@@ -412,3 +412,130 @@ class CustomUserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['email', 'first_name', 'last_name', 'is_staff', 'is_active']  # Ajuste conforme seu model
+
+
+class TenantLoginForm(forms.Form):
+    """
+    Formulário de login multi-tenant
+    """
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'seu@email.com',
+            'required': True
+        })
+    )
+    password = forms.CharField(
+        label='Senha',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Sua senha',
+            'required': True
+        })
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        password = cleaned_data.get('password')
+        
+        if email and password:
+            from django.contrib.auth import authenticate
+            user = authenticate(username=email, password=password)
+            if not user:
+                raise forms.ValidationError('Email ou senha inválidos.')
+                
+        return cleaned_data
+
+
+class AccountSelectionForm(forms.Form):
+    """
+    Formulário para seleção de conta
+    """
+    conta = forms.ModelChoiceField(
+        queryset=Conta.objects.none(),
+        label='Selecione a conta',
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        })
+    )
+    
+    def __init__(self, user=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            # Filtra apenas contas que o usuário tem acesso
+            contas_ids = ContaMembership.objects.filter(
+                user=user
+            ).values_list('conta_id', flat=True)
+            
+            self.fields['conta'].queryset = Conta.objects.filter(
+                id__in=contas_ids,
+                licenca__ativa=True
+            )
+
+
+class InviteUserForm(forms.Form):
+    """
+    Formulário para convidar usuários para a conta
+    """
+    email = forms.EmailField(
+        label='Email do usuário',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'usuario@email.com'
+        })
+    )
+    role = forms.ChoiceField(
+        label='Papel na conta',
+        choices=ContaMembership.ROLE_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        })
+    )
+    
+    def __init__(self, conta=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.conta = conta
+    
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        
+        # Verifica se o email já é membro da conta
+        if self.conta:
+            existing_membership = ContaMembership.objects.filter(
+                conta=self.conta,
+                user__email=email
+            ).exists()
+            
+            if existing_membership:
+                raise forms.ValidationError('Este usuário já é membro desta conta.')
+        
+        return email
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Valida limite de usuários
+        if self.conta:
+            licenca = self.conta.licenca
+            current_users = ContaMembership.objects.filter(conta=self.conta).count()
+            
+            if current_users >= licenca.limite_usuarios:
+                raise forms.ValidationError(
+                    f'Limite de usuários atingido. Plano atual permite {licenca.limite_usuarios} usuários.'
+                )
+        
+        return cleaned_data
+
+
+class UserRoleForm(forms.ModelForm):
+    """
+    Formulário para alterar papel do usuário na conta
+    """
+    class Meta:
+        model = ContaMembership
+        fields = ['role']
+        widgets = {
+            'role': forms.Select(attrs={'class': 'form-control'})
+        }
