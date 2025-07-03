@@ -91,6 +91,7 @@ class Licenca(models.Model):
 class ContaMembership(models.Model):
     class Meta:
         db_table = 'conta_membership'
+        unique_together = ('user', 'conta')
 
     ROLE_CHOICES = (
         ('admin', 'Administrador'),
@@ -104,9 +105,6 @@ class ContaMembership(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='invited_users'
     )
 
-    class Meta:
-        unique_together = ('user', 'conta')
-
     def __str__(self):
         return f"{self.user.email} ({self.get_role_display()}) em {self.conta.name}"
 
@@ -116,9 +114,10 @@ class Pessoa(models.Model):
     
     class Meta:
         db_table = 'pessoa'
+        unique_together = ('conta', 'CPF')  # CPF único por conta
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='pessoas', null=True, blank=True)
-    CPF = models.CharField(max_length=255, null=False, unique=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='pessoas', null=False)
+    CPF = models.CharField(max_length=255, null=False)
     type_of_person = models.IntegerField(null=True)
     name = models.CharField(max_length=255, null=False)
     profissão = models.CharField(null=True, max_length=255)
@@ -139,14 +138,15 @@ class Empresa(models.Model):
 
     class Meta:
         db_table = 'empresa'
+        unique_together = ('conta', 'CNPJ')  # CNPJ único por conta
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='empresas', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='empresas', null=False)
     class Regime_t(models.IntegerChoices):
         COMPETENCIA = 1, "COMPETENCIA"
         CAIXA       = 2, "CAIXA"
 
-    CNPJ = models.CharField(max_length=255, null=False, unique=False)
-    name = models.CharField(max_length=255, null=False, unique=False)
+    CNPJ = models.CharField(max_length=255, null=False)
+    name = models.CharField(max_length=255, null=False)
     status = models.IntegerField(null=True)
     tipo_regime =  models.PositiveSmallIntegerField(
         choices=Regime_t.choices,
@@ -161,9 +161,9 @@ class Socio(models.Model):
     
     class Meta:
         db_table = 'socio'
+        unique_together = ('conta', 'empresa', 'pessoa')  # Evita duplicatas por conta
 
-
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='socios', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='socios', null=False)
     empresa = models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
     pessoa = models.ForeignKey(Pessoa, on_delete = models.CASCADE, unique=False)
 
@@ -175,7 +175,7 @@ class Alicotas(models.Model):
     class Meta:
         db_table = 'alicotas'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='alicotas', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='alicotas', null=False)
     ISS = models.DecimalField(max_digits=9, decimal_places=2, null=False,  default=0)
     PIS = models.DecimalField(max_digits=9, decimal_places=2, null=False,  default=0)
     COFINS = models.DecimalField(max_digits=9, decimal_places=2, null=False,  default=0)
@@ -195,13 +195,14 @@ class Despesa_Grupo(models.Model):
     
     class Meta:
         db_table = 'despesa_grupo'
+        unique_together = ('conta', 'codigo')  # Código único por conta
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesa_grupos', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesa_grupos', null=False)
     class Tipo_t(models.IntegerChoices):
         COM_RATEIO = GRUPO_ITEM_COM_RATEIO, "COM RATEIO"
         SEM_RATEIO = GRUPO_ITEM_SEM_RATEIO, "SEM RATEIO"
 
-    codigo =  models.CharField(max_length=20, null=False, unique=True)
+    codigo =  models.CharField(max_length=20, null=False)
     descricao = models.CharField(max_length=255, null=False, default="")
     tipo_rateio =  models.PositiveSmallIntegerField(
         choices=Tipo_t.choices,
