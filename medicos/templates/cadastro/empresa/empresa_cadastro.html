@@ -1,0 +1,34 @@
+{% extends "templates/template_cenario_0.html" %}
+
+{% block title %}
+{% endblock %}
+
+{% block titulo %}
+{% endblock %}
+
+{% block content %}
+
+      <br>
+      <div>
+        <a href= "{% url 'medicos:empresa_incluir' %}" class="btn btn-primary btn-md" role="button"> Cadastrar empresa </a>
+        <!--<a href="http://www.google.co.uk/" onclick="return (confirm('Follow this link?'))">Google</a>-->
+      </div>
+      <br>
+
+      <table class="table table-bordered table-striped table-hover " >
+                <tr>
+                  <th rowspan="1">Id</th>          
+                  <th rowspan="1">CNPJ</th>
+                  <th rowspan="1">Empresa </th>                  
+                </tr>
+        
+                {% for empresa in lstEmpresas %}
+                  <tr>
+                    <td><a href= "{% url 'medicos:empresa_excluir' id_empresa=empresa.id %}"  onclick="return (confirm('Confirma a exclusão?'))" > Excluir </a>|<a  href= "{% url 'medicos:empresa_editar' id_empresa=empresa.id %}"> Editar </a>{{ forloop.counter }}</td>
+                    <td>{{ empresa.CNPJ}}</td>    
+                    <td><a href= "{% url 'medicos:empresa_editar' id_empresa=empresa.id %}"> {{ empresa.name}}</td>    
+                  </tr>
+                {% endfor %}
+      </table>
+
+{% endblock %}

@@ -1,0 +1,35 @@
+ 
+    <a href="{% url 'medicos:empresas_main' %}" >Home</a>
+    <a href={% url 'medicos:faturamento' fornecedor_id=request.session.empresa_id%} >Faturamento </a>
+    <a href={% url 'medicos:financeiro_main' fornecedor_id=request.session.empresa_id %} >Financeiro </a>
+    <a href={% url 'medicos:Despesas_TableView'%} >Despesas Coletivas </a>
+    <a href={% url 'medicos:despesa_socio'%} >Despesas de Sócio </a>
+    <a href={% url 'medicos:Demonstrativo_View'%} >Demonstrativo de Resultado </a>
+    <a href={% url 'medicos:apuracao_csll_irpj'%} >Apuração CSLL/IRPJ </a>
+    <a href={% url 'medicos:apuracao_issqn'%} >Apuração ISSQN </a>
+    <a href={% url 'medicos:apuracao_pis'%} >Apuração PIS </a>
+    <a href={% url 'medicos:apuracao_cofins'%} >Apuração COFINS </a>
+    <a href={% url 'medicos:Aplic_financeiras_TableView' %} >Rendimento de Aplicações </a>
+
+
+<!--
+
+<nav1>
+    <ul>
+        <li><a href="{% url 'medicos:empresas_main' %}" >Home</a></li>
+        <li><a href={% url 'medicos:faturamento' fornecedor_id=request.session.empresa_id%} >Faturamento </a></li>
+        <li><a href={% url 'medicos:financeiro_main' fornecedor_id=request.session.empresa_id %} >Financeiro </a></li>
+        <li><a href={% url 'medicos:Despesas_TableView'%} >Despesas Coletivas </a></li>
+        <li><a href={% url 'medicos:despesa_socio'%} >Despesas de Sócio </a></li>
+        <li><a href={% url 'medicos:Demonstrativo_View'%} >Demonstrativo de Resultado </a></li>
+        <li><a href={% url 'medicos:apuracao_csll_irpj'%} >Apuração CSLL/IRPJ </a></li>
+        <li><a href={% url 'medicos:apuracao_issqn'%} >Apuração ISSQN </a></li>
+        <li><a href={% url 'medicos:apuracao_pis'%} >Apuração PIS </a></li>
+        <li><a href={% url 'medicos:apuracao_cofins'%} >Apuração COFINS </a></li>
+        <li><a href={% url 'medicos:Aplic_financeiras_TableView' %} >Rendimento de Aplicações </a></li>
+    </ul>
+</nav1>
+
+
+
+-->

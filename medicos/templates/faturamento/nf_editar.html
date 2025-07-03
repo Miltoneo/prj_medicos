@@ -1,0 +1,156 @@
+{% extends "templates/template_cenario_2.html" %}
+{% load crispy_forms_tags %}
+{% load l10n %}
+
+{% block bl_script %}
+  <script type="text/javascript">
+
+      // teste
+      function myFunction() {
+            document.getElementById("demo123").innerHTML = "Hello World";
+      }
+
+      // arrendondamento like excel
+      function excel_round(num, decimals=0){
+
+          num = Number(Math.round(num +'e'+ decimals) + 'e-' + decimals);
+          return num
+      }
+
+      // calcula o valor das alicotas
+      function alicotas_calc() {
+      
+        let val_bruto = parseFloat(document.getElementById('id_val_bruto').value);    
+        let myalicotas = "{{ alicotas }}";
+        let ISS     = {{alicotas.ISS|unlocalize}} ;
+        let PIS     = {{alicotas.PIS|unlocalize}} ;
+        let COFINS  = {{alicotas.COFINS|unlocalize}} ;
+        let CSLL    =  1;
+        let IRPF    =  1.5;
+
+        let calc_ISS =  excel_round((val_bruto * ISS / 100),2);
+        let calc_PIS = excel_round((val_bruto * PIS / 100),2);
+        let calc_COFINS = excel_round((val_bruto * COFINS / 100),2);
+        let calc_IRPF = excel_round((val_bruto * IRPF / 100),2);
+        let calc_CSLL = excel_round((val_bruto * CSLL / 100),2);
+
+        // to make sure that they are numbers     
+        if (!val_bruto)  {val_bruto = 0;}    
+        let val_liquido = val_bruto - calc_ISS - calc_PIS - calc_COFINS - calc_IRPF - calc_CSLL ;
+        val_liquido = excel_round(val_liquido,2);
+
+
+        document.getElementById('id_val_ISS').value   = calc_ISS;
+        document.getElementById('id_val_PIS').value   = (calc_PIS);
+        document.getElementById('id_val_COFINS').value = (calc_COFINS);
+        document.getElementById('id_val_IR').value   = (calc_IRPF);
+        document.getElementById('id_val_CSLL').value   = (calc_CSLL);
+        document.getElementById('id_val_liquido').value = (val_liquido);
+        //alert("id_val_liquido = " +  Math.round(val_liquido,2));
+
+    }
+
+    function recalc_impostos() {
+
+      let val_bruto   = parseFloat(document.getElementById('id_val_bruto').value);    
+      let id_val_ISS  = parseFloat(document.getElementById('id_val_ISS').value);  
+      let id_val_PIS  = parseFloat(document.getElementById('id_val_PIS').value);  
+      let id_val_COFINS = parseFloat(document.getElementById('id_val_COFINS').value);  
+      let id_val_IR   = parseFloat(document.getElementById('id_val_IR').value);  
+      let id_val_CSLL = parseFloat(document.getElementById('id_val_CSLL').value);  
+
+      if (!val_bruto)  {val_bruto = 0;}    
+      let val_liquido = val_bruto - id_val_ISS - id_val_PIS - id_val_COFINS - id_val_IR - id_val_CSLL ;
+
+      document.getElementById('id_val_ISS').value   = id_val_ISS;
+      document.getElementById('id_val_PIS').value   = id_val_PIS;
+      document.getElementById('id_val_COFINS').value = id_val_COFINS;
+      document.getElementById('id_val_IR').value   = id_val_IR;
+      document.getElementById('id_val_CSLL').value   = id_val_CSLL;
+      document.getElementById('id_val_liquido').value = excel_round(val_liquido,2);
+
+      //alert("id_val_liquido = " );
+      
+    }
+
+    window.onload = function()
+    {
+        document.getElementById("id_val_bruto").onchange = function()
+        {
+          //alert("MUDOU MILTINHO !!!"  );
+          alicotas_calc();
+        };
+
+        document.getElementById("id_val_ISS").onchange = function()
+        {
+          //alert("MUDOU MILTINHO 21");
+          recalc_impostos();
+        };
+
+        document.getElementById("id_val_PIS").onchange = function()
+        {
+          //alert("MUDOU MILTINHO 21");
+          recalc_impostos();
+        };
+        document.getElementById("id_val_COFINS").onchange = function()
+        {
+          //alert("MUDOU MILTINHO 21");
+          recalc_impostos();
+        };
+        document.getElementById("id_val_IR").onchange = function()
+        {
+          //alert("MUDOU MILTINHO 21");
+          recalc_impostos();
+        };
+        document.getElementById("id_val_CSLL").onchange = function()
+        {
+          //alert("MUDOU MILTINHO 21");
+          recalc_impostos();
+        };
+
+    };
+
+    </script>
+{% endblock %}
+
+{% block title %}
+  Edition Nota Fiscal
+{% endblock %}
+
+{% block titulo %}
+  <my_cab_l1>{{ empresa.name }}</my_cab_l1><br />
+  <my_cab_l2>Notas fiscal {{ tipo_operacao }}</my_cab_l2><br />
+{% endblock %}
+
+{% block content %}
+
+  <div>
+    <!-- main -->
+    <div class="main">
+
+      <table> 
+        <tr>
+          <td>
+
+            <div class="container p-3" style="width:auto%; ">
+              <form method="post">
+                {% csrf_token %}
+                <div class="card" style="width: 40rem; background-color: beige; position: relative; left: 0px; ">
+                  <div class="card-body" style="color: black;">
+                    {% crispy form %}
+                  </div>
+
+                  <button type="submit" class="btn btn-sm btn-primary px-6">Confirmar</button>
+                </div>
+              </form>
+            </div>
+
+          </td>
+        </tr>
+      </table>
+
+    </div>
+  </div>
+  <a id="demo" onclick="myVivo()" hidden>click em min para teste</a>
+  <a id="calc" onclick="alicotas_calc()" hidden>click para calcular</a>
+{% endblock %}

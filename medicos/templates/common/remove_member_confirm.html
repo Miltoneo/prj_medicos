@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Remover membro</h2>
+<p>Tem certeza que deseja remover {{ object.user.email }} da organização {{ organization.name }}?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Remover</button>
+    <a href="{% url 'organization_detail' organization.id %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

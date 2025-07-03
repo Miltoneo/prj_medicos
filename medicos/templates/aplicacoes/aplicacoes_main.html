@@ -1,0 +1,24 @@
+{% extends "templates/template_cenario_2.html" %}
+{% load render_table from django_tables2 %}
+
+{% load l10n %}
+
+{% block title %}
+  Rendimento aplicaçoes
+{% endblock %}
+
+{% block titulo %}
+
+{% endblock %}
+
+{% block content %}
+
+  <div>
+    <h2> RENDIMENTO DE APLICAÇÕES </h2>
+  </div>
+
+  <div>
+    {% render_table table %}
+  </div>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "templates/template_cenario_2.html" %}
+{% load crispy_forms_tags %}
+{% load l10n %}
+
+{% block bl_script %}
+
+{% endblock %}
+
+{% block title %}
+  Edition Nota Fiscal
+{% endblock %}
+
+{% block titulo %}
+  <my_cab_l1>{{ empresa.name }}</my_cab_l1><br />
+  <my_cab_l2>Notas fiscal {{ tipo_operacao }}</my_cab_l2><br />
+{% endblock %}
+
+{% block content %}
+
+      <table> 
+        <tr>
+          <td>
+
+            <div class="container p-3" style="width:auto%; ">
+              <form method="post">
+                {% csrf_token %}
+                <div class="card" style="width: 40rem; background-color: beige; position: relative; left: 0px; ">
+                  <div class="card-body" style="color: black;">
+                    {% crispy form %}
+                  </div>
+
+                  <button type="submit" class="btn btn-sm btn-primary px-6">Confirmar</button>
+                </div>
+              </form>
+            </div>
+
+          </td>
+        </tr>
+      </table>
+
+
+{% endblock %}

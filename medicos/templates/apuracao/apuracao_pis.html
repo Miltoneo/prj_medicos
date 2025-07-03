@@ -1,0 +1,90 @@
+{% extends "templates/template_cenario_2.html" %}
+
+<style>
+  h1 {
+    color: red;
+  }
+  p.msg {
+    background-color: hsl(120, 100%, 50%);
+  }
+</style>
+
+{% block title %}
+  Apuração PIS
+{% endblock %}
+
+{% block titulo %}
+  <my_cab_l1>{{ empresa.name }}</my_cab_l1> <br> 
+  <my_cab_l2>Apuração PIS</my_cab_l2> <br>
+{% endblock %}
+
+{% block content %}
+
+    <br>
+    <br>
+            <div class="w3-container w3-teal">
+              APURAÇÃO PIS
+            </div>
+    <br>
+    <br>
+            <table class="table table-bordered table-striped table-hover " >
+                 <tr>
+                    <th rowspan="1"> Descrição </th>   
+                    <th rowspan="1"> janeiro </th>         
+                    <th rowspan="1"> fevereiro </th>  
+                    <th rowspan="1"> março </th>         
+                    <th rowspan="1"> abril </th>  
+                    <th rowspan="1"> maio </th>         
+                    <th rowspan="1"> junho </th>  
+                    <th rowspan="1"> julho </th>         
+                    <th rowspan="1"> agosto </th>  
+                    <th rowspan="1"> setembro </th>         
+                    <th rowspan="1"> outubro </th>  
+                    <th rowspan="1"> novembro </th>         
+                    <th rowspan="1"> dezembro </th>  
+                 <tr> 
+                    <td> Base calculo </th>    
+                    {% for balanco_pis in ds_balanco_pis %}  
+                      <td>{{balanco_pis.base_calculo}} </td>   
+                    {% endfor %}
+                 </tr>
+
+                 <tr> 
+                    <td> Imposto devido </th>    
+                    {% for balanco_pis in ds_balanco_pis %}  
+                      <td>{{balanco_pis.imposto_devido}} </td>   
+                    {% endfor %}
+                 </tr>
+
+                 <tr> 
+                    <td> Imposto retido NF</th>    
+                    {% for balanco_pis in ds_balanco_pis %}  
+                      <td>{{balanco_pis.imposto_retido}} </td>   
+                    {% endfor %}
+                 </tr>
+
+                 <tr> 
+                    <td> Imposto a pagar </th>    
+                    {% for balanco_pis in ds_balanco_pis %}  
+                      <td>{{balanco_pis.imposto_pagar}} </td>   
+                    {% endfor %}
+                 </tr>
+                 
+                 <tr> 
+                    <td> Crédito mês anterior </th>    
+                    {% for balanco_pis in ds_balanco_pis %}  
+                      <td>{{balanco_pis.saldo_mes_anterior}} </td>   
+                    {% endfor %}
+                 </tr>
+
+                 <tr> 
+                    <td> Crédito mês seguinte </th>    
+                    {% for balanco_pis in ds_balanco_pis %}  
+                      <td>{{balanco_pis.saldo_mes_seguinte}} </td>   
+                    {% endfor %}
+                 </tr>
+
+            </table>
+            
+
+{% endblock %}

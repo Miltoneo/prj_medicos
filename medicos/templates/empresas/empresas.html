@@ -1,0 +1,17 @@
+{#{% extends "base_generic.html" %}#}
+
+{% block content %}
+  <h1>Lista de Empresas</h1>
+  {% if empresa_list %}
+    <ul>
+      {% for empresa in empresa_list %}
+      <li>
+        <a href="{{ book.get_absolute_url }}">{{ empresa.CNPJ}}</a>
+        ({{empresa.name}})
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>There are no books in the library.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ organization.name }}</h2>
+<p>CNPJ: {{ organization.cnpj }}</p>
+<h3>Membros</h3>
+<ul>
+    {% for member in members %}
+        <li>
+            {{ member.user.email }} ({{ member.get_role_display }})
+            {% if is_admin and member.user != request.user %}
+                | <a href="{% url 'update_member_role' organization.id member.id %}">Alterar papel</a>
+                | <a href="{% url 'remove_member' organization.id member.id %}">Remover</a>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>Nenhum membro.</li>
+    {% endfor %}
+</ul>
+{% if is_admin %}
+    <a href="{% url 'invite_member' organization.id %}" class="btn btn-primary">Convidar novo membro</a>
+{% endif %}
+{% endblock %}

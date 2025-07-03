@@ -1,0 +1,29 @@
+{% extends "templates/template_cenario_2.html" %}
+{% load crispy_forms_tags %}
+{% load l10n %}
+
+{% block title %}
+  {{tipo_operacao}}
+{% endblock %}
+
+{% block titulo %}
+{% endblock %}
+
+
+{% block content %}
+
+    <h3 >Entre com os dados </h3>
+
+              <form method="post">
+                {% csrf_token %}
+                <div class="card" style="width: 40rem; background-color: beige;">
+                    <div class="card-body" style="color: black;" >
+                      {% crispy form %}
+                    </div>
+
+                  <button type="submit" class="btn btn-sm btn-primary px-6">Confirmar</button>
+                </div>
+              </form>
+       
+
+{% endblock %}

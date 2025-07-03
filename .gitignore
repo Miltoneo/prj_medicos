@@ -1,0 +1,5 @@
+*.pyc
+/db
+/medicos/migrations
+/medicos/migrations/*
+/myenv

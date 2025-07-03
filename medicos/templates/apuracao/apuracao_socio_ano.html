@@ -1,0 +1,203 @@
+{% extends "templates/template_cenario_2.html" %}
+{% load mathfilters %}
+
+{% block bl_script %} 
+<script type="text/javascript">
+</script>
+{% endblock %}
+
+
+{% block title %}
+ Relatorios
+{% endblock %}
+
+{% block titulo %}
+
+{% endblock %}
+
+{% block content %}
+
+    <br>
+    <br>
+
+    <a> Notas: </a>
+    <br> 
+    <a> (1) Receita bruta = considera data de emissão das notas </a><br> 
+    <div class="w3-responsive">
+
+            <div class="w3-container w3-teal">
+              DEMONSTRATIVO RESULTADO ANUAL
+            </div>
+    <br>
+
+            <table class="table table-bordered table-striped table-hover " >
+                 <tr>
+                    <th rowspan="1"> Descrição </th>   
+                    <th rowspan="1"> janeiro </th>         
+                    <th rowspan="1"> fevereiro </th>  
+                    <th rowspan="1"> março </th>         
+                    <th rowspan="1"> abril </th>  
+                    <th rowspan="1"> maio </th>         
+                    <th rowspan="1"> junho </th>  
+                    <th rowspan="1"> julho </th>         
+                    <th rowspan="1"> agosto </th>  
+                    <th rowspan="1"> setembro </th>         
+                    <th rowspan="1"> outubro </th>  
+                    <th rowspan="1"> novembro </th>         
+                    <th rowspan="1"> dezembro </th>  
+                 <tr> 
+
+                 <tr> 
+                    <td>RECEITA BRUTA (=)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.receita_bruta_notas_emitidas|floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> Faturamento serviços de consultas </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.faturamento_servicos_consultas|floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> Faturamento serviços de plantão </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.faturamento_servicos_plantao  |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> Faturamento: outros </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.faturamento_servicos_outros |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>IMPOSTOS* (-) </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.imposto_total |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> PIS </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.imposto_PIS_devido |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> COFINS </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.imposto_COFINS_devido |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> IRPJ </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.imposto_irpj_imposto_devido |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> Adicicional de IR trimestre </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.imposto_irpj_imposto_adicional |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> CSLL </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.imposto_csll_imposto_devido |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td> ISSQN </th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.imposto_iss_imposto_devido |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+               <!--- -->
+                 <tr> 
+                    <td>RECEITA LIQUIDA (=)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.receita_liquida_total |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>DESPESAS (-)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.despesa_total |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>Despesa de sócio (-)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.despesa_sem_rateio |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>Despesa de folha de pagamento(-)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.despesa_folha_rateio |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>Despesas gerais(-)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.despesa_geral_rateio |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>SALDO APURADO (=)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.saldo_apurado |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.saldo_movimentacao_financeira |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+              <!--- -->
+                 <tr> 
+                    <td>SALDO A TRANSFERIR (=)</th>    
+                    {% for mes in db_apuracao %}  
+                      <td>{{ mes.saldo_a_transferir |floatformat:2}} </td>   
+                    {% endfor %}
+                 </tr>
+
+            </table>
+
+{% endblock %}

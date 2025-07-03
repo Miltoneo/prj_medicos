@@ -1,0 +1,39 @@
+{% extends "templates/template_cenario_0.html" %}
+{% load render_table from django_tables2 %}
+
+{% block bl_script %} 
+
+{% endblock %}
+
+<style>
+  h1 {
+    color: red;
+  }
+  p.msg {
+    background-color: hsl(120, 100%, 50%);
+  }
+</style>
+
+{% block title %}
+  Cadastro: Descricões de Movimentações Financeiras
+{% endblock %}
+
+{% block titulo %}
+  <div> <a class="msg"> msg: {{ msg }}</a> </div>
+  <h1>Descrição de Movimentação Financeira</h1>
+{% endblock %}
+
+
+{% block content %}
+
+    <br>
+      <div>
+        <!--<a href="http://www.google.co.uk/" onclick="return (confirm('Follow this link?'))">Google</a>-->
+        <a href= "{% url 'medicos:desc_mov_transferencia_incluir'%}" class="btn btn-primary btn-md" role="button"> Incluir descrição de movimentação </a>
+      </div>
+    <br>
+
+      {% render_table table %}
+
+
+{% endblock %}

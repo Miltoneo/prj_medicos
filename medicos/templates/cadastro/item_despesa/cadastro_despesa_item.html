@@ -1,0 +1,42 @@
+{% extends "templates/template_cenario_0.html" %}
+
+{% block title %}
+Cadastro de Grupos de Despesas
+{% endblock %}
+
+{% block titulo %}
+  <div> <a class="msg"> msg: {{ msg }}</a> </div>
+  <h1>Cadastro de Items de Despesa</h1>
+{% endblock %}
+
+
+{% block content %}
+
+    <br>
+    <div>
+        <a href= "{% url 'medicos:despesa_item_incluir' %}" class="btn btn-primary btn-md" role="button"> Cadastrar item </a>
+        <!--<a href="http://www.google.co.uk/" onclick="return (confirm('Follow this link?'))">Google</a>-->
+    </div>
+    <br>
+    
+    <table class="table table-bordered table-striped table-hover " >
+
+                <tr>
+                  <th rowspan="1">id</th>   
+                  <th rowspan="1">Grupo de despesas</th>  
+                  <th rowspan="1">Código item despesa</th>
+                  <th rowspan="1">Descrição item despesa </th>                  
+                </tr>
+        
+                {% for despesa_item in lst_despesa_item %}
+                  <tr>
+                    <td><a href= "{% url 'medicos:despesa_item_excluir' id=despesa_item.id %}"  onclick="return (confirm('Confirma a exclusão?'))" > Excluir </a>|<a  href= "{% url 'medicos:despesa_item_editar' id=despesa_item.id %}"> Editar </a>{{ forloop.counter }}</td>
+                    <td>{{ despesa_item.grupo.codigo}}</td>    
+                    <td>{{ despesa_item.codigo}}</td>    
+                    <td>{{ despesa_item.descricao}}</td>    
+                  </tr>
+                {% endfor %}
+      </table>
+
+
+{% endblock %}

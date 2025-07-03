@@ -1,0 +1,58 @@
+{% extends "templates/template_cenario_0.html" %}
+
+{% block title %}
+  Inclusão de pessoa
+{% endblock %}
+
+{% block titulo %}
+  <div> <a class="msg"> msg: {{ msg }}</a> </div>
+  <h1> Inclusão de socio</h1>
+
+{% endblock %}
+
+<style>
+  h1 {
+    color: red;
+  }
+  p.msg {
+    background-color: hsl(120, 100%, 50%);
+  }
+</style>
+
+{% block content %}
+  <div style="overflow:auto">
+
+    <!-- main -->
+    <div class="main">
+
+      <!-- barra ações-->
+      <div>
+        <a href= "x"> açao1 </a> | <a href= "x"> ação2 </a>  
+      </div>  
+
+      <table> 
+        <tr>
+          <td>
+            <div >
+              <form method="post">{% csrf_token %}
+                <table>
+                  {% for field in form %}
+                    <tr>
+                      <th>{{field.label_tag}}</th>
+                      <td>
+                        {{ field.errors }}
+                        {{ field }}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </table>
+                <hr/>
+                <input type="submit" value="Confirma" />
+              </form>
+            </div>
+      </table>
+    </div>
+  </div>
+
+
+{% endblock %}

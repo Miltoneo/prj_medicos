@@ -1,0 +1,33 @@
+{% extends "templates/template_cenario_0.html" %}
+
+{% block title %}
+{% endblock %}
+
+{% block titulo %}
+{% endblock %}
+
+{% block content %}
+
+    <br>
+    <div class="w3-container w3-teal">
+      VINCULAR SÓCIO A EMPRESAS CADASTRADAS
+    </div>
+    <br>
+
+      <table class="table table-bordered table-striped table-hover " >
+                <tr>
+                  <th rowspan="1">Id</th>          
+                  <th rowspan="1">CNPJ</th>
+                  <th rowspan="1">Empresa </th>                  
+                </tr>
+        
+                {% for empresa in lstEmpresas %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ empresa.CNPJ}}</td>    
+                    <td><a href= "{% url 'medicos:societario_empresa' id_empresa=empresa.id %}"> {{ empresa.name}}</td>    
+                  </tr>
+                {% endfor %}
+        </table>
+
+{% endblock %}

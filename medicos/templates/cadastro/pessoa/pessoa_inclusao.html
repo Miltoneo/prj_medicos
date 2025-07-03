@@ -1,0 +1,52 @@
+{% extends "templates/template_cenario_0.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+  Inclusão de pessoa
+{% endblock %}
+
+{% block titulo %}
+  <div> <a class="msg"> msg: {{ msg }}</a> </div>
+  <h3>Empresa : {{ empresa_nome }}</h3> 
+  <h1>Cadastro de Sócio</h1>
+
+{% endblock %}
+
+<style>
+  h1 {
+    color: red;
+  }
+  p.msg {
+    background-color: hsl(120, 100%, 50%);
+  }
+</style>
+
+{% block content %}
+<div style="overflow:auto">
+    <!-- main -->
+  <div class="main">
+
+      <table> 
+        <tr>
+          <td>
+          
+              <form method="post">
+                {% csrf_token %}
+                <div class="card" style="width: 50rem;">
+                  <div class="card-header">
+                    <h6 class="card-text">Entre com os dados da pessoa</h6>
+                  </div>
+
+                  <div class="card-body">
+                    {% crispy form %}
+                  </div>
+
+                  <button type="submit">Save</button>
+                </div>
+              </form>
+                  
+          </td>
+        </tr>
+      </table>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "templates/template_cenario_2.html" %}
+{% block content %}
+<h2>Detalhes do Usuário</h2>
+<ul class="list-group mb-3">
+  <li class="list-group-item"><strong>ID:</strong> {{ user_obj.id }}</li>
+  <li class="list-group-item"><strong>Email:</strong> {{ user_obj.email }}</li>
+  <li class="list-group-item"><strong>Nome completo:</strong> {{ user_obj.get_full_name }}</li>
+  <li class="list-group-item"><strong>Staff:</strong> {{ user_obj.is_staff|yesno:"Sim,Não" }}</li>
+  <li class="list-group-item"><strong>Ativo:</strong> {{ user_obj.is_active|yesno:"Sim,Não" }}</li>
+</ul>
+<a href="{% url 'medicos:user_update' user_obj.id %}" class="btn btn-warning">Editar</a>
+<a href="{% url 'medicos:user_delete' user_obj.id %}" class="btn btn-danger">Excluir</a>
+<a href="{% url 'medicos:user_list' %}" class="btn btn-secondary">Voltar</a>
+{% endblock %}

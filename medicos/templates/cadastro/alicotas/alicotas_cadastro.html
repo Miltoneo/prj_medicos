@@ -1,0 +1,31 @@
+{% extends "templates/template_cenario_0.html" %}
+{% load crispy_forms_tags %}
+{% load l10n %}
+
+{% block bl_script %}
+
+{% endblock %}
+
+{% block title %}
+{% endblock %}
+
+{% block titulo %}
+{% endblock %}
+
+{% block content %}
+  <br>
+  
+  <div class="container p-3" style="width:auto%; ">
+    <form method="post">
+      {% csrf_token %}
+      <div class="card" style="width: 80rem; background-color: beige; position: relative; left: 0px; ">
+        <div class="card-body" style="color: black;">
+          {% crispy form %}
+        </div>
+
+        <button type="submit" class="btn btn-sm btn-primary px-6">Confirmar</button>
+      </div>
+    </form>
+  </div>
+
+{% endblock %}

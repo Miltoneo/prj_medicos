@@ -1,0 +1,11 @@
+{% extends "templates/template_cenario_2.html" %}
+{% block title %}Registrar{% endblock %}
+{% block content %}
+<h2>Registrar</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Criar Conta</button>
+</form>
+<p>Já tem conta? <a href="{% url 'medicos:login' %}">Entrar</a></p>
+{% endblock %}

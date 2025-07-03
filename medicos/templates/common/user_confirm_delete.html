@@ -1,0 +1,10 @@
+{% extends "templates/template_cenario_2.html" %}
+{% block content %}
+<h2>Excluir Usuário</h2>
+<p>Tem certeza que deseja excluir o usuário <strong>{{ object.email }}</strong>?</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Excluir</button>
+  <a href="{% url 'medicos:user_list' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

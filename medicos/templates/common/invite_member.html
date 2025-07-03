@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Convidar novo membro para {{ organization.name }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Convidar</button>
+</form>
+<a href="{% url 'organization_detail' organization.id %}">Voltar</a>
+{% endblock %}
