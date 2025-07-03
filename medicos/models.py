@@ -1,8 +1,23 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.exceptions import ValidationError
 
 app_name = 'medicos'
+
+#--------------------------------------------------------------
+# MANAGERS CUSTOMIZADOS PARA SAAS
+#--------------------------------------------------------------
+class ContaScopedManager(models.Manager):
+    """Manager que filtra automaticamente por conta (tenant)"""
+    def get_queryset(self):
+        if hasattr(self.model, '_current_conta'):
+            return super().get_queryset().filter(conta=self.model._current_conta)
+        return super().get_queryset()
+
+    def for_conta(self, conta):
+        """Método para filtrar por uma conta específica"""
+        return super().get_queryset().filter(conta=conta)
 
 #--------------------------------------------------------------
 # DEFINIÇÕES
@@ -105,18 +120,47 @@ class ContaMembership(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='invited_users'
     )
 
+    def save(self, *args, **kwargs):
+        # Validação SaaS: verificar se a licença permite mais usuários
+        if not self.pk:  # Novo membership
+            memberships_count = ContaMembership.objects.filter(conta=self.conta).count()
+            if self.conta.licenca.limite_usuarios <= memberships_count:
+                raise ValidationError(f"Limite de usuários excedido para a conta {self.conta.name}")
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.user.email} ({self.get_role_display()}) em {self.conta.name}"
 
 #--------------------------------------------------------------
+# MODELO BASE PARA TODOS OS MODELOS QUE PRECISAM DE TENANT ISOLATION
+class SaaSBaseModel(models.Model):
+    """
+    Modelo base para todos os modelos que precisam de tenant isolation
+    """
+    class Meta:
+        abstract = True
+    
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    objects = ContaScopedManager()
+    
+    def save(self, *args, **kwargs):
+        # Validação SaaS: verificar se a licença está ativa
+        if hasattr(self, 'conta') and self.conta:
+            if not self.conta.licenca.is_valida():
+                raise ValidationError(f"Licença inválida ou expirada para a conta {self.conta.name}")
+        super().save(*args, **kwargs)
+
+#--------------------------------------------------------------
 # PERFIL PESSOA (pode ser usado para usuários e não-usuários)
-class Pessoa(models.Model):
+class Pessoa(SaaSBaseModel):
     
     class Meta:
         db_table = 'pessoa'
         unique_together = ('conta', 'CPF')  # CPF único por conta
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='pessoas', null=False)
     CPF = models.CharField(max_length=255, null=False)
     type_of_person = models.IntegerField(null=True)
     name = models.CharField(max_length=255, null=False)
@@ -216,10 +260,11 @@ class Despesa_Item(models.Model):
     
     class Meta:
         db_table = 'despesa_item'
+        unique_together = ('conta', 'codigo')  # Código único por conta
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesa_itens', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesa_itens', null=False)
     grupo = models.ForeignKey(Despesa_Grupo, on_delete = models.CASCADE)
-    codigo =  models.CharField(max_length=20, null=False, unique=True)
+    codigo =  models.CharField(max_length=20, null=False)
     descricao = models.CharField(max_length=255, null=False, default="")
 
     def __str__(self):
@@ -230,7 +275,7 @@ class Despesa(models.Model):
     class Meta:
         db_table = 'despesa'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesas', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesas', null=False)
     class Tipo_t(models.IntegerChoices):
         COM_RATEIO = TIPO_DESPESA_COM_RATEIO, "DESPESA FOLHA/GERAL - COM RATEIO"
         SEM_RATEIO = TIPO_DESPESA_SEM_RATEIO, "DESPESA DE SOCIO    - SEM RATEIO"
@@ -253,7 +298,7 @@ class Despesa_socio_rateio(models.Model):
     class Meta:
         db_table = 'despesa_socio_rateio'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesa_socios_rateio', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='despesa_socios_rateio', null=False)
     fornecedor = models.ForeignKey(Empresa, on_delete = models.CASCADE)
     socio = models.ForeignKey(Socio, on_delete = models.CASCADE)
     despesa = models.ForeignKey(Despesa, on_delete = models.CASCADE)
@@ -268,14 +313,14 @@ class NotaFiscal(models.Model):
     class Meta:
         db_table = 'nota_fiscal'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='notas_fiscais', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='notas_fiscais', null=False)
     class Alicota_t(models.IntegerChoices):
         CONSULTAS = NFISCAL_ALICOTA_CONSULTAS, "CONSULTAS"
         PLANTAO   = NFISCAL_ALICOTA_PLANTAO, "PLANTAO"
         OUTROS    = NFISCAL_ALICOTA_OUTROS, "OUTROS"
 
-    numero = models.CharField(max_length=255,null=True,unique=False,default=0)
-    tomador = models.CharField(max_length=255,null=True,unique=False,default=0)
+    numero = models.CharField(max_length=255,null=True,unique=False)
+    tomador = models.CharField(max_length=255,null=True,unique=False)
     fornecedor  = models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
     socio = models.ForeignKey(Socio, on_delete = models.CASCADE, unique=False, null=True)
     dtEmissao = models.DateField(null=False)
@@ -300,7 +345,7 @@ class Balanco(models.Model):
     class Meta:
         db_table = 'balanco'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='balancos', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='balancos', null=False)
     data = models.DateField(null=False)
     empresa = models.ForeignKey(Empresa, on_delete = models.CASCADE)
     socio = models.ForeignKey(Socio, on_delete = models.CASCADE)
@@ -349,7 +394,7 @@ class Apuracao_pis(models.Model):
     class Meta:
         db_table = 'apuracao_pis'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_pis', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_pis', null=False)
     data = models.DateField(null=False)
     fornecedor =   models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
     base_calculo = models.DecimalField(max_digits=9, decimal_places=2, null=False, default=0)
@@ -367,7 +412,7 @@ class Apuracao_cofins(models.Model):
     class Meta:
         db_table = 'apuracao_cofins'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_cofins', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_cofins', null=False)
     data = models.DateField(null=False)
     fornecedor =  models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
     base_calculo = models.DecimalField(max_digits=9, decimal_places=2, null=False, default=0)
@@ -385,7 +430,7 @@ class Apuracao_csll(models.Model):
     class Meta:
         db_table = 'apuracao_csll'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_csll', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_csll', null=False)
     data = models.DateField(null=False)
     trimestre = models.IntegerField(null=False)
     fornecedor =   models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
@@ -410,7 +455,7 @@ class Apuracao_irpj(models.Model):
         db_table = 'apuracao_irpj'
 
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_irpj', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_irpj', null=False)
     data = models.DateField(null=False)
     trimestre = models.IntegerField(null=False)
     fornecedor =   models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
@@ -434,7 +479,7 @@ class Apuracao_iss(models.Model):
     class Meta:
         db_table = 'apuracao_iss'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_iss', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='apuracao_iss', null=False)
     data = models.DateField(null=False)
     fornecedor =   models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
     base_calculo = models.DecimalField(max_digits=9, decimal_places=2, null=False, default=0)
@@ -451,7 +496,7 @@ class Aplic_financeiras(models.Model):
     class Meta:
         db_table = 'aplic_financeiras'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='aplic_financeiras', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='aplic_financeiras', null=False)
     data = models.DateField(null=False)
     fornecedor =   models.ForeignKey(Empresa, on_delete = models.CASCADE, unique=False)
     rendimentos = models.DecimalField(max_digits=9, decimal_places=2, null=False, default=0)
@@ -466,7 +511,7 @@ class Desc_movimentacao_financeiro(models.Model):
     class Meta:
         db_table = 'desc_movimentacao_financeiro'
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='desc_movimentacao_financeiro', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='desc_movimentacao_financeiro', null=False)
     descricao = models.CharField(max_length=255, null=False, default="")
 
     def __str__(self):
@@ -477,7 +522,7 @@ class Financeiro(models.Model):
     class Meta:
         db_table = 'financeiro'
         
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='financeiros', null=True, blank=True)
+    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='financeiros', null=False)
     class tipo_t(models.IntegerChoices):
         CREDITO    = TIPO_MOVIMENTACAO_CONTA_CREDITO, "CREDITO"
         DEBITO     = TIPO_MOVIMENTACAO_CONTA_DEBITO,  "DEBITO"
