@@ -45,6 +45,11 @@ cd f:\Projects\Django\prj_medicos
 git push -u origin main
 ```
 
+### Adicionando Colaboradores
+Após o push inicial, adicione colaboradores:
+1. **niloarruda123** - Acesso de escrita (Write)
+2. Consulte: `GUIA_COLABORADORES.md` para instruções detalhadas
+
 ## 📋 Resumo das Melhorias SaaS Implementadas
 
 ### Modelos Refatorados
@@ -60,6 +65,7 @@ git push -u origin main
 - ✅ `database_diagram.html` - Diagrama visual interativo
 - ✅ `GIT_TROUBLESHOOTING.md` - Guia de problemas Git
 - ✅ `SOLUCAO_GIT.md` - Guia de soluções Git
+- ✅ `GUIA_COLABORADORES.md` - Guia para adicionar colaboradores
 
 ## 🎯 Status Atual
 - **Código:** ✅ Pronto para produção SaaS
