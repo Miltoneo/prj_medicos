@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from .models import (
-    Conta, Medico, Empresa, NotaFiscal, 
-    Despesa, UsuarioConta, TipoLicenca
+    Conta, Pessoa, Empresa, NotaFiscal, 
+    Despesa, ContaMembership, Licenca
 )
 from .middleware.tenant_middleware import get_current_account
 
@@ -32,12 +32,11 @@ def dashboard_home(request):
     
     # Verificar se usuário tem acesso à conta
     try:
-        usuario_conta = UsuarioConta.objects.get(
-            usuario=request.user,
-            conta=conta_atual,
-            ativo=True
+        usuario_conta = ContaMembership.objects.get(
+            user=request.user,
+            conta=conta_atual
         )
-    except UsuarioConta.DoesNotExist:
+    except ContaMembership.DoesNotExist:
         messages.error(request, 'Você não tem acesso a esta conta.')
         return redirect('auth:select_account')
     
@@ -45,27 +44,28 @@ def dashboard_home(request):
     data_inicio = timezone.now() - timedelta(days=30)
     
     # === MÉTRICAS GERAIS ===
-    total_medicos = Medico.objects.filter(conta=conta_atual).count()
+    total_pessoas = Pessoa.objects.filter(conta=conta_atual).count()
     total_empresas = Empresa.objects.filter(conta=conta_atual).count()
     
     # === MÉTRICAS FINANCEIRAS ===
     # Notas Fiscais do período
     nf_periodo = NotaFiscal.objects.filter(
         conta=conta_atual,
-        data_emissao__gte=data_inicio
+        dtEmissao__gte=data_inicio
     )
     
     total_faturamento = nf_periodo.aggregate(
-        total=Sum('valor_total')
+        total=Sum('val_bruto')
     )['total'] or Decimal('0.00')
     
-    nf_pagas = nf_periodo.filter(status='PAGA').count()
-    nf_pendentes = nf_periodo.filter(status='PENDENTE').count()
+    # Assumindo que não há campo status, vamos usar dtRecebimento para determinar se está paga
+    nf_pagas = nf_periodo.filter(dtRecebimento__isnull=False).count()
+    nf_pendentes = nf_periodo.filter(dtRecebimento__isnull=True).count()
     
     # Despesas do período
     despesas_periodo = Despesa.objects.filter(
         conta=conta_atual,
-        data_despesa__gte=data_inicio
+        data__gte=data_inicio
     )
     
     total_despesas = despesas_periodo.aggregate(
@@ -73,9 +73,8 @@ def dashboard_home(request):
     )['total'] or Decimal('0.00')
     
     # === MÉTRICAS DE USUÁRIOS ===
-    usuarios_ativos = UsuarioConta.objects.filter(
-        conta=conta_atual,
-        ativo=True
+    usuarios_ativos = ContaMembership.objects.filter(
+        conta=conta_atual
     ).count()
     
     # === GRÁFICOS E WIDGETS ===
@@ -91,9 +90,9 @@ def dashboard_home(request):
         
         faturamento_mes = NotaFiscal.objects.filter(
             conta=conta_atual,
-            data_emissao__gte=inicio_mes,
-            data_emissao__lte=fim_mes
-        ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+            dtEmissao__gte=inicio_mes,
+            dtEmissao__lte=fim_mes
+        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0.00')
         
         meses_faturamento.append({
             'mes': data_mes.strftime('%b/%Y'),
@@ -102,26 +101,31 @@ def dashboard_home(request):
     
     meses_faturamento.reverse()
     
-    # Distribuição de status das NFs
-    status_nf = list(nf_periodo.values('status').annotate(
-        total=Count('id')
-    ).order_by('-total'))
+    # Distribuição de status das NFs (baseado em dtRecebimento)
+    nf_pagas_count = nf_periodo.filter(dtRecebimento__isnull=False).count()
+    nf_pendentes_count = nf_periodo.filter(dtRecebimento__isnull=True).count()
+    
+    status_nf = [
+        {'status': 'Pagas', 'total': nf_pagas_count},
+        {'status': 'Pendentes', 'total': nf_pendentes_count}
+    ]
     
     # Últimas atividades
     ultimas_nf = NotaFiscal.objects.filter(
         conta=conta_atual
-    ).order_by('-data_criacao')[:5]
+    ).order_by('-dtEmissao')[:5]
     
     ultimas_despesas = Despesa.objects.filter(
         conta=conta_atual
-    ).order_by('-data_criacao')[:5]
+    ).order_by('-data')[:5]
     
     # === ALERTAS E NOTIFICAÇÕES ===
     alertas = []
     
     # Verificar licença próxima do vencimento
-    if conta_atual.data_vencimento_licenca:
-        dias_vencimento = (conta_atual.data_vencimento_licenca - timezone.now().date()).days
+    try:
+        licenca = conta_atual.licenca
+        dias_vencimento = (licenca.data_fim - timezone.now().date()).days
         if dias_vencimento <= 7:
             alertas.append({
                 'tipo': 'warning' if dias_vencimento > 0 else 'danger',
@@ -130,9 +134,21 @@ def dashboard_home(request):
                 'acao': 'Renovar licença',
                 'url': '#'
             })
+    except Licenca.DoesNotExist:
+        alertas.append({
+            'tipo': 'danger',
+            'titulo': 'Licença não encontrada',
+            'mensagem': 'Esta conta não possui licença configurada',
+            'acao': 'Configurar licença',
+            'url': '#'
+        })
     
     # Verificar limite de usuários
-    limite_usuarios = conta_atual.tipo_licenca.limite_usuarios if conta_atual.tipo_licenca else 1
+    try:
+        limite_usuarios = conta_atual.licenca.limite_usuarios
+    except Licenca.DoesNotExist:
+        limite_usuarios = 1
+        
     if usuarios_ativos >= limite_usuarios:
         alertas.append({
             'tipo': 'warning',
@@ -142,18 +158,19 @@ def dashboard_home(request):
             'url': '#'
         })
     
-    # NFs vencidas
+    # NFs vencidas (assumindo que são as que não foram recebidas há mais de 30 dias)
+    data_vencimento = timezone.now().date() - timedelta(days=30)
     nf_vencidas = NotaFiscal.objects.filter(
         conta=conta_atual,
-        data_vencimento__lt=timezone.now().date(),
-        status='PENDENTE'
+        dtEmissao__lt=data_vencimento,
+        dtRecebimento__isnull=True
     ).count()
     
     if nf_vencidas > 0:
         alertas.append({
             'tipo': 'danger',
             'titulo': 'Notas fiscais vencidas',
-            'mensagem': f'{nf_vencidas} nota(s) fiscal(is) vencida(s)',
+            'mensagem': f'{nf_vencidas} nota(s) fiscal(is) não recebida(s)',
             'acao': 'Ver detalhes',
             'url': '/financeiro/notas-fiscais/?vencidas=1'
         })
@@ -163,7 +180,7 @@ def dashboard_home(request):
         'usuario_conta': usuario_conta,
         
         # Métricas gerais
-        'total_medicos': total_medicos,
+        'total_pessoas': total_pessoas,
         'total_empresas': total_empresas,
         'usuarios_ativos': usuarios_ativos,
         
@@ -217,9 +234,9 @@ def dashboard_widgets(request):
             
             faturamento = NotaFiscal.objects.filter(
                 conta=conta_atual,
-                data_emissao__gte=inicio_mes,
-                data_emissao__lte=fim_mes
-            ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+                dtEmissao__gte=inicio_mes,
+                dtEmissao__lte=fim_mes
+            ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0.00')
             
             meses.append({
                 'mes': data_mes.strftime('%Y-%m'),
@@ -230,23 +247,23 @@ def dashboard_widgets(request):
         meses.reverse()
         return JsonResponse({'meses': meses})
     
-    elif widget_type == 'top_medicos':
-        # Top médicos por faturamento
-        top_medicos = Medico.objects.filter(
+    elif widget_type == 'top_pessoas':
+        # Top pessoas por faturamento
+        top_pessoas = Pessoa.objects.filter(
             conta=conta_atual
         ).annotate(
-            total_nf=Sum('notafiscal__valor_total')
+            total_nf=Sum('socio__notafiscal__val_bruto')
         ).filter(
             total_nf__isnull=False
         ).order_by('-total_nf')[:10]
         
         dados = [{
-            'nome': medico.nome,
-            'crm': medico.crm,
-            'total': float(medico.total_nf or 0)
-        } for medico in top_medicos]
+            'nome': pessoa.name,
+            'cpf': pessoa.CPF,
+            'total': float(pessoa.total_nf or 0)
+        } for pessoa in top_pessoas]
         
-        return JsonResponse({'medicos': dados})
+        return JsonResponse({'pessoas': dados})
     
     return JsonResponse({'error': 'Widget não encontrado'})
 
@@ -261,12 +278,12 @@ def dashboard_relatorio_executivo(request):
         return redirect('auth:login_tenant')
     
     # Verificar permissão (apenas admin/proprietário)
-    usuario_conta = UsuarioConta.objects.get(
-        usuario=request.user,
+    usuario_conta = ContaMembership.objects.get(
+        user=request.user,
         conta=conta_atual
     )
     
-    if usuario_conta.papel not in ['PROPRIETARIO', 'ADMIN']:
+    if usuario_conta.role not in ['admin']:
         messages.error(request, 'Acesso negado. Apenas administradores podem ver este relatório.')
         return redirect('dashboard:home')
     
@@ -286,14 +303,14 @@ def dashboard_relatorio_executivo(request):
     
     faturamento_atual = NotaFiscal.objects.filter(
         conta=conta_atual,
-        data_emissao__gte=data_inicio
-    ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+        dtEmissao__gte=data_inicio
+    ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0.00')
     
     faturamento_anterior = NotaFiscal.objects.filter(
         conta=conta_atual,
-        data_emissao__gte=periodo_anterior,
-        data_emissao__lt=data_inicio
-    ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+        dtEmissao__gte=periodo_anterior,
+        dtEmissao__lt=data_inicio
+    ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0.00')
     
     if faturamento_anterior > 0:
         crescimento_faturamento = ((faturamento_atual - faturamento_anterior) / faturamento_anterior) * 100
@@ -304,22 +321,23 @@ def dashboard_relatorio_executivo(request):
     top_empresas = Empresa.objects.filter(
         conta=conta_atual
     ).annotate(
-        total_faturado=Sum('notafiscal__valor_total')
+        total_faturado=Sum('notafiscal__val_bruto')
     ).filter(
         total_faturado__isnull=False
     ).order_by('-total_faturado')[:10]
     
-    # Análise de inadimplência
+    # Análise de inadimplência (NFs não recebidas há mais de 30 dias)
+    data_inadimplencia = timezone.now().date() - timedelta(days=30)
     nf_vencidas_valor = NotaFiscal.objects.filter(
         conta=conta_atual,
-        data_vencimento__lt=timezone.now().date(),
-        status='PENDENTE'
-    ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+        dtEmissao__lt=data_inadimplencia,
+        dtRecebimento__isnull=True
+    ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0.00')
     
     total_pendente = NotaFiscal.objects.filter(
         conta=conta_atual,
-        status='PENDENTE'
-    ).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+        dtRecebimento__isnull=True
+    ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0.00')
     
     if total_pendente > 0:
         taxa_inadimplencia = (nf_vencidas_valor / total_pendente) * 100
