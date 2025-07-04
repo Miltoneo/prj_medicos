@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.contrib import messages
 from django.utils.deprecation import MiddlewareMixin
 from django.utils import timezone
-from medicos.models import Conta, UsuarioConta
+from medicos.models import Conta, ContaMembership
 
 # Storage global para a conta atual (thread-safe)
 import threading
@@ -59,10 +59,9 @@ class TenantMiddleware(MiddlewareMixin):
             try:
                 # Verifica se a conta existe e o usuário tem acesso
                 conta = Conta.objects.get(id=conta_id)
-                usuario_conta = UsuarioConta.objects.get(
-                    usuario=request.user, 
-                    conta=conta,
-                    ativo=True
+                usuario_conta = ContaMembership.objects.get(
+                    user=request.user, 
+                    conta=conta
                 )
                 
                 # Define a conta ativa no request para uso nas views
@@ -74,7 +73,7 @@ class TenantMiddleware(MiddlewareMixin):
                 
                 return None
                 
-            except (Conta.DoesNotExist, UsuarioConta.DoesNotExist):
+            except (Conta.DoesNotExist, ContaMembership.DoesNotExist):
                 # Remove conta inválida da sessão
                 del request.session['conta_ativa_id']
                 messages.error(request, 'Acesso negado à conta selecionada.')
@@ -129,9 +128,8 @@ class UserLimitMiddleware(MiddlewareMixin):
         if hasattr(request, 'conta_ativa') and request.user.is_authenticated:
             try:
                 conta = request.conta_ativa
-                usuarios_count = UsuarioConta.objects.filter(
-                    conta=conta,
-                    ativo=True
+                usuarios_count = ContaMembership.objects.filter(
+                    conta=conta
                 ).count()
                 
                 limite_usuarios = conta.tipo_licenca.limite_usuarios if conta.tipo_licenca else 1
