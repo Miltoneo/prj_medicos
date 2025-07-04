@@ -58,7 +58,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    'medicos.middleware.LicencaValidaMiddleware',  # Middleware de licença SaaS
+    # SaaS Multi-tenant Middleware
+    'medicos.middleware.tenant_middleware.TenantMiddleware',
+    'medicos.middleware.tenant_middleware.LicenseValidationMiddleware',
+    'medicos.middleware.tenant_middleware.UserLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'prj_medicos.urls'

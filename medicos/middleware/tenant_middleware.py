@@ -7,7 +7,19 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib import messages
 from django.utils.deprecation import MiddlewareMixin
-from .models import Conta, ContaMembership
+from django.utils import timezone
+from medicos.models import Conta, UsuarioConta
+
+# Storage global para a conta atual (thread-safe)
+import threading
+_current_account_storage = threading.local()
+
+
+def get_current_account():
+    """
+    Retorna a conta atualmente ativa no contexto da requisição
+    """
+    return getattr(_current_account_storage, 'conta', None)
 
 
 class TenantMiddleware(MiddlewareMixin):
@@ -47,28 +59,28 @@ class TenantMiddleware(MiddlewareMixin):
             try:
                 # Verifica se a conta existe e o usuário tem acesso
                 conta = Conta.objects.get(id=conta_id)
-                membership = ContaMembership.objects.get(
-                    user=request.user, 
-                    conta=conta
+                usuario_conta = UsuarioConta.objects.get(
+                    usuario=request.user, 
+                    conta=conta,
+                    ativo=True
                 )
                 
                 # Define a conta ativa no request para uso nas views
                 request.conta_ativa = conta
-                request.user_role = membership.role
+                request.usuario_conta = usuario_conta
                 
-                # Define a conta nos modelos para filtro automático
-                from .models import SaaSBaseModel
-                SaaSBaseModel._current_conta = conta
+                # Define a conta global para acesso nas views
+                _current_account_storage['conta'] = conta
                 
                 return None
                 
-            except (Conta.DoesNotExist, ContaMembership.DoesNotExist):
+            except (Conta.DoesNotExist, UsuarioConta.DoesNotExist):
                 # Remove conta inválida da sessão
                 del request.session['conta_ativa_id']
                 messages.error(request, 'Acesso negado à conta selecionada.')
         
         # Se chegou aqui, precisa selecionar uma conta
-        return redirect('select_account')
+        return redirect('auth:select_account')
 
 
 class LicenseValidationMiddleware(MiddlewareMixin):
@@ -79,11 +91,11 @@ class LicenseValidationMiddleware(MiddlewareMixin):
     def process_request(self, request):
         # URLs que não precisam de validação de licença
         exempt_urls = [
-            reverse('admin:index'),
-            reverse('login'),
-            reverse('logout'),
-            '/select-account/',
-            '/license-expired/',
+            '/admin/',
+            '/auth/login/',
+            '/auth/logout/',
+            '/auth/select-account/',
+            '/auth/license-expired/',
             '/static/',
             '/media/',
         ]
@@ -94,16 +106,16 @@ class LicenseValidationMiddleware(MiddlewareMixin):
         # Verifica se há conta ativa
         if hasattr(request, 'conta_ativa'):
             try:
-                licenca = request.conta_ativa.licenca
-                if not licenca.is_valida():
+                conta = request.conta_ativa
+                if conta.data_vencimento_licenca and conta.data_vencimento_licenca < timezone.now().date():
                     messages.error(
                         request, 
-                        f'Licença da conta {request.conta_ativa.name} expirou em {licenca.data_fim}'
+                        f'Licença da conta {conta.nome} expirou em {conta.data_vencimento_licenca}'
                     )
-                    return redirect('license_expired')
+                    return redirect('auth:license_expired')
             except:
                 messages.error(request, 'Licença não encontrada para esta conta.')
-                return redirect('license_expired')
+                return redirect('auth:license_expired')
         
         return None
 
@@ -116,18 +128,21 @@ class UserLimitMiddleware(MiddlewareMixin):
     def process_request(self, request):
         if hasattr(request, 'conta_ativa') and request.user.is_authenticated:
             try:
-                licenca = request.conta_ativa.licenca
-                memberships_count = ContaMembership.objects.filter(
-                    conta=request.conta_ativa
+                conta = request.conta_ativa
+                usuarios_count = UsuarioConta.objects.filter(
+                    conta=conta,
+                    ativo=True
                 ).count()
+                
+                limite_usuarios = conta.tipo_licenca.limite_usuarios if conta.tipo_licenca else 1
                 
                 # Adiciona informações de limite no contexto
                 request.license_info = {
-                    'usuarios_atual': memberships_count,
-                    'usuarios_limite': licenca.limite_usuarios,
-                    'usuarios_disponivel': licenca.limite_usuarios - memberships_count,
-                    'plano': licenca.plano,
-                    'data_expiracao': licenca.data_fim
+                    'usuarios_atual': usuarios_count,
+                    'usuarios_limite': limite_usuarios,
+                    'usuarios_disponivel': limite_usuarios - usuarios_count,
+                    'plano': conta.tipo_licenca.nome if conta.tipo_licenca else 'Básico',
+                    'data_expiracao': conta.data_vencimento_licenca
                 }
                 
             except:

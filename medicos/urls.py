@@ -15,13 +15,15 @@ app_name='medicos'
 
 urlpatterns = [
     
-    path('login/', views_auth.login_view, name='login'),
-    path('logout/', views_auth.logout_view, name='logout'),
-    path('register/', views_auth.register_view, name='register'),
+    # SaaS Authentication URLs
+    path('auth/', include('medicos.urls_auth')),
+    
+    # SaaS Dashboard URLs  
+    path('dashboard/', include('medicos.urls_dashboard')),
+    path('', include('medicos.urls_dashboard')),  # Dashboard como página inicial
 
     #---------------------------------------
-    path('', views.index, name='index'),
-    path('main/', views.index, name='index'),
+    path('main/', views.index, name='index_old'),  # Manter compatibilidade
 
     #---------------------------------------    
     # VIEWS
