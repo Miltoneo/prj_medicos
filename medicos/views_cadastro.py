@@ -66,17 +66,17 @@ def cadastro_societario(request):
     return HttpResponse(template.render(context, request))
 
 #------------------------------------------------
-def cadastro_alicotas(request):
+def cadastro_aliquotas(request):
   
   msg =  request.session['msg_status']
-  qryAlicotas, created = Alicotas.objects.get_or_create(id=1)
+  qryAliquotas, created = Aliquotas.objects.get_or_create(id=1)
     
   if request.method == 'POST':
 
-    form = AlicotasForm(request.POST, instance = qryAlicotas)
+    form = AliquotasForm(request.POST, instance = qryAliquotas)
 
     if form.is_valid():
-      messages.success(request, 'Alicotas registradas com sucesso!')
+      messages.success(request, 'Alíquotas registradas com sucesso!')
 
       alicotas_dict = request.POST.dict()
       form.save()
@@ -84,13 +84,13 @@ def cadastro_alicotas(request):
       return redirect('medicos:cadastro_alicotas')    
 
     else:
-      request.session['msg_status'] = 'Falha na validadação dos dados'
-      return redirect('medicos:cadastro_alicotas')
+      request.session['msg_status'] = 'Falha na validação dos dados'
+      return redirect('medicos:cadastro_aliquotas')
     
   else:
 
-    form = AlicotasForm(instance = qryAlicotas)
-    template = loader.get_template('cadastro/alicotas/alicotas_cadastro.html')
+    form = AliquotasForm(instance = qryAliquotas)
+    template = loader.get_template('cadastro/aliquotas/aliquotas_cadastro.html')
     context = {
                 'form'        : form,
                 'user'        : request.user,

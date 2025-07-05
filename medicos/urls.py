@@ -7,7 +7,7 @@ from django.urls import path, include
 
 from . import views_auth
 from . import views, views_despesas, views_relatorios, views_cadastro, views_nota_fiscal, views_financeiro
-from . import report, views_empresas, views_aplicacoes
+from . import report, views_empresas, views_aplicacoes, views_dashboard
 
 from medicos import views_user
 
@@ -16,11 +16,11 @@ app_name='medicos'
 urlpatterns = [
     
     # SaaS Authentication URLs
-    path('auth/', include('medicos.urls_auth')),
+    path('auth/', include('medicos.urls_auth', namespace='auth')),
     
     # SaaS Dashboard URLs  
-    path('dashboard/', include('medicos.urls_dashboard')),
-    path('', include('medicos.urls_dashboard')),  # Dashboard como página inicial
+    path('dashboard/', include('medicos.urls_dashboard', namespace='dashboard')),
+    path('', views_dashboard.dashboard_home, name='home'),  # Dashboard home diretamente na raiz
 
     #---------------------------------------
     path('main/', views.index, name='index_old'),  # Manter compatibilidade

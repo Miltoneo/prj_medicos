@@ -35,7 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'medicos',
+    'django.contrib.humanize',  # Adicionado para suporte a filtros humanize
+    'medicos.apps.MilenioConfig',
 
     "django_bootstrap5",
     'mathfilters',
@@ -58,7 +59,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    # SaaS Multi-tenant Middleware
+    # SaaS Multi-tenant Middleware (reabilitado)
     'medicos.middleware.tenant_middleware.TenantMiddleware',
     'medicos.middleware.tenant_middleware.LicenseValidationMiddleware',
     'medicos.middleware.tenant_middleware.UserLimitMiddleware',
@@ -88,6 +89,7 @@ WSGI_APPLICATION = 'prj_medicos.wsgi.application'
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SERVER_HOSTNAME     = os.environ.get('SECONDARY_SERVER_HOSTNAME', default= env('SERVER_HOSTNAME'))
+DATABASE_HOST       = os.environ.get('SECONDARY_DATABASE_HOST', default= env('DATABASE_HOST'))
 DATABASE_NAME       = os.environ.get('SECONDARY_DATABASE_NAME', default= env('DATABASE_NAME'))
 DATABASE_USER       = os.environ.get('SECONDARY_DATABASE_USER', default= env('DATABASE_USER'))
 DATABASE_PASSWORD   = os.environ.get('SECONDARY_DATABASE_PASSWORD', default= env('DATABASE_PASSWORD'))
@@ -99,7 +101,7 @@ DATABASES = {
         'NAME': DATABASE_NAME,
         'USER': DATABASE_USER,
         'PASSWORD': DATABASE_PASSWORD,
-        'HOST': SERVER_HOSTNAME,
+        'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
     }
 }

@@ -109,8 +109,8 @@ def nf_incluir(request):
   fornecedor_initial = []
   fornecedor_initial.append([fornecedor.pk, fornecedor.name])
 
-  # recupera alicotas
-  qryAlicotas = Alicotas.objects.filter().first()
+  # recupera aliquotas
+  qryAliquotas = Aliquotas.objects.filter().first()
 
   if request.method == 'POST':
       form = Edit_NotaFiscal_Form(request.POST)
@@ -138,7 +138,7 @@ def nf_incluir(request):
                 'data_fiscal' : data_fiscal,
                 'form'        : form,
                 'empresa'     : fornecedor,
-                'alicotas'    : qryAlicotas,
+                'aliquotas'   : qryAliquotas,
                 'msg'         : msg,
                 'user'        : request.user,
               }
@@ -160,8 +160,8 @@ def nf_editar(request, notaFiscal_pk):
   for socio in qryPjuridica_socios:
     lstSocios.append([socio.pk,socio.pessoa.name])
 
-  # recupera alicotas
-  qryAlicotas = Alicotas.objects.filter().first()
+  # recupera aliquotas
+  qryAliquotas = Aliquotas.objects.filter().first()
   qryEntrada = NotaFiscal.objects.get(id = notaFiscal_pk) 
   if request.method == 'POST':
       form = Edit_NotaFiscal_Form(request.POST, instance=qryEntrada) # FUNCIONA   
@@ -197,7 +197,7 @@ def nf_editar(request, notaFiscal_pk):
                 'empresa'     : fornecedor,
                 'data_fiscal' : data_fiscal,
                 'form'        : form,
-                'alicotas'    : qryAlicotas,
+                'aliquotas'   : qryAliquotas,
                 'msg'         : msg,
                 'user'        : request.user,
               }

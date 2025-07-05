@@ -28,7 +28,7 @@ def dashboard_home(request):
     conta_atual = get_current_account()
     if not conta_atual:
         messages.error(request, 'Conta não selecionada. Faça login novamente.')
-        return redirect('auth:login_tenant')
+        return redirect('medicos:auth:login_tenant')
     
     # Verificar se usuário tem acesso à conta
     try:
@@ -38,7 +38,7 @@ def dashboard_home(request):
         )
     except ContaMembership.DoesNotExist:
         messages.error(request, 'Você não tem acesso a esta conta.')
-        return redirect('auth:select_account')
+        return redirect('medicos:auth:select_account')
     
     # Período para métricas (últimos 30 dias)
     data_inicio = timezone.now() - timedelta(days=30)
@@ -217,7 +217,7 @@ def dashboard_widgets(request):
     """
     conta_atual = get_current_account()
     if not conta_atual:
-        return redirect('auth:login_tenant')
+        return redirect('medicos:auth:login_tenant')
     
     widget_type = request.GET.get('widget')
     
@@ -275,7 +275,7 @@ def dashboard_relatorio_executivo(request):
     """
     conta_atual = get_current_account()
     if not conta_atual:
-        return redirect('auth:login_tenant')
+        return redirect('medicos:auth:login_tenant')
     
     # Verificar permissão (apenas admin/proprietário)
     usuario_conta = ContaMembership.objects.get(
@@ -285,7 +285,7 @@ def dashboard_relatorio_executivo(request):
     
     if usuario_conta.role not in ['admin']:
         messages.error(request, 'Acesso negado. Apenas administradores podem ver este relatório.')
-        return redirect('dashboard:home')
+        return redirect('medicos:dashboard:home')
     
     # Período configurável
     periodo = request.GET.get('periodo', '30')  # dias

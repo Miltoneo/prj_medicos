@@ -155,8 +155,8 @@ def financeiro_NF_editar(request, notaFiscal_pk):
   for socio in qryPjuridica_socios:
     lstSocios.append([socio.pk,socio.pessoa.name])
 
-  # recupera alicotas
-  qryAlicotas = Alicotas.objects.filter().first()
+  # recupera aliquotas
+  qryAliquotas = Aliquotas.objects.filter().first()
   qryEntrada = NotaFiscal.objects.get(id = notaFiscal_pk) 
   if request.method == 'POST':
 
@@ -197,7 +197,7 @@ def financeiro_NF_editar(request, notaFiscal_pk):
                 'empresa'     : fornecedor,
                 'periodo_fiscal'  : periodo_fiscal,
                 'form'        : form,
-                'alicotas'    : qryAlicotas,
+                'aliquotas'   : qryAliquotas,
                 'msg'         : msg,
                 'user'        : request.user,
               }

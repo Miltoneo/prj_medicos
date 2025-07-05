@@ -34,23 +34,26 @@ class TenantMiddleware(MiddlewareMixin):
     """
     
     def process_request(self, request):
-        # URLs que não precisam de tenant (login, logout, etc.)
-        exempt_urls = [
-            reverse('admin:index'),
-            reverse('login'),
-            reverse('logout'),
-            '/select-account/',
+        # URLs que não precisam de tenant (usar caminhos diretos é mais confiável)
+        exempt_paths = [
+            '/admin/',
+            '/medicos/auth/login/',
+            '/medicos/auth/logout/',
+            '/medicos/auth/select-account/',
+            '/medicos/auth/license-expired/',
+            '/medicos/auth/register/',
             '/static/',
             '/media/',
+            '/favicon.ico',
         ]
         
         # Verifica se a URL atual está na lista de exceções
-        if any(request.path.startswith(url) for url in exempt_urls):
+        if any(request.path.startswith(path) for path in exempt_paths):
             return None
             
         # Se usuário não está autenticado, redireciona para login
         if not request.user.is_authenticated:
-            return redirect('login')
+            return redirect('/medicos/auth/login/')
             
         # Tenta obter a conta ativa da sessão
         conta_id = request.session.get('conta_ativa_id')
@@ -69,17 +72,18 @@ class TenantMiddleware(MiddlewareMixin):
                 request.usuario_conta = usuario_conta
                 
                 # Define a conta global para acesso nas views
-                _current_account_storage['conta'] = conta
+                _current_account_storage.conta = conta
                 
                 return None
                 
             except (Conta.DoesNotExist, ContaMembership.DoesNotExist):
                 # Remove conta inválida da sessão
-                del request.session['conta_ativa_id']
+                if 'conta_ativa_id' in request.session:
+                    del request.session['conta_ativa_id']
                 messages.error(request, 'Acesso negado à conta selecionada.')
         
         # Se chegou aqui, precisa selecionar uma conta
-        return redirect('auth:select_account')
+        return redirect('/medicos/auth/select-account/')
 
 
 class LicenseValidationMiddleware(MiddlewareMixin):
@@ -89,32 +93,33 @@ class LicenseValidationMiddleware(MiddlewareMixin):
     
     def process_request(self, request):
         # URLs que não precisam de validação de licença
-        exempt_urls = [
+        exempt_paths = [
             '/admin/',
-            '/auth/login/',
-            '/auth/logout/',
-            '/auth/select-account/',
-            '/auth/license-expired/',
+            '/medicos/auth/login/',
+            '/medicos/auth/logout/',
+            '/medicos/auth/select-account/',
+            '/medicos/auth/license-expired/',
             '/static/',
             '/media/',
         ]
         
-        if any(request.path.startswith(url) for url in exempt_urls):
+        if any(request.path.startswith(path) for path in exempt_paths):
             return None
             
         # Verifica se há conta ativa
         if hasattr(request, 'conta_ativa'):
             try:
                 conta = request.conta_ativa
-                if conta.data_vencimento_licenca and conta.data_vencimento_licenca < timezone.now().date():
+                licenca = conta.licenca
+                if not licenca.is_valida():
                     messages.error(
                         request, 
-                        f'Licença da conta {conta.nome} expirou em {conta.data_vencimento_licenca}'
+                        f'Licença da conta {conta.name} expirou em {licenca.data_fim}'
                     )
-                    return redirect('auth:license_expired')
+                    return redirect('/medicos/auth/license-expired/')
             except:
                 messages.error(request, 'Licença não encontrada para esta conta.')
-                return redirect('auth:license_expired')
+                return redirect('/medicos/auth/license-expired/')
         
         return None
 
@@ -132,15 +137,23 @@ class UserLimitMiddleware(MiddlewareMixin):
                     conta=conta
                 ).count()
                 
-                limite_usuarios = conta.tipo_licenca.limite_usuarios if conta.tipo_licenca else 1
+                try:
+                    licenca = conta.licenca
+                    limite_usuarios = licenca.limite_usuarios
+                    plano = licenca.plano
+                    data_expiracao = licenca.data_fim
+                except:
+                    limite_usuarios = 1
+                    plano = 'Básico'
+                    data_expiracao = None
                 
                 # Adiciona informações de limite no contexto
                 request.license_info = {
                     'usuarios_atual': usuarios_count,
                     'usuarios_limite': limite_usuarios,
                     'usuarios_disponivel': limite_usuarios - usuarios_count,
-                    'plano': conta.tipo_licenca.nome if conta.tipo_licenca else 'Básico',
-                    'data_expiracao': conta.data_vencimento_licenca
+                    'plano': plano,
+                    'data_expiracao': data_expiracao
                 }
                 
             except:

@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import Conta, ContaMembership, Licenca
-from .forms import TenantLoginForm, AccountSelectionForm
+from .forms import TenantLoginForm, AccountSelectionForm, EmailAuthenticationForm, CustomUserCreationForm
 
 # ---------------------------------------------
 def login_view(request):
@@ -47,14 +47,14 @@ def tenant_login(request):
                     if conta.licenca.is_valida():
                         request.session['conta_ativa_id'] = conta.id
                         messages.success(request, f'Bem-vindo à {conta.name}!')
-                        return redirect('dashboard')
+                        return redirect('/medicos/dashboard/')
                     else:
                         messages.error(request, f'Licença da conta {conta.name} expirou.')
-                        return redirect('license_expired')
+                        return redirect('/medicos/auth/license-expired/')
                         
                 elif memberships.count() > 1:
                     # Múltiplas contas - redireciona para seleção
-                    return redirect('select_account')
+                    return redirect('/medicos/auth/select-account/')
                 else:
                     # Usuário sem contas
                     logout(request)
@@ -69,7 +69,7 @@ def tenant_login(request):
 # ---------------------------------------------
 def logout_view(request):
     logout(request)
-    return redirect('medicos:login')
+    return redirect('/medicos/auth/login/')
 
 # ---------------------------------------------
 def register_view(request):
@@ -77,7 +77,7 @@ def register_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('medicos:login')
+            return redirect('/medicos/auth/login/')
     else:
         form = CustomUserCreationForm()
     return render(request, 'auth/register.html', {'form': form})
@@ -100,7 +100,7 @@ def select_account(request):
             if conta.licenca.is_valida():
                 request.session['conta_ativa_id'] = conta.id
                 messages.success(request, f'Conta {conta.name} selecionada com sucesso!')
-                return redirect('dashboard')
+                return redirect('/medicos/dashboard/')
             else:
                 messages.error(request, f'Licença da conta {conta.name} expirou em {conta.licenca.data_fim}.')
         
@@ -182,4 +182,4 @@ def logout_view(request):
     
     logout(request)
     messages.success(request, 'Logout realizado com sucesso.')
-    return redirect('login')
+    return redirect('/medicos/auth/login/')

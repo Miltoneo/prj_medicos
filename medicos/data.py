@@ -20,7 +20,7 @@ def monta_apuracao_csll_irpj_new(request, empresa_id):
     periodo_fiscal = datetime.datetime.strptime(periodo_fiscal, "%Y-%m-%d").date()
 
     #fornecedor = Pjuridica.objects.get(id=empresa_id)
-    alicota = Alicotas.objects.get(id = 1)
+    aliquota = Aliquotas.objects.get(id = 1)
 
     #--Calculo tributo Trimestral
     mes_inicial = 0

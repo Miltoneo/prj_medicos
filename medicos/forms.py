@@ -46,11 +46,12 @@ class Edit_NotaFiscal_Form(ModelForm):
     dtRecebimento = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
     def __init__(self, *args, **kwargs):
-            socio_choices = kwargs.pop('socio_choices',())
+            empresa_choices = kwargs.pop('empresa_choices',())
             data_inicial= kwargs.pop('data_inicial',())
 
             super().__init__(*args, **kwargs)
-            self.fields['socio'].choices = socio_choices
+            if empresa_choices:
+                self.fields['empresa_destinataria'].choices = empresa_choices
             self.fields['dtRecebimento'].required = False
 
             self.helper = FormHelper(self)
@@ -67,7 +68,7 @@ class Edit_NotaFiscal_Form(ModelForm):
 
                 Row(
                     Column('tomador', css_class='col-md-4'),
-                    Column('socio', css_class='col-md-4'),              
+                    Column('empresa_destinataria', css_class='col-md-4'),              
                 ),  
 
                  Row(
@@ -96,10 +97,10 @@ class Edit_NotaFiscal_Form(ModelForm):
     class Meta:
         model = NotaFiscal
         fields = [
-
-                   'socio', #new
+                   'empresa_destinataria', # changed from 'socio'
                    'tipo_aliquota',
                    "numero", 
+                   "serie",
                    "tomador", 
                    "dtEmissao",
                    'dtRecebimento', 
@@ -115,7 +116,7 @@ class Edit_NotaFiscal_Form(ModelForm):
         widgets = {
                     #'dtEmissao': widgets.DateInput(attrs={'type': 'date'}),
                     #'dtRecebimento': widgets.DateInput(attrs={'type': 'date'}),
-                    'socio': Select2Widget,
+                    'empresa_destinataria': Select2Widget,
                     }
         localized_fiels = '__all__'
 
@@ -204,48 +205,51 @@ class Edit_Desc_Mov_Financeira_Form(ModelForm):
                     ]
 
 #-----------------------------------------------------
-class AlicotasForm(ModelForm):
+class AliquotasForm(ModelForm):
     
     def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.helper = FormHelper(self)
             self.helper.layout = Layout(
                 Row(
-                    Column('ISS', css_class='col-md-4'),   
+                    Column('ISS_CONSULTAS', css_class='col-md-4'),   
+                    Column('ISS_PLANTAO', css_class='col-md-4'),    
+                    Column('ISS_OUTROS', css_class='col-md-4'),    
+                ),
+                Row(
                     Column('PIS', css_class='col-md-4'),    
                     Column('COFINS', css_class='col-md-4'),    
+                    Column('IR', css_class='col-md-4'),   
                 ),
                 Row(
-                    Column('IRPJ_BASE_CAL', css_class='col-md-4'),   
-                    Column('IRPJ_ALIC_1', css_class='col-md-4'),    
-                    Column('IRPJ_ALIC_2', css_class='col-md-4'),   
+                    Column('CSLL', css_class='col-md-4'),   
+                    Column('data_vigencia_inicio', css_class='col-md-4'),    
+                    Column('data_vigencia_fim', css_class='col-md-4'),      
                 ),
                 Row(
-                    Column('CSLL_BASE_CAL', css_class='col-md-4'),   
-                    Column('CSLL_ALIC_1', css_class='col-md-4'),    
-                    Column('CSLL_ALIC_2', css_class='col-md-4'),      
-                ),
-                Row(
-                    Column('IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', css_class='col-md-4'),     
-                    Column('IRPJ_ADICIONAL', css_class='col-md-4'),    
+                    Column('observacoes', css_class='col-md-12'),     
                 ),
             )
 
     class Meta:
-        model = Alicotas
+        model = Aliquotas
         fields = [
-                'ISS', 
+                'ISS_CONSULTAS', 
+                'ISS_PLANTAO', 
+                'ISS_OUTROS', 
                 'PIS', 
                 'COFINS', 
-                'IRPJ_BASE_CAL', 
-                'IRPJ_ALIC_1',
-                'IRPJ_ALIC_2',  
-                'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL',
-                'IRPJ_ADICIONAL',  
-                'CSLL_BASE_CAL', 
-                'CSLL_ALIC_1',
-                'CSLL_ALIC_2',  
+                'IR',
+                'CSLL',
+                'data_vigencia_inicio',
+                'data_vigencia_fim',
+                'observacoes',
         ]
+        widgets = {
+            'data_vigencia_inicio': forms.DateInput(attrs={'type': 'date'}),
+            'data_vigencia_fim': forms.DateInput(attrs={'type': 'date'}),
+            'observacoes': forms.Textarea(attrs={'rows': 3}),
+        }
 
 #--------------------------------------------------------
 class EmpresaForm(ModelForm):
