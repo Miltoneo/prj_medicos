@@ -513,7 +513,7 @@ def despesa_geral_folha(request):
 #-----------------------------------------------------------------------------
 class Cadastro_Desc_Mov_Financeiras_TableView(SingleTableView):
 
-    model = Desc_movimentacao_financeiro
+    model = DescricaoMovimentacao
     table_class = Desc_mov_financeira_Table
     template_name = 'cadastro/desc_mov_financeira/desc_mov_financeira.html'
     paginate_by = 15    
@@ -534,8 +534,8 @@ class Cadastro_Desc_Mov_Financeiras_TableView(SingleTableView):
         fornecedor_id = self.request.session['empresa_id'] 
         fornecedor = Empresa.objects.get(id=fornecedor_id)  # Corrigido
 
-        #queryset = Desc_movimentacao_financeiro.objects.filter(fornecedor = fornecedor ).order_by('descricao')
-        queryset = Desc_movimentacao_financeiro.objects.all().order_by('descricao')
+        #queryset = DescricaoMovimentacao.objects.filter(fornecedor = fornecedor ).order_by('descricao')
+        queryset = DescricaoMovimentacao.objects.all().order_by('descricao')
         return queryset
     
 #----------------------------------------------------------------------------#
@@ -569,7 +569,7 @@ def desc_mov_transferencia_incluir(request):
   else:
 
     #form = Edit_NotaFiscal_Form( socio_choices = lstSocios, initial={'dtEmissao': data_inicial, 'dtRecebimento': data_inicial   })
-    form = Edit_Desc_Mov_Financeira_Form()
+    form = DescricaoMovimentacaoForm()
     template = loader.get_template('cadastro/desc_mov_financeira/desc_mov_financeira_editar.html')
 
 
@@ -589,10 +589,10 @@ def desc_mov_financeira_editar(request, desc_id):
   fornecedor = Empresa.objects.get(id = empresa_id)  # Corrigido
 
 
-  ds_desc_movimentacao = Desc_movimentacao_financeiro.objects.get(id = desc_id) 
+  ds_desc_movimentacao = DescricaoMovimentacao.objects.get(id = desc_id) 
   if request.method == 'POST':
 
-    form = Edit_Desc_Mov_Financeira_Form(request.POST, instance=ds_desc_movimentacao)
+    form = DescricaoMovimentacaoForm(request.POST, instance=ds_desc_movimentacao)
     if form.is_valid():
       form.save()
 
@@ -607,7 +607,7 @@ def desc_mov_financeira_editar(request, desc_id):
     
   else:
 
-    form = Edit_Desc_Mov_Financeira_Form( instance = ds_desc_movimentacao)
+    form = DescricaoMovimentacaoForm( instance = ds_desc_movimentacao)
     template = loader.get_template('cadastro/desc_mov_financeira/desc_mov_financeira_editar.html')
 
 
@@ -626,7 +626,7 @@ def desc_mov_transferencia_excluir(request, desc_id):
   empresa_id = request.session['empresa_id']
 
   fornecedor = Empresa.objects.get(id = empresa_id)  # Corrigido
-  ds_financeiro = Desc_movimentacao_financeiro.objects.get(id = desc_id).delete()
+  ds_financeiro = DescricaoMovimentacao.objects.get(id = desc_id).delete()
 
   #messages.success(request, 'Nota excluida com sucesso')
   request.session['msg_status'] = 'Exclusão com com sucesso!!!'

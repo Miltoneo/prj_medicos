@@ -333,43 +333,69 @@ class RelatorioConsolidadoMensal(models.Model):
         """Calcula a distribuição por categorias"""
         from .financeiro import TIPO_MOVIMENTACAO_CONTA_CREDITO, TIPO_MOVIMENTACAO_CONTA_DEBITO
         
-        # Mapeamento de categorias para campos
+        # Mapeamento de códigos de categoria para campos de relatório
         categorias_credito = {
-            'adiantamento': 'creditos_adiantamentos',
-            'pagamento': 'creditos_pagamentos', 
-            'ajuste': 'creditos_ajustes',
-            'transferencia': 'creditos_transferencias',
-            'financeiro': 'creditos_financeiro',
-            'saldo': 'creditos_saldo',
-            'outros': 'creditos_outros'
+            'receita_servicos': 'creditos_pagamentos',
+            'receita_outros': 'creditos_pagamentos',
+            'adiantamento_recebido': 'creditos_adiantamentos',
+            'emprestimo_recebido': 'creditos_financeiro',
+            'transferencia_recebida': 'creditos_transferencias',
+            'ajuste_credito': 'creditos_ajustes',
+            'resgate_aplicacao': 'creditos_financeiro',
+            'rendimento_aplicacao': 'creditos_financeiro',  # Nova categoria
         }
         
         categorias_debito = {
-            'adiantamento': 'debitos_adiantamentos',
-            'despesa': 'debitos_despesas',
-            'taxa': 'debitos_taxas', 
-            'transferencia': 'debitos_transferencias',
-            'ajuste': 'debitos_ajustes',
-            'financeiro': 'debitos_financeiro',
-            'saldo': 'debitos_saldo',
-            'outros': 'debitos_outros'
+            'despesa_operacional': 'debitos_despesas',
+            'despesa_pessoal': 'debitos_despesas', 
+            'adiantamento_concedido': 'debitos_adiantamentos',
+            'emprestimo_concedido': 'debitos_financeiro',
+            'transferencia_enviada': 'debitos_transferencias',
+            'ajuste_debito': 'debitos_ajustes',
+            'aplicacao_financeira': 'debitos_financeiro',
+            'irrf_aplicacao': 'debitos_financeiro',  # Nova categoria
         }
         
+        # Inicializar todos os campos com zero
+        for campo in categorias_credito.values():
+            setattr(self, campo, 0)
+        for campo in categorias_debito.values():
+            setattr(self, campo, 0)
+        
         # Processar créditos
-        for categoria, campo in categorias_credito.items():
+        for codigo_categoria, campo in categorias_credito.items():
             valor = lancamentos.filter(
                 tipo=TIPO_MOVIMENTACAO_CONTA_CREDITO,
-                descricao__categoria=categoria
+                descricao__categoria_movimentacao__codigo=codigo_categoria
             ).aggregate(models.Sum('valor'))['valor__sum'] or 0
-            setattr(self, campo, valor)
+            setattr(self, campo, getattr(self, campo, 0) + valor)
         
         # Processar débitos
-        for categoria, campo in categorias_debito.items():
+        for codigo_categoria, campo in categorias_debito.items():
             valor = lancamentos.filter(
                 tipo=TIPO_MOVIMENTACAO_CONTA_DEBITO,
-                descricao__categoria=categoria
+                descricao__categoria_movimentacao__codigo=codigo_categoria
             ).aggregate(models.Sum('valor'))['valor__sum'] or 0
-            setattr(self, campo, valor)
+            setattr(self, campo, getattr(self, campo, 0) + valor)
+        
+        # Processar categorias não mapeadas como "outros"
+        categorias_mapeadas = set(categorias_credito.keys()) | set(categorias_debito.keys())
+        
+        # Créditos "outros" (categorias não mapeadas)
+        valor_outros_credito = lancamentos.filter(
+            tipo=TIPO_MOVIMENTACAO_CONTA_CREDITO
+        ).exclude(
+            descricao__categoria_movimentacao__codigo__in=categorias_mapeadas
+        ).aggregate(models.Sum('valor'))['valor__sum'] or 0
+        self.creditos_outros = valor_outros_credito
+        
+        # Débitos "outros" (categorias não mapeadas)
+        valor_outros_debito = lancamentos.filter(
+            tipo=TIPO_MOVIMENTACAO_CONTA_DEBITO
+        ).exclude(
+            descricao__categoria_movimentacao__codigo__in=categorias_mapeadas
+        ).aggregate(models.Sum('valor'))['valor__sum'] or 0
+        self.debitos_outros = valor_outros_debito
     
     def _executar_validacoes_auditoria(self, lancamentos, config):
         """Executa validações de auditoria"""
@@ -416,7 +442,7 @@ class RelatorioConsolidadoMensal(models.Model):
         
         # Salvar inconsistências
         self.inconsistencias_encontradas = len(inconsistencias)
-        if inconsistencias:
+        if inconsistias:
             self.detalhes_inconsistencias = inconsistencias
     
     def aprovar_relatorio(self, usuario):
@@ -521,3 +547,59 @@ class RelatorioConsolidadoMensal(models.Model):
                 'data_aprovacao': self.data_aprovacao.isoformat() if self.data_aprovacao else None,
             }
         }
+    
+    def incluir_dados_aplicacoes_financeiras(self):
+        """
+        Inclui dados das aplicações financeiras no relatório consolidado.
+        
+        Este método coleta informações sobre aplicações financeiras do mês
+        e integra com os dados do relatório para análise fiscal.
+        """
+        from .financeiro import AplicacaoFinanceira
+        from datetime import date
+        
+        # Obter primeiro e último dia do mês de referência
+        primeiro_dia = self.mes_referencia.replace(day=1)
+        if primeiro_dia.month == 12:
+            ultimo_dia = primeiro_dia.replace(year=primeiro_dia.year + 1, month=1, day=1)
+        else:
+            ultimo_dia = primeiro_dia.replace(month=primeiro_dia.month + 1, day=1)
+        ultimo_dia = ultimo_dia - timezone.timedelta(days=1)
+        
+        # Buscar aplicações do período
+        aplicacoes = AplicacaoFinanceira.objects.filter(
+            conta=self.conta,
+            data__range=[primeiro_dia, ultimo_dia]
+        )
+        
+        # Calcular totais
+        totais = aplicacoes.aggregate(
+            total_rendimentos=models.Sum('rendimentos') or 0,
+            total_irrf=models.Sum('irrf') or 0,
+            total_aplicacoes=models.Sum('aplicacoes') or 0,
+            total_resgates=models.Sum('resgates') or 0,
+            count_aplicacoes=models.Count('id')
+        )
+        
+        # Adicionar aos campos financeiros do relatório
+        self.creditos_financeiro += totais['total_rendimentos']
+        self.creditos_financeiro += totais['total_resgates']
+        self.debitos_financeiro += totais['total_irrf']
+        self.debitos_financeiro += totais['total_aplicacoes']
+        
+        # Armazenar detalhes em observações se houver aplicações
+        if totais['count_aplicacoes'] > 0:
+            detalhes_aplicacao = (
+                f"Aplicações Financeiras - {totais['count_aplicacoes']} movimentações: "
+                f"Rendimentos R$ {totais['total_rendimentos']:,.2f}, "
+                f"IRRF R$ {totais['total_irrf']:,.2f}, "
+                f"Aplicações R$ {totais['total_aplicacoes']:,.2f}, "
+                f"Resgates R$ {totais['total_resgates']:,.2f}"
+            )
+            
+            if self.observacoes:
+                self.observacoes += f"\n{detalhes_aplicacao}"
+            else:
+                self.observacoes = detalhes_aplicacao
+        
+        return totais

@@ -19,10 +19,6 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       timeout: 10s
       retries: 5
-      # healthcheck:
-      #   test:  mysql --user=root --password=root -e "SELECT 1"
-      #   timeout: 10s
-      #   retries: 5
 
   app:
     build: 
@@ -32,7 +28,7 @@ services:
 
     restart: unless-stopped
     environment:
-      SECONDARY_SERVER_HOSTNAME: db #host.docker.internal  
+      SECONDARY_DATABASE_HOSTNAME: db #host.docker.internal  
       SECONDARY_DATABASE_NAME: prd_milenio
       SECONDARY_DATABASE_USER: admin
       SECONDARY_DATABASE_PASSWORD: admin

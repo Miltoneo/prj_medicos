@@ -14,6 +14,49 @@ NFISCAL_ALIQUOTA_CONSULTAS = 1
 NFISCAL_ALIQUOTA_PLANTAO = 2
 NFISCAL_ALIQUOTA_OUTROS = 3
 
+# PERIODICIDADES DE APURAÇÃO CONFORME LEGISLAÇÃO
+PERIODICIDADE_MENSAL = 'MENSAL'
+PERIODICIDADE_TRIMESTRAL = 'TRIMESTRAL'
+
+# TIPOS DE IMPOSTOS E SUAS CARACTERÍSTICAS
+IMPOSTOS_INFO = {
+    'ISS': {
+        'periodicidade': PERIODICIDADE_MENSAL,
+        'dia_vencimento': 10,  # Padrão - varia por município
+        'regime_obrigatorio': REGIME_TRIBUTACAO_COMPETENCIA,
+        'base_legal': 'LC 116/2003',
+        'observacao': 'Sempre regime de competência, vencimento varia por município'
+    },
+    'PIS': {
+        'periodicidade': PERIODICIDADE_MENSAL,
+        'dia_vencimento': 25,
+        'regime_flexivel': True,
+        'base_legal': 'Lei 10.833/2003',
+        'observacao': 'Pode seguir regime da empresa se receita ≤ R$ 78 milhões'
+    },
+    'COFINS': {
+        'periodicidade': PERIODICIDADE_MENSAL,
+        'dia_vencimento': 25,
+        'regime_flexivel': True,
+        'base_legal': 'Lei 10.833/2003',
+        'observacao': 'Pode seguir regime da empresa se receita ≤ R$ 78 milhões'
+    },
+    'IRPJ': {
+        'periodicidades': [PERIODICIDADE_MENSAL, PERIODICIDADE_TRIMESTRAL],
+        'dia_vencimento': 'ultimo_dia_util',
+        'regime_flexivel': True,
+        'base_legal': 'Lei 9.430/1996',
+        'observacao': 'Empresa pode optar por apuração mensal ou trimestral'
+    },
+    'CSLL': {
+        'periodicidades': [PERIODICIDADE_MENSAL, PERIODICIDADE_TRIMESTRAL],
+        'dia_vencimento': 'ultimo_dia_util',
+        'regime_flexivel': True,
+        'base_legal': 'Lei 9.249/1995',
+        'observacao': 'Segue a mesma periodicidade escolhida para IRPJ'
+    }
+}
+
 TIPO_MOVIMENTACAO_CONTA_CREDITO = 1
 TIPO_MOVIMENTACAO_CONTA_DEBITO = 2
 
@@ -181,7 +224,6 @@ class Pessoa(SaaSBaseModel):
         return ' '.join(palavras[:2]) if len(palavras) >= 2 else self.name
 
 #--------------------------------------------------------------
-# EMPRESA (substitui Cliente/PJuridica)
 class Empresa(models.Model):
     class Meta:
         db_table = 'empresa'
@@ -212,15 +254,53 @@ class Empresa(models.Model):
     cep = models.CharField(max_length=9, blank=True, verbose_name="CEP")
 
     # Dados tributários
-    regime_tributario = models.CharField(max_length=50, blank=True, verbose_name="Regime Tributário")
-    aliquota_iss = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
-        null=True, 
-        blank=True,
-        verbose_name="Alíquota ISS (%)"
+    REGIME_CHOICES = [
+        (REGIME_TRIBUTACAO_COMPETENCIA, 'Competência'),
+        (REGIME_TRIBUTACAO_CAIXA, 'Caixa'),
+    ]
+    
+    regime_tributario = models.IntegerField(
+        choices=REGIME_CHOICES,
+        default=REGIME_TRIBUTACAO_COMPETENCIA,
+        verbose_name="Regime de Tributação",
+        help_text="Regime de tributação que impacta no cálculo e recolhimento dos impostos (exceto ISS que é sempre competência)"
     )
-
+    
+    # Controle de receita para validação do regime de caixa
+    receita_bruta_ano_anterior = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True,
+        verbose_name="Receita Bruta Ano Anterior (R$)",
+        help_text="Receita bruta do ano anterior para validação do direito ao regime de caixa (limite R$ 78 milhões)"
+    )
+    
+    # Data da última alteração de regime (para controle anual)
+    data_ultima_alteracao_regime = models.DateField(
+        null=True, blank=True,
+        verbose_name="Data Última Alteração de Regime",
+        help_text="Data da última alteração de regime tributário (para controle de mudanças anuais)"
+    )
+    
+    # Periodicidade de apuração de IRPJ/CSLL
+    PERIODICIDADE_CHOICES = [
+        (PERIODICIDADE_MENSAL, 'Mensal'),
+        (PERIODICIDADE_TRIMESTRAL, 'Trimestral'),
+    ]
+    
+    periodicidade_irpj_csll = models.CharField(
+        max_length=12,
+        choices=PERIODICIDADE_CHOICES,
+        default=PERIODICIDADE_TRIMESTRAL,
+        verbose_name="Periodicidade IRPJ/CSLL",
+        help_text="Periodicidade de apuração e recolhimento do IRPJ e CSLL (opção da empresa)"
+    )
+    
+    # Dia de vencimento específico do ISS no município
+    dia_vencimento_iss = models.PositiveIntegerField(
+        default=10,
+        verbose_name="Dia Vencimento ISS",
+        help_text="Dia do mês para vencimento do ISS conforme legislação municipal (geralmente 10, 15 ou 20)"
+    )
+    
     # Controle
     ativo = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -236,6 +316,193 @@ class Empresa(models.Model):
             cnpj_numeros = ''.join(filter(str.isdigit, self.cnpj))
             if len(cnpj_numeros) != 14:
                 raise ValidationError({'cnpj': 'CNPJ deve ter 14 dígitos'})
+        
+        # Validar regime de caixa conforme legislação
+        if self.regime_tributario == REGIME_TRIBUTACAO_CAIXA:
+            # Limite de R$ 78 milhões para regime de caixa (Lei 9.718/1998)
+            limite_receita_caixa = 78000000.00  # R$ 78 milhões
+            
+            if (self.receita_bruta_ano_anterior and 
+                self.receita_bruta_ano_anterior > limite_receita_caixa):
+                raise ValidationError({
+                    'regime_tributario': 
+                    f'Empresa com receita bruta de R$ {self.receita_bruta_ano_anterior:,.2f} '
+                    f'não pode optar pelo regime de caixa (limite: R$ {limite_receita_caixa:,.2f})'
+                })
+        
+        # Validar que mudanças de regime respeitam periodicidade anual
+        if self.pk and self.data_ultima_alteracao_regime:
+            hoje = timezone.now().date()
+            # Verificar se a última alteração foi no mesmo ano fiscal
+            if (self.data_ultima_alteracao_regime.year == hoje.year and 
+                self._state.adding == False):  # Não é criação, é alteração
+                
+                # Verificar se realmente houve mudança de regime
+                empresa_original = Empresa.objects.get(pk=self.pk)
+                if empresa_original.regime_tributario != self.regime_tributario:
+                    raise ValidationError({
+                        'regime_tributario': 
+                        f'Alteração de regime já realizada em {self.data_ultima_alteracao_regime.year}. '
+                        'Mudanças de regime são permitidas apenas uma vez por ano fiscal.'
+                    })
+        
+        # Validar dia de vencimento do ISS
+        if self.dia_vencimento_iss:
+            if not (1 <= self.dia_vencimento_iss <= 31):
+                raise ValidationError({
+                    'dia_vencimento_iss': 'Dia de vencimento deve estar entre 1 e 31'
+                })
+            
+            # Dias mais comuns conforme legislação municipal
+            dias_comuns = [5, 10, 15, 20, 25]
+            if self.dia_vencimento_iss not in dias_comuns:
+                # Apenas aviso, não erro bloqueante
+                import warnings
+                warnings.warn(
+                    f"Dia {self.dia_vencimento_iss} não é comum para vencimento de ISS. "
+                    f"Dias mais comuns: {', '.join(map(str, dias_comuns))}",
+                    UserWarning
+                )
+    
+    @property
+    def regime_tributario_nome(self):
+        """Retorna o nome legível do regime tributário"""
+        return self.get_regime_tributario_display()
+    
+    @property
+    def eh_regime_competencia(self):
+        """Verifica se a empresa usa regime de competência"""
+        return self.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA
+    
+    @property
+    def eh_regime_caixa(self):
+        """Verifica se a empresa usa regime de caixa"""
+        return self.regime_tributario == REGIME_TRIBUTACAO_CAIXA
+    
+    def obter_regime_vigente_na_data(self, data_referencia=None):
+        """
+        Obtém o regime tributário vigente para esta empresa em uma data específica
+        
+        Args:
+            data_referencia: Data para consulta (default: hoje)
+            
+        Returns:
+            dict: Informações do regime vigente na data ou regime atual da empresa
+        """
+        if data_referencia is None:
+            data_referencia = timezone.now().date()
+        
+        # Importação lazy para evitar importação circular
+        try:
+            from .fiscal import RegimeTributarioHistorico
+            regime_historico = RegimeTributarioHistorico.obter_regime_vigente(self, data_referencia)
+            
+            if regime_historico:
+                return {
+                    'codigo': regime_historico.regime_tributario,
+                    'nome': regime_historico.get_regime_tributario_display(),
+                    'data_inicio': regime_historico.data_inicio,
+                    'data_fim': regime_historico.data_fim,
+                    'fonte': 'historico'
+                }
+        except ImportError:
+            pass  # Modelo fiscal ainda não foi importado
+        
+        # Fallback para regime atual
+        return {
+            'codigo': self.regime_tributario,
+            'nome': self.regime_tributario_nome,
+            'fonte': 'atual'
+        }
+    
+    def alterar_regime_tributario(self, novo_regime, data_inicio=None, observacoes="", receita_bruta_ano_anterior=None):
+        """
+        Altera o regime tributário da empresa criando registro no histórico
+        Inclui validações conforme legislação brasileira
+        
+        Args:
+            novo_regime: Novo regime tributário (código)
+            data_inicio: Data de início do novo regime (default: 1º de janeiro do próximo ano)
+            observacoes: Observações sobre a mudança
+            receita_bruta_ano_anterior: Receita para validação do regime de caixa
+            
+        Returns:
+            RegimeTributarioHistorico: Novo registro criado
+            
+        Raises:
+            ValidationError: Se alteração não atender requisitos legais
+        """
+        hoje = timezone.now().date()
+        
+        # Data padrão: 1º de janeiro do próximo ano (conforme legislação)
+        if data_inicio is None:
+            from datetime import date
+            data_inicio = date(hoje.year + 1, 1, 1)
+        
+        # Validar que a data não é no passado
+        if data_inicio < hoje:
+            raise ValidationError("Alteração de regime não pode ter data de início no passado")
+        
+        # Validar periodicidade anual - mudanças só no início do ano fiscal
+        if data_inicio.month != 1 or data_inicio.day != 1:
+            raise ValidationError(
+                "Alterações de regime tributário devem ter início em 1º de janeiro "
+                "(Art. 12 da Lei 9.718/1998)"
+            )
+        
+        # Validar se já houve alteração no ano fiscal atual
+        if (self.data_ultima_alteracao_regime and 
+            self.data_ultima_alteracao_regime.year == data_inicio.year):
+            raise ValidationError(
+                f"Já foi realizada alteração de regime em {data_inicio.year}. "
+                "É permitida apenas uma alteração por ano fiscal."
+            )
+        
+        # Validar limite de receita para regime de caixa
+        if novo_regime == REGIME_TRIBUTACAO_CAIXA:
+            limite_receita = 78000000.00  # R$ 78 milhões (Lei 9.718/1998)
+            receita_validacao = receita_bruta_ano_anterior or self.receita_bruta_ano_anterior
+            
+            if receita_validacao and receita_validacao > limite_receita:
+                raise ValidationError(
+                    f"Empresa com receita bruta de R$ {receita_validacao:,.2f} não pode "
+                    f"optar pelo regime de caixa (limite legal: R$ {limite_receita:,.2f})"
+                )
+        
+        # Importação lazy para evitar importação circular
+        from .fiscal import RegimeTributarioHistorico
+        
+        # Finalizar regime atual se existe
+        regime_atual = RegimeTributarioHistorico.obter_regime_vigente(self)
+        if regime_atual and not regime_atual.data_fim:
+            # Finalizar o regime atual no dia anterior ao novo
+            from datetime import timedelta
+            regime_atual.data_fim = data_inicio - timedelta(days=1)
+            regime_atual.save()
+        
+        # Criar novo registro de regime
+        novo_registro = RegimeTributarioHistorico.objects.create(
+            empresa=self,
+            regime_tributario=novo_regime,
+            data_inicio=data_inicio,
+            observacoes=observacoes or f"Alteração de regime para {self.get_regime_tributario_display()} - {data_inicio.year}",
+            receita_bruta_ano_anterior=receita_bruta_ano_anterior
+        )
+        
+        # Atualizar os campos da empresa
+        self.regime_tributario = novo_regime
+        self.data_ultima_alteracao_regime = data_inicio
+        if receita_bruta_ano_anterior is not None:
+            self.receita_bruta_ano_anterior = receita_bruta_ano_anterior
+        
+        self.save(update_fields=[
+            'regime_tributario', 
+            'data_ultima_alteracao_regime', 
+            'receita_bruta_ano_anterior',
+            'updated_at'
+        ])
+        
+        return novo_registro
 
 #--------------------------------------------------------------
 class Socio(models.Model):
@@ -282,3 +549,174 @@ class Socio(models.Model):
             mes_referencia=mes_referencia.replace(day=1),
             ativo=True
         ).select_related('item_despesa')
+
+    def calcular_data_vencimento_imposto(self, tipo_imposto, data_competencia):
+        """
+        Calcula a data de vencimento de um imposto específico
+        
+        Args:
+            tipo_imposto: 'ISS', 'PIS', 'COFINS', 'IRPJ', 'CSLL'
+            data_competencia: Data da competência (prestação ou recebimento)
+            
+        Returns:
+            date: Data de vencimento do imposto
+        """
+        from datetime import date, timedelta
+        from calendar import monthrange
+        
+        if tipo_imposto == 'ISS':
+            # ISS vence no dia configurado do mês seguinte
+            if data_competencia.month == 12:
+                ano_vencimento = data_competencia.year + 1
+                mes_vencimento = 1
+            else:
+                ano_vencimento = data_competencia.year
+                mes_vencimento = data_competencia.month + 1
+            
+            # Verificar se o dia existe no mês (ex: 31 em fevereiro)
+            ultimo_dia_mes = monthrange(ano_vencimento, mes_vencimento)[1]
+            dia_vencimento = min(self.dia_vencimento_iss, ultimo_dia_mes)
+            
+            return date(ano_vencimento, mes_vencimento, dia_vencimento)
+        
+        elif tipo_imposto in ['PIS', 'COFINS']:
+            # PIS/COFINS vencem até o dia 25 do mês seguinte
+            if data_competencia.month == 12:
+                return date(data_competencia.year + 1, 1, 25)
+            else:
+                return date(data_competencia.year, data_competencia.month + 1, 25)
+        
+        elif tipo_imposto in ['IRPJ', 'CSLL']:
+            if self.periodicidade_irpj_csll == PERIODICIDADE_MENSAL:
+                # Mensal: último dia útil do mês seguinte
+                if data_competencia.month == 12:
+                    ano_vencimento = data_competencia.year + 1
+                    mes_vencimento = 1
+                else:
+                    ano_vencimento = data_competencia.year
+                    mes_vencimento = data_competencia.month + 1
+                
+                # Último dia do mês
+                ultimo_dia = monthrange(ano_vencimento, mes_vencimento)[1]
+                data_vencimento = date(ano_vencimento, mes_vencimento, ultimo_dia)
+                
+                # Ajustar para dia útil (implementação básica - sábado/domingo)
+                while data_vencimento.weekday() >= 5:  # 5=sábado, 6=domingo
+                    data_vencimento += timedelta(days=1)
+                
+                return data_vencimento
+            
+            else:  # TRIMESTRAL
+                # Determinar o trimestre
+                if data_competencia.month <= 3:
+                    # 1º trimestre - vence até último dia útil de abril
+                    data_base = date(data_competencia.year, 4, 30)
+                elif data_competencia.month <= 6:
+                    # 2º trimestre - vence até último dia útil de julho
+                    data_base = date(data_competencia.year, 7, 31)
+                elif data_competencia.month <= 9:
+                    # 3º trimestre - vence até último dia útil de outubro
+                    data_base = date(data_competencia.year, 10, 31)
+                else:
+                    # 4º trimestre - vence até último dia útil de janeiro do ano seguinte
+                    data_base = date(data_competencia.year + 1, 1, 31)
+                
+                # Ajustar para dia útil
+                while data_base.weekday() >= 5:
+                    data_base += timedelta(days=1)
+                
+                return data_base
+        
+        else:
+            raise ValueError(f"Tipo de imposto '{tipo_imposto}' não reconhecido")
+    
+    def gerar_cronograma_impostos_mes(self, mes_referencia):
+        """
+        Gera cronograma de vencimentos de impostos para um mês
+        
+        Args:
+            mes_referencia: Data do mês de referência
+            
+        Returns:
+            dict: Cronograma com datas de vencimento por imposto
+        """
+        cronograma = {}
+        
+        for tipo_imposto in ['ISS', 'PIS', 'COFINS', 'IRPJ', 'CSLL']:
+            try:
+                data_vencimento = self.calcular_data_vencimento_imposto(tipo_imposto, mes_referencia)
+                
+                # Determinar regime aplicado
+                if tipo_imposto == 'ISS':
+                    regime_aplicado = 'Competência (obrigatório)'
+                else:
+                    if (self.regime_tributario == REGIME_TRIBUTACAO_CAIXA and 
+                        self.receita_bruta_ano_anterior and 
+                        self.receita_bruta_ano_anterior <= 78000000.00):
+                        regime_aplicado = 'Caixa'
+                    else:
+                        regime_aplicado = 'Competência'
+                
+                cronograma[tipo_imposto] = {
+                    'data_vencimento': data_vencimento,
+                    'regime_aplicado': regime_aplicado,
+                    'periodicidade': IMPOSTOS_INFO[tipo_imposto].get('periodicidade', 
+                                                                   self.periodicidade_irpj_csll if tipo_imposto in ['IRPJ', 'CSLL'] else PERIODICIDADE_MENSAL),
+                    'base_legal': IMPOSTOS_INFO[tipo_imposto]['base_legal'],
+                    'observacao': IMPOSTOS_INFO[tipo_imposto]['observacao']
+                }
+                
+            except Exception as e:
+                cronograma[tipo_imposto] = {
+                    'erro': str(e),
+                    'data_vencimento': None
+                }
+        
+        return cronograma
+    
+    def obter_proximos_vencimentos(self, dias_antecedencia=30):
+        """
+        Obtém os próximos vencimentos de impostos
+        
+        Args:
+            dias_antecedencia: Quantos dias à frente buscar vencimentos
+            
+        Returns:
+            list: Lista de vencimentos ordenada por data
+        """
+        from datetime import date, timedelta
+        
+        hoje = date.today()
+        data_limite = hoje + timedelta(days=dias_antecedencia)
+        
+        vencimentos = []
+        
+        # Verificar vencimentos dos próximos meses
+        data_atual = hoje.replace(day=1)  # Primeiro dia do mês atual
+        
+        while data_atual <= data_limite:
+            cronograma = self.gerar_cronograma_impostos_mes(data_atual)
+            
+            for tipo_imposto, info in cronograma.items():
+                if (info.get('data_vencimento') and 
+                    hoje <= info['data_vencimento'] <= data_limite):
+                    
+                    vencimentos.append({
+                        'tipo_imposto': tipo_imposto,
+                        'data_vencimento': info['data_vencimento'],
+                        'regime_aplicado': info['regime_aplicado'],
+                        'periodicidade': info['periodicidade'],
+                        'dias_restantes': (info['data_vencimento'] - hoje).days,
+                        'mes_competencia': data_atual.strftime('%m/%Y')
+                    })
+            
+            # Próximo mês
+            if data_atual.month == 12:
+                data_atual = data_atual.replace(year=data_atual.year + 1, month=1)
+            else:
+                data_atual = data_atual.replace(month=data_atual.month + 1)
+        
+        # Ordenar por data de vencimento
+        vencimentos.sort(key=lambda x: x['data_vencimento'])
+        
+        return vencimentos

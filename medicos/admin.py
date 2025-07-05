@@ -25,34 +25,52 @@ class SocioAdmin(admin.ModelAdmin):
 
 @admin.register(NotaFiscal)
 class NotaFiscalAdmin(admin.ModelAdmin):
-    list_display = ('numero', 'empresa_destinataria', 'tomador', 'get_tipo_aliquota_display', 'dtEmissao', 'val_bruto', 'val_liquido')
-    list_filter = ('tipo_aliquota', 'dtEmissao', 'empresa_destinataria')
-    search_fields = ('numero', 'tomador', 'empresa_destinataria__name')
+    list_display = ('numero', 'empresa_destinataria', 'tomador', 'get_tipo_aliquota_display', 'dtEmissao', 'val_bruto', 'val_liquido', 'get_status_recebimento_display', 'get_meio_pagamento_display')
+    list_filter = ('tipo_aliquota', 'status_recebimento', 'status', 'dtEmissao', 'empresa_destinataria', 'meio_pagamento')
+    search_fields = ('numero', 'tomador', 'empresa_destinataria__name', 'meio_pagamento__nome')
     ordering = ('-dtEmissao', 'numero')
     
     fieldsets = (
+        ('📄 NOTA FISCAL', {
+            'fields': (),
+            'description': 'Gerenciamento de notas fiscais com sistema integrado de meios de pagamento cadastrados'
+        }),
         ('Informações Básicas', {
             'fields': ('numero', 'serie', 'empresa_destinataria', 'tomador')
         }),
         ('Tipo de Serviço', {
-            'fields': ('tipo_aliquota',),
+            'fields': ('tipo_aliquota', 'descricao_servicos'),
             'description': 'Selecione o tipo de serviço médico para aplicação das alíquotas corretas de ISS'
         }),
         ('Datas', {
-            'fields': ('dtEmissao', 'dtRecebimento')
+            'fields': ('dtEmissao', 'dtRecebimento', 'dtVencimento')
         }),
-        ('Valores', {
+        ('Valores da Nota', {
             'fields': ('val_bruto', 'val_ISS', 'val_PIS', 'val_COFINS', 'val_IR', 'val_CSLL', 'val_liquido'),
+            'classes': ('collapse',)
+        }),
+        ('💳 Recebimento', {
+            'fields': ('status_recebimento', 'meio_pagamento', 'valor_recebido', 'numero_documento_recebimento', 'detalhes_recebimento'),
+            'description': 'Controle de recebimento usando meios de pagamento cadastrados pelo usuário'
+        }),
+        ('Status e Controle', {
+            'fields': ('status', 'ja_rateada', 'observacoes'),
             'classes': ('collapse',)
         })
     )
     
+    def get_queryset(self, request):
+        """Otimizar consultas incluindo relacionamentos"""
+        return super().get_queryset(request).select_related(
+            'empresa_destinataria', 'meio_pagamento', 'conta'
+        )
+    
     def get_tipo_aliquota_display(self, obj):
         """Display service type with color coding"""
         colors = {
-            'consultas': '#28a745',  # Green
-            'plantao': '#007bff',    # Blue  
-            'outros': '#ffc107'      # Yellow
+            1: '#28a745',  # Green - Consultas
+            2: '#007bff',  # Blue - Plantão
+            3: '#ffc107'   # Yellow - Outros
         }
         color = colors.get(obj.tipo_aliquota, '#6c757d')
         return format_html(
@@ -61,6 +79,51 @@ class NotaFiscalAdmin(admin.ModelAdmin):
             obj.get_tipo_aliquota_display()
         )
     get_tipo_aliquota_display.short_description = 'Tipo de Serviço'
+    
+    def get_status_recebimento_display(self, obj):
+        """Display status with color coding"""
+        colors = {
+            'pendente': '#dc3545',     # Red
+            'confirmado': '#28a745',   # Green
+            'parcial': '#ffc107'       # Yellow
+        }
+        color = colors.get(obj.status_recebimento, '#6c757d')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            obj.get_status_recebimento_display()
+        )
+    get_status_recebimento_display.short_description = 'Status Recebimento'
+    
+    def get_meio_pagamento_display(self, obj):
+        """Display meio de pagamento with info"""
+        if obj.meio_pagamento:
+            taxas_info = ""
+            if obj.meio_pagamento.taxa_percentual > 0 or obj.meio_pagamento.taxa_fixa > 0:
+                taxas_info = f" (taxa: {obj.meio_pagamento.taxa_percentual}%"
+                if obj.meio_pagamento.taxa_fixa > 0:
+                    taxas_info += f" + R${obj.meio_pagamento.taxa_fixa}"
+                taxas_info += ")"
+            
+            return format_html(
+                '<span title="{}"><strong>{}</strong>{}</span>',
+                obj.meio_pagamento.descricao or 'Sem descrição',
+                obj.meio_pagamento.nome,
+                taxas_info
+            )
+        return format_html('<span style="color: #6c757d;">-</span>')
+    get_meio_pagamento_display.short_description = 'Meio de Pagamento'
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Filtrar meios de pagamento por conta do usuário"""
+        if db_field.name == "meio_pagamento":
+            # Aqui seria ideal filtrar por conta do usuário/nota fiscal
+            # Por enquanto, mostrar apenas meios ativos que permitem crédito
+            kwargs["queryset"] = MeioPagamento.objects.filter(
+                ativo=True,
+                tipo_movimentacao__in=['credito', 'ambos']
+            ).select_related('conta')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Aliquotas)
 class AliquotasAdmin(admin.ModelAdmin):
@@ -104,39 +167,7 @@ class DespesaAdmin(admin.ModelAdmin):
     search_fields = ('descricao', 'socio__pessoa__name')
     ordering = ('-data',)
 
-@admin.register(Desc_movimentacao_financeiro)
-class DescMovimentacaoFinanceiroAdmin(admin.ModelAdmin):
-    list_display = ('descricao', 'categoria', 'tipo_padrao', 'frequencia_uso', 'ativa')
-    list_filter = ('categoria', 'tipo_padrao', 'ativa')
-    search_fields = ('descricao', 'observacoes')
-    ordering = ('categoria', 'descricao')
-    
-    fieldsets = (
-        ('⚠️ DESCRIÇÕES PADRONIZADAS PARA SISTEMA MANUAL', {
-            'fields': (),
-            'description': 'Estas descrições são usadas EXCLUSIVAMENTE para lançamentos manuais no fluxo de caixa individual. '
-                          'NÃO incluem rateio de notas fiscais, que são tratadas separadamente no sistema contábil.'
-        }),
-        ('Informações da Descrição', {
-            'fields': ('descricao', 'categoria', 'tipo_padrao')
-        }),
-        ('Controle de Uso', {
-            'fields': ('ativa', 'frequencia_uso')
-        }),
-        ('Orientações para Contabilidade', {
-            'fields': ('observacoes',),
-            'description': 'Instruções específicas sobre quando e como usar esta descrição',
-            'classes': ('collapse',)
-        })
-    )
-    
-    readonly_fields = ('frequencia_uso',)
-    
-    def save_model(self, request, obj, form, change):
-        """Automaticamente definir o usuário criador"""
-        if not change:  # Novo registro
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+# Desc_movimentacao_financeiro admin removed - replaced by DescricaoMovimentacao
 
 @admin.register(Financeiro)
 class FinanceiroAdmin(admin.ModelAdmin):
@@ -146,42 +177,38 @@ class FinanceiroAdmin(admin.ModelAdmin):
     ordering = ('-data', '-created_at')
     
     fieldsets = (
-        ('⚠️ SISTEMA MANUAL', {
+        ('💰 SISTEMA FINANCEIRO MANUAL', {
             'fields': (),
-            'description': 'IMPORTANTE: Todos os lançamentos neste sistema são MANUAIS e controlados pela contabilidade. '
+            'description': 'Lançamentos manuais do fluxo de caixa individual com controle de meios de pagamento. '
                           'Receitas de notas fiscais são tratadas separadamente no sistema contábil.'
         }),
-        ('Dados Básicos do Lançamento Manual', {
+        ('Dados Básicos do Lançamento', {
             'fields': ('data', 'empresa', 'socio', 'tipo', 'descricao', 'valor')
         }),
-        ('Referências Documentais (Opcional)', {
-            'fields': ('notafiscal', 'despesa'),
-            'description': 'Documentos de referência APENAS para auditoria (não geram lançamentos automáticos)',
+        ('Meio de Pagamento e Taxas', {
+            'fields': ('meio_pagamento', 'taxa_aplicada', 'valor_liquido_recebido'),
+            'description': 'Informações sobre como o pagamento foi processado'
+        }),
+        ('Documentação', {
+            'fields': ('numero_documento', 'observacoes'),
             'classes': ('collapse',)
         }),
-        ('Documentação Comprobatória', {
-            'fields': ('numero_documento', 'numero_autorizacao', 'banco_origem', 'forma_pagamento'),
+        ('Referências (Opcional)', {
+            'fields': ('notafiscal',),
+            'description': 'Documentos de referência APENAS para auditoria',
             'classes': ('collapse',)
         }),
-        ('Controle de Processamento Manual', {
-            'fields': ('status', 'data_processamento', 'processado_por'),
+        ('Controle de Status', {
+            'fields': ('status', 'lancado_por', 'aprovado_por', 'data_aprovacao'),
             'classes': ('collapse',)
         }),
-        ('Transferências Bancárias', {
-            'fields': ('transferencia_realizada', 'data_transferencia', 'valor_transferido'),
-            'classes': ('collapse',)
-        }),
-        ('Conciliação Bancária', {
-            'fields': ('conciliado', 'data_conciliacao', 'conciliado_por'),
-            'classes': ('collapse',)
-        }),
-        ('Observações e Auditoria', {
-            'fields': ('observacoes',),
+        ('Auditoria', {
+            'fields': ('created_at', 'updated_at', 'operacao_auto', 'ip_origem'),
             'classes': ('collapse',)
         })
     )
     
-    readonly_fields = ('data_processamento', 'created_at', 'updated_at', 'operacao_auto')
+    readonly_fields = ('created_at', 'updated_at', 'operacao_auto')
     
     def get_readonly_fields(self, request, obj=None):
         """Campo operacao_auto sempre readonly (sempre False)"""
@@ -191,8 +218,12 @@ class FinanceiroAdmin(admin.ModelAdmin):
     
     def get_descricao_display(self, obj):
         """Display da descrição com categoria"""
-        return f"[{obj.descricao.get_categoria_display()}] {obj.descricao.descricao}"
-    get_descricao_display.short_description = 'Descrição Padronizada'
+        if obj.descricao:
+            return f"[{obj.descricao.get_categoria_display()}] {obj.descricao.nome}"
+        elif obj.descricao_legacy:
+            return f"[LEGACY] {obj.descricao_legacy.descricao}"
+        return "Sem descrição"
+    get_descricao_display.short_description = 'Descrição'
     
     def get_tipo_display(self, obj):
         """Display do tipo com cor"""
@@ -262,3 +293,162 @@ class SaldoMensalMedicoAdmin(admin.ModelAdmin):
         
         self.message_user(request, f'{count} saldos recalculados com sucesso.')
     recalcular_saldos.short_description = "Recalcular saldos selecionados"
+
+@admin.register(MeioPagamento)
+class MeioPagamentoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'codigo', 'categoria_display', 'taxa_info', 'prazo_compensacao_dias', 'disponivel_display', 'ativo')
+    list_filter = ('ativo', 'tipo_movimentacao', 'data_inicio_vigencia', 'data_fim_vigencia')
+    search_fields = ('nome', 'codigo', 'descricao')
+    ordering = ('nome', 'codigo')
+    
+    fieldsets = (
+        ('💳 MEIOS DE PAGAMENTO', {
+            'fields': (),
+            'description': 'Configuração dos meios de pagamento disponíveis para movimentações financeiras. '
+                          'Estes meios controlam taxas, prazos e validações específicas para cada forma de pagamento.'
+        }),
+        ('Identificação', {
+            'fields': ('codigo', 'nome', 'descricao')
+        }),
+        ('Configurações Financeiras', {
+            'fields': ('taxa_percentual', 'taxa_fixa', 'valor_minimo', 'valor_maximo')
+        }),
+        ('Prazos e Disponibilidade', {
+            'fields': ('prazo_compensacao_dias', 'horario_limite', 'data_inicio_vigencia', 'data_fim_vigencia')
+        }),
+        ('Configurações de Uso', {
+            'fields': ('tipo_movimentacao', 'exige_documento', 'exige_aprovacao')
+        }),
+        ('Status e Controle', {
+            'fields': ('ativo', 'observacoes')
+        })
+    )
+    
+    readonly_fields = ('created_at', 'updated_at')
+    
+    def categoria_display(self, obj):
+        """Mostra a categoria com base no tipo de movimentação"""
+        if obj.tipo_movimentacao == 'credito':
+            return format_html('<span style="color: green;">📈 Recebimentos</span>')
+        elif obj.tipo_movimentacao == 'debito':
+            return format_html('<span style="color: red;">📉 Pagamentos</span>')
+        else:
+            return format_html('<span style="color: blue;">🔄 Ambos</span>')
+    categoria_display.short_description = 'Tipo'
+    
+    def taxa_info(self, obj):
+        """Mostra informações sobre taxas"""
+        partes = []
+        if obj.taxa_percentual > 0:
+            partes.append(f"{obj.taxa_percentual}%")
+        if obj.taxa_fixa > 0:
+            partes.append(f"R$ {obj.taxa_fixa}")
+        
+        if partes:
+            return " + ".join(partes)
+        return "Sem taxa"
+    taxa_info.short_description = 'Taxas'
+    
+    def disponivel_display(self, obj):
+        """Mostra se está disponível para uso"""
+        if obj.disponivel_para_uso:
+            return format_html('<span style="color: green;">✅ Sim</span>')
+        else:
+            return format_html('<span style="color: red;">❌ Não</span>')
+    disponivel_display.short_description = 'Disponível'
+    
+    def save_model(self, request, obj, form, change):
+        """Automaticamente definir o usuário criador"""
+        if not change:  # Novo registro
+            obj.criado_por = request.user
+        super().save_model(request, obj, form, change)
+
+@admin.register(DescricaoMovimentacao)
+class DescricaoMovimentacaoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'categoria_display', 'tipo_movimentacao_display', 'uso_frequente_display', 'ativa_display', 'exige_documento', 'exige_aprovacao')
+    list_filter = ('categoria', 'tipo_movimentacao', 'ativa', 'uso_frequente', 'exige_documento', 'exige_aprovacao')
+    search_fields = ('nome', 'descricao', 'codigo_contabil')
+    ordering = ('categoria', 'nome')
+    
+    fieldsets = (
+        ('📝 DESCRIÇÕES DE MOVIMENTAÇÃO - GERENCIADAS PELO USUÁRIO', {
+            'fields': (),
+            'description': 'Descrições personalizadas criadas pelos usuários para categorizar movimentações financeiras. '
+                          'Permite total flexibilidade na organização e classificação dos lançamentos.'
+        }),
+        ('Identificação', {
+            'fields': ('nome', 'descricao', 'categoria')
+        }),
+        ('Configurações de Uso', {
+            'fields': ('tipo_movimentacao', 'uso_frequente', 'ativa')
+        }),
+        ('Validações e Controles', {
+            'fields': ('exige_documento', 'exige_aprovacao'),
+            'classes': ('collapse',)
+        }),
+        ('Configurações Contábeis/Fiscais', {
+            'fields': ('codigo_contabil', 'possui_retencao_ir', 'percentual_retencao_ir'),
+            'classes': ('collapse',)
+        }),
+        ('Observações', {
+            'fields': ('observacoes',),
+            'classes': ('collapse',)
+        })
+    )
+    
+    readonly_fields = ('created_at', 'updated_at')
+    
+    def categoria_display(self, obj):
+        """Mostra a categoria com ícone"""
+        categoria_icons = {
+            'receita_servicos': '💼',
+            'receita_outros': '💰',
+            'adiantamento_recebido': '⬆️',
+            'emprestimo_recebido': '🏦',
+            'despesa_operacional': '🏢',
+            'despesa_pessoal': '👤',
+            'adiantamento_concedido': '⬇️',
+            'emprestimo_concedido': '🏦',
+            'transferencia_recebida': '📥',
+            'transferencia_enviada': '📤',
+            'ajuste_credito': '✅',
+            'ajuste_debito': '❌',
+            'taxa_encargo': '💳',
+            'aplicacao_financeira': '📈',
+            'resgate_aplicacao': '📉',
+            'outros': '📋',
+        }
+        icon = categoria_icons.get(obj.categoria, '📋')
+        return format_html(f'{icon} {obj.get_categoria_display()}')
+    categoria_display.short_description = 'Categoria'
+    
+    def tipo_movimentacao_display(self, obj):
+        """Mostra o tipo de movimentação com cor"""
+        if obj.tipo_movimentacao == 'credito':
+            return format_html('<span style="color: green; font-weight: bold;">📈 Créditos</span>')
+        elif obj.tipo_movimentacao == 'debito':
+            return format_html('<span style="color: red; font-weight: bold;">📉 Débitos</span>')
+        else:
+            return format_html('<span style="color: blue; font-weight: bold;">🔄 Ambos</span>')
+    tipo_movimentacao_display.short_description = 'Tipo'
+    
+    def uso_frequente_display(self, obj):
+        """Mostra se é uso frequente"""
+        if obj.uso_frequente:
+            return format_html('<span style="color: orange;">⭐ Sim</span>')
+        return "Não"
+    uso_frequente_display.short_description = 'Frequente'
+    
+    def ativa_display(self, obj):
+        """Mostra se está ativa"""
+        if obj.ativa:
+            return format_html('<span style="color: green;">✅ Ativa</span>')
+        else:
+            return format_html('<span style="color: red;">❌ Inativa</span>')
+    ativa_display.short_description = 'Status'
+    
+    def save_model(self, request, obj, form, change):
+        """Automaticamente definir o usuário criador"""
+        if not change:  # Novo registro
+            obj.criada_por = request.user
+        super().save_model(request, obj, form, change)

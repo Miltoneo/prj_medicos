@@ -27,7 +27,7 @@ def aplicacoes_mes(request, id):
     periodo_fiscal = datetime.datetime.strptime(periodo_fiscal, "%Y-%m-%d").date()
 
     fornecedor = Empresa.objects.get(id=empresa_id)  # Corrigido
-    rendimentos = Aplic_financeiras.objects.get(id=id)
+    rendimentos = AplicacaoFinanceira.objects.get(id=id)
 
     rendimentos.data
     data_inicial = str(rendimentos.data)
@@ -66,7 +66,7 @@ def aplicacoes_mes(request, id):
 #---------------------------------------------------------
 
 class Aplic_financeiras_TableView(SingleTableView):
-    model = Aplic_financeiras
+    model = AplicacaoFinanceira
     table_class = Aplic_fincanceiras_table
     template_name = 'aplicacoes/aplicacoes_main.html'
     paginate_by = 15    
@@ -99,12 +99,12 @@ class Aplic_financeiras_TableView(SingleTableView):
 
         for mes in range(1,13):
           data = get_data_new(periodo_fiscal.year,mes)  
-          Aplic_financeiras.objects.get_or_create(
+          AplicacaoFinanceira.objects.get_or_create(
                                                   data = data,
                                                   fornecedor = fornecedor,
                                                   )
           
-        queryset = Aplic_financeiras.objects.filter(data__year= periodo_fiscal.year, 
+        queryset = AplicacaoFinanceira.objects.filter(data__year= periodo_fiscal.year, 
                                                     fornecedor = fornecedor,
                                                     ).order_by('data')
 

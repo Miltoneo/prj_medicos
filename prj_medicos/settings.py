@@ -88,7 +88,6 @@ WSGI_APPLICATION = 'prj_medicos.wsgi.application'
 
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SERVER_HOSTNAME     = os.environ.get('SECONDARY_SERVER_HOSTNAME', default= env('SERVER_HOSTNAME'))
 DATABASE_HOST       = os.environ.get('SECONDARY_DATABASE_HOST', default= env('DATABASE_HOST'))
 DATABASE_NAME       = os.environ.get('SECONDARY_DATABASE_NAME', default= env('DATABASE_NAME'))
 DATABASE_USER       = os.environ.get('SECONDARY_DATABASE_USER', default= env('DATABASE_USER'))

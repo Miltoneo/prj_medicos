@@ -97,7 +97,7 @@ def monta_apuracao_csll_irpj_new(request, empresa_id):
 
         #----------------------------------------------------------------------------------------------------------------------------------------------
         # rendimentos de aplicações fincanceiras
-        ds_rend_aplic= Aplic_financeiras.objects.filter(data__year = periodo_fiscal.year, data__month__range=(mes_inicial, mes_final), fornecedor=fornecedor)\
+        ds_rend_aplic= AplicacaoFinanceira.objects.filter(data__year = periodo_fiscal.year, data__month__range=(mes_inicial, mes_final), fornecedor=fornecedor)\
                                                             .values('fornecedor') \
                                                             .order_by('fornecedor') \
                                                             .annotate(total=Sum('rendimentos'))\
@@ -138,13 +138,12 @@ def monta_apuracao_csll_irpj_new(request, empresa_id):
             csll_retido = qry_csll_retido.first()
             apuracao_csll.imposto_retido = round(csll_retido.get('csll'), 2)
 
-
         # faturamento consultas
         if (qry_fat_alicota_consultas):
             fat_consultas = qry_fat_alicota_consultas.first()
             # CSLL
             apuracao_csll.receita_consultas = round(fat_consultas.get('faturamento'),2)
-            #apuracao_csll.imposto_retido = round(fat_consultas.get('csll'),2)
+
             # IRPJ
             apuracao_irpj.receita_consultas = round(fat_consultas.get('faturamento'),2)
             apuracao_irpj.imposto_retido = round(fat_consultas.get('irpj'),2)
@@ -154,7 +153,7 @@ def monta_apuracao_csll_irpj_new(request, empresa_id):
             fat_plantao = qry_fat_alicota_plantao.first()
             # CSLL
             apuracao_csll.receita_plantao = round(fat_plantao.get('faturamento'),2)
-            #apuracao_csll.imposto_retido += fat_plantao.get('csll')
+
             # IRPJ
             apuracao_irpj.receita_plantao = round(fat_plantao.get('faturamento'),2)
             apuracao_irpj.imposto_retido += fat_plantao.get('irpj')

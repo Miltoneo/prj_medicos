@@ -2,7 +2,6 @@ from .models import *
 from dateutil.relativedelta import relativedelta
 import calendar
 import datetime
-#
 
 #---------------------------------------------------------------------  
 # retorna date 
@@ -47,7 +46,7 @@ def excel_round(num, decimals=0):
 # cria se não existir 
 def get_descricao_movimentacao(descricao):
 
-    desc_movimentacao, created = Desc_movimentacao_financeiro.objects.get_or_create(descricao = descricao)
+    desc_movimentacao, created = DescricaoMovimentacao.objects.get_or_create(descricao = descricao)
     if created:
         desc_movimentacao.save()
 
@@ -57,20 +56,6 @@ def get_descricao_movimentacao(descricao):
 
 # apaga as movimentações automaticas do mes seguinte para recalculo do balanço
 
-'''
-def apaga_movimentoes_automaticas_mes_seguinte(ano_fiscal, mes):
-
-    ano = int(ano_fiscal)
-    mes = int(mes)
-    data=datetime.date(ano, mes, 1)
-    data = data + relativedelta(months=1) # mes seguinte
-
-    descricao = get_descricao_movimentacao(DESC_MOVIMENTACAO_CREDITO_SALDO_MES_SEGUINTE)
-    Desc_movimentacao_financeiro.objects.get(data = data, descricao = descricao).delete()
-
-    descricao = get_descricao_movimentacao(DESC_MOVIMENTACAO_DEBITO_IMPOSTO_PROVISIONADOS)
-    Desc_movimentacao_financeiro.objects.get(data = data, descricao = descricao).delete()
-'''
 def apaga_movimentoes_automaticas_mes_seguinte(ano_fiscal, mes):
 
     ano = int(ano_fiscal)
