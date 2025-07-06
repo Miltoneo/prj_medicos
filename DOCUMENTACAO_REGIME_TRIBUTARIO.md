@@ -75,27 +75,29 @@ data_comunicacao_municipio = models.DateField(null=True, blank=True)
 
 ---
 
-## 3. NOVO MODELO `RegimeImpostoEspecifico`
+## 3. REGRAS AUTOMÁTICAS POR TIPO DE IMPOSTO
 
-### **Objetivo:**
-Controlar regimes específicos por tipo de imposto, respeitando as particularidades legais de cada um.
+### **Implementação Simplificada:**
+As regras específicas de cada imposto são aplicadas **automaticamente** pelo método `_obter_regimes_especificos_por_imposto()` da classe `Aliquotas`, garantindo conformidade legal sem necessidade de configuração manual.
 
 ### **Regras Implementadas:**
 
 #### **ISS (Imposto Sobre Serviços)**
 - **Sempre regime de competência** (LC 116/2003)
+- Aplicação automática e obrigatória
 - Não permite alteração para regime de caixa
-- Validação automática bloqueante
 
 #### **PIS/COFINS**
-- Pode seguir regime da empresa se atender critérios
+- Seguem regime da empresa se receita ≤ R$ 78 milhões
 - Limite de R$ 78 milhões para regime de caixa
 - Base legal: Lei 9.718/1998
+- Fallback automático para competência se limite excedido
 
 #### **IRPJ/CSLL**
-- Pode seguir regime da empresa se atender critérios
+- Seguem regime da empresa se receita ≤ R$ 78 milhões
 - Mesmo limite de receita que PIS/COFINS
 - Presunção de lucro de 32% para serviços médicos
+- Fallback automático para competência se limite excedido
 
 ---
 
@@ -217,7 +219,7 @@ Controlar regimes específicos por tipo de imposto, respeitando as particularida
 ### **Migrações de Banco:**
 1. Criar migração para novos campos na `Empresa`
 2. Criar migração para `RegimeTributarioHistorico`
-3. Criar migração para `RegimeImpostoEspecifico`
+3. **Remover tabela `regime_imposto_especifico`** se existir (modelo foi removido)
 
 ### **Implementações Futuras:**
 1. Interface administrativa para controle de regimes

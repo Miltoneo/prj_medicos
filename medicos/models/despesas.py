@@ -23,7 +23,7 @@ GRUPO_ITEM_COM_RATEIO = 1
 GRUPO_ITEM_SEM_RATEIO = 2
 
 
-class Despesa_Grupo(models.Model):
+class GrupoDespesa(models.Model):
     """Grupos de despesas para organização contábil"""
     
     class Meta:
@@ -35,7 +35,7 @@ class Despesa_Grupo(models.Model):
     conta = models.ForeignKey(
         Conta, 
         on_delete=models.CASCADE, 
-        related_name='despesa_grupos', 
+        related_name='grupos_despesa', 
         null=False
     )
     
@@ -54,7 +54,7 @@ class Despesa_Grupo(models.Model):
         return f"{self.codigo}"
 
 
-class Despesa_Item(models.Model):
+class ItemDespesa(models.Model):
     """Itens específicos de despesas dentro de cada grupo"""
     
     class Meta:
@@ -66,10 +66,10 @@ class Despesa_Item(models.Model):
     conta = models.ForeignKey(
         Conta, 
         on_delete=models.CASCADE, 
-        related_name='despesa_itens', 
+        related_name='itens_despesa', 
         null=False
     )
-    grupo = models.ForeignKey(Despesa_Grupo, on_delete=models.CASCADE)
+    grupo = models.ForeignKey(GrupoDespesa, on_delete=models.CASCADE)
     codigo = models.CharField(max_length=20, null=False)
     descricao = models.CharField(max_length=255, null=False, default="")
 
@@ -87,110 +87,270 @@ class Despesa_Item(models.Model):
         return f"{self.grupo.codigo} {self.descricao}"
 
 
-class PercentualRateioMensal(models.Model):
-    """Percentuais de rateio mensais para cada item de despesa dos grupos FOLHA e GERAL"""
+class ItemDespesaRateioMensal(models.Model):
+    """
+    Configuração de rateio mensal para itens de despesa entre médicos/sócios
+    
+    Este modelo é fundamental para o sistema de gestão financeira, definindo como
+    os custos operacionais da clínica/associação médica devem ser distribuídos
+    entre os médicos sócios a cada mês.
+    
+    FUNCIONALIDADES PRINCIPAIS:
+    
+    1. RATEIO POR PERCENTUAL (mais comum):
+       - Cada médico tem um percentual fixo do custo (ex: Dr. A: 40%, Dr. B: 35%, Dr. C: 25%)
+       - A soma de todos os percentuais deve ser exatamente 100%
+       - Ideal para despesas fixas como aluguel, energia, telefone
+    
+    2. RATEIO POR VALOR FIXO:
+       - Cada médico paga um valor específico independente do total da despesa
+       - Útil para despesas com valores conhecidos por médico (ex: mensalidade CRM)
+       - O total pode não corresponder a 100% do valor da despesa
+    
+    3. RATEIO PROPORCIONAL (automático):
+       - O sistema calcula automaticamente baseado em critérios definidos
+       - Ex: proporcional ao faturamento, número de consultas, etc.
+       - Flexível para regras de negócio complexas
+    
+    FLUXO DE FUNCIONAMENTO:
+    
+    1. Configuração mensal: Define-se como cada item será rateado no mês
+    2. Lançamento de despesas: Despesas são classificadas por item/grupo
+    3. Processamento de rateio: Sistema distribui valores conforme configuração
+    4. Relatórios gerenciais: Acompanhamento dos custos por médico
+    
+    INTEGRAÇÃO COM O SISTEMA:
+    
+    - Conecta-se ao módulo de Despesas para aplicação automática dos rateios
+    - Gera dados para relatórios de custos por médico
+    - Base para cálculo de resultado individual dos sócios
+    - Auditoria completa de todas as configurações e alterações
+    
+    EXEMPLOS DE USO:
+    
+    Aluguel da clínica:
+    - Dr. João: 45% (sala maior)
+    - Dr. Maria: 35% (sala média)  
+    - Dr. Pedro: 20% (sala menor)
+    
+    Mensalidade CRM:
+    - Dr. João: R$ 450,00 (valor fixo)
+    - Dr. Maria: R$ 450,00 (valor fixo)
+    - Dr. Pedro: R$ 450,00 (valor fixo)
+    
+    Material de consumo:
+    - Rateio proporcional baseado no número de atendimentos do mês
+    """
     
     class Meta:
-        db_table = 'percentual_rateio_mensal'
+        db_table = 'item_despesa_rateio_mensal'
         unique_together = ('conta', 'item_despesa', 'socio', 'mes_referencia')
-        verbose_name = "Percentual de Rateio Mensal"
-        verbose_name_plural = "Percentuais de Rateio Mensais"
+        verbose_name = "Rateio Mensal de Item de Despesa"
+        verbose_name_plural = "Rateios Mensais de Itens de Despesa"
         indexes = [
             models.Index(fields=['mes_referencia', 'item_despesa']),
             models.Index(fields=['socio', 'mes_referencia']),
+            models.Index(fields=['item_despesa', 'ativo']),
         ]
 
+    # Tenant isolation
     conta = models.ForeignKey(
         Conta, 
         on_delete=models.CASCADE, 
-        related_name='percentuais_rateio', 
-        null=False
+        related_name='rateios_itens_despesa', 
+        null=False,
+        verbose_name="Conta"
     )
     
-    # Relacionamentos
+    # Relacionamentos principais
     item_despesa = models.ForeignKey(
-        'Despesa_Item', 
+        'ItemDespesa', 
         on_delete=models.CASCADE, 
-        related_name='percentuais_mensais',
-        verbose_name="Item de Despesa"
+        related_name='rateios_mensais',
+        verbose_name="Item de Despesa",
+        help_text="Item de despesa que será rateado"
     )
+    
     socio = models.ForeignKey(
         Socio, 
         on_delete=models.CASCADE, 
-        related_name='percentuais_rateio',
-        verbose_name="Sócio/Médico"
+        related_name='rateios_despesas',
+        verbose_name="Médico/Sócio",
+        help_text="Médico que participará do rateio"
     )
     
     # Data de referência (mês/ano)
     mes_referencia = models.DateField(
         verbose_name="Mês de Referência",
-        help_text="Data no formato YYYY-MM-01 (primeiro dia do mês)"
+        help_text="Data no formato YYYY-MM-01 (primeiro dia do mês). Define o período em que esta configuração de rateio será aplicada."
     )
     
-    # Percentual específico para este item/sócio/mês
-    percentual = models.DecimalField(
+    # Tipos de rateio
+    TIPO_RATEIO_CHOICES = [
+        ('percentual', 'Por Percentual - Cada médico tem uma % fixa do total da despesa'),
+        ('valor_fixo', 'Por Valor Fixo - Cada médico paga um valor específico independente do total'),
+        ('proporcional', 'Proporcional Automático - Sistema calcula baseado em critérios definidos'),
+    ]
+    
+    tipo_rateio = models.CharField(
+        max_length=20,
+        choices=TIPO_RATEIO_CHOICES,
+        default='percentual',
+        verbose_name="Tipo de Rateio",
+        help_text="Define como será calculado o rateio: por percentual fixo (mais comum), por valor fixo, ou proporcional automático"
+    )
+    
+    # Valores de rateio
+    percentual_rateio = models.DecimalField(
         max_digits=5, 
-        decimal_places=2, 
-        verbose_name="Percentual (%)",
-        help_text="Percentual de rateio para este item específico no mês (0-100%)"
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Percentual de Rateio (%)",
+        help_text="Percentual que este médico deve pagar deste item (0-100%). Usado quando tipo_rateio = 'percentual'. A soma de todos os médicos deve ser 100%."
     )
     
-    # Dados de controle
-    data_cadastro = models.DateTimeField(auto_now_add=True)
-    data_atualizacao = models.DateTimeField(auto_now=True)
-    cadastrado_por = models.ForeignKey(
+    valor_fixo_rateio = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Valor Fixo de Rateio (R$)",
+        help_text="Valor fixo que este médico deve pagar independente do total da despesa. Usado quando tipo_rateio = 'valor_fixo'. Ex: mensalidades, taxas individuais."
+    )
+    
+    # Controle e auditoria
+    ativo = models.BooleanField(
+        default=True, 
+        verbose_name="Ativo",
+        help_text="Se este rateio está ativo para o período"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        verbose_name="Cadastrado Por"
+        blank=True,
+        related_name='rateios_despesa_criados',
+        verbose_name="Criado Por"
     )
     
-    # Status
-    ativo = models.BooleanField(default=True, verbose_name="Ativo")
-    observacoes = models.TextField(blank=True, verbose_name="Observações")
+    observacoes = models.TextField(
+        blank=True, 
+        verbose_name="Observações",
+        help_text="Observações sobre este rateio específico. Ex: 'Sala maior', 'Meio período', 'Acordo especial', etc. Importante para justificar percentuais diferenciados."
+    )
 
     def clean(self):
-        """Validações personalizadas"""
-        # Verificar se o percentual está no range válido
-        if self.percentual < 0 or self.percentual > 100:
-            raise ValidationError("Percentual deve estar entre 0 e 100%")
+        """
+        Validações personalizadas para garantir consistência do rateio
         
-        # Verificar se o item permite rateio
+        Validações implementadas:
+        1. Obrigatoriedade de valores conforme tipo de rateio escolhido
+        2. Limites válidos para percentuais (0-100%)
+        3. Valores não negativos para rateios fixos
+        4. Verificação se o item permite rateio (apenas grupos FOLHA e GERAL)
+        5. Consistência entre sócio e item (mesma conta/empresa)
+        """
+        # Verificar se pelo menos um tipo de rateio foi definido corretamente
+        if self.tipo_rateio == 'percentual' and not self.percentual_rateio:
+            raise ValidationError({
+                'percentual_rateio': 'Percentual de rateio é obrigatório quando tipo é "Por Percentual"'
+            })
+        
+        if self.tipo_rateio == 'valor_fixo' and not self.valor_fixo_rateio:
+            raise ValidationError({
+                'valor_fixo_rateio': 'Valor fixo é obrigatório quando tipo é "Por Valor Fixo"'
+            })
+        
+        # Verificar se o percentual está no range válido (0-100%)
+        if self.percentual_rateio is not None:
+            if self.percentual_rateio < 0 or self.percentual_rateio > 100:
+                raise ValidationError({
+                    'percentual_rateio': 'Percentual deve estar entre 0 e 100%'
+                })
+        
+        # Verificar se o valor fixo não é negativo
+        if self.valor_fixo_rateio is not None and self.valor_fixo_rateio < 0:
+            raise ValidationError({
+                'valor_fixo_rateio': 'Valor fixo não pode ser negativo'
+            })
+        
+        # Verificar se o item permite rateio (apenas grupos FOLHA e GERAL)
         if self.item_despesa and not self.item_despesa.permite_rateio:
-            raise ValidationError(
-                f"O item '{self.item_despesa.nome}' não permite rateio. "
-                f"Apenas itens dos grupos FOLHA e GERAL permitem rateio."
-            )
+            raise ValidationError({
+                'item_despesa': (
+                    f'O item "{self.item_despesa.descricao}" não permite rateio. '
+                    f'Apenas itens dos grupos FOLHA e GERAL permitem rateio.'
+                )
+            })
         
         # Verificar se o item é dos grupos corretos (FOLHA ou GERAL)
         if self.item_despesa and self.item_despesa.grupo.codigo not in ['FOLHA', 'GERAL']:
-            raise ValidationError(
-                f"Percentuais de rateio só podem ser definidos para itens dos grupos FOLHA e GERAL. "
-                f"O item selecionado é do grupo '{self.item_despesa.grupo.codigo}'."
-            )
+            raise ValidationError({
+                'item_despesa': (
+                    f'Rateios só podem ser definidos para itens dos grupos FOLHA e GERAL. '
+                    f'O item selecionado é do grupo "{self.item_despesa.grupo.codigo}".'
+                )
+            })
         
-        # Verificar se sócio e item pertencem à mesma conta
+        # Verificar se sócio e item pertencem à mesma conta (tenant isolation)
         if self.socio and self.item_despesa:
-            if self.socio.conta != self.item_despesa.conta:
-                raise ValidationError("Sócio e item de despesa devem pertencer à mesma conta.")
+            if self.socio.empresa.conta != self.item_despesa.conta:
+                raise ValidationError({
+                    'socio': 'Sócio e item de despesa devem pertencer à mesma conta/empresa.'
+                })
 
     def save(self, *args, **kwargs):
-        # Normalizar a data para o primeiro dia do mês
+        """
+        Método save customizado com validações e normalizações automáticas
+        
+        Operações realizadas:
+        1. Normaliza a data para o primeiro dia do mês (formato padrão)
+        2. Garante consistência da conta entre item e rateio (tenant isolation)
+        3. Limpa campos não utilizados baseado no tipo de rateio selecionado
+        4. Executa todas as validações antes de salvar
+        """
+        # Normalizar a data para o primeiro dia do mês (formato padrão do sistema)
         if self.mes_referencia:
             self.mes_referencia = self.mes_referencia.replace(day=1)
         
-        # Garantir que a conta seja consistente
+        # Garantir que a conta seja consistente (tenant isolation)
         if self.item_despesa:
             self.conta = self.item_despesa.conta
         
+        # Limpar campos não utilizados baseado no tipo de rateio
+        # Isso evita inconsistências e garante que apenas o campo relevante tenha valor
+        if self.tipo_rateio == 'percentual':
+            # Para rateio por percentual, limpar valor fixo
+            self.valor_fixo_rateio = None
+        elif self.tipo_rateio == 'valor_fixo':
+            # Para rateio por valor fixo, limpar percentual
+            self.percentual_rateio = None
+        elif self.tipo_rateio == 'proporcional':
+            # Para rateio proporcional, os valores podem ser calculados dinamicamente
+            # Mantém os campos para permitir cache de cálculos automáticos
+            pass
+        
+        # Executar todas as validações antes de salvar
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
+        if self.tipo_rateio == 'percentual' and self.percentual_rateio:
+            valor_display = f"{self.percentual_rateio}%"
+        elif self.tipo_rateio == 'valor_fixo' and self.valor_fixo_rateio:
+            valor_display = f"R$ {self.valor_fixo_rateio:.2f}"
+        else:
+            valor_display = "Proporcional"
+            
         return (
             f"{self.item_despesa.codigo_completo} - "
             f"{self.socio.pessoa.name} - "
-            f"{self.percentual}% "
+            f"{valor_display} "
             f"({self.mes_referencia.strftime('%m/%Y')})"
         )
     
@@ -200,63 +360,172 @@ class PercentualRateioMensal(models.Model):
         return self.mes_referencia.strftime('%m/%Y')
     
     @property
+    def valor_rateio_display(self):
+        """Retorna o valor do rateio formatado conforme o tipo"""
+        if self.tipo_rateio == 'percentual' and self.percentual_rateio is not None:
+            return f"{self.percentual_rateio:.2f}%"
+        elif self.tipo_rateio == 'valor_fixo' and self.valor_fixo_rateio is not None:
+            return f"R$ {self.valor_fixo_rateio:.2f}"
+        elif self.tipo_rateio == 'proporcional':
+            return "Proporcional"
+        else:
+            return "Não definido"
+    
+    @property
     def percentual_formatado(self):
         """Retorna o percentual formatado"""
         return f"{self.percentual}%"
 
     @classmethod
-    def obter_percentual_para_rateio(cls, item_despesa, socio, data_despesa):
+    def obter_rateio_para_despesa(cls, item_despesa, socio, data_despesa):
         """
-        Método de classe para obter o percentual de rateio para um item/sócio em uma data específica
+        Método de classe para obter o rateio para um item/sócio em uma data específica
         """
         # Normalizar para o primeiro dia do mês
         mes_referencia = data_despesa.replace(day=1)
         
         try:
-            percentual_obj = cls.objects.get(
+            rateio_obj = cls.objects.get(
                 item_despesa=item_despesa,
                 socio=socio,
                 mes_referencia=mes_referencia,
                 ativo=True
             )
-            return percentual_obj.percentual
+            return rateio_obj
         except cls.DoesNotExist:
-            # Se não encontrar percentual específico, retornar 0
-            return 0
+            # Se não encontrar rateio específico, retornar None
+            return None
     
     @classmethod
-    def validar_percentuais_mes(cls, item_despesa, mes_referencia):
+    def validar_rateios_mes(cls, item_despesa, mes_referencia):
         """
-        Valida se a soma dos percentuais para um item em um mês específico não excede 100%
+        Valida se a configuração de rateios para um item em um mês específico está correta
         """
-        percentuais = cls.objects.filter(
+        rateios = cls.objects.filter(
             item_despesa=item_despesa,
             mes_referencia=mes_referencia,
             ativo=True
         )
         
-        total = sum(p.percentual for p in percentuais)
+        # Para rateios por percentual, verificar se somam 100%
+        rateios_percentual = rateios.filter(tipo_rateio='percentual')
+        total_percentual = sum(r.percentual_rateio or 0 for r in rateios_percentual)
+        
+        # Para rateios por valor fixo, só verificar se não são negativos
+        rateios_valor_fixo = rateios.filter(tipo_rateio='valor_fixo')
+        valores_validos = all(r.valor_fixo_rateio and r.valor_fixo_rateio >= 0 for r in rateios_valor_fixo)
         
         return {
-            'valido': total <= 100,
-            'total': total,
-            'percentuais': list(percentuais)
+            'valido': (
+                (not rateios_percentual.exists() or abs(total_percentual - 100) < 0.01) and
+                valores_validos
+            ),
+            'total_percentual': total_percentual,
+            'total_rateios': rateios.count(),
+            'tipos_rateio': list(rateios.values_list('tipo_rateio', flat=True).distinct()),
+            'rateios': list(rateios)
         }
+    
+    @classmethod
+    def criar_rateio_igualitario(cls, item_despesa, medicos_lista, mes_referencia, usuario=None):
+        """
+        Cria rateio igualitário entre uma lista de médicos para um item de despesa
+        
+        Args:
+            item_despesa: Instância do ItemDespesa
+            medicos_lista: Lista de instâncias de Socio
+            mes_referencia: Data do mês de referência
+            usuario: Usuário que está criando o rateio
+        
+        Returns:
+            list: Lista dos rateios criados
+        """
+        if not medicos_lista:
+            raise ValidationError("Lista de médicos não pode estar vazia")
+        
+        # Calcular percentual igual para todos
+        percentual_por_medico = 100 / len(medicos_lista)
+        
+        # Limpar rateios existentes para este item/mês
+        cls.objects.filter(
+            item_despesa=item_despesa,
+            mes_referencia=mes_referencia.replace(day=1)
+        ).delete()
+        
+        rateios_criados = []
+        for medico in medicos_lista:
+            rateio = cls.objects.create(
+                conta=item_despesa.conta,
+                item_despesa=item_despesa,
+                socio=medico,
+                mes_referencia=mes_referencia.replace(day=1),
+                tipo_rateio='percentual',
+                percentual_rateio=percentual_por_medico,
+                created_by=usuario,
+                observacoes=f'Rateio igualitário entre {len(medicos_lista)} médicos'
+            )
+            rateios_criados.append(rateio)
+        
+        return rateios_criados
+    
+    @classmethod
+    def criar_rateio_por_percentuais(cls, item_despesa, rateios_config, mes_referencia, usuario=None):
+        """
+        Cria rateio baseado em percentuais específicos
+        
+        Args:
+            item_despesa: Instância do ItemDespesa
+            rateios_config: Lista de dicts com 'medico' e 'percentual'
+            mes_referencia: Data do mês de referência
+            usuario: Usuário que está criando o rateio
+        
+        Returns:
+            list: Lista dos rateios criados
+        """
+        # Validar que o total dos percentuais não excede 100%
+        total_percentual = sum(config['percentual'] for config in rateios_config)
+        if total_percentual > 100:
+            raise ValidationError(f'Total dos percentuais ({total_percentual}%) excede 100%')
+        
+        # Limpar rateios existentes
+        cls.objects.filter(
+            item_despesa=item_despesa,
+            mes_referencia=mes_referencia.replace(day=1)
+        ).delete()
+        
+        rateios_criados = []
+        for config in rateios_config:
+            medico = config['medico']
+            percentual = config['percentual']
+            
+            rateio = cls.objects.create(
+                conta=item_despesa.conta,
+                item_despesa=item_despesa,
+                socio=medico,
+                mes_referencia=mes_referencia.replace(day=1),
+                tipo_rateio='percentual',
+                percentual_rateio=percentual,
+                created_by=usuario,
+                observacoes=config.get('observacoes', '')
+            )
+            rateios_criados.append(rateio)
+        
+        return rateios_criados
 
 
-class ConfiguracaoRateioMensal(models.Model):
-    """Configuração geral de rateio para um mês específico"""
+class TemplateRateioMensalDespesas(models.Model):
+    """Template/configuração geral de rateio mensal para despesas"""
     
     class Meta:
         db_table = 'configuracao_rateio_mensal'
         unique_together = ('conta', 'mes_referencia')
-        verbose_name = "Configuração de Rateio Mensal"
-        verbose_name_plural = "Configurações de Rateio Mensais"
+        verbose_name = "Template de Rateio Mensal de Despesas"
+        verbose_name_plural = "Templates de Rateio Mensal de Despesas"
 
     conta = models.ForeignKey(
         Conta, 
         on_delete=models.CASCADE, 
-        related_name='configuracoes_rateio'
+        related_name='templates_rateio_despesas'
     )
     
     # Mês de referência
@@ -286,7 +555,7 @@ class ConfiguracaoRateioMensal(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='configuracoes_rateio_criadas',
+        related_name='templates_rateio_criados',
         verbose_name="Criada Por"
     )
     finalizada_por = models.ForeignKey(
@@ -294,7 +563,7 @@ class ConfiguracaoRateioMensal(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='configuracoes_rateio_finalizadas',
+        related_name='templates_rateio_finalizados',
         verbose_name="Finalizada Por"
     )
     
@@ -318,7 +587,7 @@ class ConfiguracaoRateioMensal(models.Model):
         
         mes_anterior = self.mes_referencia - relativedelta(months=1)
         
-        percentuais_anteriores = PercentualRateioMensal.objects.filter(
+        percentuais_anteriores = ItemDespesaRateioMensal.objects.filter(
             conta=self.conta,
             mes_referencia=mes_anterior,
             ativo=True
@@ -327,7 +596,7 @@ class ConfiguracaoRateioMensal(models.Model):
         novos_percentuais = []
         for perc_anterior in percentuais_anteriores:
             # Verificar se já não existe para este mês
-            existe = PercentualRateioMensal.objects.filter(
+            existe = ItemDespesaRateioMensal.objects.filter(
                 conta=self.conta,
                 item_despesa=perc_anterior.item_despesa,
                 socio=perc_anterior.socio,
@@ -335,19 +604,21 @@ class ConfiguracaoRateioMensal(models.Model):
             ).exists()
             
             if not existe:
-                novo_percentual = PercentualRateioMensal(
+                novo_percentual = ItemDespesaRateioMensal(
                     conta=self.conta,
                     item_despesa=perc_anterior.item_despesa,
                     socio=perc_anterior.socio,
                     mes_referencia=self.mes_referencia,
-                    percentual=perc_anterior.percentual,
-                    cadastrado_por=perc_anterior.cadastrado_por,
+                    tipo_rateio=perc_anterior.tipo_rateio,
+                    percentual_rateio=perc_anterior.percentual_rateio,
+                    valor_fixo_rateio=perc_anterior.valor_fixo_rateio,
+                    created_by=perc_anterior.created_by,
                     observacoes=f"Copiado do mês {mes_anterior.strftime('%m/%Y')}"
                 )
                 novos_percentuais.append(novo_percentual)
         
         if novos_percentuais:
-            PercentualRateioMensal.objects.bulk_create(novos_percentuais)
+            ItemDespesaRateioMensal.objects.bulk_create(novos_percentuais)
         
         return len(novos_percentuais)
 
@@ -381,7 +652,7 @@ class Despesa(models.Model):
         verbose_name="Tipo de Rateio"
     )
     item = models.ForeignKey(
-        'Despesa_Item', 
+        'ItemDespesa', 
         on_delete=models.PROTECT, 
         verbose_name="Item de Despesa"
     )
@@ -573,7 +844,7 @@ class Despesa(models.Model):
         mes_referencia = self.data.replace(day=1)
         
         # Buscar todos os percentuais para este item no mês
-        percentuais = PercentualRateioMensal.objects.filter(
+        percentuais = ItemDespesaRateioMensal.objects.filter(
             item_despesa=self.item,
             mes_referencia=mes_referencia,
             ativo=True
@@ -581,30 +852,51 @@ class Despesa(models.Model):
         
         if not percentuais.exists():
             raise ValidationError(
-                f"Não há percentuais de rateio cadastrados para o item "
-                f"'{self.item.nome}' no mês {mes_referencia.strftime('%m/%Y')}"
+                f"Não há rateios cadastrados para o item "
+                f"'{self.item.descricao}' no mês {mes_referencia.strftime('%m/%Y')}"
             )
         
-        # Verificar se a soma dos percentuais é válida
-        total_percentual = sum(p.percentual for p in percentuais)
-        if total_percentual != 100:
-            raise ValidationError(
-                f"A soma dos percentuais para o item '{self.item.nome}' "
-                f"no mês {mes_referencia.strftime('%m/%Y')} é {total_percentual}%. "
-                f"Deve ser exatamente 100%."
-            )
+        # Para rateios por percentual, verificar se a soma é válida
+        rateios_percentual = percentuais.filter(tipo_rateio='percentual')
+        if rateios_percentual.exists():
+            total_percentual = sum(p.percentual_rateio or 0 for p in rateios_percentual)
+            # Verificar se há outros tipos de rateio misturados
+            if percentuais.exclude(tipo_rateio='percentual').exists():
+                # Mix de tipos - validar separadamente
+                pass
+            else:
+                # Só percentuais - deve somar 100%
+                if abs(total_percentual - 100) > 0.01:
+                    raise ValidationError(
+                        f"A soma dos percentuais para o item '{self.item.descricao}' "
+                        f"no mês {mes_referencia.strftime('%m/%Y')} é {total_percentual:.2f}%. "
+                        f"Deve ser exatamente 100%."
+                    )
         
         # Criar os rateios
         rateios_criados = []
-        for percentual_mensal in percentuais:
-            rateio = Despesa_socio_rateio(
+        for rateio_mensal in percentuais:
+            # Calcular valor baseado no tipo de rateio
+            if rateio_mensal.tipo_rateio == 'percentual' and rateio_mensal.percentual_rateio:
+                valor_calculado = self.valor * (rateio_mensal.percentual_rateio / 100)
+                percentual_aplicado = rateio_mensal.percentual_rateio
+            elif rateio_mensal.tipo_rateio == 'valor_fixo' and rateio_mensal.valor_fixo_rateio:
+                valor_calculado = rateio_mensal.valor_fixo_rateio
+                percentual_aplicado = (valor_calculado / self.valor) * 100 if self.valor > 0 else 0
+            else:
+                # Tipo proporcional ou valores não definidos - calcular igualmente
+                valor_calculado = self.valor / percentuais.count()
+                percentual_aplicado = 100 / percentuais.count()
+            
+            rateio = DespesaSocioRateio(
                 conta=self.conta,
                 despesa=self,
-                socio=percentual_mensal.socio,
-                percentual=percentual_mensal.percentual,
-                rateado_por=usuario
+                socio=rateio_mensal.socio,
+                percentual=percentual_aplicado,
+                vl_rateio=valor_calculado,
+                observacoes=f"Rateio {rateio_mensal.get_tipo_rateio_display().lower()}: {rateio_mensal.valor_rateio_display}"
             )
-            rateio.save()  # O valor será calculado automaticamente no save()
+            rateio.save()
             rateios_criados.append(rateio)
         
         # Marcar despesa como rateada
@@ -635,7 +927,7 @@ class Despesa(models.Model):
         )
 
 
-class Despesa_socio_rateio(models.Model):
+class DespesaSocioRateio(models.Model):
     """Rateio de despesas entre sócios/médicos"""
     
     class Meta:
@@ -647,7 +939,7 @@ class Despesa_socio_rateio(models.Model):
     conta = models.ForeignKey(
         Conta, 
         on_delete=models.CASCADE, 
-        related_name='despesa_socios_rateio', 
+        related_name='rateios_socios_despesa', 
         null=False
     )
     despesa = models.ForeignKey('Despesa', on_delete=models.CASCADE, related_name='rateios')
@@ -677,6 +969,12 @@ class Despesa_socio_rateio(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         verbose_name="Rateado Por"
+    )
+    
+    observacoes = models.TextField(
+        blank=True,
+        verbose_name="Observações",
+        help_text="Observações sobre este rateio específico"
     )
     
     def clean(self):

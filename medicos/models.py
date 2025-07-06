@@ -18,7 +18,12 @@ All Django functionality (migrations, admin, imports) continues to work seamless
 """
 
 # Import all models and constants from the modular structure
-from .models import *
+from .models.base import *
+from .models.fiscal import *
+from .models.despesas import *
+from .models.financeiro import *
+from .models.auditoria import *
+from .models.relatorios import *
 
 # app_name is already imported from the modular structure
 # No need to redefine it here

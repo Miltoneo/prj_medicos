@@ -472,7 +472,7 @@ class DescricaoMovimentacao(models.Model):
         verbose_name = "Descrição de Movimentação"
         verbose_name_plural = "Descrições de Movimentação"
         indexes = [
-            models.Index(fields=['conta', 'ativa']),
+            models.Index(fields=['conta']),
             models.Index(fields=['categoria_movimentacao']),
         ]
 
@@ -555,12 +555,6 @@ class DescricaoMovimentacao(models.Model):
     )
     
     # Controle de uso
-    ativa = models.BooleanField(
-        default=True,
-        verbose_name="Ativa",
-        help_text="Se esta descrição está disponível para uso"
-    )
-    
     uso_frequente = models.BooleanField(
         default=False,
         verbose_name="Uso Frequente",
@@ -653,10 +647,9 @@ class DescricaoMovimentacao(models.Model):
     
     @classmethod
     def obter_ativas(cls, conta):
-        """Obtém todas as descrições ativas para uma conta"""
+        """Obtém todas as descrições para uma conta"""
         return cls.objects.filter(
-            conta=conta,
-            ativa=True
+            conta=conta
         ).select_related('categoria_movimentacao').order_by(
             'categoria_movimentacao__natureza', 
             'categoria_movimentacao__ordem', 
@@ -668,8 +661,7 @@ class DescricaoMovimentacao(models.Model):
         """Obtém descrições por categoria"""
         return cls.objects.filter(
             conta=conta,
-            categoria_movimentacao=categoria_movimentacao,
-            ativa=True
+            categoria_movimentacao=categoria_movimentacao
         ).order_by('nome')
     
     @classmethod
@@ -677,8 +669,7 @@ class DescricaoMovimentacao(models.Model):
         """Obtém apenas descrições para crédito"""
         return cls.objects.filter(
             conta=conta,
-            tipo_movimentacao__in=['credito', 'ambos'],
-            ativa=True
+            tipo_movimentacao__in=['credito', 'ambos']
         ).select_related('categoria_movimentacao').order_by(
             'categoria_movimentacao__natureza', 
             'categoria_movimentacao__ordem', 
@@ -690,8 +681,7 @@ class DescricaoMovimentacao(models.Model):
         """Obtém apenas descrições para débito"""
         return cls.objects.filter(
             conta=conta,
-            tipo_movimentacao__in=['debito', 'ambos'],
-            ativa=True
+            tipo_movimentacao__in=['debito', 'ambos']
         ).select_related('categoria_movimentacao').order_by(
             'categoria_movimentacao__natureza', 
             'categoria_movimentacao__ordem', 
@@ -1357,285 +1347,327 @@ class CategoriaMovimentacao(models.Model):
 
 class AplicacaoFinanceira(SaaSBaseModel):
     """
-    Modelo para controle de aplicações financeiras que rendem juros mensalmente.
+    Modelo simplificado para controle de aplicações financeiras.
     
-    Este modelo permite o controle mensal dos rendimentos de aplicações financeiras
-    e a contabilização da tributação de IR sobre esses rendimentos nas apurações
-    de impostos da empresa.
+    Mantém apenas os campos essenciais: data de referência, saldo, 
+    IR cobrado e descrição da aplicação.
     """
     
     class Meta:
         db_table = 'aplicacao_financeira'
-        unique_together = ('conta', 'data', 'fornecedor')
+        unique_together = ('conta', 'data_referencia', 'empresa')
         verbose_name = "Aplicação Financeira"
         verbose_name_plural = "Aplicações Financeiras"
         indexes = [
-            models.Index(fields=['conta', 'data']),
-            models.Index(fields=['fornecedor', 'data']),
-            models.Index(fields=['data']),
+            models.Index(fields=['conta', 'data_referencia']),
+            models.Index(fields=['empresa', 'data_referencia']),
+            models.Index(fields=['data_referencia']),
         ]
     
     # Relacionamentos
-    fornecedor = models.ForeignKey(
+    empresa = models.ForeignKey(
         'Empresa',
         on_delete=models.CASCADE,
         related_name='aplicacoes_financeiras',
         help_text="Empresa/instituição financeira onde a aplicação está alocada"
     )
     
-    # Dados da aplicação
-    data = models.DateField(
-        help_text="Data de referência dos rendimentos (mês/ano)"
+    # Campos essenciais
+    data_referencia = models.DateField(
+        help_text="Data de referência da aplicação (mês/ano)"
     )
     
-    saldo_inicial = models.DecimalField(
+    saldo = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text="Saldo da aplicação financeira"
+    )
+    
+    ir_cobrado = models.DecimalField(
         max_digits=15,
         decimal_places=2,
         default=0,
-        help_text="Saldo inicial da aplicação no período"
+        help_text="Valor do Imposto de Renda cobrado sobre a aplicação"
     )
     
-    aplicacoes = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-        help_text="Valor aplicado no período"
-    )
-    
-    resgates = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-        help_text="Valor resgatado no período"
-    )
-    
-    rendimentos = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-        help_text="Rendimentos obtidos no período"
-    )
-    
-    saldo_final = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-        help_text="Saldo final da aplicação no período"
-    )
-    
-    # Tributação sobre rendimentos
-    irrf = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-        help_text="Imposto de Renda Retido na Fonte sobre os rendimentos"
-    )
-    
-    aliquota_irrf = models.DecimalField(
-        max_digits=5,
-        decimal_places=4,
-        default=0,
-        help_text="Alíquota de IRRF aplicada (em decimal, ex: 0.15 para 15%)"
-    )
-    
-    # Informações adicionais
     descricao = models.CharField(
         max_length=500,
         blank=True,
-        help_text="Descrição adicional da aplicação ou observações"
-    )
-    
-    tipo_aplicacao = models.CharField(
-        max_length=50,
-        choices=[
-            ('cdb', 'CDB'),
-            ('lci', 'LCI'),
-            ('lca', 'LCA'),
-            ('fundos', 'Fundos de Investimento'),
-            ('poupanca', 'Poupança'),
-            ('tesouro', 'Tesouro Direto'),
-            ('outros', 'Outros'),
-        ],
-        default='cdb',
-        help_text="Tipo de aplicação financeira"
-    )
-    
-    # Controle de contabilização
-    ja_contabilizado = models.BooleanField(
-        default=False,
-        help_text="Indica se os rendimentos já foram contabilizados no fluxo financeiro"
+        help_text="Descrição da aplicação financeira"
     )
     
     def clean(self):
         """Validações customizadas"""
         super().clean()
         
-        if self.rendimentos < 0:
-            raise ValidationError({'rendimentos': 'Rendimentos não podem ser negativos'})
+        if self.saldo < 0:
+            raise ValidationError({'saldo': 'Saldo não pode ser negativo'})
         
-        if self.irrf < 0:
-            raise ValidationError({'irrf': 'IRRF não pode ser negativo'})
-        
-        if self.irrf > self.rendimentos:
-            raise ValidationError({'irrf': 'IRRF não pode ser maior que os rendimentos'})
-        
-        # Validar cálculo do saldo final
-        saldo_calculado = self.saldo_inicial + self.aplicacoes - self.resgates + self.rendimentos
-        if abs(self.saldo_final - saldo_calculado) > 0.01:  # Tolerância para arredondamentos
-            raise ValidationError({
-                'saldo_final': f'Saldo final deve ser {saldo_calculado:.2f} '
-                              f'(inicial + aplicações - resgates + rendimentos)'
-            })
-    
-    def save(self, *args, **kwargs):
-        """Sobrescreve save para cálculos automáticos"""
-        # Calcular saldo final se não informado
-        if self.saldo_final == 0:
-            self.saldo_final = self.saldo_inicial + self.aplicacoes - self.resgates + self.rendimentos
-        
-        # Calcular IRRF se não informado mas alíquota foi fornecida
-        if self.irrf == 0 and self.aliquota_irrf > 0:
-            self.irrf = self.rendimentos * self.aliquota_irrf
-        
-        # Calcular alíquota se não informada mas IRRF foi fornecido
-        if self.aliquota_irrf == 0 and self.irrf > 0 and self.rendimentos > 0:
-            self.aliquota_irrf = self.irrf / self.rendimentos
-        
-        super().save(*args, **kwargs)
+        if self.ir_cobrado < 0:
+            raise ValidationError({'ir_cobrado': 'IR cobrado não pode ser negativo'})
     
     def __str__(self):
-        return f"{self.fornecedor.nome_fantasia} - {self.data.strftime('%m/%Y')} - R$ {self.rendimentos:,.2f}"
+        return f"{self.empresa.nome_fantasia} - {self.data_referencia.strftime('%m/%Y')} - R$ {self.saldo:,.2f}"
+
+
+class Financeiro(SaaSBaseModel):
+    """
+    Modelo principal para lançamentos financeiros manuais
     
-    def gerar_lancamentos_financeiros(self):
-        """
-        Gera os lançamentos financeiros correspondentes aos rendimentos da aplicação.
+    Este modelo substitui e simplifica o antigo sistema de saldos mensais,
+    permitindo lançamentos individuais que são consolidados dinamicamente
+    conforme necessário para relatórios.
+    """
+    
+    class Meta:
+        db_table = 'financeiro'
+        verbose_name = "Lançamento Financeiro"
+        verbose_name_plural = "Lançamentos Financeiros"
+        indexes = [
+            models.Index(fields=['conta', 'data_movimentacao']),
+            models.Index(fields=['socio', 'data_movimentacao']),
+            models.Index(fields=['desc_movimentacao']),
+            models.Index(fields=['data_movimentacao', 'tipo']),
+        ]
+        ordering = ['-data_movimentacao', '-created_at']
+
+    # Relacionamentos principais
+    socio = models.ForeignKey(
+        Socio,
+        on_delete=models.PROTECT,
+        related_name='lancamentos_financeiros',
+        verbose_name="Médico/Sócio",
+        help_text="Médico ou sócio responsável por esta movimentação"
+    )
+    
+    desc_movimentacao = models.ForeignKey(
+        DescricaoMovimentacao,
+        on_delete=models.PROTECT,
+        related_name='lancamentos',
+        verbose_name="Descrição da Movimentação",
+        help_text="Descrição padronizada desta movimentação"
+    )
+    
+    aplicacao_financeira = models.ForeignKey(
+        AplicacaoFinanceira,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimentacoes',
+        verbose_name="Aplicação Financeira",
+        help_text="Aplicação financeira relacionada (opcional)"
+    )
+    
+    # Dados do lançamento
+    data_movimentacao = models.DateField(
+        verbose_name="Data da Movimentação",
+        help_text="Data em que a movimentação foi realizada"
+    )
+    
+    TIPOS_MOVIMENTACAO = [
+        (TIPO_MOVIMENTACAO_CONTA_CREDITO, 'Crédito'),
+        (TIPO_MOVIMENTACAO_CONTA_DEBITO, 'Débito'),
+    ]
+    
+    tipo = models.PositiveSmallIntegerField(
+        choices=TIPOS_MOVIMENTACAO,
+        verbose_name="Tipo de Movimentação",
+        help_text="Se é um crédito (entrada) ou débito (saída)"
+    )
+    
+    valor = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Valor",
+        help_text="Valor da movimentação em reais"
+    )
+    
+
+    
+    def clean(self):
+        """Validações personalizadas"""
+        super().clean()
         
-        Returns:
-            dict: Informações sobre os lançamentos que devem ser criados
-        """
-        if self.ja_contabilizado:
-            return {'message': 'Aplicação já contabilizada', 'lancamentos': []}
-        
-        from datetime import date
-        
-        # Buscar ou criar categorias para aplicações financeiras
-        categoria_rendimento, _ = CategoriaMovimentacao.objects.get_or_create(
-            conta=self.conta,
-            codigo='rendimento_aplicacao',
-            defaults={
-                'nome': 'Rendimento de Aplicação Financeira',
-                'natureza': 'receita',
-                'ativo': True
-            }
-        )
-        
-        categoria_irrf, _ = CategoriaMovimentacao.objects.get_or_create(
-            conta=self.conta,
-            codigo='irrf_aplicacao',
-            defaults={
-                'nome': 'IRRF sobre Aplicação Financeira',
-                'natureza': 'despesa',
-                'ativo': True
-            }
-        )
-        
-        # Buscar ou criar descrições padronizadas
-        desc_rendimento, _ = DescricaoMovimentacao.objects.get_or_create(
-            conta=self.conta,
-            categoria_movimentacao=categoria_rendimento,
-            defaults={
-                'nome': f'Rendimento - {self.tipo_aplicacao.upper()} - {self.fornecedor.nome_fantasia}',
-                'ativo': True
-            }
-        )
-        
-        desc_irrf, _ = DescricaoMovimentacao.objects.get_or_create(
-            conta=self.conta,
-            categoria_movimentacao=categoria_irrf,
-            defaults={
-                'nome': f'IRRF s/ Rendimento - {self.tipo_aplicacao.upper()} - {self.fornecedor.nome_fantasia}',
-                'ativo': True
-            }
-        )
-        
-        lancamentos_info = []
-        
-        # Informações do lançamento do rendimento (crédito)
-        if self.rendimentos > 0:
-            lancamentos_info.append({
-                'tipo': 'credito',
-                'descricao': desc_rendimento.nome,
-                'valor': self.rendimentos,
-                'observacoes': f'Rendimento aplicação financeira - Ref: {self.data.strftime("%m/%Y")}',
-                'categoria': categoria_rendimento.codigo
+        # Validar valor
+        if self.valor <= 0:
+            raise ValidationError({
+                'valor': 'Valor deve ser positivo'
             })
         
-        # Informações do lançamento do IRRF (débito)
-        if self.irrf > 0:
-            lancamentos_info.append({
-                'tipo': 'debito',
-                'descricao': desc_irrf.nome,
-                'valor': self.irrf,
-                'observacoes': f'IRRF s/ rendimento aplicação - Ref: {self.data.strftime("%m/%Y")} - Alíq: {self.aliquota_irrf*100:.2f}%',
-                'categoria': categoria_irrf.codigo
+
+        
+        # Validar compatibilidade entre tipo e descrição
+        if self.desc_movimentacao:
+            if not self.desc_movimentacao.pode_ser_usada_para(self.tipo):
+                tipo_display = self.get_tipo_display()
+                raise ValidationError({
+                    'desc_movimentacao': f'A descrição selecionada não permite movimentações do tipo {tipo_display}'
+                })
+        
+        # Validar data de movimentação (não pode ser futura)
+        if self.data_movimentacao and self.data_movimentacao > timezone.now().date():
+            raise ValidationError({
+                'data_movimentacao': 'Data de movimentação não pode ser futura'
             })
-        
-        # Marcar como contabilizado
-        self.ja_contabilizado = True
-        self.save()
-        
-        return {
-            'message': 'Lançamentos preparados para contabilização',
-            'lancamentos': lancamentos_info
-        }
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        sinal = "+" if self.tipo == TIPO_MOVIMENTACAO_CONTA_CREDITO else "-"
+        return f"{self.socio.pessoa.name} - {self.data_movimentacao.strftime('%d/%m/%Y')} - {sinal}R$ {self.valor:,.2f}"
     
-    def calcular_ir_devido_empresa(self):
-        """
-        Calcula o IR devido pela empresa sobre os rendimentos da aplicação.
+
+    
+    @property
+    def categoria(self):
+        """Retorna a categoria da movimentação"""
+        return self.desc_movimentacao.categoria_movimentacao if self.desc_movimentacao else None
+    
+    @property
+    def natureza(self):
+        """Retorna a natureza contábil da movimentação"""
+        return self.categoria.natureza if self.categoria else 'outros'
+    
+    @property
+    def tipo_display_sinal(self):
+        """Retorna o tipo com sinal visual"""
+        if self.tipo == TIPO_MOVIMENTACAO_CONTA_CREDITO:
+            return f"+ {self.get_tipo_display()}"
+        else:
+            return f"- {self.get_tipo_display()}"
+    
+    @property
+    def mes_referencia(self):
+        """Retorna o primeiro dia do mês da movimentação"""
+        return self.data_movimentacao.replace(day=1)
+    
+    def pode_ser_editado(self):
+        """Verifica se o lançamento pode ser editado"""
+        return True  # Sempre pode ser editado na versão simplificada
+    
+    def pode_ser_cancelado(self):
+        """Verifica se o lançamento pode ser cancelado"""
+        return True  # Sempre pode ser cancelado na versão simplificada
+    
+    def processar(self, usuario=None):
+        """Processa o lançamento - simplificado"""
+        pass  # Método mantido para compatibilidade
+    
+    def cancelar(self, motivo=None):
+        """Cancela o lançamento - simplificado"""
+        pass  # Método mantido para compatibilidade
+    
+    @classmethod
+    def obter_saldo_periodo(cls, conta, socio, data_inicio, data_fim):
+        """Calcula o saldo de um período específico"""
+        lancamentos = cls.objects.filter(
+            conta=conta,
+            socio=socio,
+            data_movimentacao__range=[data_inicio, data_fim]
+        )
         
-        Para pessoas jurídicas, os rendimentos de aplicações financeiras são 
-        tributados como receita financeira e integram a base de cálculo do IRPJ/CSLL.
+        creditos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_CREDITO).aggregate(
+            total=models.Sum('valor')
+        )['total'] or 0
         
-        Returns:
-            dict: Informações sobre a tributação
-        """
-        # Rendimento líquido (já descontado o IRRF)
-        rendimento_liquido = self.rendimentos - self.irrf
+        debitos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_DEBITO).aggregate(
+            total=models.Sum('valor')
+        )['total'] or 0
         
-        # O IRRF pode ser compensado/deduzido do IRPJ devido
         return {
-            'rendimento_bruto': self.rendimentos,
-            'irrf_retido': self.irrf,
-            'rendimento_liquido': rendimento_liquido,
-            'base_calculo_irpj': self.rendimentos,  # Rendimento bruto integra a base
-            'irrf_compensavel': self.irrf,  # IRRF pode ser compensado
-            'observacoes': 'Rendimento integra base de cálculo IRPJ/CSLL. IRRF compensável.'
+            'total_creditos': creditos,
+            'total_debitos': debitos,
+            'saldo_liquido': creditos - debitos,
+            'quantidade_lancamentos': lancamentos.count()
         }
     
     @classmethod
-    def obter_resumo_periodo(cls, conta, data_inicio, data_fim):
-        """
-        Obtém resumo das aplicações financeiras para um período.
+    def obter_saldo_mensal(cls, conta, socio, mes_referencia):
+        """Calcula o saldo de um mês específico"""
+        # Primeiro e último dia do mês
+        data_inicio = mes_referencia.replace(day=1)
+        ultimo_dia = 31
+        while ultimo_dia > 28:
+            try:
+                data_fim = data_inicio.replace(day=ultimo_dia)
+                break
+            except ValueError:
+                ultimo_dia -= 1
         
-        Args:
-            conta: Instância da conta
-            data_inicio: Data de início do período
-            data_fim: Data de fim do período
-            
-        Returns:
-            dict: Resumo das aplicações no período
-        """
-        aplicacoes = cls.objects.filter(
+        return cls.obter_saldo_periodo(conta, socio, data_inicio, data_fim)
+    
+    @classmethod
+    def obter_consolidado_conta(cls, conta, mes_referencia):
+        """Obtém o consolidado de toda a conta em um mês"""
+        data_inicio = mes_referencia.replace(day=1)
+        ultimo_dia = 31
+        while ultimo_dia > 28:
+            try:
+                data_fim = data_inicio.replace(day=ultimo_dia)
+                break
+            except ValueError:
+                ultimo_dia -= 1
+        
+        lancamentos = cls.objects.filter(
             conta=conta,
-            data__range=[data_inicio, data_fim]
-        ).aggregate(
-            total_rendimentos=models.Sum('rendimentos') or 0,
-            total_irrf=models.Sum('irrf') or 0,
-            total_aplicacoes=models.Sum('aplicacoes') or 0,
-            total_resgates=models.Sum('resgates') or 0
+            data_movimentacao__range=[data_inicio, data_fim]
         )
         
-        aplicacoes['rendimento_liquido'] = aplicacoes['total_rendimentos'] - aplicacoes['total_irrf']
-        aplicacoes['saldo_movimentacao'] = aplicacoes['total_aplicacoes'] - aplicacoes['total_resgates']
+        consolidado = {
+            'total_lancamentos': lancamentos.count(),
+            'total_creditos': 0,
+            'total_debitos': 0,
+            'saldo_geral': 0,
+            'medicos_ativos': 0,
+            'por_socio': {},
+            'por_categoria': {},
+        }
         
-        return aplicacoes
+        # Totais gerais
+        creditos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_CREDITO).aggregate(
+            total=models.Sum('valor')
+        )['total'] or 0
+        
+        debitos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_DEBITO).aggregate(
+            total=models.Sum('valor')
+        )['total'] or 0
+        
+        consolidado['total_creditos'] = creditos
+        consolidado['total_debitos'] = debitos
+        consolidado['saldo_geral'] = creditos - debitos
+        
+        # Médicos ativos
+        consolidado['medicos_ativos'] = lancamentos.values('socio').distinct().count()
+        
+        # Por sócio
+        for socio in Socio.objects.filter(
+            id__in=lancamentos.values_list('socio', flat=True).distinct()
+        ):
+            saldo_socio = cls.obter_saldo_periodo(conta, socio, data_inicio, data_fim)
+            consolidado['por_socio'][socio.id] = {
+                'socio': socio,
+                'saldo': saldo_socio
+            }
+        
+        # Por categoria
+        from django.db.models import Q
+        categorias = lancamentos.values(
+            'desc_movimentacao__categoria_movimentacao__nome'
+        ).annotate(
+            total=models.Sum('valor'),
+            quantidade=models.Count('id')
+        ).filter(total__gt=0)
+        
+        for categoria in categorias:
+            nome_categoria = categoria['desc_movimentacao__categoria_movimentacao__nome'] or 'Sem categoria'
+            consolidado['por_categoria'][nome_categoria] = {
+                'total': categoria['total'],
+                'quantidade': categoria['quantidade']
+            }
+        
+        return consolidado
+
+
+# Manter compatibilidade com código legacy que pode referenciar estes aliases
+Desc_movimentacao_financeiro = DescricaoMovimentacao

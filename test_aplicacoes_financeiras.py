@@ -276,8 +276,14 @@ class TestIntegracaoAplicacaoFinanceira(TestCase):
         )
     
     def test_integracao_relatorio_consolidado(self):
-        """Testa integração com relatórios consolidados"""
-        from medicos.models.relatorios import RelatorioConsolidadoMensal
+        """
+        TESTE DESABILITADO: Modelo RelatorioConsolidadoMensal foi removido
+        
+        O modelo RelatorioConsolidadoMensal foi removido para simplificar o sistema.
+        Relatórios agora são gerados dinamicamente através de consultas diretas.
+        """
+        # Teste comentado após remoção do modelo RelatorioConsolidadoMensal
+        self.skipTest("Modelo RelatorioConsolidadoMensal foi removido")
         
         # Criar aplicações do mês
         AplicacaoFinanceira.objects.create(
