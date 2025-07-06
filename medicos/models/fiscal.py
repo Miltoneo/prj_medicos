@@ -1188,6 +1188,26 @@ class NotaFiscal(models.Model):
             raise ValidationError({
                 'status_recebimento': 'Status "Recebido Completamente" requer data de recebimento'
             })
+        
+        # NOVA REGRA: Validar que toda nota fiscal deve ter pelo menos um sócio vinculado
+        if self.pk:  # Apenas para notas já salvas (para permitir criação inicial)
+            total_rateios = self.rateios_medicos.count()
+            if total_rateios == 0:
+                raise ValidationError({
+                    '__all__': 'Toda nota fiscal deve ter pelo menos um sócio/médico vinculado através do rateio. '
+                              'Configure o rateio antes de finalizar a nota fiscal.'
+                })
+            
+            # Validar que a soma dos valores de rateio corresponde ao valor bruto da nota
+            soma_valores_rateio = sum(
+                rateio.valor_bruto_medico for rateio in self.rateios_medicos.all()
+            )
+            if abs(soma_valores_rateio - self.val_bruto) > 0.01:  # Tolerância de 1 centavo
+                raise ValidationError({
+                    '__all__': f'A soma dos valores de rateio (R$ {soma_valores_rateio:.2f}) deve '
+                              f'corresponder ao valor bruto da nota fiscal (R$ {self.val_bruto:.2f}). '
+                              'Ajuste os valores de rateio para os sócios.'
+                })
 
     def save(self, *args, **kwargs):
         """Override do save para cálculos automáticos"""
@@ -1299,6 +1319,153 @@ class NotaFiscal(models.Model):
     def eh_vencida(self):
         """Verifica se a nota fiscal está vencida"""
         return self.dias_atraso > 0
+
+    @property
+    def tem_rateio_configurado(self):
+        """Verifica se a nota fiscal tem rateio configurado"""
+        return self.rateios_medicos.exists()
+
+    @property
+    def total_socios_rateio(self):
+        """Retorna o número de sócios no rateio"""
+        return self.rateios_medicos.count()
+
+    def criar_rateio_unico_medico(self, medico, observacoes=""):
+        """
+        Cria rateio para um único médico (100% para ele)
+        
+        Args:
+            medico: Instância do Socio (médico)
+            observacoes: Observações sobre o rateio
+        """
+        # Limpar rateios existentes
+        self.rateios_medicos.all().delete()
+        
+        # Criar novo rateio único
+        return NotaFiscalRateioMedico.objects.create(
+            nota_fiscal=self,
+            medico=medico,
+            percentual_participacao=100.00,
+            valor_bruto_medico=self.val_bruto,  # 100% do valor para o médico
+            tipo_rateio='automatico',
+            data_rateio=timezone.now().date(),
+            observacoes_rateio=observacoes or 'Rateio único - 100% para um médico'
+        )
+
+    def criar_rateio_multiplos_medicos(self, medicos_lista, observacoes=""):
+        """
+        Cria rateio igualitário entre múltiplos médicos
+        
+        Args:
+            medicos_lista: Lista de instâncias de Socio (médicos)
+            observacoes: Observações sobre o rateio
+        """
+        if not medicos_lista:
+            raise ValidationError("Lista de médicos não pode estar vazia")
+        
+        # Validar se todos os médicos pertencem à mesma empresa
+        empresa_nf = self.empresa_destinataria
+        for medico in medicos_lista:
+            if medico.empresa != empresa_nf:
+                raise ValidationError(
+                    'Todos os médicos do rateio devem pertencer à mesma empresa da nota fiscal'
+                )
+        
+        # Limpar rateios existentes
+        self.rateios_medicos.all().delete()
+        
+        # Calcular percentual e valor por médico
+        num_medicos = len(medicos_lista)
+        percentual_por_medico = 100.00 / num_medicos
+        valor_por_medico = self.val_bruto / num_medicos
+        
+        # Criar rateios
+        rateios_criados = []
+        for medico in medicos_lista:
+            rateio = NotaFiscalRateioMedico.objects.create(
+                nota_fiscal=self,
+                medico=medico,
+                percentual_participacao=percentual_por_medico,
+                valor_bruto_medico=valor_por_medico,
+                tipo_rateio='automatico',
+                data_rateio=timezone.now().date(),
+                observacoes_rateio=observacoes or f'Rateio automático entre {num_medicos} médicos'
+            )
+            rateios_criados.append(rateio)
+        
+        return rateios_criados
+
+    @classmethod
+    def obter_resumo_financeiro_por_medico(cls, empresa=None, medico=None, periodo_inicio=None, periodo_fim=None):
+        """
+        Obtém resumo financeiro das notas fiscais por médico (considerando rateios)
+        
+        Args:
+            empresa: Filtrar por empresa específica
+            medico: Filtrar por médico específico
+            periodo_inicio: Data de início do período
+            periodo_fim: Data de fim do período
+            
+        Returns:
+            dict: Resumo com totais por médico
+        """
+        from django.db.models import Sum, Count, Avg
+        
+        # Filtrar notas fiscais
+        qs_notas = cls.objects.all()
+        
+        if empresa:
+            qs_notas = qs_notas.filter(empresa_destinataria=empresa)
+        
+        if periodo_inicio:
+            qs_notas = qs_notas.filter(dtEmissao__gte=periodo_inicio)
+        
+        if periodo_fim:
+            qs_notas = qs_notas.filter(dtEmissao__lte=periodo_fim)
+        
+        # Obter rateios relacionados
+        qs_rateios = NotaFiscalRateioMedico.objects.filter(
+            nota_fiscal__in=qs_notas
+        )
+        
+        if medico:
+            qs_rateios = qs_rateios.filter(medico=medico)
+        
+        # Agregações por médico
+        resumo_por_medico = qs_rateios.values(
+            'medico__id',
+            'medico__pessoa__name'
+        ).annotate(
+            total_notas=Count('nota_fiscal', distinct=True),
+            valor_bruto_total=Sum('valor_bruto_medico'),
+            valor_liquido_total=Sum('valor_liquido_medico'),
+            valor_impostos_total=Sum(
+                models.F('valor_iss_medico') + models.F('valor_pis_medico') + 
+                models.F('valor_cofins_medico') + models.F('valor_ir_medico') + 
+                models.F('valor_csll_medico')
+            ),
+            percentual_medio=Avg('percentual_participacao')
+        ).order_by('-valor_bruto_total')
+        
+        # Totais gerais
+        totais_gerais = qs_rateios.aggregate(
+            total_notas_com_rateio=Count('nota_fiscal', distinct=True),
+            valor_bruto_geral=Sum('valor_bruto_medico'),
+            valor_liquido_geral=Sum('valor_liquido_medico'),
+        )
+        
+        return {
+            'resumo_por_medico': list(resumo_por_medico),
+            'totais_gerais': totais_gerais,
+            'filtros_aplicados': {
+                'empresa': empresa.name if empresa else None,
+                'medico': medico.pessoa.name if medico else None,
+                'periodo': {
+                    'inicio': periodo_inicio,
+                    'fim': periodo_fim
+                }
+            }
+        }
 
     def get_tipo_aliquota_display_extended(self):
         """Retorna descrição extendida do tipo de serviço"""
@@ -1731,6 +1898,88 @@ class NotaFiscalRateioMedico(models.Model):
     def clean(self):
         """Validações do modelo"""
         # Validar percentual
+        if self.percentual_participacao < 0 or self.percentual_participacao > 100:
+            raise ValidationError({
+                'percentual_participacao': 'Percentual deve estar entre 0 e 100%'
+            })
+        
+        # Validar valor bruto
+        if self.valor_bruto_medico <= 0:
+            raise ValidationError({
+                'valor_bruto_medico': 'Valor bruto deve ser maior que zero'
+            })
+        
+        # Validar se médico pertence à mesma empresa da nota fiscal
+        if (self.medico and self.nota_fiscal and 
+            self.medico.empresa != self.nota_fiscal.empresa_destinataria):
+            raise ValidationError({
+                'medico': 'Médico deve pertencer à mesma empresa da nota fiscal'
+            })
+        
+        # Validar se valor bruto do médico não excede valor da nota fiscal
+        if (self.nota_fiscal and 
+            self.valor_bruto_medico > self.nota_fiscal.val_bruto):
+            raise ValidationError({
+                'valor_bruto_medico': 'Valor do médico não pode exceder o valor total da nota fiscal'
+            })
+
+    def save(self, *args, **kwargs):
+        """Override do save para cálculos automáticos"""
+        # Calcular percentual automaticamente baseado no valor
+        if self.nota_fiscal and self.nota_fiscal.val_bruto > 0:
+            self.percentual_participacao = (
+                self.valor_bruto_medico / self.nota_fiscal.val_bruto
+            ) * 100
+        
+        # Calcular impostos proporcionais
+        self.calcular_impostos_proporcionais()
+        
+        super().save(*args, **kwargs)
+
+    def calcular_impostos_proporcionais(self):
+        """Calcula os impostos proporcionais baseados na participação do médico"""
+        if not self.nota_fiscal:
+            return
+        
+        # Calcular proporção baseada no valor bruto
+        if self.nota_fiscal.val_bruto > 0:
+            proporcao = self.valor_bruto_medico / self.nota_fiscal.val_bruto
+        else:
+            proporcao = 0
+        
+        # Aplicar proporção aos impostos da nota fiscal
+        self.valor_iss_medico = self.nota_fiscal.val_ISS * proporcao
+        self.valor_pis_medico = self.nota_fiscal.val_PIS * proporcao
+        self.valor_cofins_medico = self.nota_fiscal.val_COFINS * proporcao
+        self.valor_ir_medico = self.nota_fiscal.val_IR * proporcao
+        self.valor_csll_medico = self.nota_fiscal.val_CSLL * proporcao
+        
+        # Calcular valor líquido
+        total_impostos_medico = (
+            self.valor_iss_medico + self.valor_pis_medico + 
+            self.valor_cofins_medico + self.valor_ir_medico + 
+            self.valor_csll_medico
+        )
+        self.valor_liquido_medico = self.valor_bruto_medico - total_impostos_medico
+
+    def __str__(self):
+        return f"{self.nota_fiscal.numero} - {self.medico.pessoa.name} - {self.percentual_participacao}%"
+
+    @property
+    def total_impostos_medico(self):
+        """Retorna o total de impostos deste médico"""
+        return (
+            self.valor_iss_medico + self.valor_pis_medico + 
+            self.valor_cofins_medico + self.valor_ir_medico + 
+            self.valor_csll_medico
+        )
+
+    @property
+    def percentual_impostos_medico(self):
+        """Retorna o percentual de impostos sobre o valor bruto do médico"""
+        if self.valor_bruto_medico > 0:
+            return (self.total_impostos_medico / self.valor_bruto_medico) * 100
+        return 0
         if self.percentual_participacao < 0 or self.percentual_participacao > 100:
             raise ValidationError({
                 'percentual_participacao': 'Percentual deve estar entre 0% e 100%'
