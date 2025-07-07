@@ -317,44 +317,52 @@ class Aliquotas(models.Model):
     IRPJ_BASE_CAL = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=32.00,
         verbose_name="IRPJ - Base de Cálculo (%)",
-        help_text="Percentual da receita bruta para base de cálculo do IRPJ (padrão 32%)"
+        help_text="Percentual da receita bruta para base de cálculo do IRPJ (32% para serviços médicos, conforme Lei 9.249/1995, art. 15, §1º, III, 'a')"
     )
     
-    IRPJ_ALIC_1 = models.DecimalField(
+    IRPJ_ALIQUOTA_1 = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=15.00,
         verbose_name="IRPJ - Alíquota Normal (%)",
-        help_text="Alíquota normal do IRPJ (padrão 15%)"
+        help_text="Alíquota normal do IRPJ (15% sobre a base de cálculo presumida, conforme Lei 9.249/1995, art. 3º)"
     )
+
+    IRPJ_ALIQUOTA_2 = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=0,
+        verbose_name="IRPJ - Alíquota Adicional 2 (%)",
+        help_text="Alíquota adicional do IRPJ para casos excepcionais. Não prevista na legislação federal padrão para serviços médicos."
+    )
+    
     
     IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL = models.DecimalField(
         max_digits=12, decimal_places=2, null=False, default=60000.00,
         verbose_name="IRPJ - Limite para Adicional (R$)",
-        help_text="Valor limite trimestral para adicional (padrão R$ 60.000,00)"
+        help_text="Valor limite trimestral para adicional (R$ 60.000,00 por trimestre, conforme Lei 9.249/1995, art. 3º, §1º)"
     )
     
     IRPJ_ADICIONAL = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=10.00,
         verbose_name="IRPJ - Adicional (%)",
-        help_text="Alíquota do adicional de IRPJ (padrão 10%)"
+        help_text="Alíquota do adicional de IRPJ (10% sobre o excedente da base de cálculo trimestral acima de R$ 60.000,00, conforme Lei 9.249/1995, art. 3º, §1º)"
     )
     
+
     # === CONTRIBUIÇÃO SOCIAL SOBRE O LUCRO LÍQUIDO ===
     CSLL_BASE_CAL = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=32.00,
         verbose_name="CSLL - Base de Cálculo (%)",
-        help_text="Percentual da receita bruta para base de cálculo da CSLL (padrão 32%)"
+        help_text="Percentual da receita bruta para base de cálculo da CSLL (32% para serviços médicos, conforme Lei 9.249/1995, art. 20)"
     )
     
-    CSLL_ALIC_1 = models.DecimalField(
+    CSLL_ALIQUOTA_1 = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=9.00,
         verbose_name="CSLL - Alíquota Normal (%)",
-        help_text="Alíquota normal da CSLL (padrão 9%)"
+        help_text="Alíquota normal da CSLL (9% sobre a base de cálculo presumida, conforme Lei 7.689/1988, art. 3º, com redação da Lei 13.169/2015)"
     )
     
-    CSLL_ALIC_2 = models.DecimalField(
+    CSLL_ALIQUOTA_2 = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=15.00,
         verbose_name="CSLL - Alíquota Adicional (%)",
-        help_text="Alíquota adicional da CSLL para prestadores de serviços (padrão 15%)"
+        help_text="Alíquota adicional da CSLL para casos excepcionais. Não prevista na legislação federal padrão para serviços médicos."
     )
     
     # === CONTROLE E AUDITORIA ===
@@ -398,11 +406,11 @@ class Aliquotas(models.Model):
             ('PIS', self.PIS, 0, 10),
             ('COFINS', self.COFINS, 0, 10),
             ('IRPJ_BASE_CAL', self.IRPJ_BASE_CAL, 0, 100),
-            ('IRPJ_ALIC_1', self.IRPJ_ALIC_1, 0, 50),
+            ('IRPJ_ALIQUOTA_1', self.IRPJ_ALIQUOTA_1, 0, 50),
             ('IRPJ_ADICIONAL', self.IRPJ_ADICIONAL, 0, 50),
             ('CSLL_BASE_CAL', self.CSLL_BASE_CAL, 0, 100),
-            ('CSLL_ALIC_1', self.CSLL_ALIC_1, 0, 50),
-            ('CSLL_ALIC_2', self.CSLL_ALIC_2, 0, 50),
+            ('CSLL_ALIQUOTA_1', self.CSLL_ALIQUOTA_1, 0, 50),
+            ('CSLL_ALIQUOTA_2', self.CSLL_ALIQUOTA_2, 0, 50),
         ]
         
         for nome, valor, minimo, maximo in campos_percentuais:
@@ -501,7 +509,7 @@ class Aliquotas(models.Model):
         base_calculo_csll = valor_bruto * (self.CSLL_BASE_CAL / 100)
         
         # IRPJ
-        valor_ir_normal = base_calculo_ir * (self.IRPJ_ALIC_1 / 100)
+        valor_ir_normal = base_calculo_ir * (self.IRPJ_ALIQUOTA_1 / 100)
         valor_ir_adicional = 0
         if base_calculo_ir > self.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL:
             excesso = base_calculo_ir - self.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
@@ -510,7 +518,7 @@ class Aliquotas(models.Model):
         valor_ir_total = valor_ir_normal + valor_ir_adicional
         
         # CSLL
-        valor_csll = base_calculo_csll * (self.CSLL_ALIC_1 / 100)
+        valor_csll = base_calculo_csll * (self.CSLL_ALIQUOTA_1 / 100)
         
         # Valor líquido
         total_impostos = valor_iss + valor_pis + valor_cofins + valor_ir_total + valor_csll
@@ -1402,9 +1410,6 @@ class NotaFiscal(models.Model):
             medico: Filtrar por médico específico
             periodo_inicio: Data de início do período
             periodo_fim: Data de fim do período
-            
-        Returns:
-            dict: Resumo com totais por médico
         """
         from django.db.models import Sum, Count, Avg
         
@@ -1725,6 +1730,7 @@ class NotaFiscal(models.Model):
         
         # Resumo geral
         totais_gerais = rateios_qs.aggregate(
+
             total_rateios=Count('id'),
             total_notas_com_rateio=Count('nota_fiscal', distinct=True),
             valor_bruto_geral=Sum('valor_bruto_medico'),
@@ -1922,91 +1928,6 @@ class NotaFiscalRateioMedico(models.Model):
 
     def save(self, *args, **kwargs):
         """Override do save para cálculos automáticos"""
-        # Calcular percentual automaticamente baseado no valor
-        if self.nota_fiscal and self.nota_fiscal.val_bruto > 0:
-            self.percentual_participacao = (
-                self.valor_bruto_medico / self.nota_fiscal.val_bruto
-            ) * 100
-        
-        # Calcular impostos proporcionais
-        self.calcular_impostos_proporcionais()
-        
-        super().save(*args, **kwargs)
-
-    def calcular_impostos_proporcionais(self):
-        """Calcula os impostos proporcionais baseados na participação do médico"""
-        if not self.nota_fiscal:
-            return
-        
-        # Calcular proporção baseada no valor bruto
-        if self.nota_fiscal.val_bruto > 0:
-            proporcao = self.valor_bruto_medico / self.nota_fiscal.val_bruto
-        else:
-            proporcao = 0
-        
-        # Aplicar proporção aos impostos da nota fiscal
-        self.valor_iss_medico = self.nota_fiscal.val_ISS * proporcao
-        self.valor_pis_medico = self.nota_fiscal.val_PIS * proporcao
-        self.valor_cofins_medico = self.nota_fiscal.val_COFINS * proporcao
-        self.valor_ir_medico = self.nota_fiscal.val_IR * proporcao
-        self.valor_csll_medico = self.nota_fiscal.val_CSLL * proporcao
-        
-        # Calcular valor líquido
-        total_impostos_medico = (
-            self.valor_iss_medico + self.valor_pis_medico + 
-            self.valor_cofins_medico + self.valor_ir_medico + 
-            self.valor_csll_medico
-        )
-        self.valor_liquido_medico = self.valor_bruto_medico - total_impostos_medico
-
-    def __str__(self):
-        return f"{self.nota_fiscal.numero} - {self.medico.pessoa.name} - {self.percentual_participacao}%"
-
-    @property
-    def total_impostos_medico(self):
-        """Retorna o total de impostos deste médico"""
-        return (
-            self.valor_iss_medico + self.valor_pis_medico + 
-            self.valor_cofins_medico + self.valor_ir_medico + 
-            self.valor_csll_medico
-        )
-
-    @property
-    def percentual_impostos_medico(self):
-        """Retorna o percentual de impostos sobre o valor bruto do médico"""
-        if self.valor_bruto_medico > 0:
-            return (self.total_impostos_medico / self.valor_bruto_medico) * 100
-        return 0
-        if self.percentual_participacao < 0 or self.percentual_participacao > 100:
-            raise ValidationError({
-                'percentual_participacao': 'Percentual deve estar entre 0% e 100%'
-            })
-        
-        # Validar valor bruto
-        if self.valor_bruto_medico < 0:
-            raise ValidationError({
-                'valor_bruto_medico': 'Valor bruto não pode ser negativo'
-            })
-        
-        # Validar se o médico pertence à mesma empresa da nota fiscal
-        if (self.medico and self.nota_fiscal and 
-            self.medico.empresa != self.nota_fiscal.empresa_destinataria):
-            raise ValidationError({
-                'medico': 'Médico deve pertencer à mesma empresa da nota fiscal'
-            })
-        
-        # Validar se o valor não excede o valor total da nota fiscal
-        if (self.nota_fiscal and 
-            self.valor_bruto_medico > self.nota_fiscal.val_bruto):
-            raise ValidationError({
-                'valor_bruto_medico': 'Valor do médico não pode exceder o valor total da nota fiscal'
-            })
-        
-        # NOTA: Não validamos coerência entre percentual e valor aqui porque
-        # o percentual é sempre calculado automaticamente no método save()
-
-    def save(self, *args, **kwargs):
-        """Override do save para cálculos automáticos"""
         # REGRA PRINCIPAL: O valor_bruto_medico é a entrada, percentual_participacao é calculado
         # Sempre recalcular o percentual baseado no valor bruto informado
         if self.nota_fiscal and self.nota_fiscal.val_bruto > 0:
@@ -2100,124 +2021,3 @@ class NotaFiscalRateioMedico(models.Model):
         if self.valor_bruto_medico > 0:
             return (self.total_impostos_medico / self.valor_bruto_medico) * 100
         return 0
-
-    @classmethod
-    def criar_rateio_automatico(cls, nota_fiscal, medicos_lista, usuario=None):
-        """
-        Cria rateio automático igualitário entre os médicos informados
-        
-        Args:
-            nota_fiscal: Instância da nota fiscal
-            medicos_lista: Lista de instâncias de Socio (médicos)
-            usuario: Usuário que está criando o rateio
-            
-        Returns:
-            list: Lista dos rateios criados
-        """
-        if not medicos_lista:
-            raise ValidationError("Lista de médicos não pode estar vazia")
-        
-        # Limpar rateios existentes
-        cls.objects.filter(nota_fiscal=nota_fiscal).delete()
-        
-        # Calcular percentual igual para todos
-        percentual_por_medico = 100 / len(medicos_lista)
-        valor_por_medico = nota_fiscal.val_bruto / len(medicos_lista)
-        
-        rateios_criados = []
-        for medico in medicos_lista:
-            rateio = cls.objects.create(
-                nota_fiscal=nota_fiscal,
-                medico=medico,
-                valor_bruto_medico=valor_por_medico,  # Valor é a entrada principal
-                # percentual_participacao será calculado automaticamente no save()
-                tipo_rateio='automatico',
-                configurado_por=usuario,
-                observacoes_rateio=f'Rateio automático igualitário entre {len(medicos_lista)} médicos'
-            )
-            rateios_criados.append(rateio)
-        
-        return rateios_criados
-
-    @classmethod
-    def criar_rateio_por_percentuais(cls, nota_fiscal, rateios_config, usuario=None):
-        """
-        Cria rateio baseado em percentuais específicos
-        
-        Args:
-            nota_fiscal: Instância da nota fiscal
-            rateios_config: Lista de dicts com 'medico' e 'percentual'
-            usuario: Usuário que está criando o rateio
-            
-        Returns:
-            list: Lista dos rateios criados
-        """
-        # Validar que o total dos percentuais não excede 100%
-        total_percentual = sum(config['percentual'] for config in rateios_config)
-        if total_percentual > 100:
-            raise ValidationError(f'Total dos percentuais ({total_percentual}%) excede 100%')
-        
-        # Limpar rateios existentes
-        cls.objects.filter(nota_fiscal=nota_fiscal).delete()
-        
-        rateios_criados = []
-        for config in rateios_config:
-            medico = config['medico']
-            percentual = config['percentual']
-            valor_bruto = nota_fiscal.val_bruto * (percentual / 100)
-            
-            rateio = cls.objects.create(
-                nota_fiscal=nota_fiscal,
-                medico=medico,
-                valor_bruto_medico=valor_bruto,  # Valor calculado baseado no percentual desejado
-                # percentual_participacao será calculado automaticamente no save()
-                tipo_rateio='percentual',
-                configurado_por=usuario,
-                observacoes_rateio=config.get('observacoes', '')
-            )
-            rateios_criados.append(rateio)
-        
-        return rateios_criados
-
-    @classmethod
-    def criar_rateio_por_valores(cls, nota_fiscal, rateios_config, usuario=None):
-        """
-        Cria rateio baseado em valores específicos
-        
-        Args:
-            nota_fiscal: Instância da nota fiscal
-            rateios_config: Lista de dicts com 'medico' e 'valor'
-            usuario: Usuário que está criando o rateio
-            
-        Returns:
-            list: Lista dos rateios criados
-        """
-        # Validar que o total dos valores não excede o valor da nota fiscal
-        total_valor = sum(config['valor'] for config in rateios_config)
-        if total_valor > nota_fiscal.val_bruto:
-            raise ValidationError(
-                f'Total dos valores (R$ {total_valor:.2f}) excede o valor da '
-                f'nota fiscal (R$ {nota_fiscal.val_bruto:.2f})'
-            )
-        
-        # Limpar rateios existentes
-        cls.objects.filter(nota_fiscal=nota_fiscal).delete()
-        
-        rateios_criados = []
-        for config in rateios_config:
-            medico = config['medico']
-            valor = config['valor']
-            # percentual será calculado automaticamente baseado no valor
-            
-            rateio = cls.objects.create(
-                nota_fiscal=nota_fiscal,
-                medico=medico,
-                valor_bruto_medico=valor,  # Valor é a entrada principal
-                # percentual_participacao será calculado automaticamente no save()
-                tipo_rateio='valor_fixo',
-                configurado_por=usuario,
-                observacoes_rateio=config.get('observacoes', '')
-            )
-            rateios_criados.append(rateio)
-        
-        return rateios_criados

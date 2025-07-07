@@ -22,7 +22,7 @@ __all__ = [
     
     # Modelos Financeiros
     'MeioPagamento', 'DescricaoMovimentacao', 'Desc_movimentacao_financeiro', 'Financeiro', 'SaldoMensalMedico',
-    'AplicacaoFinanceira', 'CategoriaMovimentacao',
+    'AplicacaoFinanceira',
     
     # Modelos de Auditoria
     'LogAuditoriaFinanceiro', 'ConfiguracaoSistemaManual', 'registrar_auditoria',

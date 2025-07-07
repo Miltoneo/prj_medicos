@@ -473,7 +473,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         verbose_name_plural = "Descrições de Movimentação"
         indexes = [
             models.Index(fields=['conta']),
-            models.Index(fields=['categoria_movimentacao']),
+            models.Index(fields=['desc_movimentacao']),
         ]
 
     conta = models.ForeignKey(
@@ -494,15 +494,6 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         blank=True,
         verbose_name="Descrição Detalhada",
         help_text="Descrição completa sobre quando usar esta movimentação"
-    )
-    
-    # Categorização dinâmica
-    categoria_movimentacao = models.ForeignKey(
-        'CategoriaMovimentacao',
-        on_delete=models.PROTECT,
-        related_name='descricoes',
-        verbose_name="Categoria",
-        help_text="Categoria de movimentação associada a esta descrição"
     )
     
     # Configurações de comportamento
@@ -611,32 +602,22 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         return f"{self.nome}"
     
     @property
-    def nome_completo(self):
-        """Retorna nome completo com categoria"""
-        categoria_display = self.categoria_movimentacao.nome if self.categoria_movimentacao else "Sem categoria"
-        return f"[{categoria_display}] {self.nome}"
+    def esta_vigente(self):
+        """Verifica se a descrição está vigente na data atual"""
+        hoje = timezone.now().date()
+        
+        if self.data_inicio_vigencia and hoje < self.data_inicio_vigencia:
+            return False
+        
+        if self.data_fim_vigencia and hoje > self.data_fim_vigencia:
+            return False
+        
+        return True
     
     @property
-    def categoria_display(self):
-        """Retorna a categoria formatada"""
-        return self.categoria_movimentacao.nome if self.categoria_movimentacao else "Sem categoria"
-    
-    @property
-    def categoria(self):
-        """Propriedade de compatibilidade para código legacy que referencia o campo 'categoria'"""
-        return self.categoria_movimentacao.codigo if self.categoria_movimentacao else 'outros'
-    
-    def pode_ser_usada_para(self, tipo_movimentacao):
-        """Verifica se pode ser usada para um tipo específico de movimentação"""
-        if self.tipo_movimentacao == 'ambos':
-            return True
-        
-        if tipo_movimentacao == TIPO_MOVIMENTACAO_CONTA_CREDITO:
-            return self.tipo_movimentacao == 'credito'
-        elif tipo_movimentacao == TIPO_MOVIMENTACAO_CONTA_DEBITO:
-            return self.tipo_movimentacao == 'debito'
-        
-        return False
+    def disponivel_para_uso(self):
+        """Verifica se a descrição está disponível para uso"""
+        return self.ativa and self.esta_vigente
     
     def calcular_retencao_ir(self, valor_base):
         """Calcula o valor da retenção de IR"""
@@ -650,19 +631,9 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         """Obtém todas as descrições para uma conta"""
         return cls.objects.filter(
             conta=conta
-        ).select_related('categoria_movimentacao').order_by(
-            'categoria_movimentacao__natureza', 
-            'categoria_movimentacao__ordem', 
+        ).order_by(
             'nome'
         )
-    
-    @classmethod
-    def obter_por_categoria(cls, conta, categoria_movimentacao):
-        """Obtém descrições por categoria"""
-        return cls.objects.filter(
-            conta=conta,
-            categoria_movimentacao=categoria_movimentacao
-        ).order_by('nome')
     
     @classmethod
     def obter_creditos(cls, conta):
@@ -670,9 +641,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         return cls.objects.filter(
             conta=conta,
             tipo_movimentacao__in=['credito', 'ambos']
-        ).select_related('categoria_movimentacao').order_by(
-            'categoria_movimentacao__natureza', 
-            'categoria_movimentacao__ordem', 
+        ).order_by(
             'nome'
         )
     
@@ -682,9 +651,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         return cls.objects.filter(
             conta=conta,
             tipo_movimentacao__in=['debito', 'ambos']
-        ).select_related('categoria_movimentacao').order_by(
-            'categoria_movimentacao__natureza', 
-            'categoria_movimentacao__ordem', 
+        ).order_by(
             'nome'
         )
     
@@ -695,28 +662,17 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             conta=conta,
             ativa=True,
             uso_frequente=True
-        ).select_related('categoria_movimentacao').order_by(
-            'categoria_movimentacao__natureza', 
-            'categoria_movimentacao__ordem', 
+        ).order_by(
             'nome'
         )
     
     @classmethod
     def criar_descricoes_padrao(cls, conta, usuario=None):
         """Cria descrições padrão para uma nova conta"""
-        # Primeiro, garantir que as categorias padrão existam
-        categorias = CategoriaMovimentacao.criar_categorias_padrao(conta, usuario)
-        
-        # Mapeamento de códigos de categoria para objetos
-        categorias_map = {}
-        for categoria in CategoriaMovimentacao.objects.filter(conta=conta):
-            categorias_map[categoria.codigo] = categoria
-        
         descricoes_padrao = [
             # Receitas
             {
                 'nome': 'Recebimento de Honorários Médicos',
-                'categoria_codigo': 'receita_servicos',
                 'tipo_movimentacao': 'credito',
                 'descricao': 'Recebimento de honorários por serviços médicos prestados',
                 'uso_frequente': True,
@@ -724,14 +680,12 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             },
             {
                 'nome': 'Recebimento de Consultas',
-                'categoria_codigo': 'receita_servicos',
                 'tipo_movimentacao': 'credito',
                 'descricao': 'Recebimento por consultas médicas realizadas',
                 'uso_frequente': True,
             },
             {
                 'nome': 'Recebimento de Plantão',
-                'categoria_codigo': 'receita_servicos',
                 'tipo_movimentacao': 'credito',
                 'descricao': 'Recebimento por plantões médicos realizados',
                 'uso_frequente': True,
@@ -740,14 +694,12 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             # Adiantamentos
             {
                 'nome': 'Adiantamento de Lucros',
-                'categoria_codigo': 'adiantamento_recebido',
                 'tipo_movimentacao': 'credito',
                 'descricao': 'Adiantamento de lucros da sociedade médica',
                 'uso_frequente': True,
             },
             {
                 'nome': 'Adiantamento para Despesas',
-                'categoria_codigo': 'adiantamento_concedido',
                 'tipo_movimentacao': 'debito',
                 'descricao': 'Adiantamento concedido para cobrir despesas',
             },
@@ -755,21 +707,18 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             # Despesas
             {
                 'nome': 'Despesas com Material Médico',
-                'categoria_codigo': 'despesa_operacional',
                 'tipo_movimentacao': 'debito',
                 'descricao': 'Gastos com materiais médicos e insumos',
                 'exige_documento': True,
             },
             {
                 'nome': 'Despesas com Educação Médica',
-                'categoria_codigo': 'despesa_operacional',
                 'tipo_movimentacao': 'debito',
                 'descricao': 'Gastos com cursos, congressos e capacitação',
                 'exige_documento': True,
             },
             {
                 'nome': 'Retirada para Uso Pessoal',
-                'categoria_codigo': 'despesa_pessoal',
                 'tipo_movimentacao': 'debito',
                 'descricao': 'Retirada de valores para uso pessoal',
                 'uso_frequente': True,
@@ -778,14 +727,12 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             # Transferências
             {
                 'nome': 'Transferência Bancária Recebida',
-                'categoria_codigo': 'transferencia_recebida',
                 'tipo_movimentacao': 'credito',
                 'descricao': 'Transferência bancária recebida de terceiros',
                 'exige_documento': True,
             },
             {
                 'nome': 'Transferência Bancária Enviada',
-                'categoria_codigo': 'transferencia_enviada',
                 'tipo_movimentacao': 'debito',
                 'descricao': 'Transferência bancária enviada para terceiros',
                 'exige_documento': True,
@@ -794,14 +741,12 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             # Ajustes
             {
                 'nome': 'Ajuste Contábil a Crédito',
-                'categoria_codigo': 'ajuste_credito',
                 'tipo_movimentacao': 'credito',
                 'descricao': 'Ajuste contábil positivo',
                 'exige_aprovacao': True,
             },
             {
                 'nome': 'Ajuste Contábil a Débito',
-                'categoria_codigo': 'ajuste_debito',
                 'tipo_movimentacao': 'debito',
                 'descricao': 'Ajuste contábil negativo',
                 'exige_aprovacao': True,
@@ -815,534 +760,15 @@ class DescricaoMovimentacaoFinanceira(models.Model):
                 conta=conta,
                 nome=desc_data['nome']
             ).exists():
-                # Obter a categoria correspondente
-                categoria_codigo = desc_data.pop('categoria_codigo')
-                categoria_obj = categorias_map.get(categoria_codigo)
-                
-                if categoria_obj:
-                    descricao = cls.objects.create(
-                        conta=conta,
-                        criada_por=usuario,
-                        categoria_movimentacao=categoria_obj,
-                        observacoes='Descrição criada automaticamente',
-                        **desc_data
-                    )
-                    descricoes_criadas.append(descricao)
+                descricao = cls.objects.create(
+                    conta=conta,
+                    criada_por=usuario,
+                    observacoes='Descrição criada automaticamente',
+                    **desc_data
+                )
+                descricoes_criadas.append(descricao)
         
         return descricoes_criadas
-
-
-class CategoriaMovimentacao(models.Model):
-    """
-    Categorias de movimentação financeira configuráveis por conta
-    
-    Este modelo permite que cada conta/cliente configure suas próprias
-    categorias de movimentação conforme suas necessidades específicas,
-    proporcionando flexibilidade total na organização financeira.
-    """
-    
-    class Meta:
-        db_table = 'categoria_movimentacao'
-        unique_together = ('conta', 'codigo')
-        verbose_name = "Categoria de Movimentação"
-        verbose_name_plural = "Categorias de Movimentação"
-        indexes = [
-            models.Index(fields=['conta', 'ativa']),
-            models.Index(fields=['tipo_movimentacao']),
-            models.Index(fields=['codigo']),
-        ]
-        ordering = ['tipo_movimentacao', 'ordem', 'nome']
-
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='categorias_movimentacao', 
-        null=False
-    )
-    
-    # Identificação da categoria
-    codigo = models.CharField(
-        max_length=50,
-        verbose_name="Código",
-        help_text="Código único para identificar a categoria (ex: receita_servicos, despesa_operacional)"
-    )
-    
-    nome = models.CharField(
-        max_length=100,
-        verbose_name="Nome",
-        help_text="Nome descritivo da categoria"
-    )
-    
-    descricao = models.TextField(
-        blank=True,
-        verbose_name="Descrição",
-        help_text="Descrição detalhada sobre quando usar esta categoria"
-    )
-    
-    # Configurações de uso
-    TIPOS_MOVIMENTACAO = [
-        ('credito', 'Apenas Créditos'),
-        ('debito', 'Apenas Débitos'),
-        ('ambos', 'Créditos e Débitos'),
-    ]
-    
-    tipo_movimentacao = models.CharField(
-        max_length=10,
-        choices=TIPOS_MOVIMENTACAO,
-        default='ambos',
-        verbose_name="Tipo de Movimentação",
-        help_text="Tipos de movimentação permitidos com esta categoria"
-    )
-    
-    # Configurações visuais e organizacionais
-    cor = models.CharField(
-        max_length=7,
-        default='#6c757d',
-        verbose_name="Cor",
-        help_text="Cor em hexadecimal para representar esta categoria (#RRGGBB)"
-    )
-    
-    icone = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name="Ícone",
-        help_text="Nome do ícone para representar esta categoria (ex: fas fa-money-bill)"
-    )
-    
-    ordem = models.PositiveIntegerField(
-        default=0,
-        verbose_name="Ordem de Exibição",
-        help_text="Ordem para exibição nas listas (menor número aparece primeiro)"
-    )
-    
-    # Configurações contábeis/fiscais
-    NATUREZAS_CHOICES = [
-        ('receita', 'Receita'),
-        ('despesa', 'Despesa'),
-        ('transferencia', 'Transferência'),
-        ('ajuste', 'Ajuste'),
-        ('aplicacao', 'Aplicação Financeira'),
-        ('emprestimo', 'Empréstimo'),
-        ('outros', 'Outros'),
-    ]
-    
-    natureza = models.CharField(
-        max_length=20,
-        choices=NATUREZAS_CHOICES,
-        default='outros',
-        verbose_name="Natureza Contábil",
-        help_text="Natureza contábil da categoria para classificação"
-    )
-    
-    codigo_contabil = models.CharField(
-        max_length=20,
-        blank=True,
-        verbose_name="Código Contábil",
-        help_text="Código contábil padrão para esta categoria (plano de contas)"
-    )
-    
-    # Configurações tributárias
-    possui_retencao_ir = models.BooleanField(
-        default=False,
-        verbose_name="Possui Retenção IR",
-        help_text="Se movimentações desta categoria podem ter retenção de IR"
-    )
-    
-    percentual_retencao_ir_padrao = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0.00,
-        verbose_name="% Retenção IR Padrão",
-        help_text="Percentual padrão de retenção de IR para esta categoria"
-    )
-    
-    # Configurações de controle
-    exige_documento = models.BooleanField(
-        default=False,
-        verbose_name="Exige Documento",
-        help_text="Se movimentações desta categoria exigem número de documento"
-    )
-    
-    exige_aprovacao = models.BooleanField(
-        default=False,
-        verbose_name="Exige Aprovação",
-        help_text="Se movimentações desta categoria exigem aprovação adicional"
-    )
-    
-    limite_valor = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Limite de Valor",
-        help_text="Valor limite para movimentações desta categoria (opcional)"
-    )
-    
-    # Status e controle
-    ativa = models.BooleanField(
-        default=True,
-        verbose_name="Ativa",
-        help_text="Se esta categoria está disponível para uso"
-    )
-    
-    categoria_sistema = models.BooleanField(
-        default=False,
-        verbose_name="Categoria do Sistema",
-        help_text="Indica se é uma categoria criada automaticamente pelo sistema"
-    )
-    
-    # Auditoria
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    criada_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='categorias_movimentacao_criadas',
-        verbose_name="Criada Por"
-    )
-    
-    observacoes = models.TextField(
-        blank=True,
-        verbose_name="Observações",
-        help_text="Observações sobre o uso desta categoria"
-    )
-
-    def clean(self):
-        """Validações personalizadas"""
-        # Validar código único por conta
-        if self.codigo:
-            qs = CategoriaMovimentacao.objects.filter(
-                conta=self.conta,
-                codigo=self.codigo
-            )
-            if self.pk:
-                qs = qs.exclude(pk=self.pk)
-            
-            if qs.exists():
-                raise ValidationError({
-                    'codigo': 'Já existe uma categoria com este código nesta conta'
-                })
-        
-        # Validar cor hexadecimal
-        if self.cor and not self.cor.startswith('#'):
-            raise ValidationError({
-                'cor': 'Cor deve estar no formato hexadecimal (#RRGGBB)'
-            })
-        
-        # Validar percentual de retenção
-        if self.percentual_retencao_ir_padrao < 0 or self.percentual_retencao_ir_padrao > 100:
-            raise ValidationError({
-                'percentual_retencao_ir_padrao': 'Percentual deve estar entre 0% e 100%'
-            })
-        
-        # Se não possui retenção, o percentual deve ser zero
-        if not self.possui_retencao_ir and self.percentual_retencao_ir_padrao > 0:
-            raise ValidationError({
-                'percentual_retencao_ir_padrao': 'Percentual deve ser zero se não possui retenção'
-            })
-        
-        # Validar limite de valor
-        if self.limite_valor is not None and self.limite_valor <= 0:
-            raise ValidationError({
-                'limite_valor': 'Limite de valor deve ser positivo'
-            })
-
-    def save(self, *args, **kwargs):
-        # Gerar código automaticamente se não foi fornecido
-        if not self.codigo:
-            import re
-            # Converter nome para código (remover acentos, espaços, etc.)
-            codigo_base = re.sub(r'[^a-zA-Z0-9]', '_', self.nome.lower())
-            codigo_base = re.sub(r'_+', '_', codigo_base).strip('_')
-            
-            # Garantir unicidade
-            contador = 1
-            codigo_candidato = codigo_base
-            while CategoriaMovimentacao.objects.filter(
-                conta=self.conta,
-                codigo=codigo_candidato
-            ).exclude(pk=self.pk).exists():
-                codigo_candidato = f"{codigo_base}_{contador}"
-                contador += 1
-            
-            self.codigo = codigo_candidato
-        
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.nome}"
-    
-    @property
-    def nome_completo(self):
-        """Retorna nome completo com natureza"""
-        natureza_display = self.get_natureza_display()
-        return f"[{natureza_display}] {self.nome}"
-    
-    @property
-    def cor_css(self):
-        """Retorna a cor formatada para CSS"""
-        return self.cor if self.cor.startswith('#') else f"#{self.cor}"
-    
-    def pode_ser_usada_para(self, tipo_movimentacao):
-        """Verifica se pode ser usada para um tipo específico de movimentação"""
-        if self.tipo_movimentacao == 'ambos':
-            return True
-        
-        if tipo_movimentacao == TIPO_MOVIMENTACAO_CONTA_CREDITO:
-            return self.tipo_movimentacao == 'credito'
-        elif tipo_movimentacao == TIPO_MOVIMENTACAO_CONTA_DEBITO:
-            return self.tipo_movimentacao == 'debito'
-        
-        return False
-    
-    def validar_valor(self, valor):
-        """Valida se um valor é aceito por esta categoria"""
-        if not self.ativa:
-            raise ValidationError("Esta categoria não está ativa")
-        
-        if self.limite_valor and valor > self.limite_valor:
-            raise ValidationError(f"Valor excede o limite de R$ {self.limite_valor} para a categoria '{self.nome}'")
-    
-    def calcular_retencao_ir(self, valor_base):
-        """Calcula o valor da retenção de IR"""
-        if not self.possui_retencao_ir or self.percentual_retencao_ir_padrao <= 0:
-            return 0
-        
-        return valor_base * (self.percentual_retencao_ir_padrao / 100)
-    
-    @classmethod
-    def obter_ativas(cls, conta):
-        """Obtém todas as categorias ativas para uma conta"""
-        return cls.objects.filter(
-            conta=conta,
-            ativa=True
-        ).order_by('tipo_movimentacao', 'ordem', 'nome')
-    
-    @classmethod
-    def obter_por_natureza(cls, conta, natureza):
-        """Obtém categorias por natureza"""
-        return cls.objects.filter(
-            conta=conta,
-            natureza=natureza,
-            ativa=True
-        ).order_by('ordem', 'nome')
-    
-    @classmethod
-    def obter_creditos(cls, conta):
-        """Obtém apenas categorias para crédito"""
-        return cls.objects.filter(
-            conta=conta,
-            tipo_movimentacao__in=['credito', 'ambos'],
-            ativa=True
-        ).order_by('ordem', 'nome')
-    
-    @classmethod
-    def obter_debitos(cls, conta):
-        """Obtém apenas categorias para débito"""
-        return cls.objects.filter(
-            conta=conta,
-            tipo_movimentacao__in=['debito', 'ambos'],
-            ativa=True
-        ).order_by('ordem', 'nome')
-    
-    @classmethod
-    def criar_categorias_padrao(cls, conta, usuario=None):
-        """Cria categorias padrão para uma nova conta"""
-        categorias_padrao = [
-            # === RECEITAS ===
-            {
-                'codigo': 'receita_servicos',
-                'nome': 'Receita de Serviços',
-                'natureza': 'receita',
-                'tipo_movimentacao': 'credito',
-                'cor': '#28a745',
-                'icone': 'fas fa-user-md',
-                'ordem': 10,
-                'descricao': 'Receitas provenientes de serviços médicos prestados',
-                'categoria_sistema': True,
-            },
-            {
-                'codigo': 'receita_outros',
-                'nome': 'Outras Receitas',
-                'natureza': 'receita',
-                'tipo_movimentacao': 'credito',
-                'cor': '#20c997',
-                'icone': 'fas fa-plus-circle',
-                'ordem': 20,
-                'descricao': 'Outras receitas não relacionadas aos serviços principais',
-                'categoria_sistema': True,
-            },
-            
-            # === ADIANTAMENTOS RECEBIDOS ===
-            {
-                'codigo': 'adiantamento_recebido',
-                'nome': 'Adiantamento Recebido',
-                'natureza': 'receita',
-                'tipo_movimentacao': 'credito',
-                'cor': '#17a2b8',
-                'icone': 'fas fa-hand-holding-usd',
-                'ordem': 30,
-                'descricao': 'Adiantamentos de lucros ou pagamentos recebidos',
-                'categoria_sistema': True,
-            },
-            
-            # === EMPRÉSTIMOS ===
-            {
-                'codigo': 'emprestimo_recebido',
-                'nome': 'Empréstimo Recebido',
-                'natureza': 'emprestimo',
-                'tipo_movimentacao': 'credito',
-                'cor': '#6f42c1',
-                'icone': 'fas fa-handshake',
-                'ordem': 40,
-                'descricao': 'Empréstimos recebidos de terceiros',
-                'exige_documento': True,
-                'categoria_sistema': True,
-            },
-            {
-                'codigo': 'emprestimo_concedido',
-                'nome': 'Empréstimo Concedido',
-                'natureza': 'emprestimo',
-                'tipo_movimentacao': 'debito',
-                'cor': '#6f42c1',
-                'icone': 'fas fa-hand-holding-heart',
-                'ordem': 110,
-                'descricao': 'Empréstimos concedidos a terceiros',
-                'exige_documento': True,
-                'categoria_sistema': True,
-            },
-            
-            # === DESPESAS ===
-            {
-                'codigo': 'despesa_operacional',
-                'nome': 'Despesa Operacional',
-                'natureza': 'despesa',
-                'tipo_movimentacao': 'debito',
-                'cor': '#dc3545',
-                'icone': 'fas fa-file-invoice-dollar',
-                'ordem': 50,
-                'descricao': 'Despesas relacionadas à operação médica',
-                'exige_documento': True,
-                'categoria_sistema': True,
-            },
-            {
-                'codigo': 'despesa_pessoal',
-                'nome': 'Despesa Pessoal',
-                'natureza': 'despesa',
-                'tipo_movimentacao': 'debito',
-                'cor': '#fd7e14',
-                'icone': 'fas fa-user',
-                'ordem': 60,
-                'descricao': 'Retiradas e despesas pessoais do médico',
-                'categoria_sistema': True,
-            },
-            
-            # === ADIANTAMENTOS CONCEDIDOS ===
-            {
-                'codigo': 'adiantamento_concedido',
-                'nome': 'Adiantamento Concedido',
-                'natureza': 'despesa',
-                'tipo_movimentacao': 'debito',
-                'cor': '#fd7e14',
-                'icone': 'fas fa-donate',
-                'ordem': 70,
-                'descricao': 'Adiantamentos concedidos a funcionários ou parceiros',
-                'categoria_sistema': True,
-            },
-            
-            # === TRANSFERÊNCIAS ===
-            {
-                'codigo': 'transferencia_recebida',
-                'nome': 'Transferência Recebida',
-                'natureza': 'transferencia',
-                'tipo_movimentacao': 'credito',
-                'cor': '#007bff',
-                'icone': 'fas fa-arrow-circle-down',
-                'ordem': 80,
-                'descricao': 'Transferências bancárias recebidas',
-                'exige_documento': True,
-                'categoria_sistema': True,
-            },
-            {
-                'codigo': 'transferencia_enviada',
-                'nome': 'Transferência Enviada',
-                'natureza': 'transferencia',
-                'tipo_movimentacao': 'debito',
-                'cor': '#007bff',
-                'icone': 'fas fa-arrow-circle-up',
-                'ordem': 90,
-                'descricao': 'Transferências bancárias enviadas',
-                'exige_documento': True,
-                'categoria_sistema': True,
-            },
-            
-            # === AJUSTES ===
-            {
-                'codigo': 'ajuste_credito',
-                'nome': 'Ajuste a Crédito',
-                'natureza': 'ajuste',
-                'tipo_movimentacao': 'credito',
-                'cor': '#28a745',
-                'icone': 'fas fa-plus',
-                'ordem': 100,
-                'descricao': 'Ajustes contábiles positivos',
-                'exige_aprovacao': True,
-                'categoria_sistema': True,
-            },
-            {
-                'codigo': 'ajuste_debito',
-                'nome': 'Ajuste a Débito',
-                'natureza': 'ajuste',
-                'tipo_movimentacao': 'debito',
-                'cor': '#dc3545',
-                'icone': 'fas fa-minus',
-                'ordem': 120,
-                'descricao': 'Ajustes contábiles negativos',
-                'exige_aprovacao': True,
-                'categoria_sistema': True,
-            },
-            
-            # === APLICAÇÕES FINANCEIRAS ===
-            {
-                'codigo': 'aplicacao_financeira',
-                'nome': 'Aplicação Financeira',
-                'natureza': 'aplicacao',
-                'tipo_movimentacao': 'debito',
-                'cor': '#6610f2',
-                'icone': 'fas fa-chart-line',
-                'ordem': 130,
-                'descricao': 'Aplicações financeiras realizadas',
-                'exige_documento': True,
-                'categoria_sistema': True,
-            },
-            {
-                'codigo': 'resgate_aplicacao',
-                'nome': 'Resgate de Aplicação',
-                'natureza': 'aplicacao',
-                'tipo_movimentacao': 'credito',
-                'cor': '#6610f2',
-                'icone': 'fas fa-piggy-bank',
-                'ordem': 35,
-                'descricao': 'Resgates de aplicações financeiras',
-                'exige_documento': True,
-                'categoria_sistema': True,
-            },
-        ]
-        
-        # Criar as categorias
-        categorias_criadas = []
-        for categoria_data in categorias_padrao:
-            categoria_data['conta'] = conta
-            categoria_data['criada_por'] = usuario
-            
-            # Verificar se já existe
-            if not cls.objects.filter(conta=conta, codigo=categoria_data['codigo']).exists():
-                categoria = cls.objects.create(**categoria_data)
-                categorias_criadas.append(categoria)
-        
-        return categorias_criadas
 
 
 class AplicacaoFinanceira(SaaSBaseModel):

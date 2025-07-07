@@ -162,21 +162,21 @@ def monta_apuracao_csll_irpj_new(request, empresa_id):
         apuracao_csll.receita_consultas += apuracao_csll.receita_plantao
         apuracao_irpj.receita_consultas += apuracao_irpj.receita_plantao
 
-        apuracao_csll.base_calculo = apuracao_csll.receita_consultas   * (alicota.CSLL_ALIC_2/100)
-        apuracao_irpj.base_calculo = apuracao_irpj.receita_consultas   * (alicota.IRPJ_ALIC_2/100)
+        # Aplica CSLL_ALIC_2 e IRPJ_ALIC_2 para consultas e plantão
+        apuracao_csll.base_calculo = apuracao_csll.receita_consultas * (aliquota.CSLL_ALIC_2/100)
+        apuracao_irpj.base_calculo = apuracao_irpj.receita_consultas * (aliquota.IRPJ_ALIC_2/100)
 
+        # Para outros serviços, aplica CSLL_ALIC_1 e IRPJ_ALIC_1
         #for fat_outros in qry_fat_alicota_outros:
         if (qry_fat_alicota_outros):
             fat_outros = qry_fat_alicota_outros.first()
-
             # soma impostos anteriores
             # CSLL
             apuracao_csll.receita_outros = fat_outros.get('faturamento')
-            apuracao_csll.base_calculo += apuracao_csll.receita_outros* (alicota.CSLL_ALIC_1 /100)
-
+            apuracao_csll.base_calculo += apuracao_csll.receita_outros * (aliquota.CSLL_ALIC_1 / 100)
             # IRPJ
-            apuracao_irpj.receita_outros = fat_outros.get('faturamento')     
-            apuracao_irpj.base_calculo += apuracao_irpj.receita_outros * (alicota.IRPJ_ALIC_1 /100)
+            apuracao_irpj.receita_outros = fat_outros.get('faturamento')
+            apuracao_irpj.base_calculo += apuracao_irpj.receita_outros * (aliquota.IRPJ_ALIC_1 / 100)
             apuracao_irpj.imposto_retido += fat_outros.get('irpj')
 
 
@@ -610,7 +610,7 @@ def monta_balanco(request, socio_id, periodo_fiscal):
     dsBalanco.imposto_csll_imposto_pagar = dsBalanco.imposto_csll_imposto_devido - dsBalanco.imposto_csll_imposto_retido
 
     # IRPJ 
-    dsBalanco.imposto_irpj_base_calculo = ((dsBalanco.faturamento_servicos_consultas + dsBalanco.faturamento_servicos_plantao) * (alicota.IRPJ_ALIC_2/100)) + (dsBalanco.faturamento_servicos_outros * alicota.CSLL_ALIC_1 /100)
+    dsBalanco.imposto_irpj_base_calculo = ((dsBalanco.faturamento_servicos_consultas + dsBalanco.faturamento_servicos_plantao) * (alicota.IRPJ_ALIC_2/100)) + (dsBalanco.faturamento_servicos_outros * alicota.IRPJ_ALIC_1 /100)
     dsBalanco.imposto_irpj_imposto_devido = dsBalanco.imposto_irpj_base_calculo * (alicota.IRPJ_BASE_CAL /100)
     
     # CALCULA IMPOSTO ADICIONAL ???

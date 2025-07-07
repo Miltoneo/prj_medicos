@@ -1,0 +1,312 @@
+---
+title: Diagrama ER Completo - prj_medicos (Conforme Diretrizes)
+---
+# Definição de projeto: Não criar novo arquivo de documentação se já existir arquivo que trate do mesmo assunto. Utilize e atualize sempre o arquivo existente para manter a rastreabilidade e evitar duplicidade de informações.
+erDiagram
+    CONTA ||--o{ EMPRESA : possui
+    CONTA ||--o{ LICENCA : "licença"
+    CONTA ||--o{ SOCIO : "tem"
+    CONTA ||--o{ MEIO_PAGAMENTO : "meios"
+    CONTA ||--o{ GRUPO_DESPESA : "grupos"
+    CONTA ||--o{ ALIQUOTAS : "configura"
+    CONTA ||--o{ DESCRICAO_MOVIMENTACAO_FINANCEIRA : "descrições mov."
+    CONTA ||--o{ CONFIGURACAO_SISTEMA_MANUAL : "configura"
+    CONTA ||--o{ DESPESA : "despesas"
+    CONTA ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "rateios mensais"
+    CONTA ||--o{ TEMPLATE_RATEIO_MENSAL_DESPESAS : "templates rateio"
+    CONTA ||--o{ LOG_AUDITORIA_FINANCEIRO : "logs auditoria"
+    CONTA ||--o{ GRUPO_DESPESA : "grupos despesa"
+    EMPRESA ||--o{ SOCIO : "possui"
+    EMPRESA ||--o{ REGIME_TRIBUTARIO_HISTORICO : "tem historico"
+    EMPRESA ||--o{ NOTA_FISCAL : "emite"
+    SOCIO ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "rateios"
+    SOCIO ||--o{ DESPESA : "despesas"
+    SOCIO ||--o{ NOTA_FISCAL_RATEIO_MEDICO : "rateio nf"
+    GRUPO_DESPESA ||--o{ ITEM_DESPESA : "contém"
+    ITEM_DESPESA ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "rateios"
+    ITEM_DESPESA ||--o{ DESPESA : "despesas"
+    ALIQUOTAS ||--o{ NOTA_FISCAL : "aplica em"
+    NOTA_FISCAL ||--o{ NOTA_FISCAL_RATEIO_MEDICO : "rateia em"
+    MEIO_PAGAMENTO ||--o{ NOTA_FISCAL : "usado em"
+    CONFIGURACAO_SISTEMA_MANUAL ||--o{ LOG_AUDITORIA_FINANCEIRO : "logs"
+
+    CONTA {
+        int id PK
+        string name
+        string cnpj
+        date created_at
+    }
+    LICENCA {
+        int id PK
+        int conta_id FK
+        string plano
+        date data_inicio
+        date data_fim
+        bool ativa
+        int limite_usuarios
+    }
+    EMPRESA {
+        int id PK
+        int conta_id FK
+        string name
+        string nome_fantasia
+        string cnpj
+        string inscricao_estadual
+        string inscricao_municipal
+        string telefone
+        string email
+        string site
+        string endereco
+        string numero
+        string complemento
+        string bairro
+        string cidade
+        string estado
+        string cep
+        int regime_tributario
+        decimal receita_bruta_ano_anterior
+        date data_ultima_alteracao_regime
+        string periodicidade_irpj_csll
+        int dia_vencimento_iss
+        bool ativo
+        datetime created_at
+        datetime updated_at
+    }
+    SOCIO {
+        int id PK
+        int conta_id FK
+        int empresa_id FK
+        int pessoa_id FK
+        bool ativo
+        date data_entrada
+        date data_saida
+        text observacoes
+    }
+    PESSOA {
+        int id PK
+        int conta_id FK
+        int user_id FK
+        string name
+        string cpf
+        string rg
+        date data_nascimento
+        string telefone
+        string celular
+        string email
+        string endereco
+        string numero
+        string complemento
+        string bairro
+        string cidade
+        string estado
+        string cep
+        string crm
+        string especialidade
+        bool ativo
+        datetime created_at
+        datetime updated_at
+    }
+    REGIME_TRIBUTARIO_HISTORICO {
+        int id PK
+        int empresa_id FK
+        int regime_tributario
+        date data_inicio
+        date data_fim
+        decimal receita_bruta_ano_anterior
+        bool comunicado_receita_federal
+        date data_comunicacao_rf
+        bool comunicado_municipio
+        date data_comunicacao_municipio
+        datetime created_at
+        int created_by_id FK
+        text observacoes
+    }
+    ALIQUOTAS {
+        int id PK
+        int conta_id FK
+        decimal ISS_CONSULTAS
+        decimal ISS_PLANTAO
+        decimal ISS_OUTROS
+        decimal PIS
+        decimal COFINS
+        decimal IRPJ_BASE_CAL
+        decimal IRPJ_ALIQUOTA_1
+        decimal IRPJ_ALIQUOTA_2
+        decimal IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
+        decimal IRPJ_ADICIONAL
+        decimal CSLL_BASE_CAL
+        decimal CSLL_ALIQUOTA_1
+        decimal CSLL_ALIQUOTA_2
+        bool ativa
+        date data_vigencia_inicio
+        date data_vigencia_fim
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
+        text observacoes
+    }
+    NOTA_FISCAL {
+        int id PK
+        int empresa_destinataria_id FK
+        int tipo_aliquota
+        decimal val_bruto
+        decimal val_ISS
+        decimal val_PIS
+        decimal val_COFINS
+        decimal val_IR
+        decimal val_CSLL
+        decimal val_liquido
+        date dtEmissao
+        date dtVencimento
+        date dtRecebimento
+        string status_recebimento
+        int meio_pagamento_id FK
+    }
+    NOTA_FISCAL_RATEIO_MEDICO {
+        int id PK
+        int nota_fiscal_id FK
+        int socio_id FK
+        decimal percentual_participacao
+        decimal valor_bruto
+        decimal valor_iss
+        decimal valor_pis
+        decimal valor_cofins
+        decimal valor_ir
+        decimal valor_csll
+        decimal valor_liquido
+        string tipo_rateio
+        text observacoes_rateio
+        datetime data_rateio
+        int configurado_por_id FK
+        datetime updated_at
+    }
+    MEIO_PAGAMENTO {
+        int id PK
+        int conta_id FK
+        string codigo
+        string nome
+        string descricao
+        decimal taxa_percentual
+        decimal taxa_fixa
+        decimal valor_minimo
+        decimal valor_maximo
+        int prazo_compensacao_dias
+        time horario_limite
+        string tipo_movimentacao
+        bool exige_documento
+        bool exige_aprovacao
+        bool ativo
+        date data_inicio_vigencia
+        date data_fim_vigencia
+        datetime created_at
+        datetime updated_at
+        int criado_por_id FK
+        text observacoes
+    }
+    GRUPO_DESPESA {
+        int id PK
+        int conta_id FK
+        string codigo
+        string descricao
+        int tipo_rateio
+    }
+    ITEM_DESPESA {
+        int id PK
+        int conta_id FK
+        int grupo_id FK
+        string codigo
+        string descricao
+    }
+    ITEM_DESPESA_RATEIO_MENSAL {
+        int id PK
+        int conta_id FK
+        int item_despesa_id FK
+        int socio_id FK
+        date mes_referencia
+        decimal percentual_rateio
+        bool ativo
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
+        text observacoes
+    }
+    TEMPLATE_RATEIO_MENSAL_DESPESAS {
+        int id PK
+        int conta_id FK
+        date mes_referencia
+        string status
+        datetime data_criacao
+        datetime data_finalizacao
+        int criada_por_id FK
+        int finalizada_por_id FK
+        text observacoes
+    }
+    DESPESA {
+        int id PK
+        int conta_id FK
+        int item_id FK
+        int empresa_id FK
+        int socio_id FK
+        int template_rateio_id FK
+        date data
+        decimal valor
+        string status
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
+    }
+    DESCRICAO_MOVIMENTACAO_FINANCEIRA {
+        int id PK
+        int conta_id FK
+        string nome
+        string descricao
+        string tipo_movimentacao
+        bool exige_documento
+        bool exige_aprovacao
+        string codigo_contabil
+        bool possui_retencao_ir
+        decimal percentual_retencao_ir
+        bool uso_frequente
+        datetime created_at
+        datetime updated_at
+        int criada_por_id FK
+        text observacoes
+    }
+    CONFIGURACAO_SISTEMA_MANUAL {
+        int id PK
+        int conta_id FK
+        decimal limite_valor_alto
+        decimal limite_aprovacao_gerencial
+        bool exigir_documento_para_valores_altos
+        bool registrar_ip_usuario
+        int dias_edicao_lancamento
+        bool permitir_lancamento_mes_fechado
+        bool fechamento_automatico
+        bool notificar_valores_altos
+        string email_notificacao
+        bool backup_automatico
+        int retencao_logs_dias
+        bool ativa
+        datetime created_at
+        datetime updated_at
+        int criada_por_id FK
+        text observacoes
+    }
+    LOG_AUDITORIA_FINANCEIRO {
+        int id PK
+        int conta_id FK
+        int usuario_id FK
+        datetime data_acao
+        string acao
+        text descricao_acao
+        int objeto_id
+        string objeto_tipo
+        json valores_anteriores
+        json valores_novos
+        string ip_origem
+        text user_agent
+        string resultado
+        text mensagem_erro
+        int duracao_ms
+        json dados_extras
+    }

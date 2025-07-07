@@ -59,6 +59,11 @@
 - Documentar apenas o que está implementado no código
 - Scripts de teste devem ficar exclusivamente na pasta de scripts (ex: `test_scripts/`)
 
+### **📁 7.1. CENTRALIZAÇÃO E NÃO DUPLICIDADE DE DOCUMENTAÇÃO**
+- Não criar novo arquivo de documentação se já existir arquivo que trate do mesmo assunto.
+- Utilize e atualize sempre o arquivo existente para manter a rastreabilidade e evitar duplicidade de informações.
+- Antes de documentar, verifique a existência de arquivos relacionados no diretório `docs/` e subpastas.
+
 ### **🔄 8. DESENVOLVIMENTO E MANUTENÇÃO**
 - Testar todas as alterações em ambiente de desenvolvimento
 - Manter compatibilidade com Django 4.x
