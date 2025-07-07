@@ -7,6 +7,8 @@ from .models import *
 from .data import *
 from .forms import *
 
+from django_tables2 import tables, LinkColumn, TemplateColumn
+
 #-----------------------------------
 class NFiscal_Table(tables.Table):
 
@@ -63,11 +65,11 @@ class Aplic_fincanceiras_table(tables.Table):
     editar = LinkColumn('medicos:aplicacoes_mes', text='Editar',args=[A('pk')],orderable=False, empty_values=())
 
     class Meta:
-        model = AplicacaoFinanceira
+        model = Aplic_financeiras
         template_name = "django_tables2/bootstrap.html"
         orderable = True
-        sequence = ("editar", 'data', 'rendimentos', 'irrf')
-        exclude = ('id', 'fornecedor', 'descricao', 'conta')  
+        sequence = ("editar", 'data', 'rendimentos' )
+        exclude = ('id', 'fornecedor' )  
 
 #-----------------------------------
 class Desc_mov_financeira_Table(tables.Table):

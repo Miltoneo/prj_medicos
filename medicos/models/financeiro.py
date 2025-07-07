@@ -457,7 +457,7 @@ class MeioPagamento(models.Model):
         return meios_criados
 
 
-class DescricaoMovimentacao(models.Model):
+class DescricaoMovimentacaoFinanceira(models.Model):
     """
     Descrições de movimentação financeira cadastradas pelos usuários
     
@@ -595,7 +595,7 @@ class DescricaoMovimentacao(models.Model):
         
         # Validar unicidade do nome por conta
         if self.nome:
-            qs = DescricaoMovimentacao.objects.filter(
+            qs = DescricaoMovimentacaoFinanceira.objects.filter(
                 conta=self.conta,
                 nome=self.nome
             )
@@ -1441,7 +1441,7 @@ class Financeiro(SaaSBaseModel):
     )
     
     desc_movimentacao = models.ForeignKey(
-        DescricaoMovimentacao,
+        DescricaoMovimentacaoFinanceira,
         on_delete=models.PROTECT,
         related_name='lancamentos',
         verbose_name="Descrição da Movimentação",
@@ -1669,5 +1669,4 @@ class Financeiro(SaaSBaseModel):
         return consolidado
 
 
-# Manter compatibilidade com código legacy que pode referenciar estes aliases
-Desc_movimentacao_financeiro = DescricaoMovimentacao
+

@@ -13,21 +13,22 @@ __all__ = [
     'Pessoa', 'Empresa', 'Socio', 'ContaScopedManager',
     
     # Modelos Fiscais
-    'Aliquotas', 'NotaFiscal', 'NotaFiscalRateioMedico', 'RegimeTributarioHistorico', 
-    'Balanco', 'Apuracao_pis', 'Apuracao_cofins', 'Apuracao_csll', 'Apuracao_irpj', 'Apuracao_iss', 'Aplic_financeiras',
+    'Aliquotas', 'NotaFiscal', 'Balanco', 'Apuracao_pis', 'Apuracao_cofins',
+    'Apuracao_csll', 'Apuracao_irpj', 'Apuracao_iss', 'Aplic_financeiras',
     
     # Modelos de Despesas
-    'Despesa_Grupo', 'Despesa_Item', 'ItemDespesaRateioMensal', 'ConfiguracaoRateioMensal', 
+    'Despesa_Grupo', 'Despesa_Item', 'PercentualRateioMensal', 'ConfiguracaoRateioMensal', 
     'Despesa', 'Despesa_socio_rateio',
     
     # Modelos Financeiros
-    'MeioPagamento', 'DescricaoMovimentacao', 'Desc_movimentacao_financeiro', 'Financeiro',
+    'MeioPagamento', 'DescricaoMovimentacao', 'Desc_movimentacao_financeiro', 'Financeiro', 'SaldoMensalMedico',
     'AplicacaoFinanceira', 'CategoriaMovimentacao',
     
     # Modelos de Auditoria
     'LogAuditoriaFinanceiro', 'ConfiguracaoSistemaManual', 'registrar_auditoria',
     
-    # Modelos de Relatórios (módulo simplificado - sem modelos ativos)
+    # Modelos de Relatórios
+    'RelatorioConsolidadoMensal',
     
     # Constantes importantes
     'app_name', 'REGIME_TRIBUTACAO_COMPETENCIA', 'REGIME_TRIBUTACAO_CAIXA',

@@ -1,0 +1,8 @@
+Arquivos removidos da pasta docs/modelagem em 07/07/2025:
+- diagrama-er-despesas-completo.md
+- diagrama-er-fiscal.md
+- diagrama-er-hardcoded-completo.md
+- diagrama-er-sistema-completo.md
+- diagrama-er-visual.md
+- regras-negocio-fiscal.md
+- resumo-executivo-fiscal.md
