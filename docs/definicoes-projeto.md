@@ -101,6 +101,33 @@
 - Cobertura de testes para funcionalidades críticas
 - Documentação deve estar sempre sincronizada
 
+### **🧩 4.1. ATUALIZAÇÃO DE HARDCODE**
+- Sempre que houver alteração em modelos, campos ou relacionamentos, atualizar imediatamente o diagrama ER hardcoded e os arquivos de definição de modelos.
+- O diagrama ER e as definições hardcoded devem refletir fielmente o código-fonte vigente dos modelos Django.
+- Toda documentação de modelagem deve ser gerada ou revisada a partir do código real, nunca de versões antigas ou memória.
+- Mudanças em nomes de campos, remoção de redundâncias ou ajustes de nomenclatura devem ser refletidos nos arquivos de documentação e diagramas imediatamente.
+- A sincronização entre código e documentação é obrigatória e contínua.
+
+---
+
+### **✅ Checklist para ER e Modelagem de Dados Confiável (Revisado)**
+
+- [ ] Todos os arquivos em `medicos/models/` foram lidos e analisados?
+- [ ] Para cada modelo, o código-fonte está aberto lado a lado com o ER durante a revisão?
+- [ ] Todos os modelos definidos no código estão presentes no ER?
+- [ ] **Cada campo de cada modelo foi conferido linha a linha entre o código e o ER?**
+- [ ] Todos os tipos de campo (incluindo FKs, M2M, O2O, Decimal, Boolean, Date, etc.) estão corretos no ER?
+- [ ] Todos os relacionamentos (FK, M2M, O2O) estão representados?
+- [ ] Todas as constraints (`unique_together`, `indexes`, etc.) estão documentadas?
+- [ ] O ER/documentação foi atualizado imediatamente após a última alteração no código?
+- [ ] O ER/documentação não contém modelos/campos/relacionamentos que não existem mais no código?
+- [ ] Nomenclatura dos modelos e campos está idêntica à do código (sem aliases)?
+- [ ] O ER/documentação foi validado por outro desenvolvedor ou por revisão cruzada?
+- [ ] Toda alteração em modelos foi refletida nos arquivos de documentação e diagramas?
+- [ ] (Recomendado) Utilizou script ou ferramenta para extração automática dos campos dos modelos?
+
+> **Este checklist deve ser seguido e marcado a cada alteração de modelagem para garantir total confiabilidade e aderência ao código-fonte. Conferência linha a linha é obrigatória para cada campo de cada modelo.**
+
 ---
 
 ## ⚠️ **PROIBIÇÕES ABSOLUTAS**

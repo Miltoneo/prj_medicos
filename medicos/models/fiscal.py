@@ -967,9 +967,6 @@ class Aliquotas(models.Model):
             }
 
 
-
-
-
 class NotaFiscal(models.Model):
     """
     Modelo para gerenciamento de Notas Fiscais de Serviços
