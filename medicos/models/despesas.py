@@ -422,114 +422,6 @@ class ItemDespesaRateioMensal(models.Model):
         return rateios_criados
 
 
-class TemplateRateioMensalDespesas(models.Model):
-    """Template/configuração geral de rateio mensal para despesas"""
-    
-    class Meta:
-        db_table = 'configuracao_rateio_mensal'
-        unique_together = ('conta', 'mes_referencia')
-        verbose_name = "Template de Rateio Mensal de Despesas"
-        verbose_name_plural = "Templates de Rateio Mensal de Despesas"
-
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='templates_rateio_despesas'
-    )
-    
-    # Mês de referência
-    mes_referencia = models.DateField(
-        verbose_name="Mês de Referência",
-        help_text="Data no formato YYYY-MM-01"
-    )
-    
-    # Status da configuração
-    STATUS_CHOICES = [
-        ('rascunho', 'Rascunho'),
-        ('em_configuracao', 'Em Configuração'),
-        ('finalizada', 'Finalizada'),
-        ('aplicada', 'Aplicada às Despesas'),
-    ]
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='rascunho',
-        verbose_name="Status"
-    )
-    
-    # Controle
-    data_criacao = models.DateTimeField(auto_now_add=True)
-    data_finalizacao = models.DateTimeField(null=True, blank=True)
-    criada_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='templates_rateio_criados',
-        verbose_name="Criada Por"
-    )
-    finalizada_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='templates_rateio_finalizados',
-        verbose_name="Finalizada Por"
-    )
-    
-    # Observações
-    observacoes = models.TextField(blank=True, verbose_name="Observações")
-
-    def save(self, *args, **kwargs):
-        # Normalizar a data para o primeiro dia do mês
-        if self.mes_referencia:
-            self.mes_referencia = self.mes_referencia.replace(day=1)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Rateio {self.mes_referencia.strftime('%m/%Y')} - {self.get_status_display()}"
-    
-    def copiar_percentuais_mes_anterior(self):
-        """
-        Copia os percentuais do mês anterior para este mês como base
-        """
-        from dateutil.relativedelta import relativedelta
-        
-        mes_anterior = self.mes_referencia - relativedelta(months=1)
-        
-        percentuais_anteriores = ItemDespesaRateioMensal.objects.filter(
-            conta=self.conta,
-            mes_referencia=mes_anterior,
-            ativo=True
-        )
-        
-        novos_percentuais = []
-        for perc_anterior in percentuais_anteriores:
-            # Verificar se já não existe para este mês
-            existe = ItemDespesaRateioMensal.objects.filter(
-                conta=self.conta,
-                item_despesa=perc_anterior.item_despesa,
-                socio=perc_anterior.socio,
-                mes_referencia=self.mes_referencia
-            ).exists()
-            
-            if not existe:
-                novo_percentual = ItemDespesaRateioMensal(
-                    conta=self.conta,
-                    item_despesa=perc_anterior.item_despesa,
-                    socio=perc_anterior.socio,
-                    mes_referencia=self.mes_referencia,
-                    percentual_rateio=perc_anterior.percentual_rateio,
-                    created_by=perc_anterior.created_by,
-                    observacoes=f"Copiado do mês {mes_anterior.strftime('%m/%Y')}"
-                )
-                novos_percentuais.append(novo_percentual)
-        
-        if novos_percentuais:
-            ItemDespesaRateioMensal.objects.bulk_create(novos_percentuais)
-        
-        return len(novos_percentuais)
-
-
 class Despesa(models.Model):
     """Despesas unificadas com sistema de grupos e rateio"""
     
@@ -540,7 +432,6 @@ class Despesa(models.Model):
             models.Index(fields=['conta', 'data', 'status']),
             models.Index(fields=['item', 'data']),
             models.Index(fields=['empresa', 'socio', 'data']),
-            models.Index(fields=['template_rateio', 'data']),
             models.Index(fields=['created_at']),
         ]
 
@@ -579,16 +470,6 @@ class Despesa(models.Model):
                  "DEVE SER NULL para despesas COM rateio (grupos FOLHA/GERAL)."
     )
     
-    # Rastreabilidade de template usado (NOVO CAMPO)
-    template_rateio = models.ForeignKey(
-        'TemplateRateioMensalDespesas',
-        on_delete=models.SET_NULL,
-        null=True, 
-        blank=True,
-        verbose_name="Template de Rateio Utilizado",
-        help_text="Template usado para configurar rateio desta despesa"
-    )
-    
     # Dados da despesa
     data = models.DateField(null=False, verbose_name="Data da Despesa")
     valor = models.DecimalField(
@@ -624,6 +505,11 @@ class Despesa(models.Model):
         null=True,
         related_name='despesas_criadas',
         verbose_name="Criada Por"
+    )
+    possui_rateio = models.BooleanField(
+        default=False,
+        verbose_name="Possui Rateio",
+        help_text="Indica se a despesa é rateada entre sócios/participantes"
     )
 
     def clean(self):

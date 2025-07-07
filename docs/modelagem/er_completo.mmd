@@ -13,7 +13,6 @@ erDiagram
     CONTA ||--o{ CONFIGURACAO_SISTEMA_MANUAL : "configura"
     CONTA ||--o{ DESPESA : "despesas"
     CONTA ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "rateios mensais"
-    CONTA ||--o{ TEMPLATE_RATEIO_MENSAL_DESPESAS : "templates rateio"
     CONTA ||--o{ LOG_AUDITORIA_FINANCEIRO : "logs auditoria"
     CONTA ||--o{ GRUPO_DESPESA : "grupos despesa"
     EMPRESA ||--o{ SOCIO : "possui"
@@ -230,31 +229,21 @@ erDiagram
         int created_by_id FK
         text observacoes
     }
-    TEMPLATE_RATEIO_MENSAL_DESPESAS {
-        int id PK
-        int conta_id FK
-        date mes_referencia
-        string status
-        datetime data_criacao
-        datetime data_finalizacao
-        int criada_por_id FK
-        int finalizada_por_id FK
-        text observacoes
-    }
     DESPESA {
         int id PK
         int conta_id FK
         int item_id FK
         int empresa_id FK
         int socio_id FK
-        int template_rateio_id FK
         date data
         decimal valor
         string status
+        bool possui_rateio
         datetime created_at
         datetime updated_at
         int created_by_id FK
     }
+%% Campo 'possui_rateio' indica se a despesa é rateada
     DESCRICAO_MOVIMENTACAO_FINANCEIRA {
         int id PK
         int conta_id FK
