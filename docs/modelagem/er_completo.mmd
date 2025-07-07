@@ -2,6 +2,7 @@
 title: Diagrama ER Completo - prj_medicos (Conforme Diretrizes)
 ---
 # Definição de projeto: Não criar novo arquivo de documentação se já existir arquivo que trate do mesmo assunto. Utilize e atualize sempre o arquivo existente para manter a rastreabilidade e evitar duplicidade de informações.
+%% Atualização: Removido qualquer referência a categoria_movimentacao. Agrupamento por categoria em relatórios agora é feito por desc_movimentacao (nome).
 erDiagram
     CONTA ||--o{ EMPRESA : possui
     CONTA ||--o{ LICENCA : "licença"
@@ -62,11 +63,8 @@ erDiagram
         string cidade
         string estado
         string cep
-        int regime_tributario
-        decimal receita_bruta_ano_anterior
-        date data_ultima_alteracao_regime
-        string periodicidade_irpj_csll
-        int dia_vencimento_iss
+        string crm
+        string especialidade
         bool ativo
         datetime created_at
         datetime updated_at

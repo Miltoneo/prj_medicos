@@ -943,18 +943,6 @@ class Financeiro(SaaSBaseModel):
         sinal = "+" if self.tipo == TIPO_MOVIMENTACAO_CONTA_CREDITO else "-"
         return f"{self.socio.pessoa.name} - {self.data_movimentacao.strftime('%d/%m/%Y')} - {sinal}R$ {self.valor:,.2f}"
     
-
-    
-    @property
-    def categoria(self):
-        """Retorna a categoria da movimentação"""
-        return self.desc_movimentacao.categoria_movimentacao if self.desc_movimentacao else None
-    
-    @property
-    def natureza(self):
-        """Retorna a natureza contábil da movimentação"""
-        return self.categoria.natureza if self.categoria else 'outros'
-    
     @property
     def tipo_display_sinal(self):
         """Retorna o tipo com sinal visual"""
@@ -1076,17 +1064,17 @@ class Financeiro(SaaSBaseModel):
                 'saldo': saldo_socio
             }
         
-        # Por categoria
+        # Por categoria (agora por descrição de movimentação)
         from django.db.models import Q
         categorias = lancamentos.values(
-            'desc_movimentacao__categoria_movimentacao__nome'
+            'desc_movimentacao__nome'
         ).annotate(
             total=models.Sum('valor'),
             quantidade=models.Count('id')
         ).filter(total__gt=0)
         
         for categoria in categorias:
-            nome_categoria = categoria['desc_movimentacao__categoria_movimentacao__nome'] or 'Sem categoria'
+            nome_categoria = categoria['desc_movimentacao__nome'] or 'Sem categoria'
             consolidado['por_categoria'][nome_categoria] = {
                 'total': categoria['total'],
                 'quantidade': categoria['quantidade']
