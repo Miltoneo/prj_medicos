@@ -13,21 +13,15 @@ __all__ = [
     'Pessoa', 'Empresa', 'Socio', 'ContaScopedManager',
     
     # Modelos Fiscais
-    'Aliquotas', 'NotaFiscal', 'Balanco', 'Apuracao_pis', 'Apuracao_cofins',
-    'Apuracao_csll', 'Apuracao_irpj', 'Apuracao_iss', 'Aplic_financeiras',
-    
+    'Aliquotas', 'NotaFiscal',
     # Modelos de Despesas
-    'Despesa_Grupo', 'Despesa_Item', 'PercentualRateioMensal', 'ConfiguracaoRateioMensal', 
-    'Despesa', 'Despesa_socio_rateio',
+    'Despesa',
     
     # Modelos Financeiros
     'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',
     
     # Modelos de Auditoria
     'LogAuditoriaFinanceiro', 'ConfiguracaoSistemaManual', 'registrar_auditoria',
-    
-    # Modelos de Relatórios
-    'RelatorioConsolidadoMensal',
     
     # Constantes importantes
     'app_name', 'REGIME_TRIBUTACAO_COMPETENCIA', 'REGIME_TRIBUTACAO_CAIXA',

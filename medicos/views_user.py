@@ -3,7 +3,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib import messages
-from .forms import CustomUserForm  # Certifique-se de ter esse formulário implementado
+from .models.base import ContaMembership, Conta
+from .forms import CustomUserForm
 
 User = get_user_model()
 
@@ -23,6 +24,11 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     template_name = "common/user_list.html"
     context_object_name = "users"
 
+    def get_queryset(self):
+        # Filtra usuários do tenant (conta) atual
+        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
+        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
+
 # -----------------------------------------------------------------------
 class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = User
@@ -32,6 +38,15 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        # Cria vínculo do novo usuário à mesma conta do usuário logado
+        for membership in ContaMembership.objects.filter(user=self.request.user, is_active=True):
+            ContaMembership.objects.create(
+                conta=membership.conta,
+                user=self.object,
+                role='readonly',
+                is_active=True,
+                created_by=self.request.user
+            )
         messages.success(self.request, "Usuário criado com sucesso!")
         return response
 
@@ -42,6 +57,10 @@ class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     template_name = "common/user_form.html"
     success_url = reverse_lazy('medicos:user_list')
     pk_url_kwarg = "user_id"
+
+    def get_queryset(self):
+        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
+        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -55,6 +74,10 @@ class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     success_url = reverse_lazy('medicos:user_list')
     pk_url_kwarg = "user_id"
 
+    def get_queryset(self):
+        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
+        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
+
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, "Usuário removido com sucesso!")
         return super().delete(request, *args, **kwargs)
@@ -65,3 +88,7 @@ class UserDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     template_name = "common/user_detail.html"
     context_object_name = "user_obj"
     pk_url_kwarg = "user_id"
+
+    def get_queryset(self):
+        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
+        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()

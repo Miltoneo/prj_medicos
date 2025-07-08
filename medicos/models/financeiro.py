@@ -473,7 +473,6 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         verbose_name_plural = "Descrições de Movimentação"
         indexes = [
             models.Index(fields=['conta']),
-            models.Index(fields=['desc_movimentacao']),
         ]
 
     conta = models.ForeignKey(
@@ -864,7 +863,7 @@ class Financeiro(SaaSBaseModel):
         indexes = [
             models.Index(fields=['conta', 'data_movimentacao']),
             models.Index(fields=['socio', 'data_movimentacao']),
-            models.Index(fields=['desc_movimentacao']),
+            models.Index(fields=['descricao_movimentacao_financeira']),
             models.Index(fields=['data_movimentacao', 'tipo']),
         ]
         ordering = ['-data_movimentacao', '-created_at']
@@ -878,24 +877,22 @@ class Financeiro(SaaSBaseModel):
         help_text="Médico ou sócio responsável por esta movimentação"
     )
     
-    desc_movimentacao = models.ForeignKey(
+    descricao_movimentacao_financeira = models.ForeignKey(
         DescricaoMovimentacaoFinanceira,
         on_delete=models.PROTECT,
         related_name='lancamentos',
         verbose_name="Descrição da Movimentação",
         help_text="Descrição padronizada desta movimentação"
     )
-    
-    aplicacao_financeira = models.ForeignKey(
-        AplicacaoFinanceira,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='movimentacoes',
-        verbose_name="Aplicação Financeira",
-        help_text="Aplicação financeira relacionada (opcional)"
-    )
-    
+    # aplicacao_financeira = models.ForeignKey(
+    #     AplicacaoFinanceira,
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name='movimentacoes',
+    #     verbose_name="Aplicação Financeira",
+    #     help_text="Aplicação financeira relacionada (opcional)"
+    # )
     # Dados do lançamento
     data_movimentacao = models.DateField(
         verbose_name="Data da Movimentação",
@@ -947,11 +944,11 @@ class Financeiro(SaaSBaseModel):
 
         
         # Validar compatibilidade entre tipo e descrição
-        if self.desc_movimentacao:
-            if not self.desc_movimentacao.pode_ser_usada_para(self.tipo):
+        if self.descricao_movimentacao_financeira:
+            if not self.descricao_movimentacao_financeira.pode_ser_usada_para(self.tipo):
                 tipo_display = self.get_tipo_display()
                 raise ValidationError({
-                    'desc_movimentacao': f'A descrição selecionada não permite movimentações do tipo {tipo_display}'
+                    'descricao_movimentacao_financeira': f'A descrição selecionada não permite movimentações do tipo {tipo_display}'
                 })
         
         # Validar data de movimentação (não pode ser futura)
@@ -1091,14 +1088,14 @@ class Financeiro(SaaSBaseModel):
         # Por categoria (agora por descrição de movimentação)
         from django.db.models import Q
         categorias = lancamentos.values(
-            'desc_movimentacao__nome'
+            'descricao_movimentacao_financeira__nome'
         ).annotate(
             total=models.Sum('valor'),
             quantidade=models.Count('id')
         ).filter(total__gt=0)
         
         for categoria in categorias:
-            nome_categoria = categoria['desc_movimentacao__nome'] or 'Sem categoria'
+            nome_categoria = categoria['descricao_movimentacao_financeira__nome'] or 'Sem categoria'
             consolidado['por_categoria'][nome_categoria] = {
                 'total': categoria['total'],
                 'quantidade': categoria['quantidade']

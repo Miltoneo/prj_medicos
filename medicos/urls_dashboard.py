@@ -3,7 +3,7 @@ URLs do Dashboard SaaS
 """
 
 from django.urls import path
-from . import views_dashboard
+from ..zDoc import views_dashboard
 
 app_name = 'dashboard'
 

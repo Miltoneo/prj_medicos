@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import Conta, ContaMembership, Licenca
-from .forms import TenantLoginForm, AccountSelectionForm, EmailAuthenticationForm, CustomUserCreationForm
+from zDoc.forms import TenantLoginForm, AccountSelectionForm, EmailAuthenticationForm, CustomUserCreationForm
 
 # ---------------------------------------------
 def login_view(request):

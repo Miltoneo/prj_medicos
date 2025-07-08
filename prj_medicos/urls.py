@@ -9,9 +9,9 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', lambda request: redirect('medicos/', permanent=False)),  # Redireciona raiz para medicos
-    path('medicos/', include('medicos.urls', namespace='medicos')),
+    path('medicos/', include(('medicos.urls', 'medicos'), namespace='medicos')),
+    path('medicos/auth/', include(('medicos.urls_auth', 'auth'), namespace='auth')),
     path('admin/', admin.site.urls), 
     path("select2/", include("django_select2.urls")), 
-    #--sitemaps
-    #path('sitemap.xml', sitemap, {'sitemaps': sitemaps}),
+
 ]

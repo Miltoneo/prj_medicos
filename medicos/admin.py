@@ -26,7 +26,7 @@ class SocioAdmin(admin.ModelAdmin):
 @admin.register(NotaFiscal)
 class NotaFiscalAdmin(admin.ModelAdmin):
     list_display = ('numero', 'empresa_destinataria', 'tomador', 'get_tipo_aliquota_display', 'dtEmissao', 'val_bruto', 'val_liquido', 'get_status_recebimento_display', 'get_meio_pagamento_display')
-    list_filter = ('tipo_aliquota', 'status_recebimento', 'status', 'dtEmissao', 'empresa_destinataria', 'meio_pagamento')
+    list_filter = ('status_recebimento', 'dtEmissao', 'empresa_destinataria', 'meio_pagamento')
     search_fields = ('numero', 'tomador', 'empresa_destinataria__name', 'meio_pagamento__nome')
     ordering = ('-dtEmissao', 'numero')
     
@@ -127,8 +127,8 @@ class NotaFiscalAdmin(admin.ModelAdmin):
 
 @admin.register(Aliquotas)
 class AliquotasAdmin(admin.ModelAdmin):
-    list_display = ('conta', 'get_iss_rates', 'PIS', 'COFINS', 'IR', 'CSLL', 'data_vigencia_inicio', 'data_vigencia_fim')
-    list_filter = ('data_vigencia_inicio', 'data_vigencia_fim', 'conta')
+    list_display = ('conta', 'ISS', 'PIS', 'COFINS', 'IRPJ_BASE_CAL', 'IRPJ_ALIQUOTA_1', 'IRPJ_ADICIONAL', 'CSLL_BASE_CAL', 'CSLL_ALIQUOTA_1', 'CSLL_ALIQUOTA_2', 'data_vigencia_inicio', 'data_vigencia_fim', 'ativa')
+    list_filter = ('data_vigencia_inicio', 'data_vigencia_fim', 'conta', 'ativa')
     search_fields = ('conta__empresa__name', 'observacoes')
     ordering = ('-data_vigencia_inicio',)
     
@@ -162,19 +162,20 @@ class AliquotasAdmin(admin.ModelAdmin):
 
 @admin.register(Despesa)
 class DespesaAdmin(admin.ModelAdmin):
-    list_display = ('data', 'descricao', 'socio', 'tipo', 'valor')
-    list_filter = ('tipo', 'data', 'socio')
-    search_fields = ('descricao', 'socio__pessoa__name')
+    list_display = ('data', 'item', 'empresa', 'socio', 'valor', 'status')
+    list_filter = ('status', 'empresa', 'socio', 'data')
+    search_fields = ('item__descricao', 'empresa__name', 'socio__pessoa__name')
     ordering = ('-data',)
 
 # Desc_movimentacao_financeiro admin removed - replaced by DescricaoMovimentacao
 
 @admin.register(Financeiro)
 class FinanceiroAdmin(admin.ModelAdmin):
-    list_display = ('data', 'socio', 'get_descricao_display', 'get_tipo_display', 'valor_formatado', 'status', 'origem_lancamento_manual')
-    list_filter = ('tipo', 'status', 'transferencia_realizada', 'data', 'descricao__categoria')
-    search_fields = ('socio__pessoa__name', 'descricao__descricao', 'observacoes')
-    ordering = ('-data', '-created_at')
+    list_display = ('data_movimentacao', 'socio', 'descricao_movimentacao_financeira', 'tipo', 'valor')
+    list_filter = ('tipo', 'socio', 'data_movimentacao')
+    search_fields = ('socio__pessoa__name', 'descricao_movimentacao_financeira__nome', 'descricao_movimentacao_financeira__descricao')
+    ordering = ('-data_movimentacao', '-created_at')
+    readonly_fields = ('created_at', 'updated_at')
     
     fieldsets = (
         ('💰 SISTEMA FINANCEIRO MANUAL', {
@@ -208,7 +209,7 @@ class FinanceiroAdmin(admin.ModelAdmin):
         })
     )
     
-    readonly_fields = ('created_at', 'updated_at', 'operacao_auto')
+    readonly_fields = ('created_at', 'updated_at')
     
     def get_readonly_fields(self, request, obj=None):
         """Campo operacao_auto sempre readonly (sempre False)"""
@@ -243,56 +244,56 @@ class FinanceiroAdmin(admin.ModelAdmin):
         return obj.origem_lancamento
     origem_lancamento_manual.short_description = 'Origem (Manual)'
 
-@admin.register(SaldoMensalMedico)
-class SaldoMensalMedicoAdmin(admin.ModelAdmin):
-    list_display = ('mes_ano_formatado', 'socio', 'saldo_formatado', 'total_creditos', 'total_debitos', 'status')
-    list_filter = ('mes_referencia', 'status', 'socio__empresa')
-    search_fields = ('socio__pessoa__name',)
-    ordering = ('-mes_referencia', 'socio__pessoa__name')
+# @admin.register(SaldoMensalMedico)
+# class SaldoMensalMedicoAdmin(admin.ModelAdmin):
+#     list_display = ('mes_ano_formatado', 'socio', 'saldo_formatado', 'total_creditos', 'total_debitos', 'status')
+#     list_filter = ('mes_referencia', 'status', 'socio__empresa')
+#     search_fields = ('socio__pessoa__name',)
+#     ordering = ('-mes_referencia', 'socio__pessoa__name')
     
-    fieldsets = (
-        ('Identificação', {
-            'fields': ('socio', 'mes_referencia', 'status')
-        }),
-        ('Resumo Financeiro', {
-            'fields': ('saldo_inicial', 'total_creditos', 'total_debitos', 'saldo_final')
-        }),
-        ('Detalhamento de Créditos', {
-            'fields': ('creditos_nf_consultas', 'creditos_nf_plantao', 'creditos_nf_outros', 'creditos_outros'),
-            'classes': ('collapse',)
-        }),
-        ('Detalhamento de Débitos', {
-            'fields': ('debitos_despesas_folha', 'debitos_despesas_gerais', 'debitos_despesas_individuais', 
-                      'debitos_adiantamentos', 'debitos_impostos', 'debitos_outros'),
-            'classes': ('collapse',)
-        }),
-        ('Controle de Transferências', {
-            'fields': ('valor_disponivel_transferencia', 'valor_transferido'),
-            'classes': ('collapse',)
-        }),
-        ('Auditoria', {
-            'fields': ('data_calculo', 'calculado_por'),
-            'classes': ('collapse',)
-        }),
-        ('Observações', {
-            'fields': ('observacoes',),
-            'classes': ('collapse',)
-        })
-    )
+#     fieldsets = (
+#         ('Identificação', {
+#             'fields': ('socio', 'mes_referencia', 'status')
+#         }),
+#         ('Resumo Financeiro', {
+#             'fields': ('saldo_inicial', 'total_creditos', 'total_debitos', 'saldo_final')
+#         }),
+#         ('Detalhamento de Créditos', {
+#             'fields': ('creditos_nf_consultas', 'creditos_nf_plantao', 'creditos_nf_outros', 'creditos_outros'),
+#             'classes': ('collapse',)
+#         }),
+#         ('Detalhamento de Débitos', {
+#             'fields': ('debitos_despesas_folha', 'debitos_despesas_gerais', 'debitos_despesas_individuais', 
+#                       'debitos_adiantamentos', 'debitos_impostos', 'debitos_outros'),
+#             'classes': ('collapse',)
+#         }),
+#         ('Controle de Transferências', {
+#             'fields': ('valor_disponivel_transferencia', 'valor_transferido'),
+#             'classes': ('collapse',)
+#         }),
+#         ('Auditoria', {
+#             'fields': ('data_calculo', 'calculado_por'),
+#             'classes': ('collapse',)
+#         }),
+#         ('Observações', {
+#             'fields': ('observacoes',),
+#             'classes': ('collapse',)
+#         })
+#     )
     
-    readonly_fields = ('saldo_final', 'valor_disponivel_transferencia', 'data_calculo')
+#     readonly_fields = ('saldo_final', 'valor_disponivel_transferencia', 'data_calculo')
     
-    actions = ['recalcular_saldos']
+#     actions = ['recalcular_saldos']
     
-    def recalcular_saldos(self, request, queryset):
-        """Action para recalcular saldos selecionados"""
-        count = 0
-        for saldo in queryset:
-            saldo._recalcular_valores()
-            count += 1
+#     def recalcular_saldos(self, request, queryset):
+#         """Action para recalcular saldos selecionados"""
+#         count = 0
+#         for saldo in queryset:
+#             saldo._recalcular_valores()
+#             count += 1
         
-        self.message_user(request, f'{count} saldos recalculados com sucesso.')
-    recalcular_saldos.short_description = "Recalcular saldos selecionados"
+#         self.message_user(request, f'{count} saldos recalculados com sucesso.')
+#     recalcular_saldos.short_description = "Recalcular saldos selecionados"
 
 @admin.register(MeioPagamento)
 class MeioPagamentoAdmin(admin.ModelAdmin):
@@ -363,92 +364,10 @@ class MeioPagamentoAdmin(admin.ModelAdmin):
             obj.criado_por = request.user
         super().save_model(request, obj, form, change)
 
-@admin.register(DescricaoMovimentacao)
-class DescricaoMovimentacaoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'categoria_display', 'tipo_movimentacao_display', 'uso_frequente_display', 'ativa_display', 'exige_documento', 'exige_aprovacao')
-    list_filter = ('categoria', 'tipo_movimentacao', 'ativa', 'uso_frequente', 'exige_documento', 'exige_aprovacao')
+@admin.register(DescricaoMovimentacaoFinanceira)
+class DescricaoMovimentacaoFinanceiraAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'tipo_movimentacao', 'uso_frequente', 'exige_documento', 'exige_aprovacao')
+    list_filter = ('tipo_movimentacao', 'uso_frequente', 'exige_documento', 'exige_aprovacao')
     search_fields = ('nome', 'descricao', 'codigo_contabil')
-    ordering = ('categoria', 'nome')
-    
-    fieldsets = (
-        ('📝 DESCRIÇÕES DE MOVIMENTAÇÃO - GERENCIADAS PELO USUÁRIO', {
-            'fields': (),
-            'description': 'Descrições personalizadas criadas pelos usuários para categorizar movimentações financeiras. '
-                          'Permite total flexibilidade na organização e classificação dos lançamentos.'
-        }),
-        ('Identificação', {
-            'fields': ('nome', 'descricao', 'categoria')
-        }),
-        ('Configurações de Uso', {
-            'fields': ('tipo_movimentacao', 'uso_frequente', 'ativa')
-        }),
-        ('Validações e Controles', {
-            'fields': ('exige_documento', 'exige_aprovacao'),
-            'classes': ('collapse',)
-        }),
-        ('Configurações Contábeis/Fiscais', {
-            'fields': ('codigo_contabil', 'possui_retencao_ir', 'percentual_retencao_ir'),
-            'classes': ('collapse',)
-        }),
-        ('Observações', {
-            'fields': ('observacoes',),
-            'classes': ('collapse',)
-        })
-    )
-    
+    ordering = ('nome',)
     readonly_fields = ('created_at', 'updated_at')
-    
-    def categoria_display(self, obj):
-        """Mostra a categoria com ícone"""
-        categoria_icons = {
-            'receita_servicos': '💼',
-            'receita_outros': '💰',
-            'adiantamento_recebido': '⬆️',
-            'emprestimo_recebido': '🏦',
-            'despesa_operacional': '🏢',
-            'despesa_pessoal': '👤',
-            'adiantamento_concedido': '⬇️',
-            'emprestimo_concedido': '🏦',
-            'transferencia_recebida': '📥',
-            'transferencia_enviada': '📤',
-            'ajuste_credito': '✅',
-            'ajuste_debito': '❌',
-            'taxa_encargo': '💳',
-            'aplicacao_financeira': '📈',
-            'resgate_aplicacao': '📉',
-            'outros': '📋',
-        }
-        icon = categoria_icons.get(obj.categoria, '📋')
-        return format_html(f'{icon} {obj.get_categoria_display()}')
-    categoria_display.short_description = 'Categoria'
-    
-    def tipo_movimentacao_display(self, obj):
-        """Mostra o tipo de movimentação com cor"""
-        if obj.tipo_movimentacao == 'credito':
-            return format_html('<span style="color: green; font-weight: bold;">📈 Créditos</span>')
-        elif obj.tipo_movimentacao == 'debito':
-            return format_html('<span style="color: red; font-weight: bold;">📉 Débitos</span>')
-        else:
-            return format_html('<span style="color: blue; font-weight: bold;">🔄 Ambos</span>')
-    tipo_movimentacao_display.short_description = 'Tipo'
-    
-    def uso_frequente_display(self, obj):
-        """Mostra se é uso frequente"""
-        if obj.uso_frequente:
-            return format_html('<span style="color: orange;">⭐ Sim</span>')
-        return "Não"
-    uso_frequente_display.short_description = 'Frequente'
-    
-    def ativa_display(self, obj):
-        """Mostra se está ativa"""
-        if obj.ativa:
-            return format_html('<span style="color: green;">✅ Ativa</span>')
-        else:
-            return format_html('<span style="color: red;">❌ Inativa</span>')
-    ativa_display.short_description = 'Status'
-    
-    def save_model(self, request, obj, form, change):
-        """Automaticamente definir o usuário criador"""
-        if not change:  # Novo registro
-            obj.criada_por = request.user
-        super().save_model(request, obj, form, change)
