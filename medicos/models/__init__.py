@@ -21,8 +21,7 @@ __all__ = [
     'Despesa', 'Despesa_socio_rateio',
     
     # Modelos Financeiros
-    'MeioPagamento', 'DescricaoMovimentacao', 'Desc_movimentacao_financeiro', 'Financeiro', 'SaldoMensalMedico',
-    'AplicacaoFinanceira',
+    'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',
     
     # Modelos de Auditoria
     'LogAuditoriaFinanceiro', 'ConfiguracaoSistemaManual', 'registrar_auditoria',

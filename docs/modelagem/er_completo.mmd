@@ -1,42 +1,51 @@
 ---
-title: Diagrama ER Completo - prj_medicos (Conforme Diretrizes)
+title: Diagrama ER Completo - prj_medicos (Nomes Fieis aos Modelos Django)
 ---
-# Definição de projeto: Não criar novo arquivo de documentação se já existir arquivo que trate do mesmo assunto. Utilize e atualize sempre o arquivo existente para manter a rastreabilidade e evitar duplicidade de informações.
-%% Atualização: Removido qualquer referência a categoria_movimentacao. Agrupamento por categoria em relatórios agora é feito por desc_movimentacao (nome).
-erDiagram
-    CONTA ||--o{ EMPRESA : possui
-    CONTA ||--o{ LICENCA : "licença"
-    CONTA ||--o{ SOCIO : "tem"
-    CONTA ||--o{ MEIO_PAGAMENTO : "meios"
-    CONTA ||--o{ GRUPO_DESPESA : "grupos"
-    CONTA ||--o{ ALIQUOTAS : "configura"
-    CONTA ||--o{ DESCRICAO_MOVIMENTACAO_FINANCEIRA : "descrições mov."
-    CONTA ||--o{ CONFIGURACAO_SISTEMA_MANUAL : "configura"
-    CONTA ||--o{ DESPESA : "despesas"
-    CONTA ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "rateios mensais"
-    CONTA ||--o{ LOG_AUDITORIA_FINANCEIRO : "logs auditoria"
-    CONTA ||--o{ GRUPO_DESPESA : "grupos despesa"
-    EMPRESA ||--o{ SOCIO : "possui"
-    EMPRESA ||--o{ REGIME_TRIBUTARIO_HISTORICO : "tem historico"
-    EMPRESA ||--o{ NOTA_FISCAL : "emite"
-    SOCIO ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "rateios"
-    SOCIO ||--o{ DESPESA : "despesas"
-    SOCIO ||--o{ NOTA_FISCAL_RATEIO_MEDICO : "rateio nf"
-    GRUPO_DESPESA ||--o{ ITEM_DESPESA : "contém"
-    ITEM_DESPESA ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "rateios"
-    ITEM_DESPESA ||--o{ DESPESA : "despesas"
-    ALIQUOTAS ||--o{ NOTA_FISCAL : "aplica em"
-    NOTA_FISCAL ||--o{ NOTA_FISCAL_RATEIO_MEDICO : "rateia em"
-    MEIO_PAGAMENTO ||--o{ NOTA_FISCAL : "usado em"
-    CONFIGURACAO_SISTEMA_MANUAL ||--o{ LOG_AUDITORIA_FINANCEIRO : "logs"
+# Diagrama ER gerado automaticamente a partir da análise dos modelos Django
+%% Relacionamentos, campos e constraints reais
 
-    CONTA {
+erDiagram
+    Conta ||--o{ Licenca : "licencas"
+    Conta ||--o{ ContaMembership : "memberships"
+    Conta ||--o{ Empresa : "empresas"
+    Conta ||--o{ GrupoDespesa : "grupos_despesa"
+    Conta ||--o{ ItemDespesa : "itens_despesa"
+    Conta ||--o{ Despesa : "despesas"
+    Conta ||--o{ ItemDespesaRateioMensal : "rateios_mensais"
+    Conta ||--o{ MeioPagamento : "meios_pagamento"
+    Conta ||--o{ DescricaoMovimentacaoFinanceira : "descricoes_movimentacao"
+    Conta ||--o{ ConfiguracaoSistemaManual : "configuracoes"
+    Conta ||--o{ LogAuditoriaFinanceiro : "logs_auditoria"
+    Conta ||--o{ Aliquotas : "aliquotas"
+    Conta ||--o{ AplicacaoFinanceira : "aplicacoes_financeiras"
+    Conta ||--o{ Financeiro : "lancamentos_financeiros"
+    Empresa ||--o{ Socio : "socios"
+    Empresa ||--o{ NotaFiscal : "notas_fiscais"
+    Empresa ||--o{ RegimeTributarioHistorico : "regimes_tributarios"
+    Empresa ||--o{ AplicacaoFinanceira : "aplicacoes_financeiras"
+    Socio ||--o{ ItemDespesaRateioMensal : "rateios"
+    Socio ||--o{ Despesa : "despesas"
+    Socio ||--o{ NotaFiscalRateioMedico : "rateio_nf"
+    Socio ||--o{ Financeiro : "lancamentos_financeiros"
+    GrupoDespesa ||--o{ ItemDespesa : "itens"
+    ItemDespesa ||--o{ ItemDespesaRateioMensal : "rateios"
+    ItemDespesa ||--o{ Despesa : "despesas"
+    Aliquotas ||--o{ NotaFiscal : "aplica_em"
+    NotaFiscal ||--o{ NotaFiscalRateioMedico : "rateia_em"
+    MeioPagamento ||--o{ NotaFiscal : "usado_em"
+    ConfiguracaoSistemaManual ||--o{ LogAuditoriaFinanceiro : "logs"
+    DescricaoMovimentacaoFinanceira ||--o{ Financeiro : "lancamentos"
+    AplicacaoFinanceira ||--o{ Financeiro : "movimentacoes"
+
+    Conta {
         int id PK
         string name
         string cnpj
-        date created_at
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
     }
-    LICENCA {
+    Licenca {
         int id PK
         int conta_id FK
         string plano
@@ -44,8 +53,22 @@ erDiagram
         date data_fim
         bool ativa
         int limite_usuarios
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
     }
-    EMPRESA {
+    ContaMembership {
+        int id PK
+        int conta_id FK
+        int user_id FK
+        string role
+        bool is_active
+        datetime date_joined
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
+    }
+    Empresa {
         int id PK
         int conta_id FK
         string name
@@ -63,13 +86,16 @@ erDiagram
         string cidade
         string estado
         string cep
-        string crm
-        string especialidade
+        int regime_tributario
+        decimal receita_bruta_ano_anterior
+        date data_ultima_alteracao_regime
+        string periodicidade_irpj_csll
+        int dia_vencimento_iss
         bool ativo
         datetime created_at
         datetime updated_at
     }
-    SOCIO {
+    Socio {
         int id PK
         int conta_id FK
         int empresa_id FK
@@ -79,7 +105,7 @@ erDiagram
         date data_saida
         text observacoes
     }
-    PESSOA {
+    Pessoa {
         int id PK
         int conta_id FK
         int user_id FK
@@ -103,7 +129,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    REGIME_TRIBUTARIO_HISTORICO {
+    RegimeTributarioHistorico {
         int id PK
         int empresa_id FK
         int regime_tributario
@@ -118,20 +144,20 @@ erDiagram
         int created_by_id FK
         text observacoes
     }
-    ALIQUOTAS {
+    Aliquotas {
         int id PK
         int conta_id FK
         decimal ISS
         decimal PIS
         decimal COFINS
         decimal IRPJ_BASE_CAL
-        decimal IRPJ_ALIQUOTA_OUTROS
-        decimal IRPJ_ALIQUOTA_CONSULTAS
+        decimal IRPJ_ALIQUOTA_1
+        decimal IRPJ_ALIQUOTA_2
         decimal IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
         decimal IRPJ_ADICIONAL
         decimal CSLL_BASE_CAL
-        decimal CSLL_ALIQUOTA_OUTROS
-        decimal CSLL_ALIQUOTA_CONSULTAS
+        decimal CSLL_ALIQUOTA_1
+        decimal CSLL_ALIQUOTA_2
         bool ativa
         date data_vigencia_inicio
         date data_vigencia_fim
@@ -140,12 +166,11 @@ erDiagram
         int created_by_id FK
         text observacoes
     }
-    NOTA_FISCAL {
+    NotaFiscal {
         int id PK
         int empresa_destinataria_id FK
         int aliquotas_id FK
         int tipo_servico
-        %% Obrigatório. Indica o tipo de serviço prestado (ex: 1=CONSULTAS, 2=OUTROS), que define a alíquota de IRPJ/CSLL
         decimal val_bruto
         decimal val_ISS
         decimal val_PIS
@@ -160,31 +185,37 @@ erDiagram
         int meio_pagamento_id FK
         string tomador
         string cnpj_tomador
+        string descricao_servicos
+        string numero
+        string serie
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
     }
-    NOTA_FISCAL_RATEIO_MEDICO {
+    NotaFiscalRateioMedico {
         int id PK
         int nota_fiscal_id FK
-        int socio_id FK
+        int medico_id FK
         decimal percentual_participacao
-        decimal valor_bruto
-        decimal valor_iss
-        decimal valor_pis
-        decimal valor_cofins
-        decimal valor_ir
-        decimal valor_csll
-        decimal valor_liquido
+        decimal valor_bruto_medico
+        decimal valor_iss_medico
+        decimal valor_pis_medico
+        decimal valor_cofins_medico
+        decimal valor_ir_medico
+        decimal valor_csll_medico
+        decimal valor_liquido_medico
         string tipo_rateio
         text observacoes_rateio
         datetime data_rateio
         int configurado_por_id FK
         datetime updated_at
     }
-    MEIO_PAGAMENTO {
+    MeioPagamento {
         int id PK
         int conta_id FK
         string codigo
         string nome
-        string descricao
+        text descricao
         decimal taxa_percentual
         decimal taxa_fixa
         decimal valor_minimo
@@ -199,24 +230,30 @@ erDiagram
         date data_fim_vigencia
         datetime created_at
         datetime updated_at
-        int criado_por_id FK
+        int created_by_id FK
         text observacoes
     }
-    GRUPO_DESPESA {
+    GrupoDespesa {
         int id PK
         int conta_id FK
         string codigo
         string descricao
         int tipo_rateio
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
     }
-    ITEM_DESPESA {
+    ItemDespesa {
         int id PK
         int conta_id FK
         int grupo_id FK
         string codigo
         string descricao
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
     }
-    ITEM_DESPESA_RATEIO_MENSAL {
+    ItemDespesaRateioMensal {
         int id PK
         int conta_id FK
         int item_despesa_id FK
@@ -229,7 +266,7 @@ erDiagram
         int created_by_id FK
         text observacoes
     }
-    DESPESA {
+    Despesa {
         int id PK
         int conta_id FK
         int item_id FK
@@ -243,12 +280,11 @@ erDiagram
         datetime updated_at
         int created_by_id FK
     }
-%% Campo 'possui_rateio' indica se a despesa é rateada
-    DESCRICAO_MOVIMENTACAO_FINANCEIRA {
+    DescricaoMovimentacaoFinanceira {
         int id PK
         int conta_id FK
         string nome
-        string descricao
+        text descricao
         string tipo_movimentacao
         bool exige_documento
         bool exige_aprovacao
@@ -258,10 +294,10 @@ erDiagram
         bool uso_frequente
         datetime created_at
         datetime updated_at
-        int criada_por_id FK
+        int created_by_id FK
         text observacoes
     }
-    CONFIGURACAO_SISTEMA_MANUAL {
+    ConfiguracaoSistemaManual {
         int id PK
         int conta_id FK
         decimal limite_valor_alto
@@ -278,10 +314,10 @@ erDiagram
         bool ativa
         datetime created_at
         datetime updated_at
-        int criada_por_id FK
+        int created_by_id FK
         text observacoes
     }
-    LOG_AUDITORIA_FINANCEIRO {
+    LogAuditoriaFinanceiro {
         int id PK
         int conta_id FK
         int usuario_id FK
@@ -298,4 +334,32 @@ erDiagram
         text mensagem_erro
         int duracao_ms
         json dados_extras
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
+    }
+    AplicacaoFinanceira {
+        int id PK
+        int conta_id FK
+        int empresa_id FK
+        date data_referencia
+        decimal saldo
+        decimal ir_cobrado
+        string descricao
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
+    }
+    Financeiro {
+        int id PK
+        int conta_id FK
+        int socio_id FK
+        int desc_movimentacao_id FK
+        int aplicacao_financeira_id FK
+        date data_movimentacao
+        int tipo
+        decimal valor
+        datetime created_at
+        datetime updated_at
+        int created_by_id FK
     }
