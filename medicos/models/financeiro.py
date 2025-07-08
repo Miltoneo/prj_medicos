@@ -164,9 +164,9 @@ class MeioPagamento(models.Model):
     )
     
     # Auditoria
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    criado_por = models.ForeignKey(
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
@@ -553,15 +553,15 @@ class DescricaoMovimentacaoFinanceira(models.Model):
     )
     
     # Auditoria
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    criada_por = models.ForeignKey(
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='descricoes_movimentacao_criadas',
-        verbose_name="Criada Por"
+        verbose_name="Criado Por"
     )
     
     observacoes = models.TextField(
@@ -822,6 +822,18 @@ class AplicacaoFinanceira(SaaSBaseModel):
         help_text="Descrição da aplicação financeira"
     )
     
+    # Auditoria
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='aplicacoes_financeiras_criadas',
+        verbose_name="Criado Por"
+    )
+    
     def clean(self):
         """Validações customizadas"""
         super().clean()
@@ -910,6 +922,18 @@ class Financeiro(SaaSBaseModel):
     
 
     
+    # Auditoria
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lancamentos_financeiros_criados',
+        verbose_name="Criado Por"
+    )
+
     def clean(self):
         """Validações personalizadas"""
         super().clean()

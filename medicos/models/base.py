@@ -108,7 +108,16 @@ class Conta(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     cnpj = models.CharField(max_length=32, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='contas_criadas',
+        verbose_name="Criado Por"
+    )
 
     def __str__(self):
         return self.name
@@ -125,6 +134,16 @@ class Licenca(models.Model):
     data_fim = models.DateField()
     ativa = models.BooleanField(default=True)
     limite_usuarios = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='licencas_criadas',
+        verbose_name="Criado Por"
+    )
 
     def is_valida(self):
         from django.utils import timezone
@@ -150,6 +169,16 @@ class ContaMembership(models.Model):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='readonly')
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conta_memberships_criadas',
+        verbose_name="Criado Por"
+    )
 
     def __str__(self):
         return f"{self.user.email} - {self.conta.name} ({self.role})"

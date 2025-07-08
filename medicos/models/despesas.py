@@ -50,6 +50,17 @@ class GrupoDespesa(models.Model):
         default=Tipo_t.COM_RATEIO
     )
 
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='grupos_despesa_criados',
+        verbose_name="Criado Por"
+    )
+
     def __str__(self):
         return f"{self.codigo}"
 
@@ -72,6 +83,17 @@ class ItemDespesa(models.Model):
     grupo = models.ForeignKey(GrupoDespesa, on_delete=models.CASCADE)
     codigo = models.CharField(max_length=20, null=False)
     descricao = models.CharField(max_length=255, null=False, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='itens_despesa_criados',
+        verbose_name="Criado Por"
+    )
 
     @property
     def permite_rateio(self):

@@ -114,16 +114,16 @@ class ConfiguracaoSistemaManual(models.Model):
         verbose_name="Configuração Ativa"
     )
     
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
     
-    criada_por = models.ForeignKey(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='configuracoes_criadas',
-        verbose_name="Criada Por"
+        related_name='configuracoes_sistema_manual_criadas',
+        verbose_name="Criado Por"
     )
     
     observacoes = models.TextField(
@@ -365,6 +365,18 @@ class LogAuditoriaFinanceiro(models.Model):
         blank=True,
         verbose_name="Dados Extras",
         help_text="Dados adicionais específicos da ação"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='logs_auditoria_criados',
+        verbose_name="Criado Por"
     )
 
     def __str__(self):
