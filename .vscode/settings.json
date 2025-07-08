@@ -1,0 +1,18 @@
+{
+  "files.exclude": {
+    "**/db": true,
+    "**/__pycache__": true,
+    "**/myenv": true,
+    "**/static": true,
+    "**/django_logs": true,
+    "**/docs_backup": true
+  },
+  "search.exclude": {
+    "**/db": true,
+    "**/__pycache__": true,
+    "**/myenv": true,
+    "**/static": true,
+    "**/django_logs": true,
+    "**/docs_backup": true
+  }
+}

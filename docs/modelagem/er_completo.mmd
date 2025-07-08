@@ -121,19 +121,17 @@ erDiagram
     ALIQUOTAS {
         int id PK
         int conta_id FK
-        decimal ISS_CONSULTAS
-        decimal ISS_PLANTAO
-        decimal ISS_OUTROS
+        decimal ISS
         decimal PIS
         decimal COFINS
         decimal IRPJ_BASE_CAL
-        decimal IRPJ_ALIQUOTA_1
-        decimal IRPJ_ALIQUOTA_2
+        decimal IRPJ_ALIQUOTA_OUTROS
+        decimal IRPJ_ALIQUOTA_CONSULTAS
         decimal IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
         decimal IRPJ_ADICIONAL
         decimal CSLL_BASE_CAL
-        decimal CSLL_ALIQUOTA_1
-        decimal CSLL_ALIQUOTA_2
+        decimal CSLL_ALIQUOTA_OUTROS
+        decimal CSLL_ALIQUOTA_CONSULTAS
         bool ativa
         date data_vigencia_inicio
         date data_vigencia_fim
@@ -145,7 +143,9 @@ erDiagram
     NOTA_FISCAL {
         int id PK
         int empresa_destinataria_id FK
-        int tipo_aliquota
+        int aliquotas_id FK
+        int tipo_servico
+        %% Obrigatório. Indica o tipo de serviço prestado (ex: 1=CONSULTAS, 2=OUTROS), que define a alíquota de IRPJ/CSLL
         decimal val_bruto
         decimal val_ISS
         decimal val_PIS
@@ -158,6 +158,8 @@ erDiagram
         date dtRecebimento
         string status_recebimento
         int meio_pagamento_id FK
+        string tomador
+        string cnpj_tomador
     }
     NOTA_FISCAL_RATEIO_MEDICO {
         int id PK

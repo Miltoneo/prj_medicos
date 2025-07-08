@@ -281,23 +281,11 @@ class Aliquotas(models.Model):
         help_text="Conta/cliente proprietária destas configurações tributárias"
     )
     
-    # === IMPOSTOS MUNICIPAIS POR TIPO DE SERVIÇO ===
-    ISS_CONSULTAS = models.DecimalField(
+    # === IMPOSTOS MUNICIPAIS ===
+    ISS = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=0,
-        verbose_name="ISS - Consultas (%)",
-        help_text="Alíquota do ISS para prestação de serviços de consulta médica"
-    )
-    
-    ISS_PLANTAO = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=0,
-        verbose_name="ISS - Plantão (%)",
-        help_text="Alíquota do ISS para prestação de serviços de plantão médico"
-    )
-    
-    ISS_OUTROS = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=0,
-        verbose_name="ISS - Outros Serviços (%)",
-        help_text="Alíquota do ISS para vacinação, exames, procedimentos e outros serviços"
+        verbose_name="ISS (%)",
+        help_text="Alíquota do ISS para prestação de serviços médicos em geral"
     )
     
     # === CONTRIBUIÇÕES FEDERAIS ===
@@ -400,9 +388,7 @@ class Aliquotas(models.Model):
 
     def clean(self):
         campos_percentuais = [
-            ('ISS_CONSULTAS', self.ISS_CONSULTAS, 0, 20),
-            ('ISS_PLANTAO', self.ISS_PLANTAO, 0, 20),
-            ('ISS_OUTROS', self.ISS_OUTROS, 0, 20),
+            ('ISS', self.ISS, 0, 20),
             ('PIS', self.PIS, 0, 10),
             ('COFINS', self.COFINS, 0, 10),
             ('IRPJ_BASE_CAL', self.IRPJ_BASE_CAL, 0, 100),
@@ -412,7 +398,6 @@ class Aliquotas(models.Model):
             ('CSLL_ALIQUOTA_1', self.CSLL_ALIQUOTA_1, 0, 50),
             ('CSLL_ALIQUOTA_2', self.CSLL_ALIQUOTA_2, 0, 50),
         ]
-        
         for nome, valor, minimo, maximo in campos_percentuais:
             if valor < minimo or valor > maximo:
                 raise ValidationError({
@@ -469,7 +454,7 @@ class Aliquotas(models.Model):
         return not (fim_self < inicio_outra or fim_outra < inicio_self)
 
     def __str__(self):
-        return f"Alíquotas - {self.conta.name} (ISS Consultas: {self.ISS_CONSULTAS}%, Plantão: {self.ISS_PLANTAO}%, Outros: {self.ISS_OUTROS}%)"
+        return f"Alíquotas - {self.conta.name} (ISS: {self.ISS}%)"
     
     @property
     def eh_vigente(self):
@@ -485,19 +470,9 @@ class Aliquotas(models.Model):
         if not self.eh_vigente:
             raise ValidationError("Esta configuração de alíquotas não está vigente.")
         
-        # Determinar alíquota ISS baseada no tipo de serviço
-        if tipo_servico == 'consultas':
-            aliquota_iss = self.ISS_CONSULTAS
-            descricao_servico = "Consultas Médicas"
-        elif tipo_servico == 'plantao':
-            aliquota_iss = self.ISS_PLANTAO
-            descricao_servico = "Plantão Médico"
-        elif tipo_servico == 'outros':
-            aliquota_iss = self.ISS_OUTROS
-            descricao_servico = "Vacinação/Exames/Procedimentos"
-        else:
-            aliquota_iss = self.ISS_CONSULTAS
-            descricao_servico = "Consultas Médicas"
+        # Usar apenas ISS único
+        aliquota_iss = self.ISS
+        descricao_servico = "Serviço Médico"
         
         # Cálculos básicos
         valor_iss = valor_bruto * (aliquota_iss / 100)
@@ -998,7 +973,7 @@ class NotaFiscal(models.Model):
             models.Index(fields=['tomador', 'dtEmissao']),
             models.Index(fields=['status_recebimento', 'dtVencimento']),
             models.Index(fields=['dtEmissao', 'val_bruto']),
-            models.Index(fields=['tipo_aliquota', 'dtEmissao']),
+            models.Index(fields=['tipo_servico', 'dtEmissao']),  # Corrigido para tipo_servico
         ]
         ordering = ['-dtEmissao', '-numero']
 
@@ -1029,19 +1004,27 @@ class NotaFiscal(models.Model):
         verbose_name="Tomador do Serviço", 
         help_text="Nome da empresa/pessoa que tomou o serviço"
     )
+
+    cnpj_tomador = models.CharField(
+        max_length=18,
+        verbose_name="CNPJ do Tomador",
+        help_text="Número do CNPJ do tomador do serviço (formato: 00.000.000/0000-00)",
+        blank=True, null=True
+    )
     
     # === TIPO DE SERVIÇO E ALÍQUOTAS ===
-    TIPO_ALIQUOTA_CHOICES = [
-        (NFISCAL_ALIQUOTA_CONSULTAS, 'Consultas Médicas'),
-        (NFISCAL_ALIQUOTA_PLANTAO, 'Plantão Médico'),
-        (NFISCAL_ALIQUOTA_OUTROS, 'Vacinação/Exames/Procedimentos'),
+    TIPO_SERVICO_CONSULTAS = 1
+    TIPO_SERVICO_OUTROS = 2
+    TIPO_SERVICO_CHOICES = [
+        (TIPO_SERVICO_CONSULTAS, 'Consultas Médicas'),
+        (TIPO_SERVICO_OUTROS, 'Outros Serviços'),
     ]
     
-    tipo_aliquota = models.IntegerField(
-        choices=TIPO_ALIQUOTA_CHOICES,
-        default=NFISCAL_ALIQUOTA_CONSULTAS,
+    tipo_servico = models.IntegerField(
+        choices=TIPO_SERVICO_CHOICES,
+        default=TIPO_SERVICO_CONSULTAS,
         verbose_name="Tipo de Serviço",
-        help_text="Tipo de serviço prestado para aplicação da alíquota correta de ISS"
+        help_text="Tipo de serviço prestado (define a alíquota de IRPJ/CSLL)"
     )
     
     descricao_servicos = models.TextField(
@@ -1135,6 +1118,14 @@ class NotaFiscal(models.Model):
         help_text="Meio de pagamento utilizado para recebimento"
     )
     
+    aliquotas = models.ForeignKey(
+        'Aliquotas',
+        on_delete=models.PROTECT,
+        related_name='notas_fiscais',
+        verbose_name="Configuração de Alíquotas",
+        help_text="Configuração de alíquotas utilizada no momento da emissão. Garante integridade histórica."
+    )
+    
     # === CONTROLE E AUDITORIA SIMPLIFICADO ===
     
     # Metadados
@@ -1219,7 +1210,7 @@ class NotaFiscal(models.Model):
         # Se é uma nova nota ou os valores básicos mudaram, recalcular impostos
         if (not self.pk or 
             'val_bruto' in kwargs.get('update_fields', []) or
-            'tipo_aliquota' in kwargs.get('update_fields', [])):
+            'tipo_servico' in kwargs.get('update_fields', [])):
             self.calcular_impostos()
         
         # Atualizar status de recebimento automaticamente
@@ -1240,11 +1231,10 @@ class NotaFiscal(models.Model):
             if aliquotas:
                 # Determinar tipo de serviço para as alíquotas
                 tipo_servico_map = {
-                    NFISCAL_ALIQUOTA_CONSULTAS: 'consultas',
-                    NFISCAL_ALIQUOTA_PLANTAO: 'plantao',
-                    NFISCAL_ALIQUOTA_OUTROS: 'outros',
+                    self.TIPO_SERVICO_CONSULTAS: 'consultas',
+                    self.TIPO_SERVICO_OUTROS: 'outros',
                 }
-                tipo_servico = tipo_servico_map.get(self.tipo_aliquota, 'consultas')
+                tipo_servico = tipo_servico_map.get(self.tipo_servico, 'consultas')
                 
                 # Calcular impostos considerando regime tributário
                 resultado = aliquotas.calcular_impostos_com_regime(
@@ -1264,9 +1254,13 @@ class NotaFiscal(models.Model):
                 
             else:
                 # Fallback: cálculo básico usando apenas ISS padrão
+                tipo_servico_map = {
+                    self.TIPO_SERVICO_CONSULTAS: 'consultas',
+                    self.TIPO_SERVICO_OUTROS: 'outros',
+                }
                 aliquota_iss = Aliquotas.obter_aliquota_ou_padrao(
                     conta, 
-                    tipo_servico_map.get(self.tipo_aliquota, 'consultas'),
+                    tipo_servico_map.get(self.tipo_servico, 'consultas'),
                     self.dtEmissao
                 )
                 
@@ -1287,196 +1281,13 @@ class NotaFiscal(models.Model):
             self.val_CSLL = 0
             self.val_liquido = self.val_bruto - self.val_ISS
 
-    def atualizar_status_recebimento(self):
-        """Atualiza o status de recebimento baseado na data de recebimento"""
-        if not self.dtRecebimento:
-            self.status_recebimento = 'pendente'
-        else:
-            self.status_recebimento = 'completo'
-
-    def __str__(self):
-        return f"NF {self.numero}/{self.serie} - {self.tomador} - R$ {self.val_bruto:.2f}"
-
-    @property
-    def total_impostos(self):
-        """Retorna o total de impostos da nota fiscal"""
-        return self.val_ISS + self.val_PIS + self.val_COFINS + self.val_IR + self.val_CSLL
-
-    @property
-    def percentual_impostos(self):
-        """Retorna o percentual total de impostos sobre o valor bruto"""
-        if self.val_bruto > 0:
-            return (self.total_impostos / self.val_bruto) * 100
-        return 0
-
-    @property
-    def dias_atraso(self):
-        """Retorna quantos dias de atraso no pagamento"""
-        if not self.dtVencimento or self.status_recebimento == 'completo':
-            return 0
-        
-        hoje = timezone.now().date()
-        if hoje > self.dtVencimento:
-            return (hoje - self.dtVencimento).days
-        return 0
-
-    @property
-    def eh_vencida(self):
-        """Verifica se a nota fiscal está vencida"""
-        return self.dias_atraso > 0
-
-    @property
-    def tem_rateio_configurado(self):
-        """Verifica se a nota fiscal tem rateio configurado"""
-        return self.rateios_medicos.exists()
-
-    @property
-    def total_socios_rateio(self):
-        """Retorna o número de sócios no rateio"""
-        return self.rateios_medicos.count()
-
-    def criar_rateio_unico_medico(self, medico, observacoes=""):
-        """
-        Cria rateio para um único médico (100% para ele)
-        
-        Args:
-            medico: Instância do Socio (médico)
-            observacoes: Observações sobre o rateio
-        """
-        # Limpar rateios existentes
-        self.rateios_medicos.all().delete()
-        
-        # Criar novo rateio único
-        return NotaFiscalRateioMedico.objects.create(
-            nota_fiscal=self,
-            medico=medico,
-            percentual_participacao=100.00,
-            valor_bruto_medico=self.val_bruto,  # 100% do valor para o médico
-            tipo_rateio='automatico',
-            data_rateio=timezone.now().date(),
-            observacoes_rateio=observacoes or 'Rateio único - 100% para um médico'
-        )
-
-    def criar_rateio_multiplos_medicos(self, medicos_lista, observacoes=""):
-        """
-        Cria rateio igualitário entre múltiplos médicos
-        
-        Args:
-            medicos_lista: Lista de instâncias de Socio (médicos)
-            observacoes: Observações sobre o rateio
-        """
-        if not medicos_lista:
-            raise ValidationError("Lista de médicos não pode estar vazia")
-        
-        # Validar se todos os médicos pertencem à mesma empresa
-        empresa_nf = self.empresa_destinataria
-        for medico in medicos_lista:
-            if medico.empresa != empresa_nf:
-                raise ValidationError(
-                    'Todos os médicos do rateio devem pertencer à mesma empresa da nota fiscal'
-                )
-        
-        # Limpar rateios existentes
-        self.rateios_medicos.all().delete()
-        
-        # Calcular percentual e valor por médico
-        num_medicos = len(medicos_lista)
-        percentual_por_medico = 100.00 / num_medicos
-        valor_por_medico = self.val_bruto / num_medicos
-        
-        # Criar rateios
-        rateios_criados = []
-        for medico in medicos_lista:
-            rateio = NotaFiscalRateioMedico.objects.create(
-                nota_fiscal=self,
-                medico=medico,
-                percentual_participacao=percentual_por_medico,
-                valor_bruto_medico=valor_por_medico,
-                tipo_rateio='automatico',
-                data_rateio=timezone.now().date(),
-                observacoes_rateio=observacoes or f'Rateio automático entre {num_medicos} médicos'
-            )
-            rateios_criados.append(rateio)
-        
-        return rateios_criados
-
-    @classmethod
-    def obter_resumo_financeiro_por_medico(cls, empresa=None, medico=None, periodo_inicio=None, periodo_fim=None):
-        """
-        Obtém resumo financeiro das notas fiscais por médico (considerando rateios)
-        
-        Args:
-            empresa: Filtrar por empresa específica
-            medico: Filtrar por médico específico
-            periodo_inicio: Data de início do período
-            periodo_fim: Data de fim do período
-        """
-        from django.db.models import Sum, Count, Avg
-        
-        # Filtrar notas fiscais
-        qs_notas = cls.objects.all()
-        
-        if empresa:
-            qs_notas = qs_notas.filter(empresa_destinataria=empresa)
-        
-        if periodo_inicio:
-            qs_notas = qs_notas.filter(dtEmissao__gte=periodo_inicio)
-        
-        if periodo_fim:
-            qs_notas = qs_notas.filter(dtEmissao__lte=periodo_fim)
-        
-        # Obter rateios relacionados
-        qs_rateios = NotaFiscalRateioMedico.objects.filter(
-            nota_fiscal__in=qs_notas
-        )
-        
-        if medico:
-            qs_rateios = qs_rateios.filter(medico=medico)
-        
-        # Agregações por médico
-        resumo_por_medico = qs_rateios.values(
-            'medico__id',
-            'medico__pessoa__name'
-        ).annotate(
-            total_notas=Count('nota_fiscal', distinct=True),
-            valor_bruto_total=Sum('valor_bruto_medico'),
-            valor_liquido_total=Sum('valor_liquido_medico'),
-            valor_impostos_total=Sum(
-                models.F('valor_iss_medico') + models.F('valor_pis_medico') + 
-                models.F('valor_cofins_medico') + models.F('valor_ir_medico') + 
-                models.F('valor_csll_medico')
-            ),
-            percentual_medio=Avg('percentual_participacao')
-        ).order_by('-valor_bruto_total')
-        
-        # Totais gerais
-        totais_gerais = qs_rateios.aggregate(
-            total_notas_com_rateio=Count('nota_fiscal', distinct=True),
-            valor_bruto_geral=Sum('valor_bruto_medico'),
-            valor_liquido_geral=Sum('valor_liquido_medico'),
-        )
-        
-        return {
-            'resumo_por_medico': list(resumo_por_medico),
-            'totais_gerais': totais_gerais,
-            'filtros_aplicados': {
-                'empresa': empresa.name if empresa else None,
-                'medico': medico.pessoa.name if medico else None,
-                'periodo': {
-                    'inicio': periodo_inicio,
-                    'fim': periodo_fim
-                }
-            }
-        }
-
-    def get_tipo_aliquota_display_extended(self):
+    def get_tipo_servico_display_extended(self):
         """Retorna descrição extendida do tipo de serviço"""
         descricoes = {
-            NFISCAL_ALIQUOTA_CONSULTAS: 'Consultas Médicas - Atendimento ambulatorial',
-            NFISCAL_ALIQUOTA_PLANTAO: 'Plantão Médico - Serviços de emergência e plantão',
-            NFISCAL_ALIQUOTA_OUTROS: 'Outros Serviços - Vacinação, exames, procedimentos',
+            self.TIPO_SERVICO_CONSULTAS: 'Consultas Médicas - Atendimento ambulatorial',
+            self.TIPO_SERVICO_OUTROS: 'Outros Serviços - Vacinação, exames, procedimentos',
         }
-        return descricoes.get(self.tipo_aliquota, self.get_tipo_aliquota_display())
+        return descricoes.get(self.tipo_servico, self.get_tipo_servico_display())
 
     def get_status_recebimento_display_extended(self):
         """Retorna descrição extendida do status de recebimento"""
@@ -1741,6 +1552,8 @@ class NotaFiscal(models.Model):
                 models.F('valor_csll_medico')
             )
         )
+        
+
         
         return {
             'resumo_por_medico': list(resumo_por_medico),

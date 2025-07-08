@@ -3,3 +3,8 @@
 /medicos/migrations
 /medicos/migrations/*
 /myenv
+__pycache__/
+static/
+django_logs/
+docs_backup/
+*.log
