@@ -1,9 +1,11 @@
-{% extends "base.html" %}
+{% extends "auth/base.html" %}
+{% block title %}Nova Organização{% endblock %}
 {% block content %}
-<h2>Criar Organização</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Criar</button>
+<h2 class="saas-title">Nova Organização</h2>
+<form method="post" class="saas-form">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="saas-btn btn-block">Criar</button>
 </form>
+<a class="saas-link" href="{% url 'organization_list' %}">Voltar</a>
 {% endblock %}

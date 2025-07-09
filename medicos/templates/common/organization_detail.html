@@ -1,22 +1,12 @@
-{% extends "base.html" %}
+{% extends "auth/base.html" %}
+{% block title %}Organização{% endblock %}
 {% block content %}
-<h2>{{ organization.name }}</h2>
-<p>CNPJ: {{ organization.cnpj }}</p>
-<h3>Membros</h3>
-<ul>
-    {% for member in members %}
-        <li>
-            {{ member.user.email }} ({{ member.get_role_display }})
-            {% if is_admin and member.user != request.user %}
-                | <a href="{% url 'update_member_role' organization.id member.id %}">Alterar papel</a>
-                | <a href="{% url 'remove_member' organization.id member.id %}">Remover</a>
-            {% endif %}
-        </li>
-    {% empty %}
-        <li>Nenhum membro.</li>
-    {% endfor %}
+<h2 class="saas-title">{{ organization.name }}</h2>
+<ul class="list-group mb-3">
+  <li class="list-group-item"><strong>ID:</strong> {{ organization.id }}</li>
+  <li class="list-group-item"><strong>Criada por:</strong> {{ organization.created_by.get_full_name }}</li>
+  <li class="list-group-item"><strong>Data de criação:</strong> {{ organization.created_at }}</li>
 </ul>
-{% if is_admin %}
-    <a href="{% url 'invite_member' organization.id %}" class="btn btn-primary">Convidar novo membro</a>
-{% endif %}
+<a class="saas-btn" href="{% url 'invite_member' organization.id %}">Convidar Membro</a>
+<a class="saas-link ml-3" href="{% url 'organization_list' %}">Voltar</a>
 {% endblock %}

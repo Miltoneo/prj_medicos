@@ -47,7 +47,26 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
                 is_active=True,
                 created_by=self.request.user
             )
-        messages.success(self.request, "Usuário criado com sucesso!")
+        # Envia convite/ativação para o novo usuário
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        from django.core.mail import send_mail
+        from django.conf import settings
+        user = self.object
+        user.is_active = False
+        user.save()
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        activation_link = f"{settings.SITE_URL}/medicos/auth/activate/{uid}/{token}/"
+        send_mail(
+            'Ative sua conta',
+            f'Olá,\n\nVocê foi convidado para acessar o sistema. Clique no link para ativar sua conta e definir sua senha: {activation_link}',
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        messages.success(self.request, "Usuário criado com sucesso! Convite enviado por e-mail.")
         return response
 
 # -----------------------------------------------------------------------

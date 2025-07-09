@@ -1,10 +1,11 @@
-{% extends "base.html" %}
+{% extends "auth/base.html" %}
+{% block title %}Alterar Permissão{% endblock %}
 {% block content %}
-<h2>Alterar papel de {{ membership.user.email }} em {{ organization.name }}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Salvar</button>
+<h2 class="saas-title">Alterar Permissão do Membro</h2>
+<form method="post" class="saas-form">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="saas-btn btn-block">Salvar</button>
 </form>
-<a href="{% url 'organization_detail' organization.id %}">Voltar</a>
+<a class="saas-link" href="{% url 'organization_detail' organization.id %}">Voltar</a>
 {% endblock %}

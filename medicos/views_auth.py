@@ -3,8 +3,12 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from .models import Conta, ContaMembership, Licenca
-from zDoc.forms import TenantLoginForm, AccountSelectionForm, EmailAuthenticationForm, CustomUserCreationForm
+from .forms import TenantLoginForm, AccountSelectionForm, EmailAuthenticationForm, CustomUserCreationForm
 
 # ---------------------------------------------
 def login_view(request):
@@ -76,7 +80,7 @@ def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save()  # Já cria usuário, conta, vínculo e licença
             return redirect('/medicos/auth/login/')
     else:
         form = CustomUserCreationForm()
@@ -183,3 +187,51 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Logout realizado com sucesso.')
     return redirect('/medicos/auth/login/')
+
+# ---------------------------------------------
+def activate_account(request, uidb64, token):
+    User = get_user_model()
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                user.is_active = True
+                user.save()
+                messages.success(request, 'Conta ativada com sucesso! Você já pode fazer login.')
+                return redirect('auth:login_tenant')
+        else:
+            form = SetPasswordForm(user)
+        return render(request, 'auth/set_password.html', {'form': form})
+    else:
+        messages.error(request, 'Link de ativação inválido ou expirado.')
+        return render(request, 'auth/activation_invalid.html')
+
+# ---------------------------------------------
+def index(request):
+    """
+    Tela inicial do sistema: registro, login e informações básicas.
+    """
+    return render(request, 'auth/index.html')
+
+# ---------------------------------------------
+def password_reset_view(request):
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            form.save(
+                request=request,
+                use_https=request.is_secure(),
+                email_template_name='auth/password_reset_email.html',
+                subject_template_name='auth/password_reset_subject.txt',
+            )
+            messages.success(request, 'E-mail de recuperação enviado. Verifique sua caixa de entrada.')
+            return redirect('auth:login_tenant')
+    else:
+        form = PasswordResetForm()
+    return render(request, 'auth/password_reset.html', {'form': form})

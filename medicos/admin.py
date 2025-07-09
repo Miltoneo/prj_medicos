@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.contrib.auth.admin import UserAdmin
 
 from .models import *
 
@@ -371,3 +372,12 @@ class DescricaoMovimentacaoFinanceiraAdmin(admin.ModelAdmin):
     search_fields = ('nome', 'descricao', 'codigo_contabil')
     ordering = ('nome',)
     readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(CustomUser)
+class CustomUserAdmin(UserAdmin):
+    model = CustomUser
+    list_display = ('email', 'username', 'is_staff', 'is_active')
+    search_fields = ('email', 'username')
+    ordering = ('email',)
+    fieldsets = UserAdmin.fieldsets
+    add_fieldsets = UserAdmin.add_fieldsets

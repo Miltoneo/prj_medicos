@@ -1,10 +1,11 @@
-{% extends "base.html" %}
+{% extends "auth/base.html" %}
+{% block title %}Remover Membro{% endblock %}
 {% block content %}
-<h2>Remover membro</h2>
-<p>Tem certeza que deseja remover {{ object.user.email }} da organização {{ organization.name }}?</p>
+<h2 class="saas-title">Remover Membro</h2>
+<div class="saas-alert saas-alert-danger">Tem certeza que deseja remover este membro?</div>
 <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Remover</button>
-    <a href="{% url 'organization_detail' organization.id %}" class="btn btn-secondary">Cancelar</a>
+  {% csrf_token %}
+  <button type="submit" class="saas-btn btn-block">Confirmar Remoção</button>
+  <a class="saas-link" href="{% url 'organization_detail' organization.id %}">Cancelar</a>
 </form>
 {% endblock %}

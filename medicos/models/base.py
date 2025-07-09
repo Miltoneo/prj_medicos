@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -87,15 +87,33 @@ class ContaScopedManager(models.Manager):
         """Método para filtrar por uma conta específica"""
         return super().get_queryset().filter(conta=conta)
 
+class CustomUserManager(UserManager):
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+        # Preenche username com email se não informado
+        if not extra_fields.get('username'):
+            extra_fields['username'] = email
+        return super().create_user(email=email, password=password, **extra_fields)
+
 #--------------------------------------------------------------
 # MODELO DE USUÁRIO CUSTOMIZADO
 class CustomUser(AbstractUser):
+    objects = CustomUserManager()  # Usa o manager customizado
     class Meta:
         db_table = 'customUser'
 
     email = models.EmailField('e-mail address', unique=True)
+    username = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        unique=False,
+        verbose_name='username'
+    )
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.email

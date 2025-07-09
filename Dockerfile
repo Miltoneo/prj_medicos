@@ -12,6 +12,8 @@ WORKDIR /app
 COPY ./requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Instala utilitários de rede para depuração SMTP
+RUN apt-get update && apt-get install -y iputils-ping netcat-openbsd
 
 # Copy the project code into the container
 COPY . /app

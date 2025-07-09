@@ -1,10 +1,11 @@
-{% extends "templates/template_cenario_2.html" %}
+{% extends "auth/base.html" %}
+{% block title %}Excluir Usuário{% endblock %}
 {% block content %}
-<h2>Excluir Usuário</h2>
-<p>Tem certeza que deseja excluir o usuário <strong>{{ object.email }}</strong>?</p>
+<h2 class="saas-title">Excluir Usuário</h2>
+<div class="saas-alert saas-alert-danger">Tem certeza que deseja excluir este usuário <strong>{{ object.email }}</strong>?</div>
 <form method="post">
   {% csrf_token %}
-  <button type="submit" class="btn btn-danger">Excluir</button>
-  <a href="{% url 'medicos:user_list' %}" class="btn btn-secondary">Cancelar</a>
+  <button type="submit" class="saas-btn btn-block">Confirmar Exclusão</button>
+  <a class="saas-link" href="{% url 'medicos:user_list' %}">Cancelar</a>
 </form>
 {% endblock %}

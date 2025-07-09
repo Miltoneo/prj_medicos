@@ -96,12 +96,15 @@ DATABASE_PORT       = os.environ.get('SECONDARY_DATABASE_PORT', default= env('DA
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': DATABASE_NAME,
         'USER': DATABASE_USER,
         'PASSWORD': DATABASE_PASSWORD,
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
+        'TEST': {
+            'NAME': DATABASE_NAME,  # Usa o banco real para testes (NÃO RECOMENDADO em produção)
+        },
     }
 }
 
@@ -158,3 +161,30 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = 'medicos:login'
 LOGIN_REDIRECT_URL = 'medicos:index'
 LOGOUT_REDIRECT_URL = 'medicos:login'
+
+# ----------------------------------------------#
+#              smtp.onkoto.com.br ???? NAO ESTÁ AUTENTICANDO    #
+# ----------------------------------------------#
+# EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_USE_TLS   = True
+# EMAIL_PORT      = 587
+# EMAIL_HOST          = 'mail.onkoto.com.br'
+# EMAIL_HOST_USER     = 'user1@onkoto.com.br'
+# EMAIL_HOST_PASSWORD = '*mil031212'
+# DEFAULT_FROM_EMAIL  = 'user1@mail.onkoto.com.br'
+# RECIPIENT_ADDRESS   = ['None']
+
+# ----------------------------------------------#
+#              smtp.gmail.com    (teste only)   #
+# ----------------------------------------------#
+#https://www.geeksforgeeks.org/setup-sending-email-in-django-project/
+EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS   = True
+EMAIL_PORT      = 587
+EMAIL_HOST         = 'smtp.gmail.com'
+EMAIL_HOST_PASSWORD = 'xblz qmog fifx zqzu' # from google app register
+EMAIL_HOST_USER     = 'miltoneo'
+DEFAULT_FROM_EMAIL =  'suporte_tds@gmail.com'
+
+# URL base do sistema para geração de links em e-mails
+SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')

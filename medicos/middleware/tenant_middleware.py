@@ -37,6 +37,8 @@ class TenantMiddleware(MiddlewareMixin):
         # URLs que não precisam de tenant (usar caminhos diretos é mais confiável)
         exempt_paths = [
             '/admin/',
+            '/medicos/auth/',  # Permite acesso público à tela de entrada
+            '/medicos/auth',   # Permite acesso público à tela de entrada sem barra
             '/medicos/auth/login/',
             '/medicos/auth/logout/',
             '/medicos/auth/select-account/',

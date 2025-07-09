@@ -1,0 +1,19 @@
+{% extends "auth/base.html" %}
+{% block title %}Bem-vindo ao Sistema SaaS Médico{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-centered">
+      <h1>Bem-vindo ao Sistema SaaS Médico</h1>
+      <p>Gerencie sua clínica, contas e usuários de forma segura e multi-tenant.</p>
+      <a class="btn btn-primary btn-block mb-2" href="{% url 'auth:login_tenant' %}">Entrar</a>
+      <a class="btn btn-outline-primary btn-block mb-2" href="{% url 'auth:register' %}">Registrar nova Conta</a>
+      <hr>
+      <p class="text-muted">Esqueceu a senha? <a href="{% url 'auth:password_reset' %}">Recuperar acesso</a></p>
+      <hr>
+      <p class="text-muted">Dúvidas? <a href="mailto:suporte@onkoto.com.br">Fale com o suporte</a></p>
+      <p class="text-muted">Saiba mais: <a href="/docs/definicoes-projeto.md" target="_blank">Documentação</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}
