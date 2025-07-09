@@ -1,13 +1,11 @@
 {% extends "base_saas.html" %}
-{% block title %}Ativação inválida{% endblock %}
-{% block content %}
+{% block title %}Ativação Inválida{% endblock %}
+{% block auth_content %}
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
-      <div class="alert alert-danger text-center shadow-sm">
-        <h2 class="mb-3">Link de ativação inválido ou expirado</h2>
-        <p>O link de ativação não é mais válido ou já foi utilizado.</p>
-        <a href="{% url 'medicos:login' %}" class="btn btn-primary mt-3">Ir para login</a>
+      <div class="alert alert-danger mt-5 text-center">
+        Link de ativação inválido ou expirado.
       </div>
     </div>
   </div>

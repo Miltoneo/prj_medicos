@@ -1,35 +1,9 @@
-<html>
-  <head>
-    <title>Base template</title>
-    {% load static %}
-    <!-- CSS only -->
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-      crossorigin="anonymous"
-    />
-    <link rel="stylesheet" href="{% static 'css/main.css' %}" />
-    <style>
-      .col-centered {
-        text-align: center;
-      }
-    </style>
-  </head>
-  <body>
-    {% block content %} {% endblock %}
- 
-    <!-- JS, Popper.js, and jQuery -->
-    <script
-      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
-      crossorigin="anonymous"
-    ></script>
-  </body>
-</html>
+{# Template base para telas de registro/autenticação. Para o sistema principal, use base_saas.html diretamente. #}
+{% extends "base_saas.html" %}
+{% load static %}
+{% block title %}Cadastro{% endblock %}
+{% block page_content %}
+<div class="container py-5">
+  {% block registration_content %}{% endblock %}
+</div>
+{% endblock %}
