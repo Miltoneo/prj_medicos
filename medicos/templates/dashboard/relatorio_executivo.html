@@ -11,36 +11,33 @@
 {% block extra_css %}
 <style>
     .executive-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: #23272b;
+        color: #f8f9fa;
         padding: 2rem;
         border-radius: 12px;
         margin-bottom: 2rem;
     }
     
     .metric-executive {
-        background: white;
+        background: #23272b;
         border-radius: 12px;
         padding: 2rem;
         text-align: center;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-left: 4px solid #4e73df;
+        border-left: 4px solid #0d6efd;
+        color: #f8f9fa;
         transition: transform 0.2s ease;
-    }
-    
-    .metric-executive:hover {
-        transform: translateY(-4px);
     }
     
     .metric-executive h3 {
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
-        color: #2d3436;
+        color: #0d6efd;
     }
     
     .metric-executive .label {
-        color: #6c757d;
+        color: #b0b3b8;
         font-size: 1rem;
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -59,19 +56,21 @@
         display: flex;
         align-items: center;
         padding: 1rem;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid #343a40;
         transition: background-color 0.2s ease;
+        background: #23272b;
+        color: #f8f9fa;
     }
     
     .ranking-item:hover {
-        background-color: #f8f9fa;
+        background-color: #181a1b;
     }
     
     .ranking-position {
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #4e73df, #36b9cc);
+        background: #0d6efd;
         color: white;
         display: flex;
         align-items: center;
@@ -81,10 +80,15 @@
     }
     
     .period-selector {
-        background: white;
+        background: #23272b;
         border-radius: 8px;
         padding: 0.5rem;
-        border: 1px solid #ddd;
+        border: 1px solid #343a40;
+        color: #f8f9fa;
+    }
+    .bg-light {
+        background: #23272b !important;
+        color: #f8f9fa !important;
     }
 </style>
 {% endblock %}
@@ -332,7 +336,7 @@
                     </div>
                     
                     <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="{% url 'medicos:dashboard:home' %}" class="btn btn-outline-primary w-100 p-3">
+                        <a href="{% url 'medicos:dashboard' %}" class="btn btn-outline-primary w-100 p-3">
                             <i class="fas fa-arrow-left fa-2x mb-2"></i><br>
                             <strong>Dashboard</strong><br>
                             <small>Voltar ao Painel</small>

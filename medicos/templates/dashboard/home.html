@@ -8,10 +8,11 @@
 <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
 <style>
     .dashboard-card {
-        background: white;
+        background: #23272b;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e3e6f0;
+        border: 1px solid #343a40;
+        color: #f8f9fa;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     
@@ -29,12 +30,12 @@
     .metric-value {
         font-size: 2rem;
         font-weight: 700;
-        color: #2d3436;
+        color: #0d6efd;
         margin-bottom: 0.5rem;
     }
     
     .metric-label {
-        color: #6c757d;
+        color: #b0b3b8;
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -67,7 +68,9 @@
     
     .activity-item {
         padding: 0.75rem 0;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid #343a40;
+        background: #23272b;
+        color: #f8f9fa;
     }
     
     .activity-item:last-child {
@@ -85,18 +88,18 @@
     }
     
     .activity-nf {
-        background: #e3f2fd;
-        color: #1976d2;
+        background: #0d6efd;
+        color: #fff;
     }
     
     .activity-despesa {
-        background: #fce4ec;
-        color: #c2185b;
+        background: #dc3545;
+        color: #fff;
     }
     
     .tenant-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: #23272b;
+        color: #f8f9fa;
         padding: 2rem 0;
         margin-bottom: 2rem;
         border-radius: 12px;
@@ -126,11 +129,11 @@
                             <i class="fas fa-user me-2"></i>{{ user.first_name|default:user.username }}
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'medicos:auth:select_account' %}">
+                            <li><a class="dropdown-item" href="{% url 'auth:select_account' %}">
                                 <i class="fas fa-exchange-alt me-2"></i>Trocar Conta
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'medicos:auth:logout' %}">
+                            <li><a class="dropdown-item" href="{% url 'auth:logout' %}">
                                 <i class="fas fa-sign-out-alt me-2"></i>Sair
                             </a></li>
                         </ul>

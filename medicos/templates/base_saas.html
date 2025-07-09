@@ -30,8 +30,8 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--light-color);
-            color: var(--dark-color);
+            background-color: #181a1b;
+            color: #f8f9fa;
             line-height: 1.6;
         }
         
@@ -126,18 +126,19 @@
         }
         
         .topbar {
-            background: white;
+            background: #23272b;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 1rem 2rem;
             position: sticky;
             top: 0;
             z-index: 999;
-            border-bottom: 1px solid #e3e6f0;
+            border-bottom: 1px solid #343a40;
         }
         
         .content-wrapper {
             padding: 2rem;
             min-height: calc(100vh - 80px);
+            background: #181a1b;
         }
         
         /* Cards */
@@ -145,6 +146,8 @@
             border: none;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: #23272b;
+            color: #f8f9fa;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         
@@ -154,10 +157,11 @@
         }
         
         .card-header {
-            background: white;
-            border-bottom: 1px solid #e3e6f0;
+            background: #23272b;
+            border-bottom: 1px solid #343a40;
             border-radius: 12px 12px 0 0 !important;
             padding: 1.25rem 1.5rem;
+            color: #f8f9fa;
         }
         
         /* Buttons */
@@ -256,7 +260,7 @@
         
         <ul class="sidebar-nav">
             <li class="nav-item">
-                <a href="{% url 'medicos:dashboard:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <a href="{% url 'medicos:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
@@ -365,7 +369,7 @@
                 {% block breadcrumb %}
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{% url 'medicos:dashboard:home' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'medicos:dashboard' %}">Dashboard</a></li>
                         {% block breadcrumb_items %}{% endblock %}
                     </ol>
                 </nav>
@@ -400,11 +404,11 @@
                         <li><a class="dropdown-item" href="/perfil/">
                             <i class="fas fa-user me-2"></i>Meu Perfil
                         </a></li>
-                        <li><a class="dropdown-item" href="{% url 'medicos:auth:select_account' %}">
+                        <li><a class="dropdown-item" href="{% url 'auth:select_account' %}">
                             <i class="fas fa-exchange-alt me-2"></i>Trocar Conta
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'medicos:auth:logout' %}">
+                        <li><a class="dropdown-item" href="{% url 'auth:logout' %}">
                             <i class="fas fa-sign-out-alt me-2"></i>Sair
                         </a></li>
                     </ul>
