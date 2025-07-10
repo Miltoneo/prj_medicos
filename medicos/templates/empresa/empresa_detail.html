@@ -1,0 +1,15 @@
+{% extends 'layouts/base_cenario_1.html' %}
+{% block title %}Detalhes da Empresa{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Detalhes da Empresa</h2>
+  <ul class="list-group mb-3">
+    <li class="list-group-item"><strong>Nome:</strong> {{ empresa.name }}</li>
+    <li class="list-group-item"><strong>CNPJ:</strong> {{ empresa.cnpj }}</li>
+    <!-- Adicione outros campos relevantes aqui -->
+  </ul>
+  <a href="{% url 'medicos:empresa_update' empresa.id %}" class="btn btn-primary">Editar</a>
+  <a href="{% url 'medicos:empresa_delete' empresa.id %}" class="btn btn-danger">Excluir</a>
+  <a href="{% url 'medicos:empresa_list' %}" class="btn btn-secondary">Voltar</a>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'layouts/base_cenario_1.html' %}
+{% block title %}Excluir Empresa{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Excluir Empresa</h2>
+  <p>Tem certeza que deseja excluir a empresa <strong>{{ empresa.name }}</strong>?</p>
+  <form method="post">{% csrf_token %}
+    <button type="submit" class="btn btn-danger">Excluir</button>
+    <a href="{% url 'medicos:empresa_list' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

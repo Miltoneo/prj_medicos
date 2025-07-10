@@ -6,6 +6,14 @@
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}</a> {# # link quebrado #}</li>
+        <li class="nav-item">
+          <form method="post" action="{% url 'medicos:logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="nav-link btn btn-link text-danger p-0" style="border:none; background:none;">
+              <i class="fas fa-sign-out-alt me-2"></i>Sair
+            </button>
+          </form>
+        </li>
       </ul>
     </div>
   </div>

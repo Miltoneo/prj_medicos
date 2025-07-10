@@ -36,21 +36,19 @@
   <!-- TOP MENU   -->
   {% include 'layouts/topbar.html' %}
 
-  <div class="w3-container w3-border w3-teal">
-    <p class="h6" >{{request.session.titulo_1}} </p>
-    <a class="h3" >{{request.session.titulo_2}} </a>
-    <p class="h6">{{request.session.titulo_3}} </p>
-  </div>
-
-  <!-- NAV sidebar -->
-  <div class="sidebar">
-    {% include 'templates/sidebar_cenario_0.html' %}
-  </div>
-
-  <!-- CONTEUDO -->
-  <div class="content">
-    {% block content %} 
-    {% endblock %}  
+  <div class="layout-container">
+    <div class="sidebar">
+      {% include 'layouts/sidebar_cenario_1.html' %}
+    </div>
+    <div class="content">
+      <div class="w3-container w3-border w3-teal">
+        <p class="h6" >{{request.session.titulo_1}} </p>
+        <a class="h3" >{{request.session.titulo_2}} </a>
+        <p class="h6">{{request.session.titulo_3}} </p>
+      </div>
+      {% block content %} 
+      {% endblock %}  
+    </div>
   </div>
 
      <!-- for select2 -->
