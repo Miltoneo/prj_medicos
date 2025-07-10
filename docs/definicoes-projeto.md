@@ -306,3 +306,11 @@ Essa estrutura deve ser mantida e revisada periodicamente para garantir clareza,
 - A configuração do template pack (ex: Bootstrap 5) deve ser centralizada e documentada.
 - Customizações de layout devem ser feitas preferencialmente via crispy_forms, evitando sobrescrita manual de HTML dos campos.
 - Consulte a documentação oficial do django-crispy-forms para melhores práticas e exemplos.
+
+### **🎨 11.10. USO DE DJANGO_FILTERS EM LISTAGENS**
+- Sempre que houver necessidade de filtragem avançada, busca ou refino em listagens de objetos (ex: empresas, usuários, relatórios), utilize o pacote django-filter.
+- O uso de django_filters garante padronização, flexibilidade e melhor experiência de usuário na navegação de grandes volumes de dados.
+- As views de listagem devem integrar django-filter para permitir filtros por campos relevantes, com formulários automáticos e validação integrada.
+- O formulário de filtro deve ser exibido no topo da listagem, facilitando o uso.
+- A configuração dos filtros deve ser feita em classes FilterSet dedicadas, seguindo boas práticas de organização.
+- Consulte a documentação oficial do django-filter para exemplos e melhores práticas.

@@ -1,21 +1,27 @@
-{#
-Template de dashboard para cenário 0 (entrada).
-Utilize includes e blocos padronizados para navegação e conteúdo.
-Diretiva: Rotas e funcionalidades pendentes devem usar href="#" ou botão desabilitado.
-#}
 {% extends 'layouts/base_cenario_0.html' %}
 {% load static %}
 
-{% block title %}Dashboard - Empresas Cadastradas{% endblock %}
+{% block title %}Empresas Cadastradas{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
   <h2 class="mb-4">Empresas Cadastradas</h2>
   <form method="get" class="mb-3">
     <div class="row g-2 align-items-end">
-      <div class="col-md-6">
+      <div class="col-md-4">
         {{ empresa_filter.form.name.label_tag }}
         {{ empresa_filter.form.name }}
+      </div>
+      <div class="col-md-3">
+        <label for="id_ordering" class="form-label">Ordenar por</label>
+        <select name="ordering" id="id_ordering" class="form-select">
+          <option value="name" {% if request.GET.ordering == 'name' %}selected{% endif %}>Nome (A-Z)</option>
+          <option value="-name" {% if request.GET.ordering == '-name' %}selected{% endif %}>Nome (Z-A)</option>
+          <option value="cnpj" {% if request.GET.ordering == 'cnpj' %}selected{% endif %}>CNPJ (Crescente)</option>
+          <option value="-cnpj" {% if request.GET.ordering == '-cnpj' %}selected{% endif %}>CNPJ (Decrescente)</option>
+          <option value="regime_tributario" {% if request.GET.ordering == 'regime_tributario' %}selected{% endif %}>Regime Tributário (A-Z)</option>
+          <option value="-regime_tributario" {% if request.GET.ordering == '-regime_tributario' %}selected{% endif %}>Regime Tributário (Z-A)</option>
+        </select>
       </div>
       <div class="col-md-2">
         <button type="submit" class="btn btn-outline-primary">Filtrar</button>
@@ -32,7 +38,7 @@ Diretiva: Rotas e funcionalidades pendentes devem usar href="#" ou botão desabi
       </tr>
     </thead>
     <tbody>
-      {% for empresa in empresas_disponiveis %}
+      {% for empresa in empresas %}
       <tr {% if empresa.id == empresa_id_atual %}class="table-success"{% endif %}>
         <td>{{ empresa.name }}</td>
         <td>{{ empresa.cnpj }}</td>
@@ -53,5 +59,6 @@ Diretiva: Rotas e funcionalidades pendentes devem usar href="#" ou botão desabi
       {% endfor %}
     </tbody>
   </table>
+  <a href="{% url 'medicos:dashboard' %}" class="btn btn-secondary mt-3">Voltar ao Dashboard</a>
 </div>
 {% endblock %}

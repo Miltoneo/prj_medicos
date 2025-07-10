@@ -149,8 +149,8 @@ CACHES = {
 }
 
 SELECT2_CACHE_BACKEND = "select2"
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["bootstrap5"]
 
 # ------------------------------------------------------------
 AUTH_USER_MODEL = 'medicos.CustomUser'

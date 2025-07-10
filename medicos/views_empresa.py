@@ -8,6 +8,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import View, DetailView, UpdateView, DeleteView, CreateView
 from django_tables2.views import SingleTableView
 from .tables import EmpresaTable
+from django.contrib.admin.views.decorators import staff_member_required
+from .forms import EmpresaForm
+from django.contrib import messages
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_or_set_conta_id(request):
     conta_id = request.session.get('conta_id')
@@ -41,53 +47,53 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
 
 # Substitua a FBV por CBV no urls.py para empresa_list
 
-@login_required
+@staff_member_required
 def empresa_create(request):
-    from .models.base import Empresa
-    error = None
-    conta_id = get_or_set_conta_id(request)
+    membership = ContaMembership.objects.filter(user=request.user, is_active=True).first()
+    conta_id = membership.conta_id if membership else None
+    if not conta_id:
+        messages.error(request, 'Conta não encontrada para este usuário.')
+        return redirect('medicos:empresa_list')
     if request.method == 'POST':
-        nome = request.POST.get('name')
-        cnpj = request.POST.get('cnpj')
-        regime = request.POST.get('regime_tributario')
-        if not conta_id:
-            error = 'Conta não encontrada para este usuário.'
-        elif not (nome and cnpj and regime):
-            error = 'Preencha todos os campos obrigatórios.'
-        else:
-            Empresa.objects.create(name=nome, cnpj=cnpj, conta_id=conta_id, regime_tributario=regime)
+        form = EmpresaForm(request.POST)
+        if form.is_valid():
+            empresa = form.save(commit=False)
+            empresa.conta_id = conta_id
+            empresa.ativo = False  # Inativa até validação
+            empresa.save()
+            logger.info(f'Empresa cadastrada: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
+            messages.success(request, 'Empresa cadastrada com sucesso! Aguarde validação.')
             return redirect('medicos:empresa_list')
-    regimes = Empresa.REGIME_CHOICES
-    return render(request, 'empresa/empresa_create.html', {'regimes': regimes, 'error': error})
+    else:
+        form = EmpresaForm()
+    return render(request, 'empresa/empresa_create.html', {'form': form})
 
 @login_required
 def empresa_detail(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     return render(request, 'empresa/empresa_detail.html', {'empresa': empresa})
 
-@login_required
+@staff_member_required
 def empresa_update(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    error = None
     if request.method == 'POST':
-        nome = request.POST.get('name')
-        cnpj = request.POST.get('cnpj')
-        regime = request.POST.get('regime_tributario')
-        if not (nome and cnpj and regime):
-            error = 'Preencha todos os campos obrigatórios.'
-        else:
-            empresa.name = nome
-            empresa.cnpj = cnpj
-            empresa.regime_tributario = regime
-            empresa.save()
+        form = EmpresaForm(request.POST, instance=empresa)
+        if form.is_valid():
+            form.save()
+            logger.info(f'Empresa atualizada: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
+            messages.success(request, 'Empresa atualizada com sucesso!')
             return redirect('medicos:empresa_list')
-    regimes = Empresa.REGIME_CHOICES
-    return render(request, 'empresa/empresa_update.html', {'empresa': empresa, 'regimes': regimes, 'error': error})
+    else:
+        form = EmpresaForm(instance=empresa)
+    return render(request, 'empresa/empresa_update.html', {'form': form, 'empresa': empresa})
 
 @login_required
+@staff_member_required
 def empresa_delete(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     if request.method == 'POST':
+        logger.info(f'Empresa excluída: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
         empresa.delete()
+        messages.success(request, 'Empresa excluída com sucesso!')
         return redirect('medicos:empresa_list')
     return render(request, 'empresa/empresa_delete.html', {'empresa': empresa})

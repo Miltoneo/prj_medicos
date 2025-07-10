@@ -357,13 +357,6 @@ class Empresa(models.Model):
         return self.nome_fantasia or self.name
 
     def clean(self):
-        # Validar CNPJ (implementação básica)
-        if self.cnpj:
-            # Remove caracteres não numéricos
-            cnpj_numeros = ''.join(filter(str.isdigit, self.cnpj))
-            if len(cnpj_numeros) != 14:
-                raise ValidationError({'cnpj': 'CNPJ deve ter 14 dígitos'})
-        
         # Validar regime de caixa conforme legislação
         if self.regime_tributario == REGIME_TRIBUTACAO_CAIXA:
             # Limite de R$ 78 milhões para regime de caixa (Lei 9.718/1998)

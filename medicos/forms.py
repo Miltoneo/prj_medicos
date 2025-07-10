@@ -6,6 +6,9 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.conf import settings
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
+from .models.base import Empresa
 
 User = get_user_model()
 
@@ -69,3 +72,33 @@ class CustomUserCreationForm(UserCreationForm):
             fail_silently=False,
         )
         return user
+
+class EmpresaForm(forms.ModelForm):
+    class Meta:
+        model = Empresa
+        fields = [
+            'name',  # Razão social
+            'cnpj',
+            'regime_tributario',
+        ]
+        widgets = {
+            'cnpj': forms.TextInput(attrs={'placeholder': '00.000.000/0000-00'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        from crispy_forms.layout import Layout, Row, Column, Submit
+        self.helper.layout = Layout(
+            Row(
+                Column('name', css_class='col-md-6'),
+                Column('cnpj', css_class='col-md-6'),
+            ),
+            Row(
+                Column('regime_tributario', css_class='col-md-6'),
+            ),
+        )
+        # Garante que o botão sempre aparece
+        if not any(isinstance(inp, Submit) for inp in getattr(self.helper, 'inputs', [])):
+            self.helper.add_input(Submit('submit', 'Salvar', css_class='btn btn-primary'))
