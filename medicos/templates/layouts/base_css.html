@@ -1,0 +1,127 @@
+{#
+Este arquivo define os padrões globais de estrutura e estilo para todos os cenários de navegação do sistema.
+Inclua apenas o necessário para evitar conflitos e facilitar manutenção.
+#}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1", shrink-to-fit=no />
+<meta name="google-site-verification" content="bBW6t7so6dAw0kHfRhkAxcaQzosrQinyXFYoojcOWeg" />
+
+{% load static %}
+{% load crispy_forms_tags %}
+{% load render_table from django_tables2 %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% load i18n %}
+{% load adsense_tags %}
+
+<!-- Carregue CSS customizados via static para facilitar manutenção e cache -->
+<link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+<link rel="stylesheet" href="{% static 'css/topbar.css' %}">
+<link rel="stylesheet" href="{% static 'css/content.css' %}">
+
+{{ form.media.css }}
+
+<!-- Apenas Bootstrap 5 e jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<style>
+:root {
+  --primary-color: #4e73df;
+  --secondary-color: #6c757d;
+  --success-color: #1cc88a;
+  --danger-color: #e74a3b;
+  --warning-color: #f6c23e;
+  --info-color: #36b9cc;
+  --light-color: #f8f9fc;
+  --dark-color: #2d3436;
+  --sidebar-width: 250px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #181a1b;
+  color: #f8f9fa;
+  line-height: 1.6;
+}
+
+.navbar {margin-bottom: 0;}
+
+/* Sugestão: use Flexbox para layout principal */
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar {
+  background-color: #23272b;
+  color: #f8f9fa;
+  width: var(--sidebar-width);
+  min-width: 200px;
+  max-width: 300px;
+  flex: 0 0 var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar a {
+  display: block;
+  color: #f8f9fa;
+  padding: 16px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.sidebar a.active {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+.sidebar a:hover:not(.active) {
+  background-color: #343a40;
+  color: #fff;
+}
+.content {
+  flex: 1 1 auto;
+  padding: 1rem 2rem;
+  min-height: 100vh;
+  background: transparent;
+}
+@media screen and (max-width: 700px) {
+  .layout-container { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .sidebar a { float: left; }
+  .content { width: 100%; }
+}
+@media screen and (max-width: 400px) {
+  .sidebar a {
+    text-align: center;
+    float: none;
+  }
+}
+.table {
+  border-collapse: collapse;
+  width: auto;
+}
+td {
+  border: 1px solid #dddddd;
+  padding: 8px;
+  text-align: center;
+}
+th {
+  border: 2px solid #a1a4a1;
+  padding: 8px;
+  text-align: center;
+  background-color: #2d3436;
+  color: #f8f9fa;
+}
+/* Acessibilidade: foco visível */
+a:focus, button:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+</style>
+
+

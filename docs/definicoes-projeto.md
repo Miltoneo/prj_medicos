@@ -170,6 +170,13 @@
 - Consultar sempre a documentação oficial do Bootstrap para melhores práticas e exemplos.
 - Remover estilos não utilizados e revisar periodicamente para manter a consistência visual.
 
+### **🧩 11.5. ESTRUTURA MODULAR DE TEMPLATES**
+- Todos os templates principais devem ser divididos em três partes bem distintas: menu de navegação lateral (sidebar), barra superior (topbar) e área de conteúdo.
+- Cada parte deve possuir seu próprio bloco de template e, preferencialmente, seus próprios arquivos de estilo (CSS modular).
+- A estrutura modular deve ser garantida por meio de blocos `{% block sidebar %}`, `{% block topbar %}` e `{% block content %}` (com `{% block page_content %}` para o conteúdo específico).
+- Essa separação facilita a manutenção, a evolução visual e a personalização de cada área do sistema.
+- Mudanças em navegação, topbar ou conteúdo devem ser feitas de forma isolada, sem afetar as demais áreas.
+
 ### **📈 12. EVOLUÇÃO E FUTURO**
 - Preparar APIs para futuras integrações
 - Manter código flexível para novas funcionalidades
@@ -251,3 +258,43 @@ Manter um sistema Django robusto, bem documentado e perfeitamente sincronizado e
 ---
 
 *Estas diretivas são mandatórias para qualquer alteração no projeto e devem ser consultadas antes de qualquer modificação no código ou documentação.*
+
+# Diretriz de Projeto: Tratamento de Erros de Caminho, Classe ou Rota
+
+Sempre que um erro for detectado (ex: caminho inexistente, rota/url não registrada, classe ou função inexistente, NoReverseMatch, etc), o código do projeto deve ser revisado para identificar e corrigir outros erros similares em todo o sistema. Isso inclui:
+- Verificar se todos os links, includes, imports e chamadas de função referenciam nomes realmente existentes e registrados.
+- Substituir temporariamente por `#` ou placeholder seguro quando a rota ou recurso ainda não existir.
+- Garantir que todos os templates e views estejam alinhados com as rotas e nomes válidos do projeto.
+- Documentar a revisão e as correções realizadas.
+
+Essa prática evita erros recorrentes e garante maior robustez e consistência ao sistema.
+
+# Diretriz de Navegação: Hierarquia e Estrutura de Menus
+
+A navegação do sistema deve seguir uma estrutura hierárquica clara, baseada em melhores práticas de UX/UI para SaaS:
+
+- Sidebar fixa, escura, responsiva, com ícones e agrupamento de seções.
+- Itens principais e submenus organizados conforme a hierarquia funcional do sistema.
+- Topbar fixa, com atalhos para seleção de empresa, conta, notificações e perfil do usuário.
+- Breadcrumbs no conteúdo para indicar o caminho atual.
+- Menus e submenus devem ser exibidos conforme permissões do usuário.
+- Nomes de itens de menu devem ser claros e objetivos.
+- Exemplo de hierarquia recomendada:
+
+Sidebar
+├── Dashboard
+├── Usuários
+│   ├── Listar Usuários
+│   ├── Novo Usuário
+│   └── Perfis e Permissões
+├── Relatórios
+│   ├── Relatório Executivo
+│   ├── Relatório Financeiro
+│   └── Exportar Dados
+├── Empresas
+│   ├── Listar Empresas
+│   ├── Nova Empresa
+│   └── Configurações Contábeis
+└── Sair
+
+Essa estrutura deve ser mantida e revisada periodicamente para garantir clareza, facilidade de uso e escalabilidade do sistema.

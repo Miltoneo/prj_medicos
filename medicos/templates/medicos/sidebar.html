@@ -1,0 +1,15 @@
+{# Sidebar padrão SaaS - Bootstrap 5.3 #}
+<nav id="sidebar" class="sidebar bg-dark text-light">
+  <div class="sidebar-header p-3">
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2"></i>Medicos</a>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+  </div>
+  <hr class="border-secondary m-0">
+  <ul class="nav flex-column">
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:dashboard' %}"><i class="fas fa-home me-2"></i>Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:user_list' %}"><i class="fas fa-users me-2"></i>Usuários</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_executivo' %}"><i class="fas fa-file-invoice-dollar me-2"></i>Relatórios</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="#"><i class="fas fa-building me-2"></i>Empresas</a></li>
+    <li class="nav-item mt-3"><a class="nav-link text-danger" href="#"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+  </ul>
+</nav>

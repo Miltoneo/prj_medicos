@@ -1,5 +1,8 @@
+{# Padronização SaaS: sidebar, topbar e conteúdo modularizados. Siga as diretrizes do projeto. #}
 {% extends "auth/base.html" %}
 {% block title %}Remover Membro{% endblock %}
+{% block sidebar %}{% include 'medicos/sidebar.html' %}{% endblock %}
+{% block topbar %}{% include 'layouts/topbar.html' %}{% endblock %}
 {% block content %}
 <h2 class="saas-title">Remover Membro</h2>
 <div class="saas-alert saas-alert-danger">Tem certeza que deseja remover este membro?</div>

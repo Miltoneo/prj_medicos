@@ -1,5 +1,8 @@
+{# Padronização SaaS: sidebar, topbar e conteúdo modularizados. Siga as diretrizes do projeto. #}
 {% extends "auth/base.html" %}
 {% block title %}Convidar Membro{% endblock %}
+{% block sidebar %}{% include 'medicos/sidebar.html' %}{% endblock %}
+{% block topbar %}{% include 'layouts/topbar.html' %}{% endblock %}
 {% block content %}
 <h2 class="saas-title">Convidar Membro</h2>
 <form method="post" class="saas-form">
