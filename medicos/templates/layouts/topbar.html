@@ -5,17 +5,7 @@
     <a class="navbar-brand" href="/">Medicos</a>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="empresaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            {{ empresa_atual.nome|default:'Selecione a empresa' }}
-          </a>
-          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="empresaDropdown">
-            {% for empresa in empresas_disponiveis %}
-              <li><a class="dropdown-item" href="{% url 'set_empresa' empresa.id %}">{{ empresa.nome }}</a></li>
-            {% endfor %}
-          </ul>
-        </li>
-        <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}</a> {# # link quebrado #}</li>
       </ul>
     </div>
   </div>

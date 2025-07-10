@@ -14,12 +14,33 @@ Utilize includes e blocos padronizados para navegação e conteúdo.
   <div class="container mt-5">
     <h1 class="mb-4">Bem-vindo ao Dashboard</h1>
     <p>Você está logado como <strong>{{ user.email|default:'visitante' }}</strong>.</p>
+    <!-- Seleção de empresa -->
+    <div class="mb-4">
+      <form method="get" action="{% url 'medicos:set_empresa' %}" class="d-flex align-items-center gap-2">
+        <label for="empresaSelect" class="form-label mb-0 me-2">Empresa:</label>
+        <select id="empresaSelect" name="empresa_id" class="form-select w-auto">
+          {% for empresa in empresas_disponiveis %}
+            <option value="{{ empresa.id }}" {% if empresa.id == empresa_atual.id %}selected{% endif %}>{{ empresa.nome }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Selecionar</button>
+      </form>
+    </div>
     <div class="alert alert-info mt-4">
       Este é o painel principal do sistema multi-tenant.<br>
       Utilize o menu lateral para acessar as funcionalidades médicas.
     </div>
     <div class="row mt-4 g-4">
-      <div class="col-md-6">
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Empresas</h5>
+            <p class="card-text">Gerencie as empresas vinculadas à sua conta.</p>
+            <a href="{% url 'medicos:empresa_list' %}" class="btn btn-info">Gerenciar Empresas</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
             <h5 class="card-title">Usuários</h5>
@@ -28,7 +49,7 @@ Utilize includes e blocos padronizados para navegação e conteúdo.
           </div>
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
             <h5 class="card-title">Administração</h5>

@@ -1,0 +1,15 @@
+{% extends 'layouts/base_cenario_0.html' %}
+{% block title %}Nova Empresa{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Cadastrar Nova Empresa</h2>
+  <form method="post">{% csrf_token %}
+    <div class="mb-3">
+      <label for="name" class="form-label">Nome da Empresa</label>
+      <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'medicos:empresa_list' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

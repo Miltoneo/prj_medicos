@@ -2,6 +2,8 @@ from django.urls import path
 from . import views_user
 from . import views_dashboard
 from . import views_relatorios
+from . import views_empresa
+from django.contrib.auth import views as auth_views
 
 app_name = 'medicos'
 
@@ -19,4 +21,8 @@ urlpatterns = [
     path('usuarios/<int:user_id>/editar/', views_user.UserUpdateView.as_view(), name='user_update'),
     path('usuarios/<int:user_id>/excluir/', views_user.UserDeleteView.as_view(), name='user_delete'),
     path('usuarios/<int:user_id>/', views_user.UserDetailView.as_view(), name='user_detail'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('set-empresa/', views_empresa.set_empresa, name='set_empresa'),
+    path('empresas/', views_empresa.empresa_list, name='empresa_list'),
+    path('empresas/nova/', views_empresa.empresa_create, name='empresa_create'),
 ]
