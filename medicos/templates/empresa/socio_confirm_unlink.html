@@ -1,0 +1,23 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% block title %}Desvincular Sócio{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h3 class="mb-3 text-danger"><i class="fas fa-unlink me-2"></i>Desvincular Sócio</h3>
+          <p>Tem certeza que deseja desvincular o sócio <strong>{{ socio.pessoa.name }}</strong> (CPF: {{ socio.pessoa.cpf }}) da empresa <strong>{{ empresa.name }}</strong>?</p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-end">
+              <a href="{% url 'medicos:lista_socios_empresa' empresa_id=empresa.id %}" class="btn btn-secondary me-2">Cancelar</a>
+              <button type="submit" class="btn btn-danger"><i class="fas fa-unlink me-1"></i>Desvincular</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

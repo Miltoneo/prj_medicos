@@ -760,3 +760,5 @@ class Socio(models.Model):
         vencimentos.sort(key=lambda x: x['data_vencimento'])
         
         return vencimentos
+
+# Removido modelo Aliquota duplicado. Utilize o modelo Aliquotas de models/fiscal.py

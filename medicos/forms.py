@@ -8,7 +8,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from .models.base import Empresa
+from .models.base import Empresa, Socio, Pessoa
+from .models.fiscal import Aliquotas
 
 User = get_user_model()
 
@@ -102,3 +103,60 @@ class EmpresaForm(forms.ModelForm):
         # Garante que o botão sempre aparece
         if not any(isinstance(inp, Submit) for inp in getattr(self.helper, 'inputs', [])):
             self.helper.add_input(Submit('submit', 'Salvar', css_class='btn btn-primary'))
+
+class SocioCPFForm(forms.Form):
+    cpf = forms.CharField(label='CPF', max_length=14, widget=forms.TextInput(attrs={'placeholder': '000.000.000-00'}))
+
+class SocioPessoaForm(forms.ModelForm):
+    class Meta:
+        model = Pessoa
+        fields = ['name', 'cpf', 'rg', 'data_nascimento', 'telefone', 'celular', 'email', 'crm', 'especialidade', 'ativo']
+        widgets = {
+            'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        empresa = kwargs.pop('empresa', None)
+        super().__init__(*args, **kwargs)
+        self.empresa = empresa
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Garante que a conta seja definida
+        if self.empresa:
+            instance.conta = self.empresa.conta
+        if commit:
+            instance.save()
+        return instance
+
+class SocioForm(forms.ModelForm):
+    class Meta:
+        model = Socio
+        fields = ['ativo', 'data_entrada', 'data_saida', 'observacoes']
+        widgets = {
+            'data_entrada': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'data_saida': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'observacoes': forms.Textarea(attrs={'rows': 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_entrada'].input_formats = ['%Y-%m-%d']
+        self.fields['data_saida'].input_formats = ['%Y-%m-%d']
+
+class AliquotaForm(forms.ModelForm):
+    class Meta:
+        model = Aliquotas
+        fields = [
+            'ISS', 'PIS', 'COFINS',
+            'IRPJ_BASE_CAL', 'IRPJ_ALIQUOTA_OUTROS', 'IRPJ_ALIQUOTA_CONSULTA',
+            'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', 'IRPJ_ADICIONAL',
+            'CSLL_BASE_CAL', 'CSLL_ALIQUOTA_OUTROS', 'CSLL_ALIQUOTA_CONSULTA',
+            'ativa', 'data_vigencia_inicio', 'data_vigencia_fim',
+            'observacoes'
+        ]
+        widgets = {
+            'data_vigencia_inicio': forms.DateInput(attrs={'type': 'date'}),
+            'data_vigencia_fim': forms.DateInput(attrs={'type': 'date'}),
+            'observacoes': forms.Textarea(attrs={'rows': 2}),
+        }

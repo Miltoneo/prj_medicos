@@ -1,0 +1,62 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% block title %}Alíquotas Cadastradas{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center mb-4 justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-percent fa-2x text-primary me-2"></i>
+          <h2 class="mb-0">Alíquotas Cadastradas</h2>
+        </div>
+        <a href="{% url 'medicos:aliquota_edit' empresa_id=empresa.id aliquota_id=0 %}" class="btn btn-success btn-sm px-3">
+          <i class="fas fa-plus me-1"></i>Nova Alíquota
+        </a>
+      </div>
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>ISS (%)</th>
+                  <th>PIS (%)</th>
+                  <th>COFINS (%)</th>
+                  <th>IRPJ (%)</th>
+                  <th>CSLL (%)</th>
+                  <th>Início Vigência</th>
+                  <th>Fim Vigência</th>
+                  <th>Ativa</th>
+                  <th>Observações</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for aliquota in aliquotas %}
+                <tr>
+                  <td>{{ aliquota.ISS }}</td>
+                  <td>{{ aliquota.PIS }}</td>
+                  <td>{{ aliquota.COFINS }}</td>
+                  <td>{{ aliquota.IRPJ_ALIQUOTA_1 }}</td>
+                  <td>{{ aliquota.CSLL_ALIQUOTA_1 }}</td>
+                  <td>{{ aliquota.data_vigencia_inicio|date:'d/m/Y' }}</td>
+                  <td>{{ aliquota.data_vigencia_fim|date:'d/m/Y' }}</td>
+                  <td>{% if aliquota.ativa %}<span class="badge bg-success">Sim</span>{% else %}<span class="badge bg-secondary">Não</span>{% endif %}</td>
+                  <td>{{ aliquota.observacoes }}</td>
+                  <td>
+                    <a href="{% url 'medicos:aliquota_edit' empresa_id=empresa.id aliquota_id=aliquota.id %}" class="btn btn-sm btn-primary me-1"><i class="fas fa-edit"></i> Editar</a>
+                    <a href="#" class="btn btn-sm btn-danger" onclick="return confirm('Deseja excluir esta alíquota?');"><i class="fas fa-trash"></i> Excluir</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="text-center">Nenhuma alíquota cadastrada.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{# Sidebar para o cenário cadastro #}
+<nav id="sidebar" class="sidebar bg-dark text-light">
+  <div class="sidebar-header p-3">
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2"></i>Medicos</a>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+  </div>
+  <hr class="border-secondary m-0">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link text-light" href="javascript:history.back()">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+      </a>
+    </li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_socios_empresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-user-plus me-2"></i>Cadastro de Sócios</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_aliquotas' empresa_id=request.session.empresa_id %}"><i class="fas fa-percent me-2"></i>Cadastro de Alíquotas</a></li>
+    <li class="nav-item"><a class="nav-link text-light disabled" href="#"><i class="fas fa-layer-group me-2"></i>Cadastro de Grupo de Despesas</a></li>
+    <li class="nav-item"><a class="nav-link text-light disabled" href="#"><i class="fas fa-list me-2"></i>Cadastro de Item de Despesa</a></li>
+    <li class="nav-item"><a class="nav-link text-light disabled" href="#"><i class="fas fa-file-alt me-2"></i>Cadastro de Descrição de Movimentação Financeira</a></li>
+  </ul>
+</nav>

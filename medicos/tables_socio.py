@@ -7,6 +7,7 @@ class SocioTable(tables.Table):
     data_entrada = tables.DateColumn(verbose_name="Data de Entrada")
     data_saida = tables.DateColumn(verbose_name="Data de Saída")
     ativo = tables.BooleanColumn(verbose_name="Ativo")
+    # Removido a coluna de ações para uso no dashboard
 
     class Meta:
         model = Socio

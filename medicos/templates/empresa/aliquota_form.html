@@ -1,0 +1,85 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% block title %}Cadastro/Edição de Alíquota{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <i class="fas fa-percent me-2"></i>Cadastro/Edição de Alíquota
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                {{ form.ISS.label_tag }}
+                {{ form.ISS }}
+              </div>
+              <div class="col-md-4 mb-3">
+                {{ form.PIS.label_tag }}
+                {{ form.PIS }}
+              </div>
+              <div class="col-md-4 mb-3">
+                {{ form.COFINS.label_tag }}
+                {{ form.COFINS }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                {{ form.IRPJ_BASE_CAL.label_tag }}
+                {{ form.IRPJ_BASE_CAL }}
+              </div>
+              <div class="col-md-4 mb-3">
+                {{ form.IRPJ_ALIQUOTA_1.label_tag }}
+                {{ form.IRPJ_ALIQUOTA_1 }}
+              </div>
+              <div class="col-md-4 mb-3">
+                {{ form.IRPJ_ADICIONAL.label_tag }}
+                {{ form.IRPJ_ADICIONAL }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                {{ form.CSLL_BASE_CAL.label_tag }}
+                {{ form.CSLL_BASE_CAL }}
+              </div>
+              <div class="col-md-4 mb-3">
+                {{ form.CSLL_ALIQUOTA_1.label_tag }}
+                {{ form.CSLL_ALIQUOTA_1 }}
+              </div>
+              <div class="col-md-4 mb-3">
+                {{ form.CSLL_ALIQUOTA_2.label_tag }}
+                {{ form.CSLL_ALIQUOTA_2 }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                {{ form.data_vigencia_inicio.label_tag }}
+                {{ form.data_vigencia_inicio }}
+              </div>
+              <div class="col-md-6 mb-3">
+                {{ form.data_vigencia_fim.label_tag }}
+                {{ form.data_vigencia_fim }}
+              </div>
+            </div>
+            <div class="mb-3">
+              {{ form.ativa.label_tag }}
+              {{ form.ativa }}
+            </div>
+            <div class="mb-3">
+              {{ form.observacoes.label_tag }}
+              {{ form.observacoes }}
+            </div>
+            <div class="text-end">
+              <button type="submit" class="btn btn-success px-4"><i class="fas fa-save me-1"></i>Salvar</button>
+              <a href="{% url 'medicos:lista_aliquotas' empresa_id=empresa.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
