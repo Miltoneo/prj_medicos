@@ -298,3 +298,11 @@ Sidebar
 └── Sair
 
 Essa estrutura deve ser mantida e revisada periodicamente para garantir clareza, facilidade de uso e escalabilidade do sistema.
+
+### **🎨 11.9. USO DE CRISPY_FORMS EM FORMULÁRIOS**
+- Sempre que possível, utilize o django-crispy-forms para renderização de formulários nos templates.
+- O uso de crispy_forms garante padronização visual, responsividade e melhor experiência de usuário.
+- Todos os formulários devem ser exibidos com `{{ form|crispy }}` nos templates, salvo exceções técnicas justificadas.
+- A configuração do template pack (ex: Bootstrap 5) deve ser centralizada e documentada.
+- Customizações de layout devem ser feitas preferencialmente via crispy_forms, evitando sobrescrita manual de HTML dos campos.
+- Consulte a documentação oficial do django-crispy-forms para melhores práticas e exemplos.

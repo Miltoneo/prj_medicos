@@ -7,23 +7,27 @@
     <div class="alert alert-danger">{{ error }}</div>
   {% endif %}
   <form method="post">{% csrf_token %}
-    <div class="mb-3">
-      <label for="name" class="form-label">Nome da Empresa</label>
-      <input type="text" class="form-control" id="name" name="name" required>
-    </div>
-    <div class="mb-3">
-      <label for="cnpj" class="form-label">CNPJ</label>
-      <input type="text" class="form-control" id="cnpj" name="cnpj" required placeholder="00.000.000/0000-00">
-    </div>
-    <div class="mb-3">
-      <label for="regime_tributario" class="form-label">Regime Tributário</label>
-      <select class="form-select" id="regime_tributario" name="regime_tributario" required>
-        <option value="">Selecione...</option>
-        {% for value, label in regimes %}
-          <option value="{{ value }}">{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
+    <table class="table table-bordered table-dark w-auto">
+      <tr>
+        <th><label for="name" class="form-label">Nome da Empresa</label></th>
+        <td><input type="text" class="form-control" id="name" name="name" required></td>
+      </tr>
+      <tr>
+        <th><label for="cnpj" class="form-label">CNPJ</label></th>
+        <td><input type="text" class="form-control" id="cnpj" name="cnpj" required placeholder="00.000.000/0000-00"></td>
+      </tr>
+      <tr>
+        <th><label for="regime_tributario" class="form-label">Regime Tributário</label></th>
+        <td>
+          <select class="form-select" id="regime_tributario" name="regime_tributario" required>
+            <option value="">Selecione...</option>
+            {% for value, label in regimes %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </td>
+      </tr>
+    </table>
     <button type="submit" class="btn btn-primary">Salvar</button>
     <a href="{% url 'medicos:empresa_list' %}" class="btn btn-secondary">Cancelar</a>
   </form>

@@ -6,10 +6,6 @@
 <html >
   <head>
 
-    <!--  SCRIPTS -->
-    {% block bl_script %}   
-    {% endblock %}
-
     <!-- Titulo que aparece na barra do navegador  -->
     <title> 
     {% block title %}  
@@ -54,5 +50,8 @@
      <!-- for select2 -->
     {{ form.media.js }}
 
+    <!-- SCRIPTS EXTRAS (DataTables, etc) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    {% block bl_script %}{% endblock %}
   </body>
 </html>

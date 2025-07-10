@@ -3,6 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from .models.base import Conta, Empresa
 from .models.base import ContaMembership
+from django.utils.decorators import method_decorator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import View, DetailView, UpdateView, DeleteView, CreateView
+from django_tables2.views import SingleTableView
+from .tables import EmpresaTable
 
 def get_or_set_conta_id(request):
     conta_id = request.session.get('conta_id')
@@ -22,11 +27,19 @@ def set_empresa(request):
     next_url = request.META.get('HTTP_REFERER') or reverse('medicos:dashboard')
     return redirect(next_url)
 
-@login_required
-def empresa_list(request):
-    conta_id = get_or_set_conta_id(request)
-    empresas = Empresa.objects.filter(conta_id=conta_id) if conta_id else []
-    return render(request, 'empresa/empresa_list.html', {'empresas': empresas})
+class EmpresaListView(LoginRequiredMixin, SingleTableView):
+    model = Empresa
+    table_class = EmpresaTable
+    template_name = 'empresa/empresa_list.html'
+    context_object_name = 'empresas'
+
+    def get_queryset(self):
+        conta_id = get_or_set_conta_id(self.request)
+        if conta_id:
+            return Empresa.objects.filter(conta_id=conta_id)
+        return Empresa.objects.none()
+
+# Substitua a FBV por CBV no urls.py para empresa_list
 
 @login_required
 def empresa_create(request):

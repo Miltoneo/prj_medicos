@@ -23,7 +23,7 @@ urlpatterns = [
     path('usuarios/<int:user_id>/', views_user.UserDetailView.as_view(), name='user_detail'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/medicos/auth/login/'), name='logout'),
     path('set-empresa/', views_empresa.set_empresa, name='set_empresa'),
-    path('empresas/', views_empresa.empresa_list, name='empresa_list'),
+    path('empresas/', views_empresa.EmpresaListView.as_view(), name='empresa_list'),
     path('empresas/nova/', views_empresa.empresa_create, name='empresa_create'),
     path('empresas/<int:empresa_id>/', views_empresa.empresa_detail, name='empresa_detail'),
     path('empresas/<int:empresa_id>/editar/', views_empresa.empresa_update, name='empresa_update'),
