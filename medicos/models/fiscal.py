@@ -399,24 +399,20 @@ class Aliquotas(models.Model):
                 raise ValidationError({
                     nome.lower(): f'{nome} deve estar entre {minimo}% e {maximo}%'
                 })
-        
         # Validar datas de vigência
         if (self.data_vigencia_inicio and self.data_vigencia_fim and 
             self.data_vigencia_inicio > self.data_vigencia_fim):
             raise ValidationError({
                 'data_vigencia_fim': 'Data fim deve ser posterior à data início'
             })
-        
         # Validar sobreposição de vigências para a mesma conta
         if self.ativa and self.data_vigencia_inicio:
             qs = Aliquotas.objects.filter(
                 conta=self.conta,
                 ativa=True
             )
-            
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
-            
             # Verificar sobreposição de datas
             for aliquota in qs:
                 if self._vigencias_se_sobrepoe(aliquota):
@@ -425,7 +421,16 @@ class Aliquotas(models.Model):
                         f'Período de vigência sobrepõe com configuração existente de '
                         f'{aliquota.data_vigencia_inicio} até {aliquota.data_vigencia_fim or "indeterminado"}'
                     })
-    
+        # REGRA: Só pode haver uma alíquota ativa por conta
+        if self.ativa:
+            qs_ativas = Aliquotas.objects.filter(conta=self.conta, ativa=True)
+            if self.pk:
+                qs_ativas = qs_ativas.exclude(pk=self.pk)
+            if qs_ativas.exists():
+                raise ValidationError({
+                    'ativa': 'Já existe uma alíquota ativa para esta conta. Desative a configuração anterior antes de ativar uma nova.'
+                })
+
     def _vigencias_se_sobrepoe(self, outra_aliquota):
         """Verifica se as vigências de duas configurações se sobrepõem"""
         # Se alguma das configurações não tem data de início definida, não verifica

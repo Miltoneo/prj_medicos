@@ -7,6 +7,7 @@ from . import views_home_cenario
 from . import views_dashboard_empresa
 from . import views_socio
 from . import views_aliquota
+from . import views_despesa
 from django.contrib.auth import views as auth_views
 
 app_name = 'medicos'
@@ -38,6 +39,8 @@ urlpatterns = [
     path('empresas/<int:empresa_id>/socios/novo/', views_socio.socio_create, name='socio_create'),
     path('empresas/<int:empresa_id>/socios/<int:socio_id>/editar/', views_socio.socio_edit, name='socio_edit'),
     path('empresas/<int:empresa_id>/socios/<int:socio_id>/desvincular/', views_socio.socio_unlink, name='socio_unlink'),
-    path('empresas/<int:empresa_id>/aliquotas/', views_aliquota.lista_aliquotas, name='lista_aliquotas'),
+    path('empresas/<int:empresa_id>/aliquotas/', views_aliquota.ListaAliquotasView.as_view(), name='lista_aliquotas'),
     path('empresas/<int:empresa_id>/aliquotas/<int:aliquota_id>/editar/', views_aliquota.aliquota_edit, name='aliquota_edit'),
+    path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa.lista_grupos_despesa, name='lista_grupos_despesa'),
+    path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa.grupo_despesa_edit, name='grupo_despesa_edit'),
 ]

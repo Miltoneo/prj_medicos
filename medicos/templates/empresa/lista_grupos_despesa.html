@@ -1,0 +1,87 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Grupos de Despesas{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center mb-4 justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-layer-group fa-2x text-primary me-2"></i>
+          <h2 class="mb-0">Grupos de Despesas</h2>
+        </div>
+        <a href="{% url 'medicos:grupo_despesa_edit' empresa_id=empresa.id grupo_id=0 %}" class="btn btn-success btn-sm px-3">
+          <i class="fas fa-plus me-1"></i>Novo Grupo
+        </a>
+      </div>
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+          {% if filter %}
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              {{ filter.form|crispy }}
+              <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+              </div>
+            </div>
+          </form>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table table-striped table-hover sortable">
+              <thead>
+                <tr>
+                  <th><a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=codigo">Código</a></th>
+                  <th><a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=descricao">Descrição</a></th>
+                  <th>Tipo de Rateio</th>
+                  <th><a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=created_at">Criado em</a></th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for grupo in grupos %}
+                <tr>
+                  <td>{{ grupo.codigo }}</td>
+                  <td>{{ grupo.descricao }}</td>
+                  <td>{{ grupo.get_tipo_rateio_display }}</td>
+                  <td>{{ grupo.created_at|date:'d/m/Y H:i' }}</td>
+                  <td>
+                    <a href="{% url 'medicos:grupo_despesa_edit' empresa_id=empresa.id grupo_id=grupo.id %}" class="btn btn-sm btn-primary">Editar</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center">Nenhum grupo cadastrado.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <nav aria-label="Paginação de grupos de despesa">
+            <ul class="pagination justify-content-center">
+              {% if grupos.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ grupos.previous_page_number }}" aria-label="Anterior">&laquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+              {% endif %}
+              {% for num in grupos.paginator.page_range %}
+                {% if grupos.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              {% if grupos.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ grupos.next_page_number }}" aria-label="Próxima">&raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

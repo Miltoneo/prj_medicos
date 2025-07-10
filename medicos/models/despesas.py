@@ -732,5 +732,5 @@ class Despesa(models.Model):
         """Lista de médicos que participam do rateio desta despesa"""
         if not self.pode_ser_rateada:
             return []
-        
         return [config.socio for config in self.obter_configuracao_rateio()]
+

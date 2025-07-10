@@ -32,10 +32,20 @@
                 {{ form.IRPJ_BASE_CAL }}
               </div>
               <div class="col-md-4 mb-3">
-                {{ form.IRPJ_ALIQUOTA_1.label_tag }}
-                {{ form.IRPJ_ALIQUOTA_1 }}
+                {{ form.IRPJ_ALIQUOTA_OUTROS.label_tag }}
+                {{ form.IRPJ_ALIQUOTA_OUTROS }}
               </div>
               <div class="col-md-4 mb-3">
+                {{ form.IRPJ_ALIQUOTA_CONSULTA.label_tag }}
+                {{ form.IRPJ_ALIQUOTA_CONSULTA }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                {{ form.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL.label_tag }}
+                {{ form.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL }}
+              </div>
+              <div class="col-md-6 mb-3">
                 {{ form.IRPJ_ADICIONAL.label_tag }}
                 {{ form.IRPJ_ADICIONAL }}
               </div>
@@ -46,12 +56,12 @@
                 {{ form.CSLL_BASE_CAL }}
               </div>
               <div class="col-md-4 mb-3">
-                {{ form.CSLL_ALIQUOTA_1.label_tag }}
-                {{ form.CSLL_ALIQUOTA_1 }}
+                {{ form.CSLL_ALIQUOTA_OUTROS.label_tag }}
+                {{ form.CSLL_ALIQUOTA_OUTROS }}
               </div>
               <div class="col-md-4 mb-3">
-                {{ form.CSLL_ALIQUOTA_2.label_tag }}
-                {{ form.CSLL_ALIQUOTA_2 }}
+                {{ form.CSLL_ALIQUOTA_CONSULTA.label_tag }}
+                {{ form.CSLL_ALIQUOTA_CONSULTA }}
               </div>
             </div>
             <div class="row">
@@ -74,7 +84,7 @@
             </div>
             <div class="text-end">
               <button type="submit" class="btn btn-success px-4"><i class="fas fa-save me-1"></i>Salvar</button>
-              <a href="{% url 'medicos:lista_aliquotas' empresa_id=empresa.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+              <a href="{% url 'medicos:dashboard_empresa' empresa_id=empresa.id %}" class="btn btn-secondary ms-2">Voltar ao Dashboard</a>
             </div>
           </form>
         </div>

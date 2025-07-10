@@ -5,16 +5,29 @@ from django.contrib.auth.decorators import login_required
 from medicos.forms import AliquotaForm
 from django.contrib import messages
 from django.shortcuts import redirect
+from django_tables2.views import SingleTableMixin
+from django_filters.views import FilterView
+from .tables import AliquotasTable
+from .filters import AliquotasFilter
 
-@login_required
-def lista_aliquotas(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    aliquotas = Aliquotas.objects.filter(conta=empresa.conta)
-    context = {
-        'empresa': empresa,
-        'aliquotas': aliquotas
-    }
-    return render(request, 'empresa/lista_aliquotas.html', context)
+class ListaAliquotasView(SingleTableMixin, FilterView):
+    table_class = AliquotasTable
+    model = Aliquotas
+    template_name = 'empresa/lista_aliquotas.html'
+    filterset_class = AliquotasFilter  # Mantido filtro de configuração ativa
+    paginate_by = 20
+
+    def get_queryset(self):
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, id=empresa_id)
+        # Ordena primeiro por ativos, depois por data de início de vigência mais recente
+        return Aliquotas.objects.filter(conta=empresa.conta).order_by('-ativa', '-data_vigencia_inicio')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        empresa_id = self.kwargs.get('empresa_id')
+        context['empresa'] = get_object_or_404(Empresa, id=empresa_id)
+        return context
 
 @login_required
 def aliquota_edit(request, empresa_id, aliquota_id):
@@ -29,7 +42,7 @@ def aliquota_edit(request, empresa_id, aliquota_id):
         aliquota = form.save(commit=False)
         aliquota.conta = empresa.conta
         aliquota.save()
-        return redirect('lista_aliquotas', empresa_id=empresa.id)
+        return redirect('medicos:lista_aliquotas', empresa_id=empresa.id)
     context = {
         'empresa': empresa,
         'form': form,

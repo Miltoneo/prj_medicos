@@ -12,7 +12,7 @@ def dashboard_empresa(request, empresa_id):
     socios_qs = Socio.objects.filter(empresa=empresa)
     socio_filter = SocioFilter(request.GET, queryset=socios_qs)
     table = SocioTable(socio_filter.qs)
-    RequestConfig(request).configure(table)
+    RequestConfig(request, paginate={'per_page': 20}).configure(table)
     return render(request, 'empresa/dashboard_empresa.html', {
         'empresa': empresa,
         'table': table,
@@ -25,7 +25,7 @@ def lista_socios_empresa(request, empresa_id):
     socios_qs = Socio.objects.filter(empresa=empresa)
     socio_filter = SocioFilter(request.GET, queryset=socios_qs)
     table = SocioListaTable(socio_filter.qs)
-    RequestConfig(request).configure(table)
+    RequestConfig(request, paginate={'per_page': 20}).configure(table)
     return render(request, 'empresa/lista_socios_empresa.html', {
         'empresa': empresa,
         'table': table,

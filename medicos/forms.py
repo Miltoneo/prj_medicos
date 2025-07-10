@@ -10,6 +10,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models.base import Empresa, Socio, Pessoa
 from .models.fiscal import Aliquotas
+from .models.despesas import GrupoDespesa
 
 User = get_user_model()
 
@@ -156,7 +157,26 @@ class AliquotaForm(forms.ModelForm):
             'observacoes'
         ]
         widgets = {
-            'data_vigencia_inicio': forms.DateInput(attrs={'type': 'date'}),
-            'data_vigencia_fim': forms.DateInput(attrs={'type': 'date'}),
+            'data_vigencia_inicio': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'data_vigencia_fim': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'observacoes': forms.Textarea(attrs={'rows': 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_vigencia_inicio'].input_formats = ['%Y-%m-%d']
+        self.fields['data_vigencia_fim'].input_formats = ['%Y-%m-%d']
+        # Garante que os valores iniciais sejam exibidos corretamente
+        if self.instance and self.instance.pk:
+            if self.instance.data_vigencia_inicio:
+                self.fields['data_vigencia_inicio'].initial = self.instance.data_vigencia_inicio.strftime('%Y-%m-%d')
+            if self.instance.data_vigencia_fim:
+                self.fields['data_vigencia_fim'].initial = self.instance.data_vigencia_fim.strftime('%Y-%m-%d')
+
+class GrupoDespesaForm(forms.ModelForm):
+    class Meta:
+        model = GrupoDespesa
+        fields = ['codigo', 'descricao', 'tipo_rateio']
+        widgets = {
+            'descricao': forms.Textarea(attrs={'rows': 2}),
         }

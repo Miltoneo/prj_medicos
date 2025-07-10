@@ -1,5 +1,6 @@
 import django_tables2 as tables
 from .models.base import Empresa
+from .models.fiscal import Aliquotas
 
 class EmpresaTable(tables.Table):
     name = tables.Column(verbose_name="Nome")
@@ -19,3 +20,22 @@ class EmpresaTable(tables.Table):
         model = Empresa
         template_name = "django_tables2/bootstrap5.html"
         fields = ("name", "cnpj", "regime_tributario")
+
+class AliquotasTable(tables.Table):
+    acoes = tables.TemplateColumn(
+        template_code='''
+        <a href="{% url 'medicos:aliquota_edit' empresa_id=empresa.id aliquota_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
+        ''',
+        verbose_name="Ações",
+        orderable=False
+    )
+    class Meta:
+        model = Aliquotas
+        template_name = "django_tables2/bootstrap5.html"
+        fields = (
+            "data_vigencia_inicio", "data_vigencia_fim", "ativa",
+            "ISS", "PIS", "COFINS", "IRPJ_BASE_CAL", "IRPJ_ALIQUOTA_OUTROS", "IRPJ_ALIQUOTA_CONSULTA",
+            "IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL", "IRPJ_ADICIONAL", "CSLL_BASE_CAL", "CSLL_ALIQUOTA_OUTROS",
+            "CSLL_ALIQUOTA_CONSULTA", "observacoes"
+        )
+        order_by = "-data_vigencia_inicio"

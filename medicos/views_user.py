@@ -23,6 +23,7 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = User
     template_name = "common/user_list.html"
     context_object_name = "users"
+    paginate_by = 20
 
     def get_queryset(self):
         # Filtra usuários do tenant (conta) atual

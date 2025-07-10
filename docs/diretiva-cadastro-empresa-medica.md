@@ -26,3 +26,6 @@ Padronizar o fluxo de cadastro de empresas médicas (clínicas, consultórios, g
 - Garantir validação de CNPJ e unicidade.
 - Registrar logs de cadastro e alterações.
 - Permitir ativação/desativação manual da empresa pelo admin master do sistema.
+
+## Diretrizes de Interface
+- Toda template de lista deverá ter paginação (20 itens por página), com navegação clara entre páginas e integração com filtros e ordenação.
