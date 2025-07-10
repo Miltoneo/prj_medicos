@@ -11,6 +11,7 @@ from .tables import EmpresaTable
 from django.contrib.admin.views.decorators import staff_member_required
 from .forms import EmpresaForm
 from django.contrib import messages
+from .filters import EmpresaFilter
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,8 @@ def set_empresa(request):
     empresa_id = request.GET.get('empresa_id')
     if empresa_id:
         request.session['empresa_id'] = int(empresa_id)
+        # Redireciona diretamente para o dashboard da empresa selecionada
+        return redirect('medicos:dashboard_empresa', empresa_id=empresa_id)
     # Redireciona para a página anterior ou dashboard
     next_url = request.META.get('HTTP_REFERER') or reverse('medicos:dashboard')
     return redirect(next_url)
@@ -41,9 +44,16 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
 
     def get_queryset(self):
         conta_id = get_or_set_conta_id(self.request)
+        qs = Empresa.objects.none()
         if conta_id:
-            return Empresa.objects.filter(conta_id=conta_id)
-        return Empresa.objects.none()
+            qs = Empresa.objects.filter(conta_id=conta_id)
+        self.filter = EmpresaFilter(self.request.GET, queryset=qs)
+        return self.filter.qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['empresa_filter'] = self.filter
+        return context
 
 # Substitua a FBV por CBV no urls.py para empresa_list
 

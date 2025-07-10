@@ -1,0 +1,11 @@
+{# Sidebar para o cenário home #}
+<nav id="sidebar" class="sidebar bg-dark text-light">
+  <div class="sidebar-header p-3">
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2"></i>Medicos</a>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+  </div>
+  <hr class="border-secondary m-0">
+  <ul class="nav flex-column">
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:home' %}"><i class="fas fa-home me-2"></i>Home</a></li>
+  </ul>
+</nav>

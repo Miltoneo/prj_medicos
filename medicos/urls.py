@@ -3,6 +3,8 @@ from . import views_user
 from . import views_dashboard
 from . import views_relatorios
 from . import views_empresa
+from . import views_home_cenario
+from . import views_dashboard_empresa
 from django.contrib.auth import views as auth_views
 
 app_name = 'medicos'
@@ -11,6 +13,7 @@ urlpatterns = [
     path('', views_dashboard.dashboard, name='index'),
     path('dashboard/', views_dashboard.dashboard, name='dashboard'),
     path('home/', views_dashboard.dashboard, name='home'),
+    path('cenario-home/', views_home_cenario.home_cenario, name='cenario_home'),
     # Dashboard SaaS (migrado de urls_dashboard.py)
     # path('', views_dashboard.dashboard_home, name='home'),
     # path('widgets/', views_dashboard.dashboard_widgets, name='widgets'),
@@ -28,4 +31,5 @@ urlpatterns = [
     path('empresas/<int:empresa_id>/', views_empresa.empresa_detail, name='empresa_detail'),
     path('empresas/<int:empresa_id>/editar/', views_empresa.empresa_update, name='empresa_update'),
     path('empresas/<int:empresa_id>/excluir/', views_empresa.empresa_delete, name='empresa_delete'),
+    path('empresas/<int:empresa_id>/dashboard/', views_dashboard_empresa.dashboard_empresa, name='dashboard_empresa'),
 ]
