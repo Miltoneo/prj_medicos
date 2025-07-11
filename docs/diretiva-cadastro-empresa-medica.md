@@ -30,3 +30,11 @@ Padronizar o fluxo de cadastro de empresas médicas (clínicas, consultórios, g
 ## Diretrizes de Interface
 - Toda template de lista deverá ter paginação (20 itens por página), com navegação clara entre páginas e integração com filtros e ordenação.
 - Toda ação de cadastro deve iniciar a partir de um template de lista, garantindo que o usuário sempre visualize os registros existentes antes de criar um novo. O botão "Novo" deve estar presente na tela de listagem e direcionar para o formulário de cadastro.
+
+# Diretriz de Projeto
+#
+# Para evitar falhas na identificação de modelos ou símbolos importantes, siga estas boas práticas:
+#
+# - Busque sempre por todo o projeto: Utilize ferramentas de busca (grep, VS Code search, ou django-extensions show_models) para procurar nomes de modelos, classes ou funções em todos os diretórios relevantes, não apenas nos diretórios mais óbvios.
+#
+# Esta regra deve ser observada em todas as etapas de desenvolvimento e manutenção.

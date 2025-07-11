@@ -23,6 +23,33 @@
           <div class="table-responsive">
             {% render_table table %}
           </div>
+          {% if table.page and table.paginator %}
+          <nav aria-label="Paginação de itens de despesa">
+            <ul class="pagination justify-content-center">
+              {% if table.page.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ table.page.previous_page_number }}" aria-label="Anterior">&laquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+              {% endif %}
+              {% for num in table.paginator.page_range %}
+                {% if table.page.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              {% if table.page.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ table.page.next_page_number }}" aria-label="Próxima">&raquo;</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
         </div>
       </div>
     </div>

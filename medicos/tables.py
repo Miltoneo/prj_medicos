@@ -43,7 +43,6 @@ class AliquotasTable(tables.Table):
 
 class ItemDespesaTable(tables.Table):
     grupo = tables.Column(accessor='grupo.descricao', verbose_name='Grupo')
-    codigo_completo = tables.Column(verbose_name='Código Completo')
     codigo = tables.Column(verbose_name='Código')
     descricao = tables.Column(verbose_name='Descrição')
     acoes = tables.TemplateColumn(
@@ -60,21 +59,8 @@ class ItemDespesaTable(tables.Table):
         verbose_name="Ações",
         orderable=False
     )
-    remover = tables.TemplateColumn(
-        template_code='''
-        {% with empresa_id=record.conta.empresas.first.id %}
-          {% if empresa_id %}
-            <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão do item?');">Remover</a>
-          {% else %}
-            <span class="text-muted">Empresa não definida</span>
-          {% endif %}
-        {% endwith %}
-        ''',
-        verbose_name="Remover",
-        orderable=False
-    )
     class Meta:
         model = ItemDespesa
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('codigo_completo', 'grupo', 'codigo', 'descricao', 'remover')
+        fields = ('grupo', 'codigo', 'descricao', 'acoes')
         order_by = ('grupo', 'codigo', 'descricao')
