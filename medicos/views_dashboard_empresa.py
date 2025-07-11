@@ -17,6 +17,7 @@ def dashboard_empresa(request, empresa_id):
         'empresa': empresa,
         'table': table,
         'socio_filter': socio_filter,
+        'menu_nome': 'Dashboard',
     })
 
 @login_required

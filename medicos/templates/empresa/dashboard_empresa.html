@@ -21,25 +21,24 @@
         <div class="card-header bg-secondary text-white">Lista de Sócios</div>
         <div class="card-body">
           <form method="get" class="mb-3">
-            <div class="row g-2 align-items-end">
-              <div class="col-md-5">
-                {{ socio_filter.form.nome.label_tag }}
+            <div class="row g-3 align-items-end p-2 rounded bg-light border mb-2">
+              <div class="col-12">
+                <label class="form-label fw-bold" for="id_nome"><i class="fas fa-user me-1"></i>Nome</label>
                 {{ socio_filter.form.nome }}
               </div>
-              <div class="col-md-4">
-                {{ socio_filter.form.cpf.label_tag }}
-                {{ socio_filter.form.cpf }}
-              </div>
-              <div class="col-md-3">
-                {{ socio_filter.form.ativo.label_tag }}
-                {{ socio_filter.form.ativo }}
-              </div>
             </div>
-            <div class="mt-2">
-              <button type="submit" class="btn btn-outline-primary btn-sm">Filtrar</button>
+            <div class="mt-2 text-end">
+              <button type="submit" class="btn btn-primary btn-sm px-4"><i class="fas fa-filter me-1"></i>Filtrar</button>
             </div>
           </form>
-          {% render_table table %}
+          <div class="d-flex align-items-center mb-3">
+            <i class="fas fa-users fa-lg text-secondary me-2"></i>
+            <span class="h5 mb-0">Sócios da Empresa</span>
+            <span class="badge bg-success ms-3">{{ table.rows|length }} sócios</span>
+          </div>
+          <div class="table-responsive">
+            {% render_table table %}
+          </div>
         </div>
       </div>
     </div>
