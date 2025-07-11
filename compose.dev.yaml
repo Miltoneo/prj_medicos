@@ -24,7 +24,7 @@ services:
   app:
     build: 
       context: .
-    container_name: medicos_c
+    container_name: prj_medicos_c
     command: sh -c "\
             echo 'Postgres is ready - executing Django commands' &&\
             python manage.py makemigrations medicos &&\

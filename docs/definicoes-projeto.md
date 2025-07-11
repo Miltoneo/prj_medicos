@@ -314,3 +314,40 @@ Essa estrutura deve ser mantida e revisada periodicamente para garantir clareza,
 - O formulário de filtro deve ser exibido no topo da listagem, facilitando o uso.
 - A configuração dos filtros deve ser feita em classes FilterSet dedicadas, seguindo boas práticas de organização.
 - Consulte a documentação oficial do django-filter para exemplos e melhores práticas.
+
+## Descrição de Movimentação Financeira
+
+O sistema permite que os usuários criem e gerenciem descrições padronizadas para categorizar movimentações financeiras, facilitando a organização e relatórios personalizados. Cada descrição pode ser configurada para diferentes tipos de movimentação (crédito, débito ou ambos), exigir documento ou aprovação, associar códigos contábeis e definir regras de retenção de IR. As descrições frequentes podem ser destacadas para facilitar o uso recorrente.
+
+Principais funcionalidades:
+- Cadastro de descrições personalizadas para movimentações financeiras
+- Associação de tipo de movimentação (crédito, débito, ambos)
+- Configuração de exigência de documento e aprovação
+- Definição de código contábil e regras de retenção de IR
+- Destaque para descrições de uso frequente
+- Controle de vigência e disponibilidade para uso
+- Integração com lançamentos financeiros para categorização e relatórios
+
+Esse recurso aumenta a flexibilidade e a precisão na gestão financeira, permitindo que cada usuário adapte o sistema às suas necessidades contábeis e operacionais.
+
+## Fluxo de Faturamento: Entrada de Notas Fiscais Recebidas
+
+O fluxo de faturamento no cenário empresa contempla o registro, categorização e acompanhamento das notas fiscais recebidas pela empresa. Este processo garante controle fiscal, integração contábil e rastreabilidade dos documentos fiscais.
+
+Principais etapas do fluxo:
+1. **Recepção da Nota Fiscal**: A empresa recebe uma nota fiscal de serviço ou produto.
+2. **Cadastro da Nota Fiscal**: O usuário registra os dados da nota no sistema, utilizando o modelo `NotaFiscal` (campos: número, data, valor, fornecedor, empresa, etc.).
+3. **Classificação Fiscal e Contábil**: A nota é vinculada à empresa, à categoria fiscal e, quando aplicável, às alíquotas e meios de pagamento.
+4. **Rateio de Valores**: Se necessário, o valor da nota é rateado entre médicos/sócios via o modelo `NotaFiscalRateioMedico`.
+5. **Validação e Aprovação**: O sistema pode exigir validação documental ou aprovação conforme regras da empresa.
+6. **Integração com Relatórios**: As notas cadastradas alimentam relatórios fiscais, financeiros e dashboards de acompanhamento.
+7. **Auditoria e Compliance**: Todas as operações são registradas para garantir conformidade tributária e rastreabilidade.
+
+Modelos envolvidos:
+- `NotaFiscal`: Registro principal da nota fiscal recebida
+- `Empresa`: Empresa destinatária da nota
+- `Aliquotas`: Regras fiscais aplicáveis
+- `MeioPagamento`: Forma de pagamento utilizada
+- `NotaFiscalRateioMedico`: Rateio do valor entre sócios/médicos
+
+Esse fluxo garante que todas as notas fiscais recebidas sejam devidamente registradas, classificadas e integradas ao controle financeiro e fiscal da empresa, facilitando auditoria, compliance e geração de relatórios.
