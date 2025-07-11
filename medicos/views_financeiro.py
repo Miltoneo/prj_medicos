@@ -30,7 +30,11 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['empresa_id'] = self.kwargs.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id')
+        from medicos.models.base import Empresa
+        empresa = Empresa.objects.filter(id=empresa_id).first()
+        context['empresa_id'] = empresa_id
+        context['empresa'] = empresa
         context['table'] = context.get('table')
         context['filter'] = context.get('filter')
         return context
@@ -57,7 +61,11 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['empresa_id'] = self.kwargs.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id')
+        from medicos.models.base import Empresa
+        empresa = Empresa.objects.filter(id=empresa_id).first()
+        context['empresa_id'] = empresa_id
+        context['empresa'] = empresa
         return context
 
 class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
@@ -88,7 +96,11 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['empresa_id'] = self.kwargs.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id')
+        from medicos.models.base import Empresa
+        empresa = Empresa.objects.filter(id=empresa_id).first()
+        context['empresa_id'] = empresa_id
+        context['empresa'] = empresa
         return context
 
     def get_success_url(self):
@@ -101,7 +113,11 @@ class DescricaoMovimentacaoFinanceiraDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['empresa_id'] = self.kwargs.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id')
+        from medicos.models.base import Empresa
+        empresa = Empresa.objects.filter(id=empresa_id).first()
+        context['empresa_id'] = empresa_id
+        context['empresa'] = empresa
         return context
 
     def get_success_url(self):
