@@ -25,10 +25,8 @@ class GrupoDespesaFilter(django_filters.FilterSet):
         fields = ['descricao']
 
 class ItemDespesaFilter(django_filters.FilterSet):
-    codigo = django_filters.CharFilter(lookup_expr='icontains', label='Código')
     descricao = django_filters.CharFilter(lookup_expr='icontains', label='Descrição')
-    grupo = django_filters.CharFilter(field_name='grupo__descricao', lookup_expr='icontains', label='Grupo')
 
     class Meta:
         model = ItemDespesa
-        fields = ['codigo', 'descricao', 'grupo']
+        fields = ['descricao']

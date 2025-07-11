@@ -48,14 +48,33 @@ class ItemDespesaTable(tables.Table):
     descricao = tables.Column(verbose_name='Descrição')
     acoes = tables.TemplateColumn(
         template_code='''
-        <a href="{% url 'medicos:item_despesa_edit' empresa_id=record.conta.empresa_set.first.id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
-        <a href="{% url 'medicos:item_despesa_delete' empresa_id=record.conta.empresa_set.first.id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
+        {% with empresa_id=record.conta.empresas.first.id %}
+          {% if empresa_id %}
+            <a href="{% url 'medicos:item_despesa_edit' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
+            <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
+          {% else %}
+            <span class="text-muted">Empresa não definida</span>
+          {% endif %}
+        {% endwith %}
         ''',
         verbose_name="Ações",
+        orderable=False
+    )
+    remover = tables.TemplateColumn(
+        template_code='''
+        {% with empresa_id=record.conta.empresas.first.id %}
+          {% if empresa_id %}
+            <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão do item?');">Remover</a>
+          {% else %}
+            <span class="text-muted">Empresa não definida</span>
+          {% endif %}
+        {% endwith %}
+        ''',
+        verbose_name="Remover",
         orderable=False
     )
     class Meta:
         model = ItemDespesa
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('codigo_completo', 'grupo', 'codigo', 'descricao', 'acoes')
+        fields = ('codigo_completo', 'grupo', 'codigo', 'descricao', 'remover')
         order_by = ('grupo', 'codigo', 'descricao')

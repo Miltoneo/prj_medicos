@@ -11,8 +11,8 @@ from django.views.generic import ListView
 from medicos.tables import ItemDespesaTable
 from medicos.filters import ItemDespesaFilter
 from django_tables2 import SingleTableView
-from medicos.models import ItemDespesa
-from medicos.models.base import Empresa
+from .tables import ItemDespesaTable
+from .filters import ItemDespesaFilter
 
 @login_required
 def lista_grupos_despesa(request, empresa_id):
@@ -99,10 +99,13 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
     paginate_by = 20
     filterset_class = ItemDespesaFilter
 
-    def get_queryset(self):
+    def get_table_data(self):
         empresa_id = self.kwargs.get('empresa_id')
         empresa = Empresa.objects.get(pk=empresa_id)
-        return ItemDespesa.objects.filter(conta=empresa.conta)
+        qs = ItemDespesa.objects.filter(conta=empresa.conta)
+        # Aplica filtro se houver
+        self.filter = self.filterset_class(self.request.GET, queryset=qs)
+        return self.filter.qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -110,6 +113,7 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
         empresa = Empresa.objects.get(pk=empresa_id)
         context['empresa'] = empresa
         context['empresa_id'] = empresa_id
+        context['filter'] = getattr(self, 'filter', None)
         return context
 
 @login_required
