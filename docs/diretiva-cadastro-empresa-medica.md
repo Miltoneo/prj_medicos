@@ -29,3 +29,4 @@ Padronizar o fluxo de cadastro de empresas médicas (clínicas, consultórios, g
 
 ## Diretrizes de Interface
 - Toda template de lista deverá ter paginação (20 itens por página), com navegação clara entre páginas e integração com filtros e ordenação.
+- Toda ação de cadastro deve iniciar a partir de um template de lista, garantindo que o usuário sempre visualize os registros existentes antes de criar um novo. O botão "Novo" deve estar presente na tela de listagem e direcionar para o formulário de cadastro.

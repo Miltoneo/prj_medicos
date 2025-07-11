@@ -1,6 +1,7 @@
 import django_tables2 as tables
 from .models.base import Empresa
 from .models.fiscal import Aliquotas
+from .models import ItemDespesa
 
 class EmpresaTable(tables.Table):
     name = tables.Column(verbose_name="Nome")
@@ -39,3 +40,22 @@ class AliquotasTable(tables.Table):
             "CSLL_ALIQUOTA_CONSULTA", "observacoes"
         )
         order_by = "-data_vigencia_inicio"
+
+class ItemDespesaTable(tables.Table):
+    grupo = tables.Column(accessor='grupo.descricao', verbose_name='Grupo')
+    codigo_completo = tables.Column(verbose_name='Código Completo')
+    codigo = tables.Column(verbose_name='Código')
+    descricao = tables.Column(verbose_name='Descrição')
+    acoes = tables.TemplateColumn(
+        template_code='''
+        <a href="{% url 'medicos:item_despesa_edit' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
+        <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
+        ''',
+        verbose_name="Ações",
+        orderable=False
+    )
+    class Meta:
+        model = ItemDespesa
+        template_name = 'django_tables2/bootstrap4.html'
+        fields = ('grupo', 'codigo', 'descricao', 'acoes')
+        order_by = ('grupo', 'codigo', 'descricao')

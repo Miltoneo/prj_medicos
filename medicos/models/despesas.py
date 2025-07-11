@@ -494,14 +494,6 @@ class Despesa(models.Model):
     
     # Dados da despesa
     data = models.DateField(null=False, verbose_name="Data da Despesa")
-    valor = models.DecimalField(
-        max_digits=12, 
-        decimal_places=2, 
-        null=False, 
-        default=0,
-        verbose_name="Valor da Despesa (R$)",
-        help_text="Valor total da despesa em reais"
-    )
     
     # Status da despesa (NOVO CAMPO)
     STATUS_CHOICES = [

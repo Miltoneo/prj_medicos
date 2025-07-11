@@ -1,0 +1,12 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% block title %}Excluir Item de Despesa{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Excluir Item de Despesa</h2>
+  <p>Tem certeza que deseja excluir o item <strong>{{ item.descricao }}</strong> (código: {{ item.codigo_completo }})?</p>
+  <form method="post">{% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+    <a href="{% url 'medicos:lista_itens_despesa' empresa_id=empresa_id grupo_id=grupo_id %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

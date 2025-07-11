@@ -10,7 +10,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models.base import Empresa, Socio, Pessoa
 from .models.fiscal import Aliquotas
-from .models.despesas import GrupoDespesa
+from .models.despesas import GrupoDespesa, ItemDespesa
 
 User = get_user_model()
 
@@ -179,4 +179,17 @@ class GrupoDespesaForm(forms.ModelForm):
         fields = ['codigo', 'descricao', 'tipo_rateio']
         widgets = {
             'descricao': forms.Textarea(attrs={'rows': 2}),
+        }
+
+class ItemDespesaForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['grupo'].label_from_instance = lambda obj: obj.descricao
+    class Meta:
+        model = ItemDespesa
+        fields = ['codigo', 'descricao', 'grupo']
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
+            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'grupo': forms.Select(attrs={'class': 'form-control'}),
         }

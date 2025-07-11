@@ -19,7 +19,7 @@
           {% if filter %}
           <form method="get" class="mb-3">
             <div class="row g-2 align-items-end">
-              {{ filter.form|crispy }}
+              {{ filter.form.descricao|as_crispy_field }}
               <div class="col-auto">
                 <button type="submit" class="btn btn-primary">Filtrar</button>
               </div>
@@ -46,6 +46,7 @@
                   <td>{{ grupo.created_at|date:'d/m/Y H:i' }}</td>
                   <td>
                     <a href="{% url 'medicos:grupo_despesa_edit' empresa_id=empresa.id grupo_id=grupo.id %}" class="btn btn-sm btn-primary">Editar</a>
+                    <a href="{% url 'medicos:grupo_despesa_delete' empresa_id=empresa.id grupo_id=grupo.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão do grupo?');">Excluir</a>
                   </td>
                 </tr>
                 {% empty %}

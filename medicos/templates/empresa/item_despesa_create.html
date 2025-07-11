@@ -1,0 +1,15 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Novo Item de Despesa{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Novo Item de Despesa</h2>
+  <form method="post">{% csrf_token %}
+    {{ form.codigo|as_crispy_field }}
+    {{ form.descricao|as_crispy_field }}
+    {{ form.grupo|as_crispy_field }}
+    <button type="submit" class="btn btn-primary mt-2">Salvar</button>
+    <a href="{% url 'medicos:lista_grupos_despesa' empresa_id=empresa_id %}" class="btn btn-secondary mt-2">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -168,7 +168,7 @@ class AliquotasAdmin(admin.ModelAdmin):
 
 @admin.register(Despesa)
 class DespesaAdmin(admin.ModelAdmin):
-    list_display = ('data', 'item', 'empresa', 'socio', 'valor', 'status')
+    list_display = ('data', 'item', 'empresa', 'socio', 'status')
     list_filter = ('status', 'empresa', 'socio', 'data')
     search_fields = ('item__descricao', 'empresa__name', 'socio__pessoa__name')
     ordering = ('-data',)
