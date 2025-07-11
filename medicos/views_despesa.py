@@ -7,10 +7,12 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from medicos.filters import GrupoDespesaFilter
 from .models import ItemDespesa, GrupoDespesa
-from django_tables2 import SingleTableView
+from django.views.generic import ListView
 from medicos.tables import ItemDespesaTable
-from django_filters.views import FilterView
-from .filters import ItemDespesaFilter
+from medicos.filters import ItemDespesaFilter
+from django_tables2 import SingleTableView
+from medicos.models import ItemDespesa
+from medicos.models.base import Empresa
 
 @login_required
 def lista_grupos_despesa(request, empresa_id):
@@ -65,41 +67,49 @@ def item_despesa_create(request, empresa_id, grupo_id):
             item = form.save(commit=False)
             item.grupo = form.cleaned_data['grupo']
             item.conta = item.grupo.conta
+            if request.user.is_authenticated:
+                item.created_by = request.user
             # Validação: código único por conta
             if ItemDespesa.objects.filter(conta=item.conta, codigo=item.codigo).exists():
                 form.add_error('codigo', 'Já existe um item com este código para esta conta.')
             else:
                 item.save()
                 messages.success(request, 'Item de despesa cadastrado com sucesso!')
-                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo.pk)
+                # Redireciona para o grupo correto
+                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo.id)
     else:
         initial = {'grupo': grupo_inicial} if grupo_inicial else {}
         form = ItemDespesaForm(initial=initial)
-    return render(request, 'empresa/item_despesa_create.html', {'form': form, 'grupo': grupo_inicial, 'empresa_id': empresa_id, 'grupos': grupos})
+    context = {
+        'form': form,
+        'grupo': grupo_inicial,
+        'empresa_id': empresa_id,
+        'grupos': grupos,
+        'request': request
+    }
+    return render(request, 'empresa/item_despesa_create.html', context)
 
-class ItemDespesaListView(SingleTableView, FilterView):
+# NOVA VIEW: Lista de Itens de Despesa com django-tables2 e paginação
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
     model = ItemDespesa
     table_class = ItemDespesaTable
     template_name = 'empresa/lista_itens_despesa.html'
-    filterset_class = ItemDespesaFilter
     paginate_by = 20
+    filterset_class = ItemDespesaFilter
 
     def get_queryset(self):
         empresa_id = self.kwargs.get('empresa_id')
         empresa = Empresa.objects.get(pk=empresa_id)
-        conta = empresa.conta
-        return ItemDespesa.objects.filter(conta=conta)
+        return ItemDespesa.objects.filter(conta=empresa.conta)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
         empresa = Empresa.objects.get(pk=empresa_id)
-        grupos = GrupoDespesa.objects.filter(conta=empresa.conta)
-        context.update({
-            'empresa': empresa,
-            'empresa_id': empresa_id,
-            'grupos': grupos,
-        })
+        context['empresa'] = empresa
+        context['empresa_id'] = empresa_id
         return context
 
 @login_required
