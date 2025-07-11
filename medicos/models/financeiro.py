@@ -57,7 +57,9 @@ class MeioPagamento(models.Model):
     nome = models.CharField(
         max_length=100,
         verbose_name="Nome",
-        help_text="Nome descritivo do meio de pagamento"
+        help_text="Nome descritivo do meio de pagamento",
+        blank=True,
+        null=True
     )
     
     descricao = models.TextField(
@@ -468,7 +470,8 @@ class DescricaoMovimentacaoFinanceira(models.Model):
     
     class Meta:
         db_table = 'descricao_movimentacao'
-        unique_together = ('conta', 'nome')
+        unique_together = ()
+        constraints = []
         verbose_name = "Descrição de Movimentação"
         verbose_name_plural = "Descrições de Movimentação"
         indexes = [
@@ -483,12 +486,6 @@ class DescricaoMovimentacaoFinanceira(models.Model):
     )
     
     # Identificação da descrição
-    nome = models.CharField(
-        max_length=100,
-        verbose_name="Nome",
-        help_text="Nome da descrição de movimentação"
-    )
-    
     descricao = models.TextField(
         blank=True,
         verbose_name="Descrição Detalhada",
@@ -541,7 +538,9 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         decimal_places=2,
         default=0.00,
         verbose_name="% Retenção IR",
-        help_text="Percentual de retenção de IR aplicado"
+        help_text="Percentual de retenção de IR aplicado",
+        blank=True,
+        null=True
     )
     
     # Controle de uso
@@ -582,23 +581,9 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             raise ValidationError({
                 'percentual_retencao_ir': 'Percentual deve ser zero se não possui retenção'
             })
-        
-        # Validar unicidade do nome por conta
-        if self.nome:
-            qs = DescricaoMovimentacaoFinanceira.objects.filter(
-                conta=self.conta,
-                nome=self.nome
-            )
-            if self.pk:
-                qs = qs.exclude(pk=self.pk)
-            
-            if qs.exists():
-                raise ValidationError({
-                    'nome': 'Já existe uma descrição com este nome nesta conta'
-                })
 
     def __str__(self):
-        return f"{self.nome}"
+        return f"DescriçãoMovimentacaoFinanceira #{self.pk}"
     
     @property
     def esta_vigente(self):

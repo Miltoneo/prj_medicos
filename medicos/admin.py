@@ -372,10 +372,10 @@ class MeioPagamentoAdmin(admin.ModelAdmin):
 
 @admin.register(DescricaoMovimentacaoFinanceira)
 class DescricaoMovimentacaoFinanceiraAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'tipo_movimentacao', 'uso_frequente', 'exige_documento', 'exige_aprovacao')
+    list_display = ('tipo_movimentacao', 'uso_frequente', 'exige_documento', 'exige_aprovacao', 'descricao', 'codigo_contabil', 'observacoes')
     list_filter = ('tipo_movimentacao', 'uso_frequente', 'exige_documento', 'exige_aprovacao')
     search_fields = ('nome', 'descricao', 'codigo_contabil')
-    ordering = ('nome',)
+    ordering = ('descricao',)
     readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(CustomUser)

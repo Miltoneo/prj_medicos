@@ -3,6 +3,7 @@ from .models.base import Empresa
 from .models.fiscal import Aliquotas
 from medicos.models.despesas import GrupoDespesa
 from .models import ItemDespesa
+from .models.financeiro import DescricaoMovimentacaoFinanceira
 
 class EmpresaFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(label='Nome', lookup_expr='icontains')
@@ -29,4 +30,11 @@ class ItemDespesaFilter(django_filters.FilterSet):
 
     class Meta:
         model = ItemDespesa
+        fields = ['descricao']
+
+class DescricaoMovimentacaoFinanceiraFilter(django_filters.FilterSet):
+    descricao = django_filters.CharFilter(lookup_expr='icontains', label='Descrição')
+
+    class Meta:
+        model = DescricaoMovimentacaoFinanceira
         fields = ['descricao']

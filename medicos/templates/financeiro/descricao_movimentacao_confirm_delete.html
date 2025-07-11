@@ -1,0 +1,21 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% block title %}Confirmar Exclusão{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h3 class="mb-4 text-danger">Confirma exclusão da descrição de movimentação financeira?</h3>
+          <p class="mb-3">Esta ação não pode ser desfeita. Todos os dados relacionados serão removidos.</p>
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Excluir</button>
+            <a href="{% url 'financeiro:lista_descricoes_movimentacao' empresa_id=empresa_id %}" class="btn btn-secondary ms-2">Cancelar</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

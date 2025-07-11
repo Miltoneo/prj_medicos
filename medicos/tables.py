@@ -2,6 +2,7 @@ import django_tables2 as tables
 from .models.base import Empresa
 from .models.fiscal import Aliquotas
 from .models import ItemDespesa
+from .models.financeiro import DescricaoMovimentacaoFinanceira
 
 class EmpresaTable(tables.Table):
     name = tables.Column(verbose_name="Nome")
@@ -64,3 +65,23 @@ class ItemDespesaTable(tables.Table):
         template_name = 'django_tables2/bootstrap4.html'
         fields = ('grupo', 'codigo', 'descricao', 'acoes')
         order_by = ('grupo', 'codigo', 'descricao')
+
+class DescricaoMovimentacaoFinanceiraTable(tables.Table):
+    codigo_contabil = tables.Column(verbose_name='Código Contábil')
+    tipo_movimentacao = tables.Column(verbose_name='Tipo', accessor='get_tipo_movimentacao_display')
+    descricao = tables.Column(verbose_name='Descrição')
+    observacoes = tables.Column(verbose_name='Observações')
+    actions = tables.TemplateColumn(
+        template_code='''
+        <a href="{% url 'financeiro:descricao_movimentacao_edit' empresa_id=record.conta_id pk=record.pk %}" class="btn btn-sm btn-primary">Editar</a>
+        <a href="{% url 'financeiro:descricao_movimentacao_delete' empresa_id=record.conta_id pk=record.pk %}" class="btn btn-sm btn-danger">Excluir</a>
+        ''',
+        verbose_name='Ações', orderable=False
+    )
+
+    class Meta:
+        model = DescricaoMovimentacaoFinanceira
+        template_name = "django_tables2/bootstrap5.html"
+        fields = ('codigo_contabil', 'tipo_movimentacao', 'descricao', 'observacoes')
+        sequence = ('codigo_contabil', 'tipo_movimentacao', 'descricao', 'observacoes', 'actions')
+        attrs = {'class': 'table table-striped'}

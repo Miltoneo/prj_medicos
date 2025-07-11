@@ -1,4 +1,5 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
+{% load render_table from django_tables2 %}
 {% block title %}Descrições de Movimentação Financeira{% endblock %}
 {% block content %}
 <div class="container mt-4">
@@ -15,47 +16,44 @@
       </div>
       <div class="card shadow-sm border-0">
         <div class="card-body">
+          <form method="get" class="mb-3">
+            {{ filter.form.as_p }}
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+          </form>
           <div class="table-responsive">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Descrição</th>
-                  <th>Tipo</th>
-                  <th>Exige Documento</th>
-                  <th>Exige Aprovação</th>
-                  <th>Código Contábil</th>
-                  <th>Retenção IR?</th>
-                  <th>% Retenção IR</th>
-                  <th>Uso Frequente</th>
-                  <th>Observações</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for descricao in descricoes %}
-                <tr>
-                  <td>{{ descricao.nome }}</td>
-                  <td>{{ descricao.descricao }}</td>
-                  <td>{{ descricao.get_tipo_movimentacao_display }}</td>
-                  <td>{{ descricao.exige_documento|yesno:"Sim,Não" }}</td>
-                  <td>{{ descricao.exige_aprovacao|yesno:"Sim,Não" }}</td>
-                  <td>{{ descricao.codigo_contabil }}</td>
-                  <td>{{ descricao.possui_retencao_ir|yesno:"Sim,Não" }}</td>
-                  <td>{{ descricao.percentual_retencao_ir }}%</td>
-                  <td>{{ descricao.uso_frequente|yesno:"Sim,Não" }}</td>
-                  <td>{{ descricao.observacoes }}</td>
-                  <td>
-                    <a href="{% url 'financeiro:descricao_movimentacao_edit' empresa_id=empresa_id pk=descricao.pk %}" class="btn btn-sm btn-primary">Editar</a>
-                    <a href="{% url 'financeiro:descricao_movimentacao_delete' empresa_id=empresa_id pk=descricao.pk %}" class="btn btn-sm btn-danger">Excluir</a>
-                  </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="11" class="text-center">Nenhuma descrição cadastrada.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            {% render_table table %}
           </div>
+          {% if table.page and table.paginator.num_pages > 1 %}
+          <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination justify-content-center">
+              {% if table.page.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ table.page.previous_page_number }}" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+              {% endif %}
+              {% for num in table.paginator.page_range %}
+                {% if num == table.page.number %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              {% if table.page.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ table.page.next_page_number }}" aria-label="Próxima">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
         </div>
       </div>
     </div>

@@ -196,10 +196,13 @@ class ItemDespesaForm(forms.ModelForm):
         }
 
 class DescricaoMovimentacaoFinanceiraForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     class Meta:
         model = DescricaoMovimentacaoFinanceira
         fields = [
-            'nome', 'descricao', 'tipo_movimentacao', 'exige_documento', 'exige_aprovacao',
+            'descricao', 'tipo_movimentacao', 'exige_documento', 'exige_aprovacao',
             'codigo_contabil', 'possui_retencao_ir', 'percentual_retencao_ir', 'uso_frequente', 'observacoes'
         ]
         widgets = {

@@ -761,4 +761,12 @@ class Socio(models.Model):
         
         return vencimentos
 
+def ensure_conta_exists(conta_id, name=None):
+    from .models.base import Conta
+    obj, created = Conta.objects.get_or_create(id=conta_id, defaults={
+        'name': name or f'Conta {conta_id}',
+        'cnpj': '',
+    })
+    return obj
+
 # Removido modelo Aliquota duplicado. Utilize o modelo Aliquotas de models/fiscal.py
