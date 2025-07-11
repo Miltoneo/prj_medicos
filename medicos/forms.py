@@ -11,6 +11,7 @@ from crispy_forms.layout import Submit
 from .models.base import Empresa, Socio, Pessoa
 from .models.fiscal import Aliquotas
 from .models.despesas import GrupoDespesa, ItemDespesa
+from .models.financeiro import DescricaoMovimentacaoFinanceira
 
 User = get_user_model()
 
@@ -192,4 +193,16 @@ class ItemDespesaForm(forms.ModelForm):
             'codigo': forms.TextInput(attrs={'class': 'form-control'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'grupo': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+class DescricaoMovimentacaoFinanceiraForm(forms.ModelForm):
+    class Meta:
+        model = DescricaoMovimentacaoFinanceira
+        fields = [
+            'nome', 'descricao', 'tipo_movimentacao', 'exige_documento', 'exige_aprovacao',
+            'codigo_contabil', 'possui_retencao_ir', 'percentual_retencao_ir', 'uso_frequente', 'observacoes'
+        ]
+        widgets = {
+            'descricao': forms.Textarea(attrs={'rows': 3}),
+            'observacoes': forms.Textarea(attrs={'rows': 2}),
         }

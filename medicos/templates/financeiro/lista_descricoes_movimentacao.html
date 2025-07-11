@@ -1,0 +1,64 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% block title %}Descrições de Movimentação Financeira{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="d-flex align-items-center mb-4 justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-file-alt fa-2x text-primary me-2"></i>
+          <h2 class="mb-0">Descrições de Movimentação Financeira</h2>
+        </div>
+        <a href="{% url 'financeiro:descricao_movimentacao_create' empresa_id=empresa_id %}" class="btn btn-success btn-sm px-3">
+          <i class="fas fa-plus me-1"></i>Nova Descrição
+        </a>
+      </div>
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Descrição</th>
+                  <th>Tipo</th>
+                  <th>Exige Documento</th>
+                  <th>Exige Aprovação</th>
+                  <th>Código Contábil</th>
+                  <th>Retenção IR?</th>
+                  <th>% Retenção IR</th>
+                  <th>Uso Frequente</th>
+                  <th>Observações</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for descricao in descricoes %}
+                <tr>
+                  <td>{{ descricao.nome }}</td>
+                  <td>{{ descricao.descricao }}</td>
+                  <td>{{ descricao.get_tipo_movimentacao_display }}</td>
+                  <td>{{ descricao.exige_documento|yesno:"Sim,Não" }}</td>
+                  <td>{{ descricao.exige_aprovacao|yesno:"Sim,Não" }}</td>
+                  <td>{{ descricao.codigo_contabil }}</td>
+                  <td>{{ descricao.possui_retencao_ir|yesno:"Sim,Não" }}</td>
+                  <td>{{ descricao.percentual_retencao_ir }}%</td>
+                  <td>{{ descricao.uso_frequente|yesno:"Sim,Não" }}</td>
+                  <td>{{ descricao.observacoes }}</td>
+                  <td>
+                    <a href="{% url 'financeiro:descricao_movimentacao_edit' empresa_id=empresa_id pk=descricao.pk %}" class="btn btn-sm btn-primary">Editar</a>
+                    <a href="{% url 'financeiro:descricao_movimentacao_delete' empresa_id=empresa_id pk=descricao.pk %}" class="btn btn-sm btn-danger">Excluir</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="11" class="text-center">Nenhuma descrição cadastrada.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
