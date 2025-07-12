@@ -83,6 +83,16 @@ Este documento reúne todas as diretrizes, práticas recomendadas e padrões que
 - Views e templates devem acessar `request.session['mes_ano']` para garantir sincronização.
 - Essa regra garante consistência de contexto temporal para o usuário em todo o sistema.
 
+## Regra: Comportamento da Data de Competência
+
+- A data de competência (mês/ano) é compartilhada por todos os cenários e módulos do sistema.
+- Ao acessar o sistema pela primeira vez, a data de competência é inicializada com o mês/ano atual e salva na sessão do usuário.
+- O campo de competência é exibido no cabeçalho dos cenários principais.
+- Quando o usuário altera manualmente a data de competência, o novo valor é salvo na sessão e mantido ao navegar entre diferentes cenários.
+- Todas as views e templates que dependem de contexto temporal acessam `request.session['mes_ano']` para garantir sincronização.
+- O valor permanece persistente durante toda a navegação do usuário, garantindo que filtros, cálculos e exibições estejam sempre alinhados com a competência selecionada.
+- Essa abordagem garante consistência e contexto temporal único para o usuário em todo o sistema.
+
 ## 16. Revisão de Métodos de Validação
 - Sempre revisar e, se necessário, remover ou ajustar validações duplicadas ou conflitantes tanto no formulário quanto no modelo.
 - Garantir que a alteração foi testada na interface e no backend.
