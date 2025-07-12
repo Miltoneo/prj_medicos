@@ -19,6 +19,16 @@ def main(request):
     empresa_filter = EmpresaFilter(request.GET, queryset=empresas_qs)
 
     empresas_disponiveis = empresa_filter.qs
+    empresa_id_param = request.GET.get('empresa_id')
+    if empresa_id_param:
+        try:
+            empresa_id_param = int(empresa_id_param)
+            empresa_selecionada = empresas_disponiveis.filter(id=empresa_id_param).first()
+            if empresa_selecionada:
+                request.session['empresa_id'] = empresa_selecionada.id
+        except Exception:
+            pass
+
     empresa_id_atual = request.session.get('empresa_id')
     empresa_atual = None
     if empresa_id_atual:
@@ -28,15 +38,12 @@ def main(request):
         if empresa_atual:
             request.session['empresa_id'] = empresa_atual.id
 
-    # Atualiza o contexto na sessão
     contexto = {
         'mes_ano': request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m'),
         'menu_nome': 'Home',
         'cenario_nome': 'Home',
         'titulo_pagina': 'Dashboard Principal',
-
     }
-    #set_contexto(request, contexto)
 
     return render(request, 'dashboard/home.html', {
         'empresas_disponiveis': empresas_disponiveis,

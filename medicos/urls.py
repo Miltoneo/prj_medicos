@@ -3,8 +3,8 @@ from . import views_user
 from . import views_main
 from . import views_relatorios
 from . import views_empresa
-from . import views_home_cenario
-from . import views_dashboard_empresa
+# from . import views_home_cenario  # Removido: arquivo não existe
+# from . import views_dashboard_empresa  # Removido: arquivo não existe
 from . import views_socio
 from . import views_aliquota
 from . import views_despesa
@@ -16,7 +16,7 @@ urlpatterns = [
     path('', views_main.main, name='index'),
 path('dashboard/', views_main.main, name='dashboard'),
 path('home/', views_main.main, name='home'),
-    path('cenario-home/', views_home_cenario.home_cenario, name='cenario_home'),
+    # path('cenario-home/', views_home_cenario.home_cenario, name='cenario_home'),  # Removido: views_home_cenario não existe
     # Dashboard SaaS (migrado de urls_dashboard.py)
     # path('', views_dashboard.dashboard_home, name='home'),
     # path('widgets/', views_dashboard.dashboard_widgets, name='widgets'),
@@ -28,13 +28,11 @@ path('home/', views_main.main, name='home'),
     path('usuarios/<int:user_id>/excluir/', views_user.UserDeleteView.as_view(), name='user_delete'),
     path('usuarios/<int:user_id>/', views_user.UserDetailView.as_view(), name='user_detail'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/medicos/auth/login/'), name='logout'),
-    path('set-empresa/', views_empresa.set_empresa, name='set_empresa'),
-    path('empresas/', views_empresa.EmpresaListView.as_view(), name='empresa_list'),
+    path('empresas/', views_empresa.main, name='empresas'),
     path('empresas/nova/', views_empresa.empresa_create, name='empresa_create'),
     path('empresas/<int:empresa_id>/', views_empresa.empresa_detail, name='empresa_detail'),
     path('empresas/<int:empresa_id>/editar/', views_empresa.empresa_update, name='empresa_update'),
     path('empresas/<int:empresa_id>/excluir/', views_empresa.empresa_delete, name='empresa_delete'),
-path('empresas/<int:empresa_id>/dashboard/', views_dashboard_empresa.main_empresa, name='dashboard_empresa'),
 path('empresas/<int:empresa_id>/socios/', views_socio.lista_socios_empresa, name='lista_socios_empresa'),
     path('empresas/<int:empresa_id>/socios/novo/', views_socio.socio_create, name='socio_create'),
     path('empresas/<int:empresa_id>/socios/<int:socio_id>/editar/', views_socio.socio_edit, name='socio_edit'),

@@ -35,7 +35,7 @@
         <td>{{ empresa.regime_tributario }}</td>
         <td>
           {% if empresa.id != empresa_id_atual %}
-          <form method="get" action="{% url 'medicos:set_empresa' %}" style="display:inline;">
+          <form method="get" action="{% url 'medicos:empresas' %}" style="display:inline;">
             <input type="hidden" name="empresa_id" value="{{ empresa.id }}">
             <button type="submit" class="btn btn-sm btn-primary">Selecionar</button>
           </form>

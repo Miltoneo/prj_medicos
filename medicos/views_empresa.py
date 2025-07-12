@@ -1,15 +1,18 @@
 
-# Standard Library
-from datetime import datetime
-import logging
 
-# Django
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from medicos.models.base import Socio
+from .tables_socio import SocioTable
+from .filters_socio import SocioFilter
+from django_tables2 import RequestConfig
+
+from datetime import datetime
+import logging
 
 # Third Party
 from django_tables2.views import SingleTableView
@@ -33,8 +36,9 @@ def get_or_set_conta_id(request):
             request.session['conta_id'] = conta_id
     return conta_id
 
+
 # Helpers
-def main(request):
+def main(request, empresa_id=None):
     # Preparar variáveis de contexto essenciais para o sistema
     mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
     if not mes_ano:
@@ -47,39 +51,52 @@ def main(request):
     empresas_disponiveis = Empresa.objects.filter(conta_id__in=contas_ids)
 
     # Empresa atual
-    empresa_id_atual = request.session.get('empresa_id')
     empresa_atual = None
-    if empresa_id_atual:
-        empresa_atual = empresas_disponiveis.filter(id=empresa_id_atual).first()
-    if not empresa_atual:
-        empresa_atual = empresas_disponiveis.first()
+    if empresa_id:
+        empresa_atual = empresas_disponiveis.filter(id=empresa_id).first()
         if empresa_atual:
             request.session['empresa_id'] = empresa_atual.id
+    else:
+        empresa_id_atual = request.session.get('empresa_id')
+        if empresa_id_atual:
+            empresa_atual = empresas_disponiveis.filter(id=empresa_id_atual).first()
+        if not empresa_atual:
+            empresa_atual = empresas_disponiveis.first()
+            if empresa_atual:
+                request.session['empresa_id'] = empresa_atual.id
 
     # Filtro de empresas
     empresa_filter = EmpresaFilter(request.GET, queryset=empresas_disponiveis)
 
-    # Menu e cenário
-    request.session['menu_nome'] = 'Dashboard'
-    request.session['cenario_nome'] = 'Empresas'
+    # Socios da empresa atual (se houver)
+    socios_qs = None
+    socio_filter = None
+    table = None
+    if empresa_atual:
+        socios_qs = Socio.objects.filter(empresa=empresa_atual)
+        socio_filter = SocioFilter(request.GET, queryset=socios_qs)
+        table = SocioTable(socio_filter.qs)
+        RequestConfig(request, paginate={'per_page': 20}).configure(table)
 
-    # Usuário
-    request.session['user_id'] = request.user.id
+    contexto = {
+        'mes_ano': mes_ano,
+        'menu_nome': 'dashboard',
+        'cenario_nome': 'Empresas',
+        'titulo_pagina': 'Dashboard Empresa',
+    }
+    return render(request, 'empresa/dashboard_empresa.html', {
+        'empresas_disponiveis': empresas_disponiveis,
+        'empresa_atual': empresa_atual,
+        'empresa_filter': empresa_filter,
+        'user': request.user,
+        'table': table,
+        'socio_filter': socio_filter,
+        **contexto,
+    })
 
-    # Redireciona para a lista de empresas
-    return redirect(reverse('medicos:empresa_list'))
+# --- Dashboard Empresa ---
+# Removido: dashboard_empresa. Use main(request) + render in urls/views.
 
-# Views
-@login_required
-def set_empresa(request):
-    empresa_id = request.GET.get('empresa_id')
-    if empresa_id:
-        request.session['empresa_id'] = int(empresa_id)
-        # Redireciona diretamente para o dashboard da empresa selecionada
-        return redirect('medicos:dashboard_empresa', empresa_id=empresa_id)
-    # Redireciona para a página anterior ou dashboard
-    next_url = request.META.get('HTTP_REFERER') or reverse('medicos:dashboard')
-    return redirect(next_url)
 
 
 class EmpresaListView(LoginRequiredMixin, SingleTableView):
@@ -122,21 +139,22 @@ def empresa_create(request):
             return redirect('medicos:empresa_list')
     else:
         form = EmpresaForm()
-    context = main(request)
-    context['form'] = form
-    return render(request, 'empresa/empresa_create.html', context)
+    contexto = main(request)
+    contexto['form'] = form
+    return render(request, 'empresa/empresa_create.html', contexto)
 
 
 @login_required
 def empresa_detail(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    context = main(request)
-    return render(request, 'empresa/empresa_detail.html', context)
+    contexto = main(request, empresa_id=empresa_id)
+    contexto['empresa'] = contexto['empresa_atual']
+    return render(request, 'empresa/empresa_detail.html', contexto)
 
 
 @staff_member_required
 def empresa_update(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
+    contexto = main(request, empresa_id=empresa_id)
+    empresa = contexto['empresa_atual']
     if request.method == 'POST':
         form = EmpresaForm(request.POST, instance=empresa)
         if form.is_valid():
@@ -146,19 +164,20 @@ def empresa_update(request, empresa_id):
             return redirect('medicos:empresa_list')
     else:
         form = EmpresaForm(instance=empresa)
-    context = main(request)
-    context['form'] = form
-    return render(request, 'empresa/empresa_update.html', context)
+    contexto['form'] = form
+    contexto['empresa'] = empresa
+    return render(request, 'empresa/empresa_update.html', contexto)
 
 
 @login_required
 @staff_member_required
 def empresa_delete(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
+    contexto = main(request, empresa_id=empresa_id)
+    empresa = contexto['empresa_atual']
     if request.method == 'POST':
         logger.info(f'Empresa excluída: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
         empresa.delete()
         messages.success(request, 'Empresa excluída com sucesso!')
         return redirect('medicos:empresa_list')
-    context = main(request)
-    return render(request, 'empresa/empresa_delete.html', context)
+    contexto['empresa'] = empresa
+    return render(request, 'empresa/empresa_delete.html', contexto)
