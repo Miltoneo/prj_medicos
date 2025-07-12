@@ -291,6 +291,7 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
         empresa = Empresa.objects.get(pk=empresa_id)
         context['empresa'] = empresa
         context['empresa_id'] = empresa_id
+        context['titulo_pagina'] = 'Itens de Despesa'
         context['filter'] = getattr(self, 'filter', None)
         return context
 

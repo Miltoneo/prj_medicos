@@ -60,6 +60,7 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
         empresa = Empresa.objects.filter(id=empresa_id).first()
         main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Lista de Movimentações')
         context.update(main_context)
+        context['titulo_pagina'] = 'Descrições de Movimentação Financeira'
         context['empresa_id'] = empresa_id
         context['table'] = context.get('table')
         context['filter'] = context.get('filter')
