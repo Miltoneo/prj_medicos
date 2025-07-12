@@ -3,16 +3,15 @@
 {% block title %}Dashboard da Empresa{% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h2 class="mb-4">Dashboard da Empresa</h2>
   <div class="row">
     <div class="col-md-6">
       <div class="card mb-4">
         <div class="card-header bg-primary text-white">Dados Básicos da Empresa</div>
         <div class="card-body">
-          <p><strong>Razão Social:</strong> {{ empresa.name }}</p>
-          <p><strong>CNPJ:</strong> {{ empresa.cnpj }}</p>
-          <p><strong>Regime Tributário:</strong> {{ empresa.regime_tributario }}</p>
-          <p><strong>Regime de Competência:</strong> {{ empresa.regime_competencia }}</p>
+          <p><strong>Razão Social:</strong> {{ empresa_atual.name }}</p>
+          <p><strong>CNPJ:</strong> {{ empresa_atual.cnpj }}</p>
+          <p><strong>Regime Tributário:</strong> {{ empresa_atual.regime_tributario }}</p>
+          <p><strong>Regime de Competência:</strong> {{ empresa_atual.regime_competencia }}</p>
         </div>
       </div>
     </div>
