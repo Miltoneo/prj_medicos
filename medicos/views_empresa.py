@@ -51,19 +51,24 @@ def main(request, empresa_id=None):
     empresas_disponiveis = Empresa.objects.filter(conta_id__in=contas_ids)
 
     # Empresa atual
+    empresa_id_param = request.GET.get('empresa_id')
+    if empresa_id_param:
+        try:
+            empresa_id_param = int(empresa_id_param)
+            empresa_selecionada = empresas_disponiveis.filter(id=empresa_id_param).first()
+            if empresa_selecionada:
+                request.session['empresa_id'] = empresa_selecionada.id
+        except Exception:
+            pass
+
     empresa_atual = None
-    if empresa_id:
-        empresa_atual = empresas_disponiveis.filter(id=empresa_id).first()
+    empresa_id_atual = request.session.get('empresa_id')
+    if empresa_id_atual:
+        empresa_atual = empresas_disponiveis.filter(id=empresa_id_atual).first()
+    if not empresa_atual:
+        empresa_atual = empresas_disponiveis.first()
         if empresa_atual:
             request.session['empresa_id'] = empresa_atual.id
-    else:
-        empresa_id_atual = request.session.get('empresa_id')
-        if empresa_id_atual:
-            empresa_atual = empresas_disponiveis.filter(id=empresa_id_atual).first()
-        if not empresa_atual:
-            empresa_atual = empresas_disponiveis.first()
-            if empresa_atual:
-                request.session['empresa_id'] = empresa_atual.id
 
     # Filtro de empresas
     empresa_filter = EmpresaFilter(request.GET, queryset=empresas_disponiveis)
