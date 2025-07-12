@@ -13,6 +13,7 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
         'cenario_nome': cenario_nome or 'Aliquotas',
         'empresa': empresa,
         'user': request.user,
+        'titulo_pagina': 'Aliquotas',
     }
     return context
 from django.shortcuts import render, get_object_or_404

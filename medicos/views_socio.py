@@ -31,6 +31,7 @@ def lista_socios_empresa(request, empresa_id):
         'socio_filter': socio_filter,
         'menu_nome': 'Dashboard',
         'cenario_nome': 'Lista de Sócios',
+        'titulo_pagina': 'Lista de Sócios',
     }
     return render(request, 'empresa/lista_socios_empresa.html', context)
 
@@ -85,6 +86,7 @@ def socio_create(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     step = request.POST.get('step') or request.GET.get('step') or 'cpf'
     context = main(request, empresa=empresa, menu_nome='Sócios', cenario_nome='Cadastro de Sócio')
+    context['titulo_pagina'] = 'Cadastro de Sócio'
 
     if step == 'cpf':
         cpf_form = SocioCPFForm(request.POST or None)
@@ -149,6 +151,7 @@ def socio_edit(request, empresa_id, socio_id):
     else:
         form = SocioForm(instance=socio)
     context = main(request, empresa=empresa, menu_nome='Sócios', cenario_nome='Editar Sócio')
+    context['titulo_pagina'] = 'Editar Sócio'
     context['socio_form'] = form
     context['pessoa'] = socio.pessoa
     context['step'] = 'socio'

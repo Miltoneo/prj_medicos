@@ -207,7 +207,8 @@ def lista_grupos_despesa(request, empresa_id):
         'empresa': empresa,
         'grupos': grupos,
         'filter': filtro,
-        'request': request
+        'request': request,
+        'titulo_pagina': 'Grupos de Despesa',
     }
     return render(request, 'empresa/lista_grupos_despesa.html', context)
 
