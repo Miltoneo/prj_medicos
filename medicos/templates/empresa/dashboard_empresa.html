@@ -10,8 +10,7 @@
         <div class="card-body">
           <p><strong>Razão Social:</strong> {{ empresa_atual.name }}</p>
           <p><strong>CNPJ:</strong> {{ empresa_atual.cnpj }}</p>
-          <p><strong>Regime Tributário:</strong> {{ empresa_atual.regime_tributario }}</p>
-          <p><strong>Regime de Competência:</strong> {{ empresa_atual.regime_competencia }}</p>
+          <p><strong>Regime Tributário:</strong> {{ empresa_atual.get_regime_tributario_display }}</p>
         </div>
       </div>
     </div>
