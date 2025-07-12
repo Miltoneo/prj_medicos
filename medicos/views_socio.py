@@ -169,6 +169,7 @@ def socio_unlink(request, empresa_id, socio_id):
         return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id)
     context = {
         'empresa': empresa,
-        'socio': socio
+        'socio': socio,
+        'titulo_pagina': 'Desvincular Sócio',
     }
     return render(request, 'empresa/socio_confirm_unlink.html', context)
