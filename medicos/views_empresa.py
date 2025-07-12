@@ -1,21 +1,29 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from .models.base import Conta, Empresa
-from .models.base import ContaMembership
-from django.utils.decorators import method_decorator
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import View, DetailView, UpdateView, DeleteView, CreateView
-from django_tables2.views import SingleTableView
-from .tables import EmpresaTable
-from django.contrib.admin.views.decorators import staff_member_required
-from .forms import EmpresaForm
-from django.contrib import messages
-from .filters import EmpresaFilter
+
+# Standard Library
+from datetime import datetime
 import logging
 
+# Django
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+# Third Party
+from django_tables2.views import SingleTableView
+
+# Local
+from .models.base import Conta, Empresa, ContaMembership
+from .tables import EmpresaTable
+from .forms import EmpresaForm
+from .filters import EmpresaFilter
+
+# Logger
 logger = logging.getLogger(__name__)
 
+# Helper para obter ou definir conta_id na sessão
 def get_or_set_conta_id(request):
     conta_id = request.session.get('conta_id')
     if not conta_id:
@@ -25,6 +33,43 @@ def get_or_set_conta_id(request):
             request.session['conta_id'] = conta_id
     return conta_id
 
+# Helpers
+def main(request):
+    # Preparar variáveis de contexto essenciais para o sistema
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
+    if not mes_ano:
+        mes_ano = datetime.now().strftime('%Y-%m')
+    request.session['mes_ano'] = mes_ano
+
+    # Empresas disponíveis para o usuário
+    memberships = ContaMembership.objects.filter(user=request.user, is_active=True)
+    contas_ids = memberships.values_list('conta_id', flat=True)
+    empresas_disponiveis = Empresa.objects.filter(conta_id__in=contas_ids)
+
+    # Empresa atual
+    empresa_id_atual = request.session.get('empresa_id')
+    empresa_atual = None
+    if empresa_id_atual:
+        empresa_atual = empresas_disponiveis.filter(id=empresa_id_atual).first()
+    if not empresa_atual:
+        empresa_atual = empresas_disponiveis.first()
+        if empresa_atual:
+            request.session['empresa_id'] = empresa_atual.id
+
+    # Filtro de empresas
+    empresa_filter = EmpresaFilter(request.GET, queryset=empresas_disponiveis)
+
+    # Menu e cenário
+    request.session['menu_nome'] = 'Dashboard'
+    request.session['cenario_nome'] = 'Empresas'
+
+    # Usuário
+    request.session['user_id'] = request.user.id
+
+    # Redireciona para a lista de empresas
+    return redirect(reverse('medicos:empresa_list'))
+
+# Views
 @login_required
 def set_empresa(request):
     empresa_id = request.GET.get('empresa_id')
@@ -35,6 +80,7 @@ def set_empresa(request):
     # Redireciona para a página anterior ou dashboard
     next_url = request.META.get('HTTP_REFERER') or reverse('medicos:dashboard')
     return redirect(next_url)
+
 
 class EmpresaListView(LoginRequiredMixin, SingleTableView):
     model = Empresa
@@ -53,19 +99,9 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
-        mes_ano = self.request.GET.get('mes_ano')
-        if mes_ano:
-            self.request.session['mes_ano'] = mes_ano
-        else:
-            mes_ano = self.request.session.get('mes_ano')
-            if not mes_ano:
-                from datetime import datetime
-                mes_ano = datetime.now().strftime('%Y-%m')
-                self.request.session['mes_ano'] = mes_ano
-        context['mes_ano'] = mes_ano
+        context.update(main(self.request))
         return context
 
-# Substitua a FBV por CBV no urls.py para empresa_list
 
 @staff_member_required
 def empresa_create(request):
@@ -86,12 +122,17 @@ def empresa_create(request):
             return redirect('medicos:empresa_list')
     else:
         form = EmpresaForm()
-    return render(request, 'empresa/empresa_create.html', {'form': form})
+    context = main(request)
+    context['form'] = form
+    return render(request, 'empresa/empresa_create.html', context)
+
 
 @login_required
 def empresa_detail(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    return render(request, 'empresa/empresa_detail.html', {'empresa': empresa})
+    context = main(request)
+    return render(request, 'empresa/empresa_detail.html', context)
+
 
 @staff_member_required
 def empresa_update(request, empresa_id):
@@ -105,7 +146,10 @@ def empresa_update(request, empresa_id):
             return redirect('medicos:empresa_list')
     else:
         form = EmpresaForm(instance=empresa)
-    return render(request, 'empresa/empresa_update.html', {'form': form, 'empresa': empresa})
+    context = main(request)
+    context['form'] = form
+    return render(request, 'empresa/empresa_update.html', context)
+
 
 @login_required
 @staff_member_required
@@ -116,4 +160,5 @@ def empresa_delete(request, empresa_id):
         empresa.delete()
         messages.success(request, 'Empresa excluída com sucesso!')
         return redirect('medicos:empresa_list')
-    return render(request, 'empresa/empresa_delete.html', {'empresa': empresa})
+    context = main(request)
+    return render(request, 'empresa/empresa_delete.html', context)

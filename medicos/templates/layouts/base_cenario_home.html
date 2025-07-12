@@ -5,52 +5,48 @@
 <!DOCTYPE html>
 <html>
   <head>
-
-    <!--  SCRIPTS -->
-    {% block bl_script %}   
+    <!-- SCRIPTS -->
+    {% block bl_script %}
     {% endblock %}
 
-    <!-- Titulo que aparece na barra do navegador  -->
-    <title> 
-    {% block title %}  
-    {% endblock %} 
+    <!-- Titulo que aparece na barra do navegador -->
+    <title>
+      {% block title %}
+
+      {% endblock %}
     </title>
 
-    <!-- styles     -->
-    {#{% include 'templates/css_geral.html' %}#}
-    {#{% include 'templates/css_layout.html' %}#}
-
     {% include 'layouts/base_css.html' %}
-
   </head>
 
   <body>
-
-   <!-- mensagens popup -->
+    <!-- mensagens popup -->
     {% if messages %}
-        {% for message in messages %}
-         {% if message.tags %}  <script>alert("{{ message }}")</script> {% endif %}
-        {% endfor %}
+      {% for message in messages %}
+        {% if message.tags %}
+          <script>
+            alert('{{ message }}')
+          </script>
+        {% endif %}
+      {% endfor %}
     {% endif %}
 
-  <!-- TOP MENU   -->
-  {% include 'layouts/topbar.html' %}
+    <!-- TOP MENU -->
+    {% include 'layouts/topbar.html' %}
 
-  <div class="layout-container">
-    <div class="sidebar">
-      {% include 'layouts/sidebar_cenario_home.html' %}
-    </div>
-    <div class="content mt-5">
-      <p class="h6" >{{request.session.titulo_1}} </p>
-      <a class="h3" >{{request.session.titulo_2}} </a>
-      <p class="h6">{{request.session.titulo_3}} </p>
-      {% block content %} 
-      {% endblock %}  
-    </div>
-  </div>
+    <div class="layout-container">
+      <div class="sidebar">
+        {% include 'layouts/sidebar_cenario_home.html' %}
+      </div>
+      <div class="content mt-5">
+        {% include 'layouts/base_header.html' %}
+        {% block content %}
 
-     <!-- for select2 -->
+        {% endblock %}
+      </div>
+    </div>
+
+    <!-- for select2 -->
     {{ form.media.js }}
-
   </body>
 </html>

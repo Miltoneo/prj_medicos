@@ -1,16 +1,90 @@
+
+
+# Imports: Standard Library
+from datetime import datetime
+
+# Imports: Django
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-from medicos.models.base import Empresa, Socio, Pessoa
-from medicos.forms import SocioCPFForm, SocioPessoaForm, SocioForm
 from django.contrib import messages
 
+# Imports: Third Party
+from django_tables2 import RequestConfig
+
+# Imports: Local
+from medicos.models.base import Empresa, Socio, Pessoa
+from medicos.forms import SocioCPFForm, SocioPessoaForm, SocioForm
+from .tables_socio_lista import SocioListaTable
+from .filters_socio import SocioFilter
+
+@login_required
+def lista_socios_empresa(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    socios_qs = Socio.objects.filter(empresa=empresa)
+    socio_filter = SocioFilter(request.GET, queryset=socios_qs)
+    table = SocioListaTable(socio_filter.qs)
+    RequestConfig(request, paginate={'per_page': 20}).configure(table)
+    context = {
+        'empresa': empresa,
+        'table': table,
+        'socio_filter': socio_filter,
+        'menu_nome': 'Dashboard',
+        'cenario_nome': 'Lista de Sócios',
+    }
+    return render(request, 'empresa/lista_socios_empresa.html', context)
+
+# Imports: Standard Library
+from datetime import datetime
+
+# Imports: Django
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
+from django.contrib import messages
+
+# Imports: Third Party
+from django_tables2 import RequestConfig
+
+
+# Imports: Standard Library
+from datetime import datetime
+
+# Imports: Django
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
+from django.contrib import messages
+
+from medicos.models.base import Empresa, Socio, Pessoa
+from medicos.forms import SocioCPFForm, SocioPessoaForm, SocioForm
+
+# Helpers
+def main(request, empresa=None, menu_nome=None, cenario_nome=None):
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
+    if not mes_ano:
+        mes_ano = datetime.now().strftime('%Y-%m')
+    request.session['mes_ano'] = mes_ano
+
+    # Menu e cenário
+    request.session['menu_nome'] = menu_nome or 'Sócios'
+    request.session['cenario_nome'] = cenario_nome or 'Cadastro de Sócio'
+
+    # Usuário
+    request.session['user_id'] = request.user.id
+
+    # Redireciona para a lista de sócios da empresa
+    if empresa:
+        return redirect(reverse('medicos:lista_socios_empresa', args=[empresa.id]))
+    else:
+        return redirect(reverse('medicos:empresa_list'))
+
+# Views
 @login_required
 def socio_create(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    # Corrigido: obtém step do GET se não houver POST
     step = request.POST.get('step') or request.GET.get('step') or 'cpf'
-    context = {'empresa': empresa, 'mes_ano': request.session.get('mes_ano')}
+    context = main(request, empresa=empresa, menu_nome='Sócios', cenario_nome='Cadastro de Sócio')
 
     if step == 'cpf':
         cpf_form = SocioCPFForm(request.POST or None)
@@ -61,6 +135,7 @@ def socio_create(request, empresa_id):
         context['step'] = 'socio'
         return render(request, 'empresa/socio_form_socio.html', context)
 
+
 @login_required
 def socio_edit(request, empresa_id, socio_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
@@ -73,14 +148,13 @@ def socio_edit(request, empresa_id, socio_id):
             return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id)
     else:
         form = SocioForm(instance=socio)
-    context = {
-        'empresa': empresa,
-        'socio_form': form,
-        'pessoa': socio.pessoa,
-        'step': 'socio',
-        'edit_mode': True
-    }
+    context = main(request, empresa=empresa, menu_nome='Sócios', cenario_nome='Editar Sócio')
+    context['socio_form'] = form
+    context['pessoa'] = socio.pessoa
+    context['step'] = 'socio'
+    context['edit_mode'] = True
     return render(request, 'empresa/socio_form_socio.html', context)
+
 
 @login_required
 def socio_unlink(request, empresa_id, socio_id):

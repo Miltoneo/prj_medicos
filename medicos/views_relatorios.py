@@ -1,14 +1,45 @@
+
+# Imports: Standard Library
+from datetime import datetime
+
+# Imports: Django
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
+# Helpers
+def main(request, empresa=None, menu_nome=None, cenario_nome=None):
+    # Preparar variáveis de contexto essenciais para o sistema
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
+    if not mes_ano:
+        mes_ano = datetime.now().strftime('%Y-%m')
+    request.session['mes_ano'] = mes_ano
+
+    # Menu e cenário
+    request.session['menu_nome'] = menu_nome or 'Relatórios'
+    request.session['cenario_nome'] = cenario_nome or 'Relatórios'
+
+    # Usuário
+    request.session['user_id'] = request.user.id
+
+    # Retorna contexto para renderização
+    context = {
+        'mes_ano': mes_ano,
+        'menu_nome': menu_nome or 'Relatórios',
+        'cenario_nome': cenario_nome or 'Relatórios',
+        'empresa': empresa,
+        'user': request.user,
+    }
+    return context
+
+# Views
 @login_required
 def relatorio_executivo(request):
-    # Adapte o contexto conforme necessário
-    context = {'mes_ano': request.session.get('mes_ano')}
+    context = main(request, menu_nome='Relatórios', cenario_nome='Relatório Executivo')
     return render(request, 'relatorios/relatorio_executivo.html', context)
+
 
 @login_required
 def relatorio_executivo_pdf(request, conta_id):
-    # Implemente a lógica de PDF conforme necessário
-    context = {'conta_id': conta_id, 'mes_ano': request.session.get('mes_ano')}
+    context = main(request, menu_nome='Relatórios', cenario_nome='Relatório Executivo PDF')
+    context['conta_id'] = conta_id
     return render(request, 'relatorios/relatorio_executivo.html', context)

@@ -1,14 +1,18 @@
+
+# Imports: Django
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib import messages
+
+# Imports: Local
 from .models.base import ContaMembership, Conta
 from .forms import CustomUserForm
 
 User = get_user_model()
 
-# -----------------------------------------------------------------------
+# Helpers / Mixins
 class StaffRequiredMixin(UserPassesTestMixin):
     """Permite apenas staff/admin acessar a view."""
     def test_func(self):
@@ -18,7 +22,8 @@ class StaffRequiredMixin(UserPassesTestMixin):
         messages.error(self.request, "Você não tem permissão para esta ação.")
         return reverse_lazy('medicos:user_list')
 
-# -----------------------------------------------------------------------
+# Views
+
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = User
     template_name = "common/user_list.html"
@@ -30,7 +35,7 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
         conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
         return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
 
-# -----------------------------------------------------------------------
+
 class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = User
     form_class = CustomUserForm
@@ -70,7 +75,7 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
         messages.success(self.request, "Usuário criado com sucesso! Convite enviado por e-mail.")
         return response
 
-# -----------------------------------------------------------------------
+
 class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     model = User
     form_class = CustomUserForm
@@ -87,7 +92,7 @@ class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
         messages.success(self.request, "Usuário atualizado com sucesso!")
         return response
 
-# -----------------------------------------------------------------------
+
 class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     model = User
     template_name = "common/user_confirm_delete.html"
@@ -102,7 +107,7 @@ class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
         messages.success(self.request, "Usuário removido com sucesso!")
         return super().delete(request, *args, **kwargs)
 
-# -----------------------------------------------------------------------
+
 class UserDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = User
     template_name = "common/user_detail.html"

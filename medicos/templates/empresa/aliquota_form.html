@@ -11,6 +11,10 @@
         <div class="card-body">
           <form method="post">
             {% csrf_token %}
+            <div class="mb-3">
+              <label for="mes_ano" class="form-label fw-bold">Competência:</label>
+              <input type="month" id="mes_ano" name="mes_ano" class="form-control" value="{{ mes_ano|default:'' }}">
+            </div>
             {{ form.non_field_errors }}
             <div class="row">
               <div class="col-md-4 mb-3">

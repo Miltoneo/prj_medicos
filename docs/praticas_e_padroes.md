@@ -1,3 +1,25 @@
+## 5. Formatação de Views Django
+
+Todas as views devem seguir o padrão de formatação Django:
+
+- Imports organizados no topo do arquivo, separados por grupos: padrão Python, terceiros, depois do próprio projeto.
+- Funções e classes organizadas por ordem lógica (helpers, views, etc), com uma linha de espaço entre elas.
+- Funções de view recebem `request` como primeiro argumento.
+- Contexto para templates deve ser passado como dicionário.
+- Uso de decorators (`@login_required`, etc) acima das views.
+- Nomes de funções e variáveis em inglês, exceto quando o projeto exigir o contrário.
+- Indentação de 4 espaços.
+
+Exemplo:
+```python
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def my_view(request):
+    context = {'key': 'value'}
+    return render(request, 'template.html', context)
+```
 # Práticas e Padrões de Desenvolvimento
 
 Este documento reúne todas as diretrizes, práticas recomendadas e padrões que devem ser adotados para o desenvolvimento do sistema prj_medicos.

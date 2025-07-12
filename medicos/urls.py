@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views_user
-from . import views_dashboard
+from . import views_main
 from . import views_relatorios
 from . import views_empresa
 from . import views_home_cenario
@@ -13,9 +13,9 @@ from django.contrib.auth import views as auth_views
 app_name = 'medicos'
 
 urlpatterns = [
-    path('', views_dashboard.dashboard, name='index'),
-    path('dashboard/', views_dashboard.dashboard, name='dashboard'),
-    path('home/', views_dashboard.dashboard, name='home'),
+    path('', views_main.main, name='index'),
+path('dashboard/', views_main.main, name='dashboard'),
+path('home/', views_main.main, name='home'),
     path('cenario-home/', views_home_cenario.home_cenario, name='cenario_home'),
     # Dashboard SaaS (migrado de urls_dashboard.py)
     # path('', views_dashboard.dashboard_home, name='home'),
@@ -34,8 +34,8 @@ urlpatterns = [
     path('empresas/<int:empresa_id>/', views_empresa.empresa_detail, name='empresa_detail'),
     path('empresas/<int:empresa_id>/editar/', views_empresa.empresa_update, name='empresa_update'),
     path('empresas/<int:empresa_id>/excluir/', views_empresa.empresa_delete, name='empresa_delete'),
-    path('empresas/<int:empresa_id>/dashboard/', views_dashboard_empresa.dashboard_empresa, name='dashboard_empresa'),
-    path('empresas/<int:empresa_id>/socios/', views_dashboard_empresa.lista_socios_empresa, name='lista_socios_empresa'),
+path('empresas/<int:empresa_id>/dashboard/', views_dashboard_empresa.main_empresa, name='dashboard_empresa'),
+path('empresas/<int:empresa_id>/socios/', views_socio.lista_socios_empresa, name='lista_socios_empresa'),
     path('empresas/<int:empresa_id>/socios/novo/', views_socio.socio_create, name='socio_create'),
     path('empresas/<int:empresa_id>/socios/<int:socio_id>/editar/', views_socio.socio_edit, name='socio_edit'),
     path('empresas/<int:empresa_id>/socios/<int:socio_id>/desvincular/', views_socio.socio_unlink, name='socio_unlink'),

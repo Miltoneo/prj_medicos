@@ -3,58 +3,29 @@
 {% load render_table from django_tables2 %}
 
 <!DOCTYPE html>
-<html >
+<html>
   <head>
-    <!--  SCRIPTS -->
-    {% block bl_script %}   
-    {% endblock %}
-    <!-- Titulo que aparece na barra do navegador  -->
-    <title> 
-    {% block title %}  
-    {% endblock %} 
-    </title>
-    <!-- styles     -->
+    {% block bl_script %}{% endblock %}
+    <title>{% block title %}{% endblock %}</title>
     {% include 'layouts/base_css.html' %}
   </head>
   <body>
-    <!-- mensagens popup -->
     {% if messages %}
-        {% for message in messages %}
-         {% if message.tags %}  <script>alert("{{ message }}")</script> {% endif %}
-        {% endfor %}
+      {% for message in messages %}
+        {% if message.tags %}<script>alert("{{ message }}")</script>{% endif %}
+      {% endfor %}
     {% endif %}
-  <!-- TOP MENU   -->
-  {% include 'layouts/topbar.html' %}
-  <div class="layout-container">
-    <div class="sidebar">
-      {% include 'layouts/sidebar_cenario_empresa.html' %}
-    </div>
-    <div class="content mt-5">
-      <!-- Cabeçalho do cenário empresa -->
-      <div class="bg-light border-bottom shadow-sm mb-4 py-3 px-4 rounded d-flex align-items-center justify-content-between">
-        <div class="d-flex flex-column align-items-start">
-          <div class="d-flex align-items-center">
-            <i class="fas fa-building fa-lg text-primary me-2"></i>
-            <span class="h4 mb-0 text-dark">{{ empresa.name }}</span>
-            <form method="get" class="ms-4 d-flex align-items-center" style="gap: 0.5rem;">
-              <label for="mes_ano" class="mb-0 fw-bold text-dark">Competência:</label>
-              <input type="month" id="mes_ano" name="mes_ano" class="form-control form-control-sm" value="{{ mes_ano|default:'' }}" style="width: 140px;">
-              <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-calendar-alt"></i></button>
-            </form>
-          </div>
-          <div>
-            <span class="h5 mb-0 text-dark ms-4">{{ menu_nome }}</span>
-          </div>
-        </div>
-        <div>
-          <span class="badge bg-primary px-3 py-2 text-light"><i class="fas fa-briefcase me-1"></i>Cenário: Empresa</span>
-        </div>
+    {% include 'layouts/topbar.html' %}
+    <div class="layout-container">
+      <div class="sidebar">
+        {% include 'layouts/sidebar_cenario_empresa.html' %}
       </div>
-      {% block content %} 
-      {% endblock %}  
+      <div class="content mt-5">
+        {% include 'layouts/base_header.html' %}
+        {% block content %}{% endblock %}
+      </div>
     </div>
-  </div>
-     <!-- for select2 -->
     {{ form.media.js }}
   </body>
+</html>
 </html>
