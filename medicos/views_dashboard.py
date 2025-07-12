@@ -25,6 +25,7 @@ class DashboardEmpresaListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
         context['empresa_id_atual'] = self.request.session.get('empresa_id')
+        context['mes_ano'] = self.request.session.get('mes_ano')
         return context
 
 @login_required
@@ -48,4 +49,5 @@ def dashboard(request):
         'empresa_atual': empresa_atual,
         'empresa_filter': empresa_filter,
         'user': request.user,
+        'mes_ano': request.session.get('mes_ano'),
     })

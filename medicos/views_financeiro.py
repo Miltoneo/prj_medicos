@@ -37,6 +37,7 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
         context['empresa'] = empresa
         context['table'] = context.get('table')
         context['filter'] = context.get('filter')
+        context['mes_ano'] = self.request.session.get('mes_ano')
         return context
 
 class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):

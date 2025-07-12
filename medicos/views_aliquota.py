@@ -27,6 +27,7 @@ class ListaAliquotasView(SingleTableMixin, FilterView):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
         context['empresa'] = get_object_or_404(Empresa, id=empresa_id)
+        context['mes_ano'] = self.request.session.get('mes_ano')
         return context
 
 @login_required

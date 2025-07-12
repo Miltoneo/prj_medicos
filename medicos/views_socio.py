@@ -10,7 +10,7 @@ def socio_create(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     # Corrigido: obtém step do GET se não houver POST
     step = request.POST.get('step') or request.GET.get('step') or 'cpf'
-    context = {'empresa': empresa}
+    context = {'empresa': empresa, 'mes_ano': request.session.get('mes_ano')}
 
     if step == 'cpf':
         cpf_form = SocioCPFForm(request.POST or None)

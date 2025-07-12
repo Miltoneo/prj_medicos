@@ -13,11 +13,21 @@ def dashboard_empresa(request, empresa_id):
     socio_filter = SocioFilter(request.GET, queryset=socios_qs)
     table = SocioTable(socio_filter.qs)
     RequestConfig(request, paginate={'per_page': 20}).configure(table)
+    from datetime import datetime
+    mes_ano = request.GET.get('mes_ano')
+    if mes_ano:
+        request.session['mes_ano'] = mes_ano
+    else:
+        mes_ano = request.session.get('mes_ano')
+        if not mes_ano:
+            mes_ano = datetime.now().strftime('%Y-%m')
+            request.session['mes_ano'] = mes_ano
     return render(request, 'empresa/dashboard_empresa.html', {
         'empresa': empresa,
         'table': table,
         'socio_filter': socio_filter,
         'menu_nome': 'Dashboard',
+        'mes_ano': mes_ano,
     })
 
 @login_required

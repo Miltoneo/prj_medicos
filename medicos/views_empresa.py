@@ -53,6 +53,16 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
+        mes_ano = self.request.GET.get('mes_ano')
+        if mes_ano:
+            self.request.session['mes_ano'] = mes_ano
+        else:
+            mes_ano = self.request.session.get('mes_ano')
+            if not mes_ano:
+                from datetime import datetime
+                mes_ano = datetime.now().strftime('%Y-%m')
+                self.request.session['mes_ano'] = mes_ano
+        context['mes_ano'] = mes_ano
         return context
 
 # Substitua a FBV por CBV no urls.py para empresa_list

@@ -2,10 +2,13 @@
 
 Sempre utilize Class-Based Views (CBV) para implementar fluxos CRUD em módulos do sistema, exceto em casos justificados e documentados. CBVs garantem padronização, melhor reutilização de código, facilidade de manutenção e integração com recursos nativos do Django. Antes de criar uma view baseada em função (FBV), verifique se não há impedimentos técnicos ou de negócio e registre a justificativa no código e na documentação do projeto.
 
-## Diretriz para Links Quebrados em Templates
 
-Sempre que existirem links quebrados (rotas, URLs ou views ainda não implementadas) nos templates, estes deverão ser temporariamente substituídos por `#`. Isso evita erros de navegação e garante que o layout seja exibido corretamente até que as rotas estejam disponíveis.
+## Diretriz para Data de Competência Compartilhada
 
-- Utilize `href="#"` para itens de menu, botões ou links que ainda não possuem destino funcional.
-- Documente a substituição e revise periodicamente para atualizar os links assim que as rotas forem implementadas.
-- Essa prática deve ser seguida em todos os cenários e módulos do sistema.
+Todos os cenários do sistema devem compartilhar a data de competência (mês/ano) selecionada pelo usuário. Esta data deve ser persistida na sessão do usuário e utilizada como padrão em todos os menus, páginas e funcionalidades que dependam de competência temporal.
+
+- O campo de competência deve ser exibido no cabeçalho dos cenários principais.
+- Ao alterar manualmente a competência, o novo valor deve ser salvo na sessão e mantido ao navegar entre diferentes cenários.
+- O valor inicial deve ser o mês/ano atual, salvo na sessão na primeira navegação.
+- Views e templates devem acessar `request.session['mes_ano']` para garantir sincronização.
+- Essa regra garante consistência de contexto temporal para o usuário em todo o sistema.
