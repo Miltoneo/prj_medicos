@@ -2,11 +2,79 @@
 {% block title %}Editar Nota Fiscal{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <h2 class="mb-4">Editar Nota Fiscal</h2>
-  <form method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Salvar</button>
-    <a href="{% url 'medicos:lista_notas_fiscais' %}" class="btn btn-secondary ms-2">Cancelar</a>
-  </form>
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-light">
+          <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Editar Nota Fiscal</h4>
+        </div>
+        <div class="card-body">
+          <form method="post" autocomplete="off">{% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div class="row g-3">
+              {% if campos_topo %}
+                {# Exibe os campos do topo, se não estiverem em campos_excluir #}
+                {% for name in campos_topo %}
+                  {% for field in form.visible_fields %}
+                    {% if field.name == name and field.name not in campos_excluir %}
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                          <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                {% endfor %}
+                {# Exibe os demais campos, se não estiverem em campos_excluir ou campos_topo #}
+                {% for field in form.visible_fields %}
+                  {% if field.name not in campos_excluir and field.name not in campos_topo %}
+                    <div class="col-md-6">
+                      <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                      {{ field }}
+                      {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                      {% endif %}
+                      {% for error in field.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                {# Se campos_topo não está definido, exibe todos os campos visíveis normalmente #}
+                {% for field in form.visible_fields %}
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="mt-4 d-flex justify-content-end gap-2">
+              <button type="submit" class="btn btn-success px-4">Salvar</button>
+              <a href="{% url 'medicos:lista_notas_fiscais' %}" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

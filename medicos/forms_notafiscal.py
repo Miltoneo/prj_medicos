@@ -23,8 +23,8 @@ class NotaFiscalForm(forms.ModelForm):
         model = NotaFiscal
         exclude = ['dtVencimento', 'descricao_servicos', 'serie', 'created_by', 'aliquotas']
         widgets = {
-            'dtEmissao': forms.DateInput(attrs={'type': 'date'}),
-            'dtRecebimento': forms.DateInput(attrs={'type': 'date'}),
+            'dtEmissao': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'dtRecebimento': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
         }
 
     def __init__(self, *args, **kwargs):

@@ -59,6 +59,16 @@ class NotaFiscalUpdateView(UpdateView):
     template_name = 'faturamento/editar_nota_fiscal.html'
     success_url = reverse_lazy('medicos:lista_notas_fiscais')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['campos_topo'] = [
+            'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
+        ]
+        context['campos_excluir'] = [
+            'dtVencimento','descricao_servicos','serie','criado_por'
+        ]
+        return context
+
 class NotaFiscalDeleteView(DeleteView):
     model = NotaFiscal
     template_name = 'faturamento/excluir_nota_fiscal.html'
