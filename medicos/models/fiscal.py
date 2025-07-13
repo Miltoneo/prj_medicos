@@ -1146,27 +1146,22 @@ class NotaFiscal(models.Model):
             raise ValidationError({
                 'dtVencimento': 'Data de vencimento não pode ser anterior à data de emissão'
             })
-        
         if self.dtRecebimento and self.dtEmissao and self.dtRecebimento < self.dtEmissao:
             raise ValidationError({
                 'dtRecebimento': 'Data de recebimento não pode ser anterior à data de emissão'
             })
-        
         # Validar valores
         if self.val_bruto <= 0:
             raise ValidationError({
                 'val_bruto': 'Valor bruto deve ser maior que zero'
             })
-        
         # Validar total de impostos vs valor bruto
         total_impostos = (self.val_ISS + self.val_PIS + self.val_COFINS + 
                          self.val_IR + self.val_CSLL)
-        
         if total_impostos > self.val_bruto:
             raise ValidationError({
                 'val_bruto': 'Total de impostos não pode ser maior que o valor bruto'
             })
-        
         # Validar valor líquido
         valor_liquido_calculado = self.val_bruto - total_impostos
         if abs(self.val_liquido - valor_liquido_calculado) > 0.01:  # Tolerância de 1 centavo
@@ -1174,34 +1169,12 @@ class NotaFiscal(models.Model):
                 'val_liquido': f'Valor líquido deve ser R$ {valor_liquido_calculado:.2f} '
                               f'(valor bruto - impostos)'
             })
-        
         # (Regra removida: meio de pagamento não é mais obrigatório quando há data de recebimento)
-        
         # Validar consistência do status de recebimento
         if self.status_recebimento == 'completo' and not self.dtRecebimento:
             raise ValidationError({
                 'status_recebimento': 'Status "Recebido Completamente" requer data de recebimento'
             })
-        
-        # NOVA REGRA: Validar que toda nota fiscal deve ter pelo menos um sócio vinculado
-        if self.pk:  # Apenas para notas já salvas (para permitir criação inicial)
-            total_rateios = self.rateios_medicos.count()
-            if total_rateios == 0:
-                raise ValidationError({
-                    '__all__': 'Toda nota fiscal deve ter pelo menos um sócio/médico vinculado através do rateio. '
-                              'Configure o rateio antes de finalizar a nota fiscal.'
-                })
-            
-            # Validar que a soma dos valores de rateio corresponde ao valor bruto da nota
-            soma_valores_rateio = sum(
-                rateio.valor_bruto_medico for rateio in self.rateios_medicos.all()
-            )
-            if abs(soma_valores_rateio - self.val_bruto) > 0.01:  # Tolerância de 1 centavo
-                raise ValidationError({
-                    '__all__': f'A soma dos valores de rateio (R$ {soma_valores_rateio:.2f}) deve '
-                              f'corresponder ao valor bruto da nota fiscal (R$ {self.val_bruto:.2f}). '
-                              'Ajuste os valores de rateio para os sócios.'
-                })
 
     def save(self, *args, **kwargs):
         """Override do save para cálculos automáticos"""
@@ -1424,3 +1397,153 @@ class NotaFiscal(models.Model):
                 f'Rateio incompleto. Total: {self.percentual_total_rateado:.2f}%. '
                 f'Faltam {self.percentual_pendente_rateio:.2f}% para completar 100%.'
             )
+
+
+class NotaFiscalRateioMedico(models.Model):
+    """
+    Rateio de Nota Fiscal para Médicos
+    
+    Este modelo representa o rateio de uma nota fiscal entre diferentes médicos,
+    permitindo a distribuição proporcional dos valores e impostos.
+    
+    Cada rateio é associado a uma nota fiscal específica e a um médico,
+    com campos para controle do percentual e valores rateados.
+    """
+    
+    class Meta:
+        db_table = 'nota_fiscal_rateio_medico'
+        verbose_name = "Rateio de Nota Fiscal para Médico"
+        verbose_name_plural = "Rateios de Nota Fiscal para Médicos"
+        indexes = [
+            models.Index(fields=['nota_fiscal', 'medico']),
+            models.Index(fields=['medico', 'percentual_participacao']),
+        ]
+        ordering = ['nota_fiscal', 'medico']
+
+    nota_fiscal = models.ForeignKey(
+        'NotaFiscal',
+        on_delete=models.CASCADE,
+        related_name='rateios_medicos',
+        verbose_name="Nota Fiscal",
+        help_text="Nota fiscal associada a este rateio"
+    )
+    
+    medico = models.ForeignKey(
+        'Socio',
+        on_delete=models.CASCADE,
+        verbose_name="Médico",
+        help_text="Médico ao qual este rateio se aplica"
+    )
+    
+    percentual_participacao = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        verbose_name="Percentual de Participação",
+        help_text="Percentual do valor total da nota fiscal que este médico irá receber"
+    )
+    
+    valor_bruto_medico = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        verbose_name="Valor Bruto para Médico (R$)",
+        help_text="Valor bruto da nota fiscal rateado para este médico"
+    )
+    
+    valor_iss_medico = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Valor ISS para Médico (R$)",
+        help_text="Valor do Imposto sobre Serviços (ISS) rateado para este médico"
+    )
+    
+    valor_pis_medico = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Valor PIS para Médico (R$)",
+        help_text="Valor da contribuição para o PIS rateado para este médico"
+    )
+    
+    valor_cofins_medico = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Valor COFINS para Médico (R$)",
+        help_text="Valor da contribuição para o COFINS rateado para este médico"
+    )
+    
+    valor_ir_medico = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Valor IRPJ para Médico (R$)",
+        help_text="Valor do Imposto de Renda Pessoa Jurídica rateado para este médico"
+    )
+    
+    valor_csll_medico = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Valor CSLL para Médico (R$)",
+        help_text="Valor da Contribuição Social sobre o Lucro Líquido rateado para este médico"
+    )
+    
+    valor_liquido_medico = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        verbose_name="Valor Líquido para Médico (R$)",
+        help_text="Valor líquido após dedução dos impostos rateado para este médico"
+    )
+    
+    tipo_rateio = models.CharField(
+        max_length=50,
+        verbose_name="Tipo de Rateio",
+        help_text="Tipo de rateio aplicado (percentual, fixo, etc.)"
+    )
+    
+    observacoes_rateio = models.TextField(
+        blank=True, null=True,
+        verbose_name="Observações sobre o Rateio",
+        help_text="Observações adicionais sobre este rateio"
+    )
+    
+    data_rateio = models.DateTimeField(
+        verbose_name="Data do Rateio",
+        help_text="Data em que o rateio foi realizado"
+    )
+    
+    configurado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Configurado por",
+        help_text="Usuário que configurou este rateio"
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Atualizado em",
+        help_text="Data da última atualização deste rateio"
+    )
+
+    def clean(self):
+        """Validações do modelo de rateio"""
+        # Validar percentual de participação
+        if self.percentual_participacao <= 0:
+            raise ValidationError({
+                'percentual_participacao': 'Percentual de participação deve ser maior que zero'
+            })
+        
+        # Validar valores rateados
+        if self.valor_bruto_medico <= 0:
+            raise ValidationError({
+                'valor_bruto_medico': 'Valor bruto para médico deve ser maior que zero'
+            })
+        
+        # Validar que o total dos rateios não excede o valor bruto da nota fiscal
+        total_rateado = NotaFiscalRateioMedico.objects.filter(
+            nota_fiscal=self.nota_fiscal
+        ).exclude(pk=self.pk).aggregate(
+            total=models.Sum('valor_bruto_medico')
+        )['total'] or 0
+        
+        if total_rateado + self.valor_bruto_medico > self.nota_fiscal.val_bruto:
+            raise ValidationError({
+                'valor_bruto_medico': 'O total dos rateios não pode exceder o valor bruto da nota fiscal'
+            })
+        
+        # Validar datas
+        if self.data_rateio and self.data_rateio > timezone.now():
+            raise ValidationError({
+                'data_rateio': 'Data do rateio não pode ser futura'
+            })
+
+    def __str__(self):
+        return f"Rateio NF {self.nota_fiscal.numero} - Médico {self.medico.pessoa.name}"
