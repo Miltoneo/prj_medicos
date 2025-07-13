@@ -1,6 +1,7 @@
 
 # Imports: Django
 from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
@@ -21,7 +22,26 @@ class NotaFiscalCreateView(CreateView):
     model = NotaFiscal
     form_class = NotaFiscalForm
     template_name = 'faturamento/criar_nota_fiscal.html'
+
     success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def form_valid(self, form):
+        empresa = form.cleaned_data.get('empresa_destinataria')
+        dt_emissao = form.cleaned_data.get('dtEmissao')
+        conta = empresa.conta if empresa else None
+        aliquota_vigente = None
+        if conta and dt_emissao:
+            from medicos.models.fiscal import Aliquotas
+            aliquota_vigente = Aliquotas.obter_aliquota_vigente(conta, dt_emissao)
+        if not aliquota_vigente:
+            form.add_error(None, 'Não foi encontrada alíquota vigente para a empresa e data informada. Cadastre uma alíquota antes de emitir a nota fiscal.')
+            return self.form_invalid(form)
+        # Preenche o campo antes de salvar
+        form.instance.aliquotas = aliquota_vigente
+        response = super().form_valid(form)
+        # Atualiza a sessão para garantir que a lista exibida seja da empresa correta
+        self.request.session['empresa_id'] = empresa.id if empresa else None
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -56,6 +76,11 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
         empresa_id = self.request.session.get('empresa_id')
         if empresa_id:
             return NotaFiscal.objects.filter(empresa_destinataria_id=empresa_id)
+        # Fallback: se o usuário tem empresa vinculada, mostra todas as notas dessa empresa
+        user = getattr(self.request, 'user', None)
+        if user and hasattr(user, 'empresa_set') and user.empresa_set.exists():
+            empresa = user.empresa_set.first()
+            return NotaFiscal.objects.filter(empresa_destinataria_id=empresa.id)
         return NotaFiscal.objects.all()
 
     def get_context_data(self, **kwargs):
