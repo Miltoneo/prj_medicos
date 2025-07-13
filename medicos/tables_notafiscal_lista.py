@@ -2,6 +2,18 @@ import django_tables2 as tables
 from medicos.models.fiscal import NotaFiscal
 
 class NotaFiscalListaTable(tables.Table):
+    acoes = tables.TemplateColumn(
+        template_code='''
+            <a href="{% url 'medicos:editar_nota_fiscal' record.pk %}" class="btn btn-sm btn-primary me-1" title="Editar">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'medicos:excluir_nota_fiscal' record.pk %}" class="btn btn-sm btn-danger" title="Excluir" onclick="return confirm('Confirma a exclusão desta nota fiscal?');">
+                <i class="bi bi-trash"></i>
+            </a>
+        ''',
+        verbose_name='Ações',
+        orderable=False
+    )
     numero = tables.Column(verbose_name='Número da NF')
     empresa_destinataria = tables.Column(verbose_name='Empresa Emitente', accessor='empresa_destinataria.nome')
     tomador = tables.Column(verbose_name='Tomador do Serviço')
@@ -21,7 +33,6 @@ class NotaFiscalListaTable(tables.Table):
 
     class Meta:
         model = NotaFiscal
-        template_name = 'django_tables2/bootstrap5.html'
         fields = (
             'numero',
             'empresa_destinataria',
@@ -39,4 +50,5 @@ class NotaFiscalListaTable(tables.Table):
             'val_liquido',
             'status_recebimento',
             'meio_pagamento',
+            'acoes',
         )

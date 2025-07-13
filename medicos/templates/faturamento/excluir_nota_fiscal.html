@@ -1,0 +1,12 @@
+{% extends 'layouts/base_cenario_faturamento.html' %}
+{% block title %}Excluir Nota Fiscal{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-danger">Excluir Nota Fiscal</h2>
+  <form method="post">{% csrf_token %}
+    <p>Tem certeza que deseja excluir a nota fiscal <strong>{{ object.numero }}</strong>?</p>
+    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+    <a href="{% url 'medicos:lista_notas_fiscais' %}" class="btn btn-secondary ms-2">Cancelar</a>
+  </form>
+</div>
+{% endblock %}
