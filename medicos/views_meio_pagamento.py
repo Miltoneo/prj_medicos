@@ -12,12 +12,19 @@ class MeioPagamentoListView(ListView):
     context_object_name = 'meios_pagamento'
 
     def get_queryset(self):
-        conta_id = self.kwargs.get('empresa_id')
-        self.empresa_id = conta_id
-        return MeioPagamento.objects.filter(conta_id=conta_id)
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, pk=empresa_id)
+        self.empresa_id = empresa_id
+        return MeioPagamento.objects.filter(conta=empresa.conta)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_id'] = self.empresa_id
+        # Adiciona ao contexto apenas os campos desejados
+        meios = context.get('meios_pagamento', [])
+        context['meios_pagamento'] = [
+            {'codigo': m.codigo, 'nome': m.nome, 'descricao': m.descricao}
+            for m in meios
+        ]
         return context
 
 class MeioPagamentoCreateView(CreateView):
@@ -43,7 +50,10 @@ class MeioPagamentoCreateView(CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': self.object.conta_id})
+        empresa = Empresa.objects.filter(conta=self.object.conta).first()
+        if empresa:
+            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.pk})
+        return reverse_lazy('medicos:empresas')
 
 class MeioPagamentoUpdateView(UpdateView):
     model = MeioPagamento
