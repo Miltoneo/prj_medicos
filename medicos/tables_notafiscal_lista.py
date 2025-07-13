@@ -15,7 +15,7 @@ class NotaFiscalListaTable(tables.Table):
         orderable=False
     )
     numero = tables.Column(verbose_name='Número da NF')
-    empresa_destinataria = tables.Column(verbose_name='Empresa Emitente', accessor='empresa_destinataria.nome')
+    empresa_destinataria = tables.Column(verbose_name='Empresa Emitente', accessor='empresa_destinataria.__str__')
     tomador = tables.Column(verbose_name='Tomador do Serviço')
     cnpj_tomador = tables.Column(verbose_name='CNPJ do Tomador')
     tipo_servico = tables.Column(verbose_name='Tipo de Serviço', accessor='get_tipo_servico_display')

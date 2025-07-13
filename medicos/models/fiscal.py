@@ -1175,6 +1175,16 @@ class NotaFiscal(models.Model):
             raise ValidationError({
                 'status_recebimento': 'Status "Recebido Completamente" requer data de recebimento'
             })
+        # Corrigir validação de unicidade para edição
+        if self.pk:
+            if NotaFiscal.objects.filter(
+                numero=self.numero,
+                serie=self.serie,
+                empresa_destinataria=self.empresa_destinataria
+            ).exclude(pk=self.pk).exists():
+                raise ValidationError({
+                    '__all__': 'Já existe uma nota fiscal com este número, série e empresa. Escolha outro número ou série.'
+                })
 
     def save(self, *args, **kwargs):
         """Override do save para cálculos automáticos"""

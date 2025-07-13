@@ -9,12 +9,15 @@ class NotaFiscalForm(forms.ModelForm):
         empresa = cleaned_data.get('empresa_destinataria')
         if numero and serie and empresa:
             from medicos.models.fiscal import NotaFiscal
-            existe = NotaFiscal.objects.filter(
+            qs = NotaFiscal.objects.filter(
                 numero=numero,
                 serie=serie,
                 empresa_destinataria=empresa
-            ).exists()
-            if existe:
+            )
+            # Exclui o registro atual se for edição
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
                 raise forms.ValidationError(
                     'Já existe uma nota fiscal com este número, série e empresa. Escolha outro número ou série.'
                 )
