@@ -72,7 +72,6 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
             context['titulo_pagina'] = 'Movimentação Financeira'
         return context
 
-
 class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
     model = DescricaoMovimentacaoFinanceira
     form_class = DescricaoMovimentacaoFinanceiraForm
@@ -108,7 +107,6 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
         if 'titulo_pagina' not in context or not context['titulo_pagina']:
             context['titulo_pagina'] = 'Movimentação Financeira'
         return context
-
 
 class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
     model = DescricaoMovimentacaoFinanceira
@@ -155,7 +153,6 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         empresa_id = self._get_empresa_id_by_conta(self.object.conta)
         return reverse_lazy('financeiro:lista_descricoes_movimentacao', kwargs={'empresa_id': empresa_id})
-
 
 class DescricaoMovimentacaoFinanceiraDeleteView(LoginRequiredMixin, DeleteView):
     model = DescricaoMovimentacaoFinanceira

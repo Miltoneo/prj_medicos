@@ -99,10 +99,6 @@ def main(request, empresa_id=None):
         **contexto,
     })
 
-# --- Dashboard Empresa ---
-# Removido: dashboard_empresa. Use main(request) + render in urls/views.
-
-
 
 class EmpresaListView(LoginRequiredMixin, SingleTableView):
     model = Empresa

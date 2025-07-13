@@ -1,5 +1,6 @@
 
 
+
 # Imports: Standard Library
 from datetime import datetime
 
@@ -18,6 +19,7 @@ from medicos.forms import SocioCPFForm, SocioPessoaForm, SocioForm
 from .tables_socio_lista import SocioListaTable
 from .filters_socio import SocioFilter
 
+
 @login_required
 def lista_socios_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
@@ -29,36 +31,12 @@ def lista_socios_empresa(request, empresa_id):
         'empresa': empresa,
         'table': table,
         'socio_filter': socio_filter,
-        'menu_nome': 'Dashboard',
+        'menu_nome': 'Sócios',
         'cenario_nome': 'Lista de Sócios',
         'titulo_pagina': 'Lista de Sócios',
     }
     return render(request, 'empresa/lista_socios_empresa.html', context)
 
-# Imports: Standard Library
-from datetime import datetime
-
-# Imports: Django
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from django.contrib import messages
-
-# Imports: Third Party
-from django_tables2 import RequestConfig
-
-
-# Imports: Standard Library
-from datetime import datetime
-
-# Imports: Django
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from django.contrib import messages
-
-from medicos.models.base import Empresa, Socio, Pessoa
-from medicos.forms import SocioCPFForm, SocioPessoaForm, SocioForm
 
 # Helpers
 def main(request, empresa=None, menu_nome=None, cenario_nome=None):
@@ -79,6 +57,7 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
         return redirect(reverse('medicos:lista_socios_empresa', args=[empresa.id]))
     else:
         return redirect(reverse('medicos:empresa_list'))
+
 
 # Views
 @login_required

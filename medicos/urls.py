@@ -1,8 +1,11 @@
 from django.urls import path
+# ...existing code...
 from . import views_user
 from . import views_main
 from . import views_relatorios
 from . import views_empresa
+from . import views_faturamento
+from . import views_cenario
 # from . import views_home_cenario  # Removido: arquivo não existe
 # from . import views_dashboard_empresa  # Removido: arquivo não existe
 from . import views_socio
@@ -46,4 +49,6 @@ path('empresas/<int:empresa_id>/socios/', views_socio.lista_socios_empresa, name
     path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/editar/', views_despesa.item_despesa_edit, name='item_despesa_edit'),
     path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/excluir/', views_despesa.item_despesa_delete, name='item_despesa_delete'),
     path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
+    path('notas-fiscais/', views_faturamento.NotaFiscalListView.as_view(), name='lista_notas_fiscais'),
+    path('faturamento/', views_cenario.cenario_faturamento, name='cenario_faturamento'),
 ]
