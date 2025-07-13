@@ -1,30 +1,33 @@
 from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, UpdateView, DeleteView
+from django_tables2.views import SingleTableView
 from django.shortcuts import get_object_or_404
 from medicos.models.financeiro import MeioPagamento, Conta
 from medicos.models.base import Empresa
 from .forms_meio_pagamento import MeioPagamentoForm
 
-class MeioPagamentoListView(ListView):
+from medicos.tables_meio_pagamento import MeioPagamentoTable
+
+class MeioPagamentoListView(SingleTableView):
     model = MeioPagamento
+    table_class = MeioPagamentoTable
     template_name = 'cadastro/lista_meios_pagamento.html'
-    context_object_name = 'meios_pagamento'
+    paginate_by = 10
 
     def get_queryset(self):
         empresa_id = self.kwargs.get('empresa_id')
         empresa = get_object_or_404(Empresa, pk=empresa_id)
         self.empresa_id = empresa_id
-        return MeioPagamento.objects.filter(conta=empresa.conta)
+        qs = MeioPagamento.objects.filter(conta=empresa.conta)
+        nome = self.request.GET.get('nome')
+        if nome:
+            qs = qs.filter(nome__icontains=nome)
+        return qs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_id'] = self.empresa_id
-        # Adiciona ao contexto apenas os campos desejados
-        meios = context.get('meios_pagamento', [])
-        context['meios_pagamento'] = [
-            {'codigo': m.codigo, 'nome': m.nome, 'descricao': m.descricao}
-            for m in meios
-        ]
         return context
 
 class MeioPagamentoCreateView(CreateView):
@@ -61,11 +64,22 @@ class MeioPagamentoUpdateView(UpdateView):
     template_name = 'cadastro/editar_meio_pagamento.html'
 
     def get_success_url(self):
-        return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': self.object.conta_id})
+        conta = self.object.conta
+        empresa = conta.empresas.first() if conta else None
+        if empresa:
+            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.id})
+        else:
+            return reverse_lazy('medicos:empresas')
 
 class MeioPagamentoDeleteView(DeleteView):
     model = MeioPagamento
     template_name = 'cadastro/excluir_meio_pagamento.html'
 
     def get_success_url(self):
-        return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': self.object.conta_id})
+        # Tenta obter a primeira empresa vinculada à conta
+        conta = self.object.conta
+        empresa = conta.empresas.first() if conta else None
+        if empresa:
+            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.id})
+        else:
+            return reverse_lazy('medicos:empresas')  # Redireciona para lista geral de empresas

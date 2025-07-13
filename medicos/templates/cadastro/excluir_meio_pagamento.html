@@ -6,7 +6,11 @@
   <form method="post">{% csrf_token %}
     <p>Tem certeza que deseja excluir o meio de pagamento <strong>{{ object.nome }}</strong>?</p>
     <button type="submit" class="btn btn-danger">Excluir</button>
-    <a href="{% url 'medicos:lista_meios_pagamento' empresa_id=object.empresa_id %}" class="btn btn-secondary">Cancelar</a>
+    {% if object.conta.empresas.first %}
+      <a href="{% url 'medicos:lista_meios_pagamento' empresa_id=object.conta.empresas.first.id %}" class="btn btn-secondary">Cancelar</a>
+    {% else %}
+      <a href="{% url 'medicos:empresas' %}" class="btn btn-secondary">Cancelar</a>
+    {% endif %}
   </form>
 </div>
 {% endblock %}
