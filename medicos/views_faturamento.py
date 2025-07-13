@@ -22,6 +22,16 @@ class NotaFiscalCreateView(CreateView):
     form_class = NotaFiscalForm
     template_name = 'faturamento/criar_nota_fiscal.html'
     success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['campos_topo'] = [
+            'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
+        ]
+        context['campos_excluir'] = [
+            'numero','tipo_servico','meio_pagamento','status_recebimento','dtEmissao','dtRecebimento','dtVencimento','descricao_servicos','serie','criado_por'
+        ]
+        return context
  
 class NotaFiscalUpdateView(UpdateView):
     model = NotaFiscal

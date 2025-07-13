@@ -1,25 +1,9 @@
-"""
-Modelos relacionados ao sistema financeiro manual
-
-Este módulo contém todos os modelos relacionados ao fluxo de caixa manual
-da aplicação de médicos, incluindo descrições de movimentação, lançamentos
-financeiros e saldos mensais consolidados.
-"""
-
+# Modelo restaurado: MeioPagamento
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
 from .base import Conta, SaaSBaseModel, Empresa, Socio
-
-# Constantes específicas para financeiro
-TIPO_MOVIMENTACAO_CONTA_CREDITO = 1    # entradas, creditos, depositos
-TIPO_MOVIMENTACAO_CONTA_DEBITO = 2     # retiradas, transferencia
-
-# DESCRICAO PADRONIZADA DE MOVIMENTAÇÃO AUTOMÁTICA REALIZADA PELO SISTEMA
-DESC_MOVIMENTACAO_CREDITO_SALDO_MES_SEGUINTE = 'CREDITO SALDO MES ANTERIOR'
-DESC_MOVIMENTACAO_DEBITO_IMPOSTO_PROVISIONADOS = 'DEBITO PAGAMENTO DE IMPOSTOS'
-
 
 class MeioPagamento(models.Model):
     """
@@ -457,6 +441,29 @@ class MeioPagamento(models.Model):
                 meios_criados.append(meio)
         
         return meios_criados
+"""
+Modelos relacionados ao sistema financeiro manual
+
+Este módulo contém todos os modelos relacionados ao fluxo de caixa manual
+da aplicação de médicos, incluindo descrições de movimentação, lançamentos
+financeiros e saldos mensais consolidados.
+"""
+
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.utils import timezone
+from .base import Conta, SaaSBaseModel, Empresa, Socio
+
+# Constantes específicas para financeiro
+TIPO_MOVIMENTACAO_CONTA_CREDITO = 1    # entradas, creditos, depositos
+TIPO_MOVIMENTACAO_CONTA_DEBITO = 2     # retiradas, transferencia
+
+# DESCRICAO PADRONIZADA DE MOVIMENTAÇÃO AUTOMÁTICA REALIZADA PELO SISTEMA
+DESC_MOVIMENTACAO_CREDITO_SALDO_MES_SEGUINTE = 'CREDITO SALDO MES ANTERIOR'
+DESC_MOVIMENTACAO_DEBITO_IMPOSTO_PROVISIONADOS = 'DEBITO PAGAMENTO DE IMPOSTOS'
+
+
 
 
 class DescricaoMovimentacaoFinanceira(models.Model):

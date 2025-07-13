@@ -1110,8 +1110,9 @@ class NotaFiscal(models.Model):
     )
     
     # === INTEGRAÇÃO COM MEIO DE PAGAMENTO ===
+    from medicos.models.financeiro import MeioPagamento
     meio_pagamento = models.ForeignKey(
-        'MeioPagamento',
+        MeioPagamento,
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name='notas_fiscais',
@@ -1174,11 +1175,7 @@ class NotaFiscal(models.Model):
                               f'(valor bruto - impostos)'
             })
         
-        # Validar meio de pagamento quando há recebimento
-        if self.dtRecebimento and not self.meio_pagamento:
-            raise ValidationError({
-                'meio_pagamento': 'Meio de pagamento é obrigatório quando há data de recebimento'
-            })
+        # (Regra removida: meio de pagamento não é mais obrigatório quando há data de recebimento)
         
         # Validar consistência do status de recebimento
         if self.status_recebimento == 'completo' and not self.dtRecebimento:
@@ -1213,10 +1210,15 @@ class NotaFiscal(models.Model):
             'val_bruto' in kwargs.get('update_fields', []) or
             'tipo_servico' in kwargs.get('update_fields', [])):
             self.calcular_impostos()
-        
-        # Atualizar status de recebimento automaticamente
-        self.atualizar_status_recebimento()
-        
+
+        # Preencher aliquotas automaticamente se não estiver definido
+        if not self.aliquotas:
+            from medicos.models.fiscal import Aliquotas
+            conta = self.empresa_destinataria.conta
+            aliquota_vigente = Aliquotas.obter_aliquota_vigente(conta, self.dtEmissao)
+            if aliquota_vigente:
+                self.aliquotas = aliquota_vigente
+
         super().save(*args, **kwargs)
 
     def calcular_impostos(self):
@@ -1265,7 +1267,8 @@ class NotaFiscal(models.Model):
                     self.dtEmissao
                 )
                 
-                self.val_ISS = self.val_bruto * (aliquota_iss / 100)
+                from decimal import Decimal
+                self.val_ISS = self.val_bruto * (Decimal(str(aliquota_iss)) / Decimal('100'))
                 self.val_PIS = 0
                 self.val_COFINS = 0
                 self.val_IR = 0
@@ -1275,7 +1278,8 @@ class NotaFiscal(models.Model):
         except Exception as e:
             # Em caso de erro, manter valores zerados para impostos federais
             # e calcular apenas ISS básico
-            self.val_ISS = self.val_bruto * 0.02  # 2% padrão
+            from decimal import Decimal
+            self.val_ISS = self.val_bruto * Decimal('0.02')  # 2% padrão
             self.val_PIS = 0
             self.val_COFINS = 0
             self.val_IR = 0

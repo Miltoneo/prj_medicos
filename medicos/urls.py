@@ -5,6 +5,7 @@ from . import views_main
 from . import views_relatorios
 from . import views_empresa
 from . import views_faturamento
+from . import views_meio_pagamento
 from . import views_cenario
 # from . import views_home_cenario  # Removido: arquivo não existe
 # from . import views_dashboard_empresa  # Removido: arquivo não existe
@@ -54,4 +55,14 @@ path('empresas/<int:empresa_id>/socios/', views_socio.lista_socios_empresa, name
     path('faturamento/', views_cenario.cenario_faturamento, name='cenario_faturamento'),
     path('notas-fiscais/<int:pk>/editar/', views_faturamento.NotaFiscalUpdateView.as_view(), name='editar_nota_fiscal'),
     path('notas-fiscais/<int:pk>/excluir/', views_faturamento.NotaFiscalDeleteView.as_view(), name='excluir_nota_fiscal'),
+
+    # Meios de Pagamento
+    path('empresas/<int:empresa_id>/meios-pagamento/',
+         views_meio_pagamento.MeioPagamentoListView.as_view(), name='lista_meios_pagamento'),
+    path('empresas/<int:empresa_id>/meios-pagamento/novo/',
+         views_meio_pagamento.MeioPagamentoCreateView.as_view(), name='criar_meio_pagamento'),
+    path('meios-pagamento/<int:pk>/editar/',
+         views_meio_pagamento.MeioPagamentoUpdateView.as_view(), name='editar_meio_pagamento'),
+    path('meios-pagamento/<int:pk>/excluir/',
+         views_meio_pagamento.MeioPagamentoDeleteView.as_view(), name='excluir_meio_pagamento'),
 ]

@@ -11,47 +11,24 @@
         <div class="card-body">
           <form method="post" autocomplete="off">{% csrf_token %}
             <div class="row g-3">
-              {% for field in form.visible_fields %}
-                {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' %}
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                      <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                      <div class="text-danger small">{{ error }}</div>
-                    {% endfor %}
-                  </div>
-                {% endif %}
+              {% for name in campos_topo %}
+                {% for field in form.visible_fields %}
+                  {% if field.name == name %}
+                    <div class="col-md-6">
+                      <label class="form-label fw-bold">{{ field.label }}</label>
+                      {{ field }}
+                      {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                      {% endif %}
+                      {% for error in field.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                {% endfor %}
               {% endfor %}
               {% for field in form.visible_fields %}
-                {% if field.name == 'dtEmissao' %}
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                      <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                      <div class="text-danger small">{{ error }}</div>
-                    {% endfor %}
-                  </div>
-                  {% for f in form.visible_fields %}
-                    {% if f.name == 'dtRecebimento' %}
-                      <div class="col-md-6">
-                        <label class="form-label fw-bold">{{ f.label }}</label>
-                        {{ f }}
-                        {% if f.help_text %}
-                          <small class="form-text text-muted">{{ f.help_text }}</small>
-                        {% endif %}
-                        {% for error in f.errors %}
-                          <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                      </div>
-                    {% endif %}
-                  {% endfor %}
-                {% elif field.name != 'dtVencimento' and field.name != 'descricao_servicos' and field.name != 'serie' and field.name != 'criado_por' and field.name != 'dtRecebimento' and field.name != 'meio_pagamento' and field.name != 'status_recebimento' %}
+                {% if field.name not in campos_excluir %}
                   <div class="col-md-6">
                     <label class="form-label fw-bold">{{ field.label }}</label>
                     {{ field }}

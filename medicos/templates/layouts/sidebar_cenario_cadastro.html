@@ -16,6 +16,11 @@
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_grupos_despesa' empresa_id=request.session.empresa_id %}"><i class="fas fa-layer-group me-2"></i>Cadastro de Grupo de Despesas</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_itens_despesa' empresa_id=request.session.empresa_id grupo_id=0 %}"><i class="fas fa-list me-2"></i>Cadastro de Item de Despesa</a></li>
     <li class="nav-item">
+      <a class="nav-link text-light" href="{% url 'medicos:lista_meios_pagamento' empresa_id=request.session.empresa_id %}">
+        <i class="fas fa-credit-card me-2"></i>Cadastro de Meio de Pagamento
+      </a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link text-light" href="{% url 'financeiro:lista_descricoes_movimentacao' empresa_id=request.session.empresa_id %}">
         <i class="fas fa-file-alt me-2"></i>Cadastro de Descrição de Movimentação Financeira
       </a>
