@@ -1,0 +1,78 @@
+{% extends 'layouts/base_cenario_faturamento.html' %}
+{% block title %}Nova Nota Fiscal{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-light">
+          <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i> Nova Nota Fiscal</h4>
+        </div>
+        <div class="card-body">
+          <form method="post" autocomplete="off">{% csrf_token %}
+            <div class="row g-3">
+              {% for field in form.visible_fields %}
+                {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' %}
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+              {% for field in form.visible_fields %}
+                {% if field.name == 'dtEmissao' %}
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  {% for f in form.visible_fields %}
+                    {% if f.name == 'dtRecebimento' %}
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ f.label }}</label>
+                        {{ f }}
+                        {% if f.help_text %}
+                          <small class="form-text text-muted">{{ f.help_text }}</small>
+                        {% endif %}
+                        {% for error in f.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                {% elif field.name != 'dtVencimento' and field.name != 'descricao_servicos' and field.name != 'serie' and field.name != 'criado_por' and field.name != 'dtRecebimento' and field.name != 'meio_pagamento' and field.name != 'status_recebimento' %}
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <div class="mt-4 d-flex justify-content-end gap-2">
+              <button type="submit" class="btn btn-success px-4">Salvar</button>
+              <a href="{% url 'medicos:lista_notas_fiscais' %}" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

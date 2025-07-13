@@ -1,26 +1,9 @@
 
-from django.urls import reverse_lazy
-from django.views.generic import UpdateView, DeleteView
-from medicos.models.fiscal import NotaFiscal
-
-class NotaFiscalUpdateView(UpdateView):
-    model = NotaFiscal
-    fields = '__all__'
-    template_name = 'faturamento/editar_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
-
-class NotaFiscalDeleteView(DeleteView):
-    model = NotaFiscal
-    template_name = 'faturamento/excluir_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
-
-
-
 # Imports: Django
-from django.views.generic import ListView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse_lazy
 
 # Imports: Third Party
 from django_tables2 import SingleTableMixin
@@ -30,6 +13,26 @@ from django_filters.views import FilterView
 from medicos.models.fiscal import NotaFiscal
 from .tables_notafiscal_lista import NotaFiscalListaTable
 from .filters_notafiscal import NotaFiscalFilter
+
+
+from .forms_notafiscal import NotaFiscalForm
+
+class NotaFiscalCreateView(CreateView):
+    model = NotaFiscal
+    form_class = NotaFiscalForm
+    template_name = 'faturamento/criar_nota_fiscal.html'
+    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+ 
+class NotaFiscalUpdateView(UpdateView):
+    model = NotaFiscal
+    form_class = NotaFiscalForm
+    template_name = 'faturamento/editar_nota_fiscal.html'
+    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+class NotaFiscalDeleteView(DeleteView):
+    model = NotaFiscal
+    template_name = 'faturamento/excluir_nota_fiscal.html'
+    success_url = reverse_lazy('medicos:lista_notas_fiscais')
 
 @method_decorator(login_required, name='dispatch')
 class NotaFiscalListView(SingleTableMixin, FilterView):

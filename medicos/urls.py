@@ -50,6 +50,7 @@ path('empresas/<int:empresa_id>/socios/', views_socio.lista_socios_empresa, name
     path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/excluir/', views_despesa.item_despesa_delete, name='item_despesa_delete'),
     path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
     path('notas-fiscais/', views_faturamento.NotaFiscalListView.as_view(), name='lista_notas_fiscais'),
+    path('notas-fiscais/nova/', views_faturamento.NotaFiscalCreateView.as_view(), name='criar_nota_fiscal'),
     path('faturamento/', views_cenario.cenario_faturamento, name='cenario_faturamento'),
     path('notas-fiscais/<int:pk>/editar/', views_faturamento.NotaFiscalUpdateView.as_view(), name='editar_nota_fiscal'),
     path('notas-fiscais/<int:pk>/excluir/', views_faturamento.NotaFiscalDeleteView.as_view(), name='excluir_nota_fiscal'),
