@@ -1,3 +1,4 @@
+from . import views_cenario
 from django.urls import path
 # ...existing code...
 from . import views_user
@@ -17,6 +18,7 @@ from django.contrib.auth import views as auth_views
 app_name = 'medicos'
 
 urlpatterns = [
+    path('cenario_cadastro/', views_cenario.cenario_cadastro, name='cenario_cadastro'),
     path('', views_main.main, name='index'),
      path('dashboard/', views_main.main, name='dashboard'),
      path('home/', views_main.main, name='home'),

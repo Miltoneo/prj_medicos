@@ -27,14 +27,17 @@ def lista_socios_empresa(request, empresa_id):
     socio_filter = SocioFilter(request.GET, queryset=socios_qs)
     table = SocioListaTable(socio_filter.qs)
     RequestConfig(request, paginate={'per_page': 20}).configure(table)
+
+    menu_nome = 'Cadastro de Sócios'
+    titulo_pagina = 'Lista de Sócios'
+
     context = {
         'empresa': empresa,
         'empresa_atual': empresa,
         'table': table,
         'socio_filter': socio_filter,
-        'menu_nome': 'Sócios',
-        'cenario_nome': 'Lista de Sócios',
-        'titulo_pagina': 'Lista de Sócios',
+        'menu_nome': menu_nome,
+        'titulo_pagina': titulo_pagina,
     }
     return render(request, 'empresa/lista_socios_empresa.html', context)
 
