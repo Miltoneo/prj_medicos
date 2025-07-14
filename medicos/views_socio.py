@@ -1,73 +1,93 @@
 
 
 
-# Imports: Standard Library
 from datetime import datetime
 
-# Imports: Django
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse, reverse_lazy
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.generic import CreateView, DeleteView, UpdateView
+from django_filters.views import FilterView
+from django.views.generic.base import ContextMixin
 
-# Imports: Third Party
-from django_tables2 import RequestConfig
+from django_tables2 import RequestConfig, tables, A
+from django.urls import reverse
 
-# Imports: Local
-from medicos.models.base import Empresa, Socio, Pessoa
-from medicos.forms import SocioCPFForm, SocioPessoaForm, SocioForm, SocioPessoaCompletaForm
-from .tables_socio_lista import SocioListaTable
+from medicos.forms import SocioCPFForm, SocioForm, SocioPessoaCompletaForm, SocioPessoaForm
+from medicos.models.base import Empresa, Pessoa, Socio
 from .filters_socio import SocioFilter
 
 
+# Import SocioListaTable from the padronized location
+from .tables_socio_lista import SocioListaTable
+
 # Mixin para contexto/session
-from django.views.generic.base import ContextMixin
 class SocioContextMixin(ContextMixin):
     menu_nome = 'Cadastro de Sócios'
-    cenario_nome = 'Cadastro de Sócio'
+    #cenario_nome = 'Cadastro de Sócio'
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        empresa = getattr(self, 'empresa', None)
-        context['empresa'] = empresa
+        context['empresa'] = getattr(self, 'empresa', None)
         context['menu_nome'] = self.menu_nome
-        context['cenario_nome'] = self.cenario_nome
+        #context['cenario_nome'] = self.cenario_nome
         context['titulo_pagina'] = getattr(self, 'titulo_pagina', 'Sócios')
         return context
+
     def dispatch(self, request, *args, **kwargs):
         mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
         if not mes_ano:
             mes_ano = datetime.now().strftime('%Y-%m')
-        request.session['mes_ano'] = mes_ano
-        request.session['menu_nome'] = self.menu_nome
-        request.session['cenario_nome'] = self.cenario_nome
-        request.session['user_id'] = request.user.id
+
+        request.session.update({
+            'mes_ano': mes_ano,
+            'menu_nome': self.menu_nome,
+            #'cenario_nome': self.cenario_nome,
+            'user_id': request.user.id,
+        })
         return super().dispatch(request, *args, **kwargs)
 
 
-
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.utils.decorators import method_decorator
-
 @method_decorator(login_required, name='dispatch')
-class SocioListView(SocioContextMixin, ListView):
+class SocioListView(SocioContextMixin, FilterView):
     model = Socio
+    filterset_class = SocioFilter
+    table_class = SocioListaTable
     template_name = 'empresa/lista_socios_empresa.html'
-    context_object_name = 'table'
     paginate_by = 20
+    context_object_name = 'table'
+
     def dispatch(self, request, *args, **kwargs):
         self.empresa = get_object_or_404(Empresa, id=self.kwargs['empresa_id'])
         return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
-        socios_qs = Socio.objects.filter(empresa=self.empresa)
-        self.socio_filter = SocioFilter(self.request.GET, queryset=socios_qs)
-        return self.socio_filter.qs
+        return Socio.objects.filter(empresa=self.empresa)
+
+    def get_table_data(self):
+        queryset = self.get_queryset()
+        sort = self.request.GET.get('sort')
+        if sort:
+            # Tradução dos campos da tabela para campos do modelo
+            sort_map = {
+                'nome': 'pessoa__name',
+                '-nome': '-pessoa__name',
+                'cpf': 'pessoa__cpf',
+                '-cpf': '-pessoa__cpf',
+            }
+            sort_field = sort_map.get(sort, sort)
+            queryset = queryset.order_by(sort_field)
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.titulo_pagina = 'Lista de Sócios'
-        table = SocioListaTable(self.socio_filter.qs)
+        context['socio_filter'] = context.get('filter')
+        table = SocioListaTable(self.get_table_data())
         RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
         context['table'] = table
-        context['socio_filter'] = self.socio_filter
         return context
 
 
@@ -76,10 +96,6 @@ class SocioListView(SocioContextMixin, ListView):
 # Views
 
 @method_decorator(login_required, name='dispatch')
-
-
-
-
 
 class SocioCreateView(CreateView):
     model = Socio
