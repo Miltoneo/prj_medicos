@@ -133,11 +133,36 @@ document.addEventListener('DOMContentLoaded', function() {
     setFieldValue(valLiquidoInput, liquido.toFixed(2));
   }
 
+  // Sempre recalcula ao editar valor bruto
   if (valBrutoInput) {
     valBrutoInput.addEventListener('input', calcularCampos);
     valBrutoInput.addEventListener('change', calcularCampos);
-    calcularCampos();
-  } else {
+  }
+
+  // Recalcula valor líquido ao editar manualmente qualquer imposto
+  [valISSInput, valPISInput, valCOFINSInput, valIRInput, valCSLLInput].forEach(function(impostoInput) {
+    if (impostoInput) {
+      impostoInput.addEventListener('input', function() {
+        let bruto = 0;
+        if (valBrutoInput) {
+          bruto = parseFloat(valBrutoInput.value.replace(',', '.')) || 0;
+        }
+        // Pega os valores atuais dos impostos (permite edição manual)
+        const valorISS = parseFloat(valISSInput && valISSInput.value.replace(',', '.') || 0) || 0;
+        const valorPIS = parseFloat(valPISInput && valPISInput.value.replace(',', '.') || 0) || 0;
+        const valorCOFINS = parseFloat(valCOFINSInput && valCOFINSInput.value.replace(',', '.') || 0) || 0;
+        const valorIR = parseFloat(valIRInput && valIRInput.value.replace(',', '.') || 0) || 0;
+        const valorCSLL = parseFloat(valCSLLInput && valCSLLInput.value.replace(',', '.') || 0) || 0;
+        const totalImpostos = valorISS + valorPIS + valorCOFINS + valorIR + valorCSLL;
+        const liquido = bruto - totalImpostos;
+        setFieldValue(valLiquidoInput, liquido.toFixed(2));
+      });
+    }
+  });
+
+  // Cálculo inicial
+  calcularCampos();
+  if (!valBrutoInput) {
     // Se não encontrar o campo, mostra erro no console
     console.error('Campo "Valor Bruto" não encontrado. Verifique o nome/id do campo no template.');
   }
