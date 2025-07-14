@@ -16,7 +16,7 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
 
     # Menu e cenário
     request.session['menu_nome'] = menu_nome or 'Relatórios'
-    request.session['cenario_nome'] = cenario_nome or 'Relatórios'
+    request.session['cenario_nome'] = 'Relatórios'  # Always save 'Relatórios' in session
 
     # Usuário
     request.session['user_id'] = request.user.id
@@ -25,7 +25,7 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     context = {
         'mes_ano': mes_ano,
         'menu_nome': menu_nome or 'Relatórios',
-        'cenario_nome': cenario_nome or 'Relatórios',
+        # 'cenario_nome': cenario_nome or 'Relatórios',  # Removed from context
         'empresa': empresa,
         'user': request.user,
     }

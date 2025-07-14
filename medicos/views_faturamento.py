@@ -108,9 +108,10 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Entrada de Notas Fiscais'
         context['menu_nome'] = 'Notas Fiscais'
-        context['cenario_nome'] = 'Faturamento'
+        self.request.session['cenario_nome'] = 'Faturamento'
         empresa_id = int(self.request.session.get('empresa_id'))
         context['empresa_id'] = empresa_id
         context['empresa_atual'] = Empresa.objects.get(id=empresa_id)
         context['mes_ano'] = self.request.session.get('mes_ano')
+        # Não incluir cenario_nome no contexto
         return context

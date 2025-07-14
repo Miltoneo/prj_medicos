@@ -11,7 +11,7 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     context = {
         'mes_ano': mes_ano,
         'menu_nome': menu_nome or 'Financeiro',
-        'cenario_nome': cenario_nome or 'Financeiro',
+        # 'cenario_nome': cenario_nome or 'Financeiro',
         'empresa': empresa,
         'user': getattr(request, 'user', None),
     }

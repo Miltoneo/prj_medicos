@@ -42,29 +42,32 @@ def main(request, empresa_id=None):
     mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m')
     request.session['mes_ano'] = mes_ano
 
-    # Sempre haverá uma empresa selecionada
-    if empresa_id is None:
-        empresa_id = request.GET.get('empresa_id')
-    if empresa_id is None:
-        empresa_id = request.session.get('empresa_id')
+    empresa_id = empresa_id or request.GET.get('empresa_id') or request.session.get('empresa_id')
+    if not empresa_id:
+        raise Exception('empresa_id não definido na sessão ou na requisição.')
     empresa_selecionada = Empresa.objects.get(id=int(empresa_id))
     request.session['empresa_id'] = empresa_selecionada.id
+    request.session['cenario_nome'] = 'Empresa'
 
     socios_qs = Socio.objects.filter(empresa=empresa_selecionada)
     socio_filter = SocioFilter(request.GET, queryset=socios_qs)
     table = SocioTable(socio_filter.qs)
     RequestConfig(request, paginate={'per_page': 20}).configure(table)
 
-    context = {
+    return {
         'empresa_atual': empresa_selecionada,
         'user': request.user,
         'table': table,
         'socio_filter': socio_filter,
         'mes_ano': mes_ano,
         'menu_nome': 'dashboard',
-        'cenario_nome': 'Empresas',
         'titulo_pagina': 'Dashboard Empresa',
     }
+
+# Nova view para renderizar o dashboard
+@login_required
+def dashboard_empresa(request, empresa_id=None):
+    context = main(request, empresa_id=empresa_id)
     return render(request, 'empresa/dashboard.html', context)
 
 
@@ -86,6 +89,9 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
         main_context = main(self.request)
+        # Remover cenario_nome do contexto se existir
+        if 'cenario_nome' in main_context:
+            del main_context['cenario_nome']
         context.update(main_context)
         return context
 
@@ -111,6 +117,8 @@ def empresa_create(request):
         form = EmpresaForm()
     contexto = main(request)
     contexto['form'] = form
+    if 'cenario_nome' in contexto:
+        del contexto['cenario_nome']
     return render(request, 'empresa/empresa_create.html', contexto)
 
 
@@ -118,6 +126,8 @@ def empresa_create(request):
 def empresa_detail(request, empresa_id):
     contexto = main(request, empresa_id=empresa_id)
     contexto['empresa'] = contexto['empresa_atual']
+    if 'cenario_nome' in contexto:
+        del contexto['cenario_nome']
     return render(request, 'empresa/empresa_detail.html', contexto)
 
 
@@ -136,6 +146,8 @@ def empresa_update(request, empresa_id):
         form = EmpresaForm(instance=empresa)
     contexto['form'] = form
     contexto['empresa'] = empresa
+    if 'cenario_nome' in contexto:
+        del contexto['cenario_nome']
     return render(request, 'empresa/empresa_update.html', contexto)
 
 
@@ -150,4 +162,6 @@ def empresa_delete(request, empresa_id):
         messages.success(request, 'Empresa excluída com sucesso!')
         return redirect('medicos:empresa_list')
     contexto['empresa'] = empresa
+    if 'cenario_nome' in contexto:
+        del contexto['cenario_nome']
     return render(request, 'empresa/empresa_delete.html', contexto)

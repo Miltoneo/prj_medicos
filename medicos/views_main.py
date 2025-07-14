@@ -17,10 +17,10 @@ def main(request):
     contas_ids = memberships.values_list('conta_id', flat=True)
     empresas_cadastradas = Empresa.objects.filter(conta_id__in=contas_ids)
 
+    request.session['cenario_nome'] = 'Home'
     contexto = {
         'mes_ano': request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m'),
         'menu_nome': 'Home',
-        'cenario_nome': 'Home',
         'titulo_pagina': 'Dashboard Principal',
     }
 
