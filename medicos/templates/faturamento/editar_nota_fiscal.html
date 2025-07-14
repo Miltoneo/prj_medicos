@@ -89,6 +89,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   const valBrutoInput = getInput('val_bruto');
   const valLiquidoInput = getInput('val_liquido');
+  if (valLiquidoInput) {
+    valLiquidoInput.setAttribute('readonly', 'readonly');
+    valLiquidoInput.addEventListener('keydown', function(e) { e.preventDefault(); return false; });
+  }
   const valISSInput = getInput('val_ISS');
   const valPISInput = getInput('val_PIS');
   const valCOFINSInput = getInput('val_COFINS');
