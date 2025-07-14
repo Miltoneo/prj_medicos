@@ -1,22 +1,18 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
-{% block title %}Novo Sócio - Dados do Sócio{% endblock %}
+{% block title %}Novo Sócio{% endblock %}
 {% block content %}
 <div class="container mt-4">
   <div class="row justify-content-center">
     <div class="col-lg-8">
       <div class="card shadow-sm border-0">
         <div class="card-header bg-success text-white">
-          <i class="fas fa-user-plus me-2"></i>Novo Sócio - Dados do Sócio
+          <i class="fas fa-user-plus me-2"></i>Novo Sócio
         </div>
         <div class="card-body">
-          <div class="alert alert-info mb-3">
-            <strong>Pessoa:</strong> {{ pessoa.name }}<br>
-            <strong>CPF:</strong> {{ pessoa.cpf }}
-          </div>
-          <form method="post">
+          <form method="post" novalidate>
             {% csrf_token %}
-            {{ socio_form.non_field_errors }}
-            {% for field in socio_form.visible_fields %}
+            {{ form.non_field_errors }}
+            {% for field in form.visible_fields %}
               <div class="mb-3">
                 {{ field.label_tag }}
                 {{ field }}
@@ -24,12 +20,18 @@
                 {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
               </div>
             {% endfor %}
-            <input type="hidden" name="step" value="socio">
             <div class="text-end">
               <button type="submit" class="btn btn-success px-4"><i class="fas fa-save me-1"></i>Salvar Sócio</button>
               <a href="{% url 'medicos:lista_socios_empresa' empresa_id=empresa.id %}" class="btn btn-secondary ms-2">Cancelar</a>
             </div>
           </form>
+          {% if messages %}
+            <ul class="messages">
+              {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
         </div>
       </div>
     </div>

@@ -1,3 +1,59 @@
+
+from django import forms
+from .models.base import Socio, Pessoa
+
+class SocioPessoaCompletaForm(forms.Form):
+    """
+    Formulário único para cadastro de sócio e pessoa.
+    """
+    name = forms.CharField(label='Nome', max_length=255)
+    cpf = forms.CharField(label='CPF', max_length=14)
+    rg = forms.CharField(label='RG', max_length=20, required=False)
+    data_nascimento = forms.DateField(label='Data de Nascimento', widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+    telefone = forms.CharField(label='Telefone', max_length=20, required=False)
+    celular = forms.CharField(label='Celular', max_length=20, required=False)
+    email = forms.EmailField(label='Email', required=False)
+    crm = forms.CharField(label='CRM', max_length=20, required=False)
+    especialidade = forms.CharField(label='Especialidade', max_length=100, required=False)
+    pessoa_ativo = forms.BooleanField(label='Pessoa Ativa', required=False)
+    socio_ativo = forms.BooleanField(label='Sócio Ativo', required=False)
+    data_entrada = forms.DateField(label='Data de Entrada', widget=forms.DateInput(attrs={'type': 'date'}))
+    data_saida = forms.DateField(label='Data de Saída', widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+    observacoes = forms.CharField(label='Observações', widget=forms.Textarea(attrs={'rows': 3}), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_entrada'].input_formats = ['%Y-%m-%d']
+        self.fields['data_saida'].input_formats = ['%Y-%m-%d']
+
+    def save(self, empresa, commit=True):
+        pessoa_data = {
+            'name': self.cleaned_data['name'],
+            'cpf': self.cleaned_data['cpf'],
+            'rg': self.cleaned_data.get('rg'),
+            'data_nascimento': self.cleaned_data.get('data_nascimento'),
+            'telefone': self.cleaned_data.get('telefone'),
+            'celular': self.cleaned_data.get('celular'),
+            'email': self.cleaned_data.get('email'),
+            'crm': self.cleaned_data.get('crm'),
+            'especialidade': self.cleaned_data.get('especialidade'),
+            'ativo': self.cleaned_data.get('pessoa_ativo', True),
+            'conta': empresa.conta,
+        }
+        pessoa, _ = Pessoa.objects.update_or_create(cpf=pessoa_data['cpf'], defaults=pessoa_data)
+        socio = Socio(
+            empresa=empresa,
+            conta=empresa.conta,
+            pessoa=pessoa,
+            ativo=self.cleaned_data.get('socio_ativo', True),
+            data_entrada=self.cleaned_data['data_entrada'],
+            data_saida=self.cleaned_data.get('data_saida'),
+            observacoes=self.cleaned_data.get('observacoes', ''),
+        )
+        if commit:
+            socio.save()
+        return socio
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -12,6 +68,26 @@ from .models.base import Empresa, Socio, Pessoa
 from .models.fiscal import Aliquotas
 from .models.despesas import GrupoDespesa, ItemDespesa
 from .models.financeiro import DescricaoMovimentacaoFinanceira
+
+class SocioForm(forms.ModelForm):
+    """
+    Formulário de cadastro/edição de sócio. Apenas campos editáveis pelo usuário.
+    Os vínculos (conta, empresa, pessoa) são definidos na view.
+    """
+    class Meta:
+        model = Socio
+        fields = ['ativo', 'data_entrada', 'data_saida', 'observacoes']
+        widgets = {
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'data_entrada': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
+            'data_saida': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
+            'observacoes': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Observações'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_entrada'].input_formats = ['%Y-%m-%d']
+        self.fields['data_saida'].input_formats = ['%Y-%m-%d']
 
 User = get_user_model()
 
@@ -130,21 +206,6 @@ class SocioPessoaForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
-class SocioForm(forms.ModelForm):
-    class Meta:
-        model = Socio
-        fields = ['ativo', 'data_entrada', 'data_saida', 'observacoes']
-        widgets = {
-            'data_entrada': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
-            'data_saida': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
-            'observacoes': forms.Textarea(attrs={'rows': 2}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['data_entrada'].input_formats = ['%Y-%m-%d']
-        self.fields['data_saida'].input_formats = ['%Y-%m-%d']
 
 class AliquotaForm(forms.ModelForm):
     class Meta:

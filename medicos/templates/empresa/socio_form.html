@@ -12,28 +12,15 @@
           <form method="post">
             {% csrf_token %}
             {{ form.non_field_errors }}
-            <div class="mb-3">
-              {{ form.pessoa.label_tag }}
-              {{ form.pessoa }}
-            </div>
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                {{ form.ativo.label_tag }}
-                {{ form.ativo }}
+            <!-- Campos de vínculo são definidos na view, não editáveis pelo usuário -->
+            {% for field in form.visible_fields %}
+              <div class="mb-3">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
               </div>
-              <div class="col-md-4 mb-3">
-                {{ form.data_entrada.label_tag }}
-                {{ form.data_entrada }}
-              </div>
-              <div class="col-md-4 mb-3">
-                {{ form.data_saida.label_tag }}
-                {{ form.data_saida }}
-              </div>
-            </div>
-            <div class="mb-3">
-              {{ form.observacoes.label_tag }}
-              {{ form.observacoes }}
-            </div>
+            {% endfor %}
             <div class="text-end">
               <button type="submit" class="btn btn-success px-4"><i class="fas fa-save me-1"></i>Salvar</button>
               <a href="{% url 'medicos:lista_socios_empresa' empresa_id=empresa.id %}" class="btn btn-secondary ms-2">Cancelar</a>
