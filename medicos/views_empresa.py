@@ -39,65 +39,33 @@ def get_or_set_conta_id(request):
 
 # Helpers
 def main(request, empresa_id=None):
-    # Preparar variáveis de contexto essenciais para o sistema
-    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
-    if not mes_ano:
-        mes_ano = datetime.now().strftime('%Y-%m')
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m')
     request.session['mes_ano'] = mes_ano
 
-    # Empresas disponíveis para o usuário
-    memberships = ContaMembership.objects.filter(user=request.user, is_active=True)
-    contas_ids = memberships.values_list('conta_id', flat=True)
-    empresas_disponiveis = Empresa.objects.filter(conta_id__in=contas_ids)
+    # Sempre haverá uma empresa selecionada
+    if empresa_id is None:
+        empresa_id = request.GET.get('empresa_id')
+    if empresa_id is None:
+        empresa_id = request.session.get('empresa_id')
+    empresa_selecionada = Empresa.objects.get(id=int(empresa_id))
+    request.session['empresa_id'] = empresa_selecionada.id
 
-    # Empresa atual
-    empresa_id_param = request.GET.get('empresa_id')
-    if empresa_id_param:
-        try:
-            empresa_id_param = int(empresa_id_param)
-            empresa_selecionada = empresas_disponiveis.filter(id=empresa_id_param).first()
-            if empresa_selecionada:
-                request.session['empresa_id'] = empresa_selecionada.id
-        except Exception:
-            pass
+    socios_qs = Socio.objects.filter(empresa=empresa_selecionada)
+    socio_filter = SocioFilter(request.GET, queryset=socios_qs)
+    table = SocioTable(socio_filter.qs)
+    RequestConfig(request, paginate={'per_page': 20}).configure(table)
 
-    empresa_atual = None
-    empresa_id_atual = request.session.get('empresa_id')
-    if empresa_id_atual:
-        empresa_atual = empresas_disponiveis.filter(id=empresa_id_atual).first()
-    if not empresa_atual:
-        empresa_atual = empresas_disponiveis.first()
-        if empresa_atual:
-            request.session['empresa_id'] = empresa_atual.id
-
-    # Filtro de empresas
-    empresa_filter = EmpresaFilter(request.GET, queryset=empresas_disponiveis)
-
-    # Socios da empresa atual (se houver)
-    socios_qs = None
-    socio_filter = None
-    table = None
-    if empresa_atual:
-        socios_qs = Socio.objects.filter(empresa=empresa_atual)
-        socio_filter = SocioFilter(request.GET, queryset=socios_qs)
-        table = SocioTable(socio_filter.qs)
-        RequestConfig(request, paginate={'per_page': 20}).configure(table)
-
-    contexto = {
+    context = {
+        'empresa_atual': empresa_selecionada,
+        'user': request.user,
+        'table': table,
+        'socio_filter': socio_filter,
         'mes_ano': mes_ano,
         'menu_nome': 'dashboard',
         'cenario_nome': 'Empresas',
         'titulo_pagina': 'Dashboard Empresa',
     }
-    return render(request, 'empresa/dashboard_empresa.html', {
-        'empresas_disponiveis': empresas_disponiveis,
-        'empresa_atual': empresa_atual,
-        'empresa_filter': empresa_filter,
-        'user': request.user,
-        'table': table,
-        'socio_filter': socio_filter,
-        **contexto,
-    })
+    return render(request, 'empresa/dashboard.html', context)
 
 
 class EmpresaListView(LoginRequiredMixin, SingleTableView):
@@ -117,7 +85,8 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
-        context.update(main(self.request))
+        main_context = main(self.request)
+        context.update(main_context)
         return context
 
 

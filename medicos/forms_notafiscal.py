@@ -7,6 +7,16 @@ class NotaFiscalForm(forms.ModelForm):
         numero = cleaned_data.get('numero')
         serie = cleaned_data.get('serie', '1')
         empresa = cleaned_data.get('empresa_destinataria')
+        # Se empresa não está no cleaned_data, pega da instância (preenchida na view)
+        if not empresa:
+            empresa = getattr(self.instance, 'empresa_destinataria', None)
+        # Se ainda não encontrou, pega do atributo empresa_id_sessao passado pela view
+        if not empresa and hasattr(self, 'empresa_id_sessao') and self.empresa_id_sessao:
+            from medicos.models.base import Empresa
+            try:
+                empresa = Empresa.objects.get(id=int(self.empresa_id_sessao))
+            except Exception:
+                empresa = None
         if numero and serie and empresa:
             from medicos.models.fiscal import NotaFiscal
             qs = NotaFiscal.objects.filter(
@@ -24,7 +34,7 @@ class NotaFiscalForm(forms.ModelForm):
         return cleaned_data
     class Meta:
         model = NotaFiscal
-        exclude = ['dtVencimento', 'descricao_servicos', 'serie', 'created_by', 'aliquotas']
+        exclude = ['dtVencimento', 'descricao_servicos', 'serie', 'created_by', 'aliquotas', 'empresa_destinataria']
         widgets = {
             'dtEmissao': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'dtRecebimento': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),

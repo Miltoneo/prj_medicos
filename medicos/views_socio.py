@@ -29,6 +29,7 @@ def lista_socios_empresa(request, empresa_id):
     RequestConfig(request, paginate={'per_page': 20}).configure(table)
     context = {
         'empresa': empresa,
+        'empresa_atual': empresa,
         'table': table,
         'socio_filter': socio_filter,
         'menu_nome': 'Sócios',
@@ -54,9 +55,12 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
 
     # Redireciona para a lista de sócios da empresa
     if empresa:
-        return redirect(reverse('medicos:lista_socios_empresa', args=[empresa.id]))
+        context = {
+            'empresa_atual': empresa,
+        }
+        return context
     else:
-        return redirect(reverse('medicos:empresa_list'))
+        return {}
 
 
 # Views
@@ -148,6 +152,7 @@ def socio_unlink(request, empresa_id, socio_id):
         return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id)
     context = {
         'empresa': empresa,
+        'empresa_atual': empresa,
         'socio': socio,
         'titulo_pagina': 'Desvincular Sócio',
     }

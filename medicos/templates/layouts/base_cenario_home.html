@@ -34,19 +34,21 @@
     <!-- TOP MENU -->
     {% include 'layouts/topbar.html' %}
 
+
     <div class="layout-container">
       <div class="sidebar">
         {% include 'layouts/sidebar_cenario_home.html' %}
       </div>
       <div class="content mt-5">
         {% include 'layouts/base_header.html' %}
-        {% block content %}
-
-        {% endblock %}
+        {% if titulo_pagina %}
+          <div class="mb-3">
+            <h4 class="fw-bold text-primary">{{ titulo_pagina }}</h4>
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
       </div>
     </div>
-
-    <!-- for select2 -->
     {{ form.media.js }}
   </body>
 </html>

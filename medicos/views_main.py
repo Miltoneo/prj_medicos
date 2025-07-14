@@ -15,28 +15,7 @@ from medicos.contexto import *
 def main(request):
     memberships = ContaMembership.objects.filter(user=request.user, is_active=True)
     contas_ids = memberships.values_list('conta_id', flat=True)
-    empresas_qs = Empresa.objects.filter(conta_id__in=contas_ids)
-    empresa_filter = EmpresaFilter(request.GET, queryset=empresas_qs)
-
-    empresas_disponiveis = empresa_filter.qs
-    empresa_id_param = request.GET.get('empresa_id')
-    if empresa_id_param:
-        try:
-            empresa_id_param = int(empresa_id_param)
-            empresa_selecionada = empresas_disponiveis.filter(id=empresa_id_param).first()
-            if empresa_selecionada:
-                request.session['empresa_id'] = empresa_selecionada.id
-        except Exception:
-            pass
-
-    empresa_id_atual = request.session.get('empresa_id')
-    empresa_atual = None
-    if empresa_id_atual:
-        empresa_atual = empresas_disponiveis.filter(id=empresa_id_atual).first()
-    if not empresa_atual:
-        empresa_atual = empresas_disponiveis.first()
-        if empresa_atual:
-            request.session['empresa_id'] = empresa_atual.id
+    empresas_cadastradas = Empresa.objects.filter(conta_id__in=contas_ids)
 
     contexto = {
         'mes_ano': request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m'),
@@ -46,9 +25,7 @@ def main(request):
     }
 
     return render(request, 'dashboard/home.html', {
-        'empresas_disponiveis': empresas_disponiveis,
-        'empresa_atual': empresa_atual,
-        'empresa_filter': empresa_filter,
+        'empresas_cadastradas': empresas_cadastradas,
         'user': request.user,
         **contexto,
     })

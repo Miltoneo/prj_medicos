@@ -9,7 +9,7 @@
     {% if object.conta.empresas.first %}
       <a href="{% url 'medicos:lista_meios_pagamento' empresa_id=object.conta.empresas.first.id %}" class="btn btn-secondary">Cancelar</a>
     {% else %}
-      <a href="{% url 'medicos:empresas' %}" class="btn btn-secondary">Cancelar</a>
+      <a href="{% url 'medicos:empresas' request.session.empresa_id %}" class="btn btn-secondary">Cancelar</a>
     {% endif %}
   </form>
 </div>
