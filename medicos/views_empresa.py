@@ -61,7 +61,7 @@ def main(request, empresa_id=None):
         'socio_filter': socio_filter,
         'mes_ano': mes_ano,
         'menu_nome': 'dashboard',
-        'titulo_pagina': 'Dashboard Empresa',
+        'titulo_pagina': 'Dashboard',
     }
 
 # Nova view para renderizar o dashboard
@@ -88,11 +88,7 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
-        main_context = main(self.request)
-        # Remover cenario_nome do contexto se existir
-        if 'cenario_nome' in main_context:
-            del main_context['cenario_nome']
-        context.update(main_context)
+        context.update(main(self.request))
         return context
 
 
@@ -102,7 +98,7 @@ def empresa_create(request):
     conta_id = membership.conta_id if membership else None
     if not conta_id:
         messages.error(request, 'Conta não encontrada para este usuário.')
-        return redirect('medicos:empresa_list')
+        return redirect('medicos:empresa_create')
     if request.method == 'POST':
         form = EmpresaForm(request.POST)
         if form.is_valid():
@@ -112,7 +108,7 @@ def empresa_create(request):
             empresa.save()
             logger.info(f'Empresa cadastrada: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
             messages.success(request, 'Empresa cadastrada com sucesso! Aguarde validação.')
-            return redirect('medicos:empresa_list')
+            return redirect('medicos:empresa_create')
     else:
         form = EmpresaForm()
     contexto = main(request)
@@ -141,7 +137,7 @@ def empresa_update(request, empresa_id):
             form.save()
             logger.info(f'Empresa atualizada: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
             messages.success(request, 'Empresa atualizada com sucesso!')
-            return redirect('medicos:empresa_list')
+            return redirect('medicos:empresa_update', empresa_id=empresa.id)
     else:
         form = EmpresaForm(instance=empresa)
     contexto['form'] = form
@@ -160,7 +156,7 @@ def empresa_delete(request, empresa_id):
         logger.info(f'Empresa excluída: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
         empresa.delete()
         messages.success(request, 'Empresa excluída com sucesso!')
-        return redirect('medicos:empresa_list')
+        return redirect('medicos:empresa_delete', empresa_id=empresa.id)
     contexto['empresa'] = empresa
     if 'cenario_nome' in contexto:
         del contexto['cenario_nome']

@@ -7,7 +7,7 @@
   <hr class="border-secondary m-0">
   <ul class="nav flex-column">
     <li class="nav-item">
-      <a class="nav-link text-light" href="{% url 'medicos:empresas' request.session.empresa_id %}">
+      <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}">
         <i class="fas fa-arrow-left me-2"></i>Voltar
       </a>
     </li>

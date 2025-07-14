@@ -34,7 +34,7 @@
         <td>{{ empresa.regime_tributario }}</td>
         <td>
           {% if empresa.id != empresa_id_atual %}
-          <a href="{% url 'medicos:empresas' empresa.id %}" class="btn btn-sm btn-primary">Selecionar</a>
+          <a href="{% url 'medicos:startempresa' empresa_id=empresa.id %}" class="btn btn-sm btn-primary">Selecionar</a>
           {% else %}
           <span class="badge bg-success">Selecionada</span>
           {% endif %}

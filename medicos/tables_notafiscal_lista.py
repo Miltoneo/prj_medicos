@@ -4,10 +4,10 @@ from medicos.models.fiscal import NotaFiscal
 class NotaFiscalListaTable(tables.Table):
     acoes = tables.TemplateColumn(
         template_code='''
-            <a href="{% url 'medicos:editar_nota_fiscal' record.pk %}" class="btn btn-sm btn-primary me-1" title="Editar">
+            <a href="{% url 'medicos:editar_nota_fiscal' pk=record.pk %}" class="btn btn-sm btn-primary me-1" title="Editar">
                 <i class="bi bi-pencil"></i>
             </a>
-            <a href="{% url 'medicos:excluir_nota_fiscal' record.pk %}" class="btn btn-sm btn-danger" title="Excluir" onclick="return confirm('Confirma a exclusão desta nota fiscal?');">
+            <a href="{% url 'medicos:excluir_nota_fiscal' pk=record.pk %}" class="btn btn-sm btn-danger" title="Excluir" onclick="return confirm('Confirma a exclusão desta nota fiscal?');">
                 <i class="bi bi-trash"></i>
             </a>
         ''',

@@ -11,7 +11,7 @@ def cenario_faturamento(request):
     empresa_id = request.session.get('empresa_id')
     if not empresa_id:
         # Redireciona para seleção de empresa se nenhuma estiver selecionada
-        return redirect('medicos:empresas')
+        return redirect('medicos:startempresa', empresa_id=0)
     return redirect('medicos:lista_notas_fiscais')
 
 

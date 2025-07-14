@@ -10,9 +10,9 @@ class EmpresaTable(tables.Table):
     regime_tributario = tables.Column(verbose_name="Regime Tributário", accessor="get_regime_tributario_display")
     acoes = tables.TemplateColumn(
         template_code='''
-        <a href="{% url 'medicos:empresa_detail' record.id %}" class="btn btn-sm btn-secondary">Ver</a>
-        <a href="{% url 'medicos:empresa_update' record.id %}" class="btn btn-sm btn-primary">Editar</a>
-        <a href="{% url 'medicos:empresa_delete' record.id %}" class="btn btn-sm btn-danger">Excluir</a>
+        <a href="{% url 'medicos:empresa_detail' empresa_id=record.id %}" class="btn btn-sm btn-secondary">Ver</a>
+        <a href="{% url 'medicos:empresa_update' empresa_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
+        <a href="{% url 'medicos:empresa_delete' empresa_id=record.id %}" class="btn btn-sm btn-danger">Excluir</a>
         ''',
         verbose_name="Ações",
         orderable=False

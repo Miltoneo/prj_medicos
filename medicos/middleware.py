@@ -12,7 +12,7 @@ class LicencaValidaMiddleware:
 
     def __call__(self, request):
         # Ignora admin e páginas de login/logout
-        if request.path.startswith(reverse('admin:index')) or request.path.startswith(reverse('medicos:login')):
+        if request.path.startswith(reverse('admin:index')) or request.path.startswith(reverse('medicos:logout')):
             return self.get_response(request)
 
         if request.user.is_authenticated:
