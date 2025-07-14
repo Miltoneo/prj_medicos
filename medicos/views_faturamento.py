@@ -19,7 +19,6 @@ from .filters_notafiscal import NotaFiscalFilter
 from medicos.models.base import Empresa
 from .forms_notafiscal import NotaFiscalForm
 
-
 class NotaFiscalCreateView(CreateView):
     model = NotaFiscal
     form_class = NotaFiscalForm
@@ -32,15 +31,34 @@ class NotaFiscalCreateView(CreateView):
         empresa_id = self.request.session.get('empresa_id')
         if empresa_id:
             empresa = Empresa.objects.get(id=int(empresa_id))
-            context.update({
-                'empresa': empresa,
-                'campos_topo': [
-                    'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
-                ],
-                'campos_excluir': [
-                    'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento', 'dtVencimento', 'descricao_servicos', 'serie', 'criado_por'
-                ]
-            })
+            conta = getattr(empresa, 'conta', None)
+            aliquota_vigente = None
+            dt_emissao = self.request.POST.get('dtEmissao') or self.request.GET.get('dtEmissao')
+            if conta:
+                if dt_emissao:
+                    aliquota_vigente = Aliquotas.obter_aliquota_vigente(conta, dt_emissao)
+                if not aliquota_vigente:
+                    aliquota_vigente = Aliquotas.obter_aliquota_vigente(conta)
+            if not aliquota_vigente:
+                context['erro_aliquota'] = 'Não foi encontrada alíquota vigente para a empresa e data informada. Cadastre uma alíquota antes de emitir a nota fiscal.'
+                context['aliquota_vigente'] = False
+            else:
+                context.update({
+                    'empresa': empresa,
+                    'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0),
+                    'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0),
+                    'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0),
+                    'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_BASE_CAL', 0),
+                    'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA_OUTROS', 0),
+                    'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0),
+                    'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0),
+                    'campos_topo': [
+                        'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
+                    ],
+                    'campos_excluir': [
+                        'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento', 'dtVencimento', 'descricao_servicos', 'serie', 'criado_por'
+                    ]
+                })
         return context
 
     def get_form(self, form_class=None):
@@ -74,11 +92,29 @@ class NotaFiscalUpdateView(UpdateView):
         context = super().get_context_data(**kwargs)
         empresa_id = self.request.session.get('empresa_id')
         empresa = None
+        aliquota_vigente = None
         if empresa_id:
             try:
                 empresa = Empresa.objects.get(id=int(empresa_id))
+                conta = getattr(empresa, 'conta', None)
+                dt_emissao = self.object.dtEmissao if hasattr(self.object, 'dtEmissao') else None
+                if conta:
+                    if dt_emissao:
+                        aliquota_vigente = Aliquotas.obter_aliquota_vigente(conta, dt_emissao)
+                    if not aliquota_vigente:
+                        aliquota_vigente = Aliquotas.obter_aliquota_vigente(conta)
             except Empresa.DoesNotExist:
                 empresa = None
+        if aliquota_vigente:
+            context.update({
+                'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0),
+                'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0),
+                'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0),
+                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_BASE_CAL', 0),
+                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA_OUTROS', 0),
+                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0),
+                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0),
+            })
         context.update({
             'empresa': empresa,
             'campos_topo': [

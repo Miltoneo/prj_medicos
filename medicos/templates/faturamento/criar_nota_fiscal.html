@@ -2,6 +2,9 @@
 {% block title %}Nova Nota Fiscal{% endblock %}
 {% block content %}
 <div class="container py-4">
+  {% if erro_aliquota %}
+    <div class="alert alert-danger mt-3">{{ erro_aliquota }}</div>
+  {% endif %}
   <div class="row justify-content-center">
     <div class="col-lg-8 col-md-10">
       <div class="card shadow-sm border-0">
@@ -68,4 +71,66 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DEBUG: Entrou no script de cálculo automático de nota fiscal.');
+  function getInput(name) {
+    // Tenta pelo padrão Django, depois por querySelector
+    return document.getElementById('id_' + name) || document.querySelector('[name="' + name + '"]') || document.querySelector('[id$="_' + name + '"]');
+  }
+  const valBrutoInput = getInput('val_bruto');
+  const valLiquidoInput = getInput('val_liquido');
+  const valISSInput = getInput('val_ISS');
+  const valPISInput = getInput('val_PIS');
+  const valCOFINSInput = getInput('val_COFINS');
+  const valIRInput = getInput('val_IR');
+  const valCSLLInput = getInput('val_CSLL');
+
+  const aliquotaISS = Number('{{ aliquota_ISS|default:0|floatformat:2 }}'.replace(',', '.'));
+  const aliquotaPIS = Number('{{ aliquota_PIS|default:0|floatformat:2 }}'.replace(',', '.'));
+  const aliquotaCOFINS = Number('{{ aliquota_COFINS|default:0|floatformat:2 }}'.replace(',', '.'));
+  const aliquotaIRBase = Number('{{ aliquota_IR_BASE|default:0|floatformat:2 }}'.replace(',', '.'));
+  const aliquotaIR = Number('{{ aliquota_IR|default:0|floatformat:2 }}'.replace(',', '.'));
+  const aliquotaCSLLBase = Number('{{ aliquota_CSLL_BASE|default:0|floatformat:2 }}'.replace(',', '.'));
+  const aliquotaCSLL = Number('{{ aliquota_CSLL|default:0|floatformat:2 }}'.replace(',', '.'));
+
+  function setFieldValue(field, value) {
+    if (!field) return;
+    field.value = value;
+  }
+
+  function calcularCampos() {
+    let bruto = 0;
+    if (valBrutoInput) {
+      bruto = parseFloat(valBrutoInput.value.replace(',', '.')) || 0;
+    }
+    const valorISS = bruto * (aliquotaISS/100);
+    const valorPIS = bruto * (aliquotaPIS/100);
+    const valorCOFINS = bruto * (aliquotaCOFINS/100);
+    const valorIR = (bruto * (aliquotaIRBase/100)) * (aliquotaIR/100);
+    const valorCSLL = (bruto * (aliquotaCSLLBase/100)) * (aliquotaCSLL/100);
+    const totalImpostos = valorISS + valorPIS + valorCOFINS + valorIR + valorCSLL;
+    const liquido = bruto - totalImpostos;
+
+    setFieldValue(valISSInput, valorISS.toFixed(2));
+    setFieldValue(valPISInput, valorPIS.toFixed(2));
+    setFieldValue(valCOFINSInput, valorCOFINS.toFixed(2));
+    setFieldValue(valIRInput, valorIR.toFixed(2));
+    setFieldValue(valCSLLInput, valorCSLL.toFixed(2));
+    setFieldValue(valLiquidoInput, liquido.toFixed(2));
+  }
+
+  if (valBrutoInput) {
+    valBrutoInput.addEventListener('input', calcularCampos);
+    valBrutoInput.addEventListener('change', calcularCampos);
+    calcularCampos();
+  } else {
+    // Se não encontrar o campo, mostra erro no console
+    console.error('Campo "Valor Bruto" não encontrado. Verifique o nome/id do campo no template.');
+  }
+});
+</script>
 {% endblock %}

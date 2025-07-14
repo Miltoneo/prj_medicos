@@ -34,7 +34,10 @@ class NotaFiscalForm(forms.ModelForm):
         return cleaned_data
     class Meta:
         model = NotaFiscal
-        exclude = ['dtVencimento', 'descricao_servicos', 'serie', 'created_by', 'aliquotas', 'empresa_destinataria']
+        fields = [
+            'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento',
+            'val_bruto', 'val_ISS', 'val_PIS', 'val_COFINS', 'val_IR', 'val_CSLL', 'val_liquido'
+        ]
         widgets = {
             'dtEmissao': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'dtRecebimento': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
@@ -44,3 +47,5 @@ class NotaFiscalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if 'meio_pagamento' in self.fields:
             self.fields['meio_pagamento'].required = False
+        # Os campos de impostos e valor líquido voltam a ser editáveis pelo usuário
+        # Os campos de impostos e valor líquido voltam a ser editáveis pelo usuário
