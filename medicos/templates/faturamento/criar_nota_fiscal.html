@@ -18,24 +18,33 @@
               </div>
             {% endif %}
             <div class="row g-3">
-              {% for name in campos_topo %}
-                {% for field in form.visible_fields %}
-                  {% if field.name == name %}
-                    <div class="col-md-6">
-                      <label class="form-label fw-bold">{{ field.label }}</label>
-                      {{ field }}
-                      {% if field.help_text %}
-                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                      {% endif %}
-                      {% for error in field.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-                {% endfor %}
+              {% for field in form.visible_fields %}
+                {% if field.name == 'numero' %}
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% elif field.name == 'tipo_servico' %}
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               {% endfor %}
               {% for field in form.visible_fields %}
-                {% if field.name not in campos_excluir %}
+                {% if field.name != 'numero' and field.name != 'tipo_servico' %}
                   <div class="col-md-6">
                     <label class="form-label fw-bold">{{ field.label }}</label>
                     {{ field }}

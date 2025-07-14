@@ -30,32 +30,21 @@ class NotaFiscalCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.request.session.get('empresa_id')
-        empresa = None
         if empresa_id:
-            try:
-                empresa = Empresa.objects.get(id=int(empresa_id))
-            except Empresa.DoesNotExist:
-                empresa = None
-        context.update({
-            'empresa': empresa,
-            'campos_topo': [
-                'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
-            ],
-            'campos_excluir': [
-                'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento', 'dtVencimento', 'descricao_servicos', 'serie', 'criado_por'
-            ]
-        })
+            empresa = Empresa.objects.get(id=int(empresa_id))
+            context.update({
+                'empresa': empresa,
+                'campos_topo': [
+                    'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
+                ],
+                'campos_excluir': [
+                    'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento', 'dtVencimento', 'descricao_servicos', 'serie', 'criado_por'
+                ]
+            })
         return context
 
     def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        empresa_id = self.request.session.get('empresa_id')
-        if not empresa_id:
-            # Redireciona para seleção de empresa se não houver empresa_id
-            raise Exception('Nenhuma empresa selecionada na sessão. Selecione uma empresa antes de continuar.')
-        form.request = self.request
-        form.empresa_id_sessao = int(empresa_id)
-        return form
+        return super().get_form(form_class)
 
     def form_valid(self, form):
         empresa_id = self.request.session.get('empresa_id')
