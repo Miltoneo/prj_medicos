@@ -33,7 +33,6 @@ def lista_socios_empresa(request, empresa_id):
 
     context = {
         'empresa': empresa,
-        'empresa_atual': empresa,
         'table': table,
         'socio_filter': socio_filter,
         'menu_nome': menu_nome,
@@ -59,7 +58,7 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     # Redireciona para a lista de sócios da empresa
     if empresa:
         context = {
-            'empresa_atual': empresa,
+            'empresa': empresa,
         }
         return context
     else:
@@ -155,7 +154,6 @@ def socio_unlink(request, empresa_id, socio_id):
         return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id)
     context = {
         'empresa': empresa,
-        'empresa_atual': empresa,
         'socio': socio,
         'titulo_pagina': 'Desvincular Sócio',
     }

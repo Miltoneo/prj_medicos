@@ -1,38 +1,39 @@
-def main(request, empresa=None, menu_nome=None, cenario_nome=None):
-    from datetime import datetime
-    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
-    if not mes_ano:
-        mes_ano = datetime.now().strftime('%Y-%m')
-    request.session['mes_ano'] = mes_ano
-    request.session['menu_nome'] = menu_nome or 'Aliquotas'
-    request.session['cenario_nome'] = cenario_nome or 'Aliquotas'
-    request.session['user_id'] = request.user.id
-    context = {
-        'mes_ano': mes_ano,
-        'menu_nome': menu_nome or 'Aliquotas',
-        'cenario_nome': cenario_nome or 'Aliquotas',
-        'empresa': empresa,
-        'user': request.user,
-        'titulo_pagina': 'Aliquotas',
-    }
-    return context
-from django.shortcuts import render, get_object_or_404
+
+from datetime import datetime
+from django.shortcuts import render, get_object_or_404, redirect
 from medicos.models.base import Empresa
 from medicos.models.fiscal import Aliquotas
 from django.contrib.auth.decorators import login_required
 from medicos.forms import AliquotaForm
 from django.contrib import messages
-from django.shortcuts import redirect
 from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
 from .tables import AliquotasTable
 from .filters import AliquotasFilter
 
+def main(request, empresa=None, menu_nome=None, cenario_nome=None):
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
+    if not mes_ano:
+        mes_ano = datetime.now().strftime('%Y-%m')
+    request.session['mes_ano'] = mes_ano
+    request.session['menu_nome'] = menu_nome or 'erro'
+    request.session['cenario_nome'] = cenario_nome or 'CADASTRO'
+    request.session['user_id'] = request.user.id
+    
+    context = {
+        'mes_ano': mes_ano,
+        'menu_nome': menu_nome,
+        'empresa': empresa,
+        'user': request.user,
+        'titulo_pagina': 'Aliquotas',
+    }
+    return context
+
 class ListaAliquotasView(SingleTableMixin, FilterView):
     table_class = AliquotasTable
     model = Aliquotas
     template_name = 'empresa/lista_aliquotas.html'
-    filterset_class = AliquotasFilter  # Mantido filtro de configuração ativa
+    filterset_class = AliquotasFilter  
     paginate_by = 20
 
     def get_queryset(self):
@@ -45,7 +46,7 @@ class ListaAliquotasView(SingleTableMixin, FilterView):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
         empresa = get_object_or_404(Empresa, id=empresa_id)
-        context.update(main(self.request, empresa=empresa, menu_nome='Aliquotas', cenario_nome='Aliquotas'))
+        context.update(main(self.request, empresa=empresa, menu_nome='Aliquotas'))
         return context
 
 @login_required

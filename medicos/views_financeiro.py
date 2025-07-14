@@ -60,14 +60,14 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
         empresa = Empresa.objects.filter(id=empresa_id).first()
         main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Lista de Movimentações')
         context.update(main_context)
-        context['empresa_atual'] = empresa
+        context['empresa'] = empresa
         context['titulo_pagina'] = 'Descrições de Movimentação Financeira'
         context['empresa_id'] = empresa_id
         context['table'] = context.get('table')
         context['filter'] = context.get('filter')
-        # Garantir que empresa_atual e titulo_pagina estejam sempre presentes
-        if 'empresa_atual' not in context or not context['empresa_atual']:
-            context['empresa_atual'] = context.get('empresa')
+        # Garantir que empresa e titulo_pagina estejam sempre presentes
+        if 'empresa' not in context or not context['empresa']:
+            context['empresa'] = context.get('empresa')
         if 'titulo_pagina' not in context or not context['titulo_pagina']:
             context['titulo_pagina'] = 'Movimentação Financeira'
         return context
@@ -99,11 +99,11 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
         empresa = Empresa.objects.filter(id=empresa_id).first()
         main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Nova Movimentação')
         context.update(main_context)
-        context['empresa_atual'] = empresa
+        context['empresa'] = empresa
         context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Nova Descrição de Movimentação Financeira'
-        if 'empresa_atual' not in context or not context['empresa_atual']:
-            context['empresa_atual'] = context.get('empresa')
+        if 'empresa' not in context or not context['empresa']:
+            context['empresa'] = context.get('empresa')
         if 'titulo_pagina' not in context or not context['titulo_pagina']:
             context['titulo_pagina'] = 'Movimentação Financeira'
         return context
@@ -141,11 +141,11 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
         empresa = Empresa.objects.filter(id=empresa_id).first()
         main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Editar Movimentação')
         context.update(main_context)
-        context['empresa_atual'] = empresa
+        context['empresa'] = empresa
         context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Editar Descrição de Movimentação Financeira'
-        if 'empresa_atual' not in context or not context['empresa_atual']:
-            context['empresa_atual'] = context.get('empresa')
+        if 'empresa' not in context or not context['empresa']:
+            context['empresa'] = context.get('empresa')
         if 'titulo_pagina' not in context or not context['titulo_pagina']:
             context['titulo_pagina'] = 'Movimentação Financeira'
         return context

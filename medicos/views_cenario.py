@@ -3,7 +3,6 @@ from django.shortcuts import redirect
 
 @login_required
 def cenario_cadastro(request):
-    request.session['menu_nome'] = 'Cadastro'
     request.session['cenario_nome'] = 'Cadastro'
     # Assume que sempre haverá empresa selecionada
     empresa_id = request.session.get('empresa_id')

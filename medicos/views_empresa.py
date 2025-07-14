@@ -55,7 +55,7 @@ def main(request, empresa_id=None):
     RequestConfig(request, paginate={'per_page': 20}).configure(table)
 
     return {
-        'empresa_atual': empresa_selecionada,
+        'empresa': empresa_selecionada,
         'user': request.user,
         'table': table,
         'socio_filter': socio_filter,
@@ -121,7 +121,7 @@ def empresa_create(request):
 @login_required
 def empresa_detail(request, empresa_id):
     contexto = main(request, empresa_id=empresa_id)
-    contexto['empresa'] = contexto['empresa_atual']
+    # contexto['empresa'] já está correto
     if 'cenario_nome' in contexto:
         del contexto['cenario_nome']
     return render(request, 'empresa/empresa_detail.html', contexto)
@@ -130,7 +130,7 @@ def empresa_detail(request, empresa_id):
 @staff_member_required
 def empresa_update(request, empresa_id):
     contexto = main(request, empresa_id=empresa_id)
-    empresa = contexto['empresa_atual']
+    empresa = contexto['empresa']
     if request.method == 'POST':
         form = EmpresaForm(request.POST, instance=empresa)
         if form.is_valid():
@@ -151,7 +151,7 @@ def empresa_update(request, empresa_id):
 @staff_member_required
 def empresa_delete(request, empresa_id):
     contexto = main(request, empresa_id=empresa_id)
-    empresa = contexto['empresa_atual']
+    empresa = contexto['empresa']
     if request.method == 'POST':
         logger.info(f'Empresa excluída: {empresa.name} (CNPJ: {empresa.cnpj}) por {request.user.email}')
         empresa.delete()

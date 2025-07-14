@@ -38,14 +38,14 @@ class NotaFiscalCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.request.session.get('empresa_id')
-        empresa_atual = None
+        empresa = None
         if empresa_id:
             try:
-                empresa_atual = Empresa.objects.get(id=int(empresa_id))
+                empresa = Empresa.objects.get(id=int(empresa_id))
             except Empresa.DoesNotExist:
-                empresa_atual = None
+                empresa = None
         context.update({
-            'empresa_atual': empresa_atual,
+            'empresa': empresa,
             'campos_topo': [
                 'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
             ],
@@ -92,14 +92,14 @@ class NotaFiscalUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.request.session.get('empresa_id')
-        empresa_atual = None
+        empresa = None
         if empresa_id:
             try:
-                empresa_atual = Empresa.objects.get(id=int(empresa_id))
+                empresa = Empresa.objects.get(id=int(empresa_id))
             except Empresa.DoesNotExist:
-                empresa_atual = None
+                empresa = None
         context.update({
-            'empresa_atual': empresa_atual,
+            'empresa': empresa,
             'campos_topo': [
                 'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
             ],
@@ -116,14 +116,14 @@ class NotaFiscalDeleteView(DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.request.session.get('empresa_id')
-        empresa_atual = None
+        empresa = None
         if empresa_id:
             try:
-                empresa_atual = Empresa.objects.get(id=int(empresa_id))
+                empresa = Empresa.objects.get(id=int(empresa_id))
             except Empresa.DoesNotExist:
-                empresa_atual = None
+                empresa = None
         context.update({
-            'empresa_atual': empresa_atual
+            'empresa': empresa
         })
         return context
 
@@ -152,15 +152,15 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
         })
         self.request.session['cenario_nome'] = 'Faturamento'
         empresa_id = self.request.session.get('empresa_id')
-        empresa_atual = None
+        empresa = None
         if empresa_id:
             try:
-                empresa_atual = Empresa.objects.get(id=int(empresa_id))
+                empresa = Empresa.objects.get(id=int(empresa_id))
             except Empresa.DoesNotExist:
-                empresa_atual = None
+                empresa = None
         context.update({
             'empresa_id': empresa_id,
-            'empresa_atual': empresa_atual,
+            'empresa': empresa,
             'mes_ano': self.request.session.get('mes_ano')
         })
         # Não incluir cenario_nome no contexto

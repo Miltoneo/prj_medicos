@@ -6,7 +6,11 @@
     </div>
     <div class="d-flex flex-column align-items-end w-100">
       <span class="h5 mb-0 text-dark">
-        {{ empresa_atual.name }}
+        {% if empresa %}
+          {{ empresa.name }}
+        {% else %}
+          <span class="text-danger">Empresa não selecionada</span>
+        {% endif %}
       </span>
       <div class="mt-2">
         <form method="get" class="d-flex align-items-center justify-content-end" style="gap: 0.5rem;">
