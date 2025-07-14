@@ -19,14 +19,6 @@ from .filters_notafiscal import NotaFiscalFilter
 from medicos.models.base import Empresa
 from .forms_notafiscal import NotaFiscalForm
 
-# View movida de views_cenario.py
-@login_required
-def cenario_faturamento(request):
-    request.session['menu_nome'] = 'Faturamento'
-    request.session['cenario_nome'] = 'Faturamento'
-    request.session['titulo_pagina'] = 'Notas Fiscais'
-    # Assume que sempre haverá empresa selecionada
-    return redirect('medicos:lista_notas_fiscais')
 
 class NotaFiscalCreateView(CreateView):
     model = NotaFiscal

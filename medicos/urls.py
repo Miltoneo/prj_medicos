@@ -51,7 +51,7 @@ urlpatterns = [
     path('grupo_despesa_delete/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
     path('lista_notas_fiscais/', views_faturamento.NotaFiscalListView.as_view(), name='lista_notas_fiscais'),
     path('criar_nota_fiscal/nova/', views_faturamento.NotaFiscalCreateView.as_view(), name='criar_nota_fiscal'),
-    path('cenario_faturamento/', views_faturamento.cenario_faturamento, name='cenario_faturamento'),
+path('cenario_faturamento/', views_cenario.cenario_faturamento, name='cenario_faturamento'),
     path('editar_nota_fiscal/<int:pk>/editar/', views_faturamento.NotaFiscalUpdateView.as_view(), name='editar_nota_fiscal'),
     path('excluir_nota_fiscal/<int:pk>/excluir/', views_faturamento.NotaFiscalDeleteView.as_view(), name='excluir_nota_fiscal'),
 

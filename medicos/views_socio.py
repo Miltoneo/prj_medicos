@@ -19,28 +19,6 @@ from medicos.forms import SocioCPFForm, SocioPessoaForm, SocioForm
 from .tables_socio_lista import SocioListaTable
 from .filters_socio import SocioFilter
 
-
-@login_required
-def lista_socios_empresa(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    socios_qs = Socio.objects.filter(empresa=empresa)
-    socio_filter = SocioFilter(request.GET, queryset=socios_qs)
-    table = SocioListaTable(socio_filter.qs)
-    RequestConfig(request, paginate={'per_page': 20}).configure(table)
-
-    menu_nome = 'Cadastro de Sócios'
-    titulo_pagina = 'Lista de Sócios'
-
-    context = {
-        'empresa': empresa,
-        'table': table,
-        'socio_filter': socio_filter,
-        'menu_nome': menu_nome,
-        'titulo_pagina': titulo_pagina,
-    }
-    return render(request, 'empresa/lista_socios_empresa.html', context)
-
-
 # Helpers
 def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
@@ -63,6 +41,29 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
         return context
     else:
         return {}
+
+
+@login_required
+def lista_socios_empresa(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    socios_qs = Socio.objects.filter(empresa=empresa)
+    socio_filter = SocioFilter(request.GET, queryset=socios_qs)
+    table = SocioListaTable(socio_filter.qs)
+    RequestConfig(request, paginate={'per_page': 20}).configure(table)
+
+    menu_nome = 'Cadastro de Sócios'
+    titulo_pagina = 'Lista de Sócios'
+
+    context = {
+        'empresa': empresa,
+        'table': table,
+        'socio_filter': socio_filter,
+        'menu_nome': menu_nome,
+        'titulo_pagina': titulo_pagina,
+    }
+    return render(request, 'empresa/lista_socios_empresa.html', context)
+
+
 
 
 # Views
