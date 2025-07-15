@@ -18,10 +18,43 @@
             {{ filter.form.non_field_errors }}
           </div>
         {% endif %}
-        <div class="row g-2 align-items-end">
+        <div class="row g-2 flex-wrap align-items-end">
           {% for field in filter.form.visible_fields %}
-            {% if field.name == 'socio' or field.name == 'tipo' %}
-              <div class="col-md-3 col-6">
+            {% if field.name == 'data_movimentacao_mes' %}
+              <div class="mb-2 d-flex flex-column" style="max-width: 140px;">
+                <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+              </div>
+            {% elif field.name == 'descricao_movimentacao_financeira' %}
+              <div class="mb-2 d-flex flex-column" style="max-width: 200px;">
+                <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+              </div>
+            {% elif field.name == 'socio' %}
+              <div class="mb-2 d-flex flex-column" style="max-width: 180px;">
+                <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+              </div>
+            {% elif field.name == 'tipo' %}
+              <div class="mb-2 d-flex flex-column" style="max-width: 120px;">
                 <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.errors %}
@@ -33,7 +66,7 @@
               </div>
             {% endif %}
           {% endfor %}
-          <div class="col-md-2 col-12">
+          <div class="col-lg-3 col-md-4 col-sm-6 mb-2 d-flex align-items-end">
             <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
           </div>
         </div>
