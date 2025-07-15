@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -107,7 +108,11 @@ class NotaFiscalRateioMedicoCreateView(RateioContextMixin, CreateView):
     def form_valid(self, form):
         # Always set nota_fiscal from dispatch (using nota_id)
         form.instance.nota_fiscal = self.nota_fiscal
-        return super().form_valid(form)
+        try:
+            return super().form_valid(form)
+        except ValidationError as e:
+            form.add_error(None, e)
+            return self.form_invalid(form)
 
     def get_success_url(self):
         return reverse('medicos:lista_rateio_medicos', kwargs={'nota_id': self.nota_fiscal.id})

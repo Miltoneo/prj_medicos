@@ -35,7 +35,7 @@ class NotaFiscalForm(forms.ModelForm):
     class Meta:
         model = NotaFiscal
         fields = [
-            'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento',
+            'numero', 'tomador', 'cnpj_tomador', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento',
             'val_bruto', 'val_ISS', 'val_PIS', 'val_COFINS', 'val_IR', 'val_CSLL', 'val_liquido'
         ]
         widgets = {
