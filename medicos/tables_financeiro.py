@@ -10,7 +10,7 @@ class FinanceiroTable(tables.Table):
         verbose_name='Ações',
         orderable=False
     )
-    socio = tables.Column(verbose_name='Médico/Sócio')
+    socio = tables.Column(verbose_name='Médico/Sócio', accessor='socio.pessoa.name')
     descricao_movimentacao_financeira = tables.Column(verbose_name='Descrição')
     data_movimentacao = tables.DateColumn(verbose_name='Data')
     tipo = tables.Column(verbose_name='Tipo')
