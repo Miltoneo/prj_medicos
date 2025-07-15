@@ -112,7 +112,8 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         if 'nota_id' in filter_params:
             filter_params.pop('nota_id')
         self.filter = self.filterset_class(filter_params, queryset=qs)
-        return self.filter.qs.order_by('-dtEmissao')
+        # Não aplica ordenação fixa para permitir ordenação dinâmica via django-tables2
+        return self.filter.qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

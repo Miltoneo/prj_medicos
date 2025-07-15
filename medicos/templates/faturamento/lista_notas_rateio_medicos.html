@@ -28,39 +28,41 @@
   </form>
 
   {% if table.rows %}
-    <div class="mb-3">
-      <h5 class="fw-bold mb-2">Totalização</h5>
-      <table class="table table-bordered w-auto mb-0">
-        <thead>
+    <div class="mb-3 rounded shadow-sm p-3" style="background-color:#f8f9fa;">
+      <h5 class="fw-bold mb-2 text-dark">Totalização</h5>
+      <table class="table table-bordered w-auto mb-0" style="background-color:#fff;">
+        <thead style="background-color:#e3eafc;">
           <tr>
-            <th>Total de notas rateadas</th>
-            <th>Total Valor Bruto</th>
-            <th>Total Valor Líquido</th>
-            <th>Total ISS</th>
-            <th>Total PIS</th>
-            <th>Total COFINS</th>
-            <th>Total IR</th>
-            <th>Total CSLL</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total de notas rateadas</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total Valor Bruto</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total Valor Líquido</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total ISS</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total PIS</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total COFINS</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total IR</th>
+            <th style="background-color:#e3eafc; color:#212529;">Total CSLL</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>{{ table.data|length }}</td>
-            <td>R$ {{ total_bruto|floatformat:2 }}</td>
-            <td>R$ {{ total_liquido|floatformat:2 }}</td>
-            <td>R$ {{ total_iss|floatformat:2 }}</td>
-            <td>R$ {{ total_pis|floatformat:2 }}</td>
-            <td>R$ {{ total_cofins|floatformat:2 }}</td>
-            <td>R$ {{ total_ir|floatformat:2 }}</td>
-            <td>R$ {{ total_csll|floatformat:2 }}</td>
+            <td class="text-dark">{{ table.data|length }}</td>
+            <td class="text-dark">R$ {{ total_bruto|floatformat:2 }}</td>
+            <td class="text-dark">R$ {{ total_liquido|floatformat:2 }}</td>
+            <td class="text-dark">R$ {{ total_iss|floatformat:2 }}</td>
+            <td class="text-dark">R$ {{ total_pis|floatformat:2 }}</td>
+            <td class="text-dark">R$ {{ total_cofins|floatformat:2 }}</td>
+            <td class="text-dark">R$ {{ total_ir|floatformat:2 }}</td>
+            <td class="text-dark">R$ {{ total_csll|floatformat:2 }}</td>
           </tr>
         </tbody>
       </table>
     </div>
   {% endif %}
   <h5 class="fw-bold mt-4 mb-2">Notas fiscais rateadas</h5>
-  <div class="table-responsive">
-    {% render_table table %}
+  <div class="table-responsive rounded shadow-sm p-3" style="background-color:#f8f9fa;">
+    <div style="background-color:#fff; border-radius:4px; padding:4px;">
+      {% render_table table %}
+    </div>
   </div>
 </div>
 {% endblock %}

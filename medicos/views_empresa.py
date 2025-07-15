@@ -55,6 +55,7 @@ def main(request, empresa_id=None):
     RequestConfig(request, paginate={'per_page': 20}).configure(table)
 
     return {
+        'empresa_atual': empresa_selecionada,
         'empresa': empresa_selecionada,
         'user': request.user,
         'table': table,
