@@ -1,11 +1,11 @@
 from . import views_cenario
 from .views_rateio import (
     NotaFiscalRateioListView,
-    NotaFiscalRateioMedicoListView,
     NotaFiscalRateioMedicoCreateView,
     NotaFiscalRateioMedicoUpdateView,
     NotaFiscalRateioMedicoDeleteView,
 )
+from .views_rateio_medico import NotaFiscalRateioMedicoListView
 from django.urls import path
 # ...existing code...
 from . import views_user
@@ -81,4 +81,5 @@ path('cenario_faturamento/', views_cenario.cenario_faturamento, name='cenario_fa
          views_meio_pagamento.MeioPagamentoUpdateView.as_view(), name='editar_meio_pagamento'),
     path('excluir_meio_pagamento/<int:pk>/excluir/',
          views_meio_pagamento.MeioPagamentoDeleteView.as_view(), name='excluir_meio_pagamento'),
+    path('lista_notas_rateio_medicos/', NotaFiscalRateioMedicoListView.as_view(), name='lista_notas_rateio_medicos'),
 ]
