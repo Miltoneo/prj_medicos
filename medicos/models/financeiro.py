@@ -467,6 +467,21 @@ DESC_MOVIMENTACAO_DEBITO_IMPOSTO_PROVISIONADOS = 'DEBITO PAGAMENTO DE IMPOSTOS'
 
 
 class DescricaoMovimentacaoFinanceira(models.Model):
+    def pode_ser_usada_para(self, tipo):
+        """
+        Verifica se esta descrição pode ser usada para o tipo de movimentação informado.
+        tipo: int ou str ('credito' ou 'debito')
+        """
+        # Se tipo_movimentacao for 'ambos', permite qualquer tipo
+        if self.tipo_movimentacao == 'ambos':
+            return True
+        # Se for 'credito', só permite tipo crédito (1)
+        if self.tipo_movimentacao == 'credito' and (tipo == 1 or str(tipo).lower() == 'credito'):
+            return True
+        # Se for 'debito', só permite tipo débito (2)
+        if self.tipo_movimentacao == 'debito' and (tipo == 2 or str(tipo).lower() == 'debito'):
+            return True
+        return False
     """
     Descrições de movimentação financeira cadastradas pelos usuários
     
@@ -590,7 +605,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             })
 
     def __str__(self):
-        return f"DescriçãoMovimentacaoFinanceira #{self.pk}"
+        return self.descricao or f"DescriçãoMovimentacaoFinanceira #{self.pk}"
     
     @property
     def esta_vigente(self):

@@ -29,15 +29,27 @@ class FinanceiroCreateView(CreateView):
     model = Financeiro
     form_class = FinanceiroForm
     template_name = 'financeiro/form_movimentacao.html'
-    success_url = reverse_lazy('financeiro:lancamentos')
+
+    def get_success_url(self):
+        return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        empresa_ctx = empresa_context(self.request)
+        # Garante que conta sempre existe
+        instance.conta = empresa_ctx['conta_atual']
+        instance.save()
+        return super().form_valid(form)
 
 class FinanceiroUpdateView(UpdateView):
     model = Financeiro
     form_class = FinanceiroForm
     template_name = 'financeiro/form_movimentacao.html'
-    success_url = reverse_lazy('financeiro:lancamentos')
+    def get_success_url(self):
+        return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
 class FinanceiroDeleteView(DeleteView):
     model = Financeiro
     template_name = 'financeiro/confirm_delete.html'
-    success_url = reverse_lazy('financeiro:lancamentos')
+    def get_success_url(self):
+        return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
