@@ -77,7 +77,7 @@
   <div class="row mb-5">
       <div class="col-lg-3 col-md-6 mb-4">
           <div class="metric-executive">
-              <h3>R$ {{ faturamento_atual|floatformat:2 }}</h3>
+              <!-- Título removido para padronização pelo bloco 'title' -->
               <div class="label">Faturamento Atual</div>
               {% if crescimento_faturamento != 0 %}
               <div class="mt-2 {% if crescimento_faturamento > 0 %}trend-positive{% else %}trend-negative{% endif %}">
@@ -90,7 +90,7 @@
       
       <div class="col-lg-3 col-md-6 mb-4">
           <div class="metric-executive">
-              <h3>R$ {{ faturamento_anterior|floatformat:2 }}</h3>
+              <!-- Título removido para padronização pelo bloco 'title' -->
               <div class="label">Faturamento Anterior</div>
               <div class="mt-2 text-muted">
                   <i class="fas fa-calendar me-1"></i>
@@ -101,7 +101,7 @@
       
       <div class="col-lg-3 col-md-6 mb-4">
           <div class="metric-executive">
-              <h3>{{ taxa_inadimplencia|floatformat:1 }}%</h3>
+              <!-- Título removido para padronização pelo bloco 'title' -->
               <div class="label">Taxa de Inadimplência</div>
               <div class="mt-2 {% if taxa_inadimplencia < 10 %}trend-positive{% else %}trend-negative{% endif %}">
                   <i class="fas fa-exclamation-triangle me-1"></i>
@@ -112,7 +112,7 @@
       
       <div class="col-lg-3 col-md-6 mb-4">
           <div class="metric-executive">
-              <h3>R$ {{ total_pendente|floatformat:2 }}</h3>
+              <!-- Título removido para padronização pelo bloco 'title' -->
               <div class="label">Total a Receber</div>
               <div class="mt-2 text-info">
                   <i class="fas fa-clock me-1"></i>

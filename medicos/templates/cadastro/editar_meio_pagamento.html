@@ -2,7 +2,6 @@
 {% block title %}Editar Meio de Pagamento{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <h3>Editar Meio de Pagamento</h3>
   <form method="post">{% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-success">Salvar</button>
