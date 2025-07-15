@@ -2,7 +2,7 @@
 {% block title %}Excluir Rateio Médico{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <h4 class="mb-3">Excluir Rateio para Nota Fiscal Nº {{ nota_fiscal.numero }}</h4>
+  <!-- Título removido, será renderizado pelo template base -->
   <form method="post">{% csrf_token %}
     <p>Tem certeza que deseja excluir este rateio?</p>
     <button type="submit" class="btn btn-danger">Excluir</button>

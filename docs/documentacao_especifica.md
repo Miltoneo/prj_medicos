@@ -1,3 +1,44 @@
+# Regras de Documentação e Negócio (migradas de praticas_e_padroes.md)
+
+## Modelagem de Dados
+- Respeitar constraints de unique_together definidas no código.
+- Manter validações em métodos `clean()` conforme implementado.
+- Preservar índices de performance existentes.
+- Não alterar relacionamentos sem análise completa de impacto.
+- Documentar decisões de design baseadas no código atual.
+- Toda análise de modelagem solicitada deve considerar TODOS os modelos definidos em hardcode Django.
+- Incluir obrigatoriamente modelos de todos os arquivos: `base.py`, `fiscal.py`, `financeiro.py`, `despesas.py`, `auditoria.py`, `relatorios.py`.
+- Analisar relacionamentos entre todos os modelos, não apenas subconjuntos.
+- Validar constraints e dependencies em toda a base de modelos.
+- Nunca fazer análise parcial ignorando modelos existentes no código.
+
+## Validações e Compliance
+- Manter validações tributárias conforme legislação brasileira.
+- Preservar regras de negócio implementadas nos modelos.
+- Respeitar constraints de integridade de dados.
+- Manter logs de auditoria em todas as operações críticas.
+- Validar percentuais de rateio (soma = 100%).
+
+## Documentação e Organização
+- Manter documentação centralizada em `docs/` com subpastas temáticas.
+- Não criar novo arquivo de documentação se já existir arquivo que trate do mesmo assunto.
+- Utilize e atualize sempre o arquivo existente para manter a rastreabilidade e evitar duplicidade de informações.
+
+## Data de Competência Compartilhada
+- Todos os cenários do sistema devem compartilhar a data de competência (mês/ano) selecionada pelo usuário. Esta data deve ser persistida na sessão do usuário e utilizada como padrão em todos os menus, páginas e funcionalidades que dependam de competência temporal.
+- Ao alterar manualmente a competência, o novo valor deve ser salvo na sessão e mantido ao navegar entre diferentes cenários.
+- O valor inicial deve ser o mês/ano atual, salvo na sessão na primeira navegação.
+- Views e templates devem acessar `request.session['mes_ano']` para garantir sincronização.
+- Essa regra garante consistência de contexto temporal para o usuário em todo o sistema.
+
+## Regra: Comportamento da Data de Competência
+- A data de competência (mês/ano) é compartilhada por todos os cenários e módulos do sistema.
+- Ao acessar o sistema pela primeira vez, a data de competência é inicializada com o mês/ano atual e salva na sessão do usuário.
+- O campo de competência é exibido no cabeçalho dos cenários principais.
+- Quando o usuário altera manualmente a data de competência, o novo valor é salvo na sessão e mantido ao navegar entre diferentes cenários.
+- Todas as views e templates que dependem de contexto temporal acessam `request.session['mes_ano']` para garantir sincronização.
+- O valor permanece persistente durante toda a navegação do usuário, garantindo que filtros, cálculos e exibições estejam sempre alinhados com a competência selecionada.
+- Essa abordagem garante consistência e contexto temporal único para o usuário em todo o sistema.
 # Documentação Específica do Aplicativo prj_medicos
 
 Este documento reúne todas as regras de negócio, fluxos funcionais, detalhes de cadastro, seleção de empresa, gestão de alíquotas, convites de usuários, rotas pendentes, modelagem de dados e exemplos específicos do sistema.

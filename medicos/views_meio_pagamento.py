@@ -28,6 +28,7 @@ class MeioPagamentoListView(SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_id'] = self.empresa_id
+        context['titulo_pagina'] = 'Meios de Pagamento'
         return context
 
 class MeioPagamentoCreateView(CreateView):
@@ -38,6 +39,7 @@ class MeioPagamentoCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_id'] = self.kwargs.get('empresa_id')
+        context['titulo_pagina'] = 'Novo Meio de Pagamento'
         return context
 
     def get_form(self, form_class=None):
@@ -59,6 +61,10 @@ class MeioPagamentoCreateView(CreateView):
         return reverse_lazy('medicos:empresas')
 
 class MeioPagamentoUpdateView(UpdateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Editar Meio de Pagamento'
+        return context
     model = MeioPagamento
     form_class = MeioPagamentoForm
     template_name = 'cadastro/editar_meio_pagamento.html'
@@ -72,6 +78,10 @@ class MeioPagamentoUpdateView(UpdateView):
             return reverse_lazy('medicos:empresas')
 
 class MeioPagamentoDeleteView(DeleteView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Excluir Meio de Pagamento'
+        return context
     model = MeioPagamento
     template_name = 'cadastro/excluir_meio_pagamento.html'
 

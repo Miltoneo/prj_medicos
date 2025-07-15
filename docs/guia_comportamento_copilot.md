@@ -1,3 +1,8 @@
+# Regras de Comportamento do Copilot (migradas de praticas_e_padroes.md)
+
+- Sempre revisar e, se necessário, remover ou ajustar validações duplicadas ou conflitantes tanto no formulário quanto no modelo.
+- Garantir que a alteração foi testada na interface e no backend.
+- Esta diretiva visa evitar retrabalho e garantir que as validações estejam centralizadas e alinhadas com as regras de negócio atuais do projeto.
 # Guia de Comportamento do Copilot
 
 ## 1. Regras para Mensagens de Operações no Sistema

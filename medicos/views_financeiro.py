@@ -212,6 +212,7 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
         context['table'] = context.get('table')
         context['filter'] = context.get('filter')
         context['mes_ano'] = self.request.session.get('mes_ano')
+        context['titulo_pagina'] = 'Descrições de Movimentação Financeira'
         return context
 
 class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
@@ -241,6 +242,7 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
         empresa = Empresa.objects.filter(id=empresa_id).first()
         context['empresa_id'] = empresa_id
         context['empresa'] = empresa
+        context['titulo_pagina'] = 'Nova Descrição de Movimentação Financeira'
         return context
 
 class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
@@ -276,6 +278,7 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
         empresa = Empresa.objects.filter(id=empresa_id).first()
         context['empresa_id'] = empresa_id
         context['empresa'] = empresa
+        context['titulo_pagina'] = 'Editar Descrição de Movimentação Financeira'
         return context
 
     def get_success_url(self):
@@ -293,6 +296,7 @@ class DescricaoMovimentacaoFinanceiraDeleteView(LoginRequiredMixin, DeleteView):
         empresa = Empresa.objects.filter(id=empresa_id).first()
         context['empresa_id'] = empresa_id
         context['empresa'] = empresa
+        context['titulo_pagina'] = 'Excluir Descrição de Movimentação Financeira'
         return context
 
     def get_success_url(self):

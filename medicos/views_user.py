@@ -25,6 +25,10 @@ class StaffRequiredMixin(UserPassesTestMixin):
 # Views
 
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Usuários'
+        return context
     model = User
     template_name = "common/user_list.html"
     context_object_name = "users"
@@ -37,6 +41,10 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
 
 
 class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Novo Usuário'
+        return context
     model = User
     form_class = CustomUserForm
     template_name = "common/user_form.html"
@@ -77,6 +85,10 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
 
 
 class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Editar Usuário'
+        return context
     model = User
     form_class = CustomUserForm
     template_name = "common/user_form.html"
@@ -94,6 +106,10 @@ class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
 
 
 class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Excluir Usuário'
+        return context
     model = User
     template_name = "common/user_confirm_delete.html"
     success_url = reverse_lazy('medicos:user_list')
@@ -109,6 +125,10 @@ class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
 
 
 class UserDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Detalhes do Usuário'
+        return context
     model = User
     template_name = "common/user_detail.html"
     context_object_name = "user_obj"

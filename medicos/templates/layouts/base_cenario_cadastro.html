@@ -22,11 +22,9 @@
       </div>
       <div class="content mt-5">
         {% include 'layouts/base_header.html' %}
-        {% if titulo_pagina %}
-          <div class="mb-3">
-            <h4 class="fw-bold text-primary">{{ titulo_pagina }}</h4>
-          </div>
-        {% endif %}
+        <div class="mb-3">
+          <h4 class="fw-bold text-primary">Título: {{ titulo_pagina|default:'erro' }}</h4>
+        </div>
         {% block content %}{% endblock %}
       </div>
     </div>

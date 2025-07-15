@@ -161,6 +161,7 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             'table': table,
             'nota_fiscal': nota_fiscal,
             'medicos_rateio': medicos_rateio,
+            'titulo_pagina': 'Rateio de Notas Fiscais',
         })
         return context
 
@@ -216,6 +217,7 @@ class NotaFiscalRateioMedicoCreateView(RateioContextMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['nota_fiscal'] = self.nota_fiscal
+        context['titulo_pagina'] = 'Adicionar Rateio Médico'
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -238,6 +240,7 @@ class NotaFiscalRateioMedicoUpdateView(RateioContextMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['nota_fiscal'] = self.nota_fiscal
+        context['titulo_pagina'] = 'Editar Rateio Médico'
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -259,4 +262,5 @@ class NotaFiscalRateioMedicoDeleteView(RateioContextMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['nota_fiscal'] = self.nota_fiscal
+        context['titulo_pagina'] = 'Excluir Rateio Médico'
         return context
