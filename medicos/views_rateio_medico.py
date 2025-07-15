@@ -39,4 +39,5 @@ class NotaFiscalRateioMedicoListView(FilterView):
         context['titulo_pagina'] = 'Notas Fiscais Rateadas por Médico'
         if self.nota_fiscal:
             context['nota_fiscal'] = self.nota_fiscal
+        # Removido campo 'competencia' do contexto
         return context
