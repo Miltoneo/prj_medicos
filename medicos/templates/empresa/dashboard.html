@@ -1,23 +1,32 @@
+
 {% extends 'layouts/base_cenario_empresa.html' %}
 {% load django_tables2 %}
 {% block title %}Dashboard da Empresa{% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <div class="row">
-    <div class="col-md-6">
-      <div class="card mb-4">
-        <div class="card-header bg-primary text-white">Dados Básicos da Empresa</div>
-        <div class="card-body">
+
+  <div class="row g-4">
+    <div class="col-auto">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-industry fa-lg me-2"></i>
+          <span>Dados Básicos da Empresa</span>
+        </div>
+        <div class="card-body py-4">
           <p><strong>Razão Social:</strong> {{ empresa_atual.name }}</p>
           <p><strong>CNPJ:</strong> {{ empresa_atual.cnpj }}</p>
           <p><strong>Regime Tributário:</strong> {{ empresa_atual.get_regime_tributario_display }}</p>
         </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">Lista de Sócios</div>
-        <div class="card-body">
+    <div class="col-auto">
+      <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white d-flex align-items-center">
+          <i class="fas fa-users fa-lg me-2"></i>
+          <span>Lista de Sócios</span>
+        </div>
+        <div class="card-body py-4">
+          <h6 class="fw-bold mb-3"><i class="fas fa-filter me-1"></i>Filtrar Sócios</h6>
           <form method="get" class="mb-3">
             <div class="row g-3 align-items-end p-2 rounded bg-light border mb-2">
               <div class="col-12">
@@ -30,7 +39,6 @@
             </div>
           </form>
           <div class="d-flex align-items-center mb-3">
-            <i class="fas fa-users fa-lg text-secondary me-2"></i>
             <span class="h5 mb-0">Sócios da Empresa</span>
             <span class="badge bg-success ms-3">{{ table.rows|length }} sócios</span>
           </div>
