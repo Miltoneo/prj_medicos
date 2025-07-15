@@ -1,0 +1,111 @@
+{% extends 'layouts/base_cenario_faturamento.html' %}
+{% load render_table from django_tables2 %}
+{% block title %}Rateio de Notas Fiscais{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h4 class="mb-3">Notas Fiscais para Rateio</h4>
+  <div class="row">
+    <div class="col-md-7">
+      {% if filter %}
+        <form method="get" class="mb-3">
+          <div class="row g-2 align-items-end">
+            {% for field in filter.form.visible_fields %}
+              <div class="col-auto">
+                <label for="id_{{ field.name }}" class="form-label mb-0">{{ field.label }}</label>
+                {{ field }}
+              </div>
+            {% endfor %}
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+          </div>
+        </form>
+      {% endif %}
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Tomador</th>
+            <th>Valor Bruto</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for nota in table.data %}
+            <tr{% if nota_fiscal and nota.id == nota_fiscal.id %} class="table-primary"{% endif %}>
+              <td>{{ nota.numero }}</td>
+              <td>{{ nota.tomador }}</td>
+              <td>{{ nota.val_bruto }}</td>
+              <td>
+                <form method="get" style="display:inline;">
+                  {% for key, value in request.GET.items %}
+                    {% if key != 'nota_id' %}
+                      <input type="hidden" name="{{ key }}" value="{{ value }}" />
+                    {% endif %}
+                  {% endfor %}
+                  <input type="hidden" name="nota_id" value="{{ nota.id }}" />
+                  <button type="submit" class="btn btn-sm btn-outline-primary">Selecionar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-5">
+      {% if nota_fiscal %}
+        <h5>Rateio por Médico para NF Nº {{ nota_fiscal.numero }}</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Nome do Médico</th>
+                <th>Valor Bruto Rateado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rateio in nota_fiscal.rateios_medicos.all %}
+                <tr>
+                  <td>{{ rateio.medico.pessoa.name }}</td>
+                  <td>{{ rateio.valor_bruto_medico }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="2">Nenhum rateio cadastrado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="alert alert-info mt-4">Selecione uma nota fiscal para ver os rateios.</div>
+      {% endif %}
+    </div>
+  </div>
+  {% if table.page and table.paginator.num_pages > 1 %}
+    <nav aria-label="Paginação">
+      <ul class="pagination justify-content-center mt-3">
+        {% if table.page.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if filter %}{{ filter.form.data.urlencode }}&{% endif %}page={{ table.page.previous_page_number }}">Anterior</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+        {% endif %}
+        {% for i in table.paginator.page_range %}
+          {% if table.page.number == i %}
+            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?{% if filter %}{{ filter.form.data.urlencode }}&{% endif %}page={{ i }}">{{ i }}</a></li>
+          {% endif %}
+        {% endfor %}
+        {% if table.page.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if filter %}{{ filter.form.data.urlencode }}&{% endif %}page={{ table.page.next_page_number }}">Próxima</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

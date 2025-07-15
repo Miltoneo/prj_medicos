@@ -1,3 +1,44 @@
+from django import forms
+from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
+from medicos.models.base import Socio
+import django_filters
+
+# Formulário para rateio de nota fiscal
+class NotaFiscalRateioMedicoForm(forms.ModelForm):
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Só calcula percentual se nota_fiscal estiver presente
+        if hasattr(instance, 'nota_fiscal') and instance.nota_fiscal and instance.valor_bruto_medico is not None:
+            total = instance.nota_fiscal.val_bruto
+            if total and total > 0:
+                instance.percentual_participacao = (instance.valor_bruto_medico / total) * 100
+        if commit:
+            instance.save()
+        return instance
+    class Meta:
+        model = NotaFiscalRateioMedico
+        fields = [
+            'medico', 'valor_bruto_medico'
+        ]
+
+
+# Filter para listagem de notas fiscais para rateio
+import django_filters
+from medicos.models.fiscal import NotaFiscal
+
+class NotaFiscalRateioFilter(django_filters.FilterSet):
+    numero = django_filters.CharFilter(field_name="numero", lookup_expr="icontains", label="Nº NF")
+    tomador = django_filters.CharFilter(field_name="tomador", lookup_expr="icontains", label="Tomador")
+    class Meta:
+        model = NotaFiscal
+        fields = ['numero', 'tomador']
+
+# Filter para rateio de nota fiscal por médico
+class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
+    medico = django_filters.ModelChoiceFilter(queryset=Socio.objects.all(), label="Médico")
+    class Meta:
+        model = NotaFiscalRateioMedico
+        fields = ['medico']
 
 from django import forms
 from .models.base import Socio, Pessoa

@@ -1,0 +1,12 @@
+{% extends 'layouts/base_cenario_faturamento.html' %}
+{% block title %}Excluir Rateio Médico{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h4 class="mb-3">Excluir Rateio para Nota Fiscal Nº {{ nota_fiscal.numero }}</h4>
+  <form method="post">{% csrf_token %}
+    <p>Tem certeza que deseja excluir este rateio?</p>
+    <button type="submit" class="btn btn-danger">Excluir</button>
+    <a href="{% url 'medicos:lista_rateio_medicos' nota_id=nota_fiscal.id %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

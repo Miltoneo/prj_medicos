@@ -1410,6 +1410,33 @@ class NotaFiscal(models.Model):
 
 
 class NotaFiscalRateioMedico(models.Model):
+    def save(self, *args, **kwargs):
+        # Calculate all required fields before saving
+        if self.nota_fiscal and self.valor_bruto_medico is not None:
+            # Use aliquotas from nota_fiscal
+            aliquotas = self.nota_fiscal.aliquotas
+            tipo_servico_map = {
+                self.nota_fiscal.TIPO_SERVICO_CONSULTAS: 'consultas',
+                self.nota_fiscal.TIPO_SERVICO_OUTROS: 'outros',
+            }
+            tipo_servico = tipo_servico_map.get(self.nota_fiscal.tipo_servico, 'consultas')
+            resultado = aliquotas.calcular_impostos_com_regime(
+                valor_bruto=self.valor_bruto_medico,
+                tipo_servico=tipo_servico,
+                empresa=self.nota_fiscal.empresa_destinataria,
+                data_referencia=self.nota_fiscal.dtEmissao
+            )
+            self.valor_iss_medico = resultado.get('valor_iss', 0)
+            self.valor_pis_medico = resultado.get('valor_pis', 0)
+            self.valor_cofins_medico = resultado.get('valor_cofins', 0)
+            self.valor_ir_medico = resultado.get('valor_ir', 0)
+            self.valor_csll_medico = resultado.get('valor_csll', 0)
+            self.valor_liquido_medico = resultado.get('valor_liquido', self.valor_bruto_medico)
+        # Set data_rateio if not provided
+        if not self.data_rateio:
+            from django.utils import timezone
+            self.data_rateio = timezone.now()
+        super().save(*args, **kwargs)
     """
     Rateio de Nota Fiscal para Médicos
     
@@ -1525,18 +1552,24 @@ class NotaFiscalRateioMedico(models.Model):
 
     def clean(self):
         """Validações do modelo de rateio"""
+        # Calcula percentual automaticamente se não estiver definido
+        if self.percentual_participacao is None and self.nota_fiscal and self.valor_bruto_medico is not None:
+            total = self.nota_fiscal.val_bruto
+            if total and total > 0:
+                self.percentual_participacao = (self.valor_bruto_medico / total) * 100
+
         # Validar percentual de participação
-        if self.percentual_participacao <= 0:
+        if self.percentual_participacao is None or self.percentual_participacao <= 0:
             raise ValidationError({
                 'percentual_participacao': 'Percentual de participação deve ser maior que zero'
             })
-        
+
         # Validar valores rateados
-        if self.valor_bruto_medico <= 0:
+        if self.valor_bruto_medico is None or self.valor_bruto_medico <= 0:
             raise ValidationError({
                 'valor_bruto_medico': 'Valor bruto para médico deve ser maior que zero'
             })
-        
+
         # Validar que o total dos rateios não excede o valor bruto da nota fiscal
         total_rateado = NotaFiscalRateioMedico.objects.filter(
             nota_fiscal=self.nota_fiscal

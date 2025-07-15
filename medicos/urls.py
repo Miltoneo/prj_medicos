@@ -1,4 +1,5 @@
 from . import views_cenario
+from .views_rateio import NotaFiscalRateioListView, NotaFiscalRateioMedicoListView, NotaFiscalRateioMedicoCreateView
 from django.urls import path
 # ...existing code...
 from . import views_user
@@ -18,6 +19,12 @@ from django.contrib.auth import views as auth_views
 app_name = 'medicos'
 
 urlpatterns = [
+    path('lista_rateio_medicos/<int:nota_id>/',
+         NotaFiscalRateioMedicoListView.as_view(), name='lista_rateio_medicos'),
+    path('novo_rateio_medico/<int:nota_id>/',
+         NotaFiscalRateioMedicoCreateView.as_view(), name='novo_rateio_medico'),
+    # Compatibilidade: rota antiga para lista_notas_rateio
+    path('lista_notas_rateio/', NotaFiscalRateioListView.as_view(), name='lista_notas_rateio'),
     path('cenario_cadastro/', views_cenario.cenario_cadastro, name='cenario_cadastro'),
     path('', views_main.main, name='index'),
      path('dashboard/', views_main.main, name='dashboard'),

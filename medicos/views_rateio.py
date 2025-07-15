@@ -8,7 +8,7 @@ from django_filters.views import FilterView
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.base import Empresa, Socio
 from .tables_rateio import NotaFiscalRateioTable
-from .forms import NotaFiscalRateioMedicoForm, NotaFiscalRateioMedicoFilter
+from .forms import NotaFiscalRateioMedicoForm, NotaFiscalRateioMedicoFilter, NotaFiscalRateioFilter
 
 # Mixin para contexto do cenário de faturamento
 class RateioContextMixin:
@@ -26,25 +26,45 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
     model = NotaFiscal
     template_name = 'faturamento/lista_notas_rateio.html'
     context_object_name = 'table'
-    filterset_class = NotaFiscalRateioMedicoFilter
+    filterset_class = NotaFiscalRateioFilter
     table_class = NotaFiscalRateioTable
     paginate_by = 20
 
     def get_queryset(self):
-        qs = NotaFiscal.objects.all().order_by('-dtEmissao')
-        empresa_id = self.request.GET.get('empresa_id')
-        if empresa_id:
-            qs = qs.filter(empresa_destinataria_id=empresa_id)
-        return qs
-
-    def get_table_data(self):
-        return self.get_queryset()
+        # Sempre filtra por empresa da sessão
+        empresa_id = self.request.session.get('empresa_id')
+        if not empresa_id:
+            return NotaFiscal.objects.none()
+        return NotaFiscal.objects.filter(empresa_destinataria_id=empresa_id).order_by('-dtEmissao')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        table = self.table_class(self.get_table_data())
+        empresa_id = self.request.session.get('empresa_id')
+        empresa = None
+        if empresa_id:
+            try:
+                empresa = Empresa.objects.get(id=int(empresa_id))
+            except Empresa.DoesNotExist:
+                empresa = None
+        queryset = self.get_queryset()
+        table = self.table_class(queryset)
         RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
-        context['table'] = table
+        # Selection logic: get nota_id from GET, else default to first nota
+        nota_id = self.request.GET.get('nota_id')
+        nota_fiscal = None
+        if nota_id:
+            try:
+                nota_fiscal = queryset.get(id=nota_id)
+            except (NotaFiscal.DoesNotExist, ValueError):
+                nota_fiscal = None
+        elif queryset.exists():
+            nota_fiscal = queryset.first()
+        context.update({
+            'empresa_id': empresa_id,
+            'empresa': empresa,
+            'table': table,
+            'nota_fiscal': nota_fiscal,
+        })
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -72,6 +92,10 @@ class NotaFiscalRateioMedicoListView(RateioContextMixin, ListView):
 
 @method_decorator(login_required, name='dispatch')
 class NotaFiscalRateioMedicoCreateView(RateioContextMixin, CreateView):
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.instance.nota_fiscal = self.nota_fiscal
+        return form
     model = NotaFiscalRateioMedico
     form_class = NotaFiscalRateioMedicoForm
     template_name = 'faturamento/rateio_medico_form.html'
@@ -81,6 +105,7 @@ class NotaFiscalRateioMedicoCreateView(RateioContextMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        # Always set nota_fiscal from dispatch (using nota_id)
         form.instance.nota_fiscal = self.nota_fiscal
         return super().form_valid(form)
 
