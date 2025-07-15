@@ -29,9 +29,10 @@ from medicos.models.fiscal import NotaFiscal
 class NotaFiscalRateioFilter(django_filters.FilterSet):
     numero = django_filters.CharFilter(field_name="numero", lookup_expr="icontains", label="Nº NF")
     tomador = django_filters.CharFilter(field_name="tomador", lookup_expr="icontains", label="Tomador")
+    cnpj_tomador = django_filters.CharFilter(field_name="cnpj_tomador", lookup_expr="icontains", label="CNPJ do Tomador")
     class Meta:
         model = NotaFiscal
-        fields = ['numero', 'tomador']
+        fields = ['numero', 'tomador', 'cnpj_tomador']
 
 # Filter para rateio de nota fiscal por médico
 class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):

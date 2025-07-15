@@ -24,6 +24,71 @@ class RateioContextMixin:
 
 @method_decorator(login_required, name='dispatch')
 class NotaFiscalRateioListView(RateioContextMixin, FilterView):
+    def post(self, request, *args, **kwargs):
+        empresa_id = self.request.session.get('empresa_id')
+        queryset = self.get_queryset()
+        nota_id = self.request.GET.get('nota_id')
+        nota_fiscal = None
+        if nota_id:
+            try:
+                nota_fiscal = queryset.get(id=nota_id)
+            except (NotaFiscal.DoesNotExist, ValueError):
+                nota_fiscal = None
+        elif queryset.exists():
+            nota_fiscal = queryset.first()
+        if not nota_fiscal:
+            return self.get(request, *args, **kwargs)
+        # Get all active medicos for empresa
+        medicos_empresa = []
+        if empresa_id:
+            try:
+                empresa = Empresa.objects.get(id=int(empresa_id))
+                medicos_empresa = Socio.objects.filter(empresa=empresa, ativo=True)
+            except Empresa.DoesNotExist:
+                pass
+        # Save rateio for each medico
+        from medicos.models.fiscal import NotaFiscalRateioMedico
+        for medico in medicos_empresa:
+            field_name = f"valor_bruto_medico_{medico.id}"
+            valor_bruto = request.POST.get(field_name)
+            from decimal import Decimal, InvalidOperation
+            try:
+                valor_bruto = Decimal(valor_bruto) if valor_bruto else Decimal('0')
+            except (InvalidOperation, TypeError, ValueError):
+                valor_bruto = Decimal('0')
+            if valor_bruto > 0:
+                # Only create/update if valor_bruto > 0
+                try:
+                    val_bruto_nota = Decimal(nota_fiscal.val_bruto)
+                except (InvalidOperation, TypeError, ValueError):
+                    val_bruto_nota = Decimal('0')
+                if val_bruto_nota > 0:
+                    percentual_participacao = (valor_bruto / val_bruto_nota) * Decimal('100')
+                else:
+                    percentual_participacao = Decimal('0')
+                rateio_obj_qs = NotaFiscalRateioMedico.objects.filter(nota_fiscal=nota_fiscal, medico=medico)
+                if rateio_obj_qs.exists():
+                    rateio_obj = rateio_obj_qs.first()
+                    rateio_obj.valor_bruto_medico = valor_bruto
+                    rateio_obj.percentual_participacao = percentual_participacao
+                    rateio_obj.tipo_rateio = 'valor'
+                    rateio_obj.save()
+                else:
+                    rateio_obj = NotaFiscalRateioMedico(
+                        nota_fiscal=nota_fiscal,
+                        medico=medico,
+                        valor_bruto_medico=valor_bruto,
+                        percentual_participacao=percentual_participacao,
+                        tipo_rateio='valor'
+                    )
+                    rateio_obj.save()
+            else:
+                # Only delete, never create if valor_bruto is zero or missing
+                NotaFiscalRateioMedico.objects.filter(nota_fiscal=nota_fiscal, medico=medico).delete()
+        # Optionally, remove rateios for medicos no longer active
+        nota_fiscal.rateios_medicos.exclude(medico__in=medicos_empresa).delete()
+        # Redirect to same page with nota_id
+        return redirect(f"{request.path}?nota_id={nota_fiscal.id}")
     model = NotaFiscal
     template_name = 'faturamento/lista_notas_rateio.html'
     context_object_name = 'table'
@@ -34,24 +99,35 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
     def get_queryset(self):
         # Sempre filtra por empresa da sessão
         empresa_id = self.request.session.get('empresa_id')
-        if not empresa_id:
-            return NotaFiscal.objects.none()
-        return NotaFiscal.objects.filter(empresa_destinataria_id=empresa_id).order_by('-dtEmissao')
+        qs = NotaFiscal.objects.all()
+        if empresa_id:
+            qs = qs.filter(empresa_destinataria_id=empresa_id)
+        # Aplica o filtro de busca
+        filter_params = self.request.GET.copy()
+        if 'page' in filter_params:
+            filter_params.pop('page')
+        if 'nota_id' in filter_params:
+            filter_params.pop('nota_id')
+        self.filter = self.filterset_class(filter_params, queryset=qs)
+        return self.filter.qs.order_by('-dtEmissao')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.request.session.get('empresa_id')
         empresa = None
+        medicos_empresa = []
         if empresa_id:
             try:
                 empresa = Empresa.objects.get(id=int(empresa_id))
+                medicos_empresa = list(Socio.objects.filter(empresa=empresa, ativo=True).select_related('pessoa'))
             except Empresa.DoesNotExist:
                 empresa = None
         queryset = self.get_queryset()
         table = self.table_class(queryset)
         RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
-        # Selection logic: get nota_id from GET, else default to first nota
         nota_id = self.request.GET.get('nota_id')
+        # Adiciona o filtro ao contexto para o template
+        context['filter'] = getattr(self, 'filter', None)
         nota_fiscal = None
         if nota_id:
             try:
@@ -60,11 +136,31 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
                 nota_fiscal = None
         elif queryset.exists():
             nota_fiscal = queryset.first()
+        # Always re-query nota_fiscal and its rateios to get latest values after POST
+        if nota_fiscal:
+            nota_fiscal = NotaFiscal.objects.get(id=nota_fiscal.id)
+        medicos_rateio = []
+        rateios_map = {}
+        if nota_fiscal:
+            rateios_qs = nota_fiscal.rateios_medicos.select_related('medico')
+            rateios_map = {r.medico_id: r for r in rateios_qs}
+        for medico in medicos_empresa:
+            rateio = rateios_map.get(medico.id)
+            if rateio:
+                valor_bruto_medico = float(rateio.valor_bruto_medico)
+            else:
+                valor_bruto_medico = 0.0
+            medicos_rateio.append({
+                'medico': medico,
+                'valor_bruto_medico': valor_bruto_medico,
+                'rateio_id': rateio.id if rateio else None,
+            })
         context.update({
             'empresa_id': empresa_id,
             'empresa': empresa,
             'table': table,
             'nota_fiscal': nota_fiscal,
+            'medicos_rateio': medicos_rateio,
         })
         return context
 

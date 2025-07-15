@@ -26,6 +26,7 @@
           <tr>
             <th>Número</th>
             <th>Tomador</th>
+            <th>CNPJ do Tomador</th>
             <th>Valor Bruto</th>
             <th>Ações</th>
           </tr>
@@ -35,6 +36,7 @@
             <tr{% if nota_fiscal and nota.id == nota_fiscal.id %} class="table-primary"{% endif %}>
               <td>{{ nota.numero }}</td>
               <td>{{ nota.tomador }}</td>
+              <td>{{ nota.cnpj_tomador }}</td>
               <td>{{ nota.val_bruto }}</td>
               <td>
                 <form method="get" style="display:inline;">
@@ -54,40 +56,10 @@
     </div>
     <div class="col-md-5">
       {% if nota_fiscal %}
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="mb-0">Rateio por Médico para NF Nº {{ nota_fiscal.numero }}</h5>
-          <a href="{% url 'medicos:novo_rateio_medico' nota_fiscal.id %}" class="btn btn-sm btn-success">Adicionar Rateio</a>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-bordered table-striped">
-            <thead>
-              <tr>
-                <th>Nome do Médico</th>
-                <th>Valor Bruto Rateado</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for rateio in nota_fiscal.rateios_medicos.all %}
-                <tr>
-                  <td>{{ rateio.medico.pessoa.name }}</td>
-                  <td>{{ rateio.valor_bruto_medico }}</td>
-                  <td>
-                    <a href="{% url 'medicos:editar_rateio_medico' nota_fiscal.id rateio.id %}" class="btn btn-sm btn-outline-secondary">Editar</a>
-                    <a href="{% url 'medicos:excluir_rateio_medico' nota_fiscal.id rateio.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir este rateio?');">Excluir</a>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="3">Nenhum rateio cadastrado.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        {% if table.data|length > 0 %}
+        <form method="post">
+          {% csrf_token %}
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="mb-0">Rateio por Médico para NF Nº {{ table.data.0.numero }}</h5>
-            <a href="{% url 'medicos:novo_rateio_medico' table.data.0.id %}" class="btn btn-sm btn-success">Adicionar Rateio</a>
+            <h5 class="mb-0">Rateio por Médico para NF Nº {{ nota_fiscal.numero }}</h5>
           </div>
           <div class="table-responsive">
             <table class="table table-bordered table-striped">
@@ -95,28 +67,24 @@
                 <tr>
                   <th>Nome do Médico</th>
                   <th>Valor Bruto Rateado</th>
-                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {% for rateio in table.data.0.rateios_medicos.all %}
+                {% for item in medicos_rateio %}
                   <tr>
-                    <td>{{ rateio.medico.pessoa.name }}</td>
-                    <td>{{ rateio.valor_bruto_medico }}</td>
+                    <td>{{ item.medico.pessoa.name }}</td>
                     <td>
-                      <a href="{% url 'medicos:editar_rateio_medico' table.data.0.id rateio.id %}" class="btn btn-sm btn-outline-secondary">Editar</a>
-                      <a href="{% url 'medicos:excluir_rateio_medico' table.data.0.id rateio.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir este rateio?');">Excluir</a>
+                      <input type="number" step="0.01" min="0" name="valor_bruto_medico_{{ item.medico.id }}" value="{{ item.valor_bruto_medico|stringformat:".2f" }}" class="form-control form-control-sm" />
                     </td>
                   </tr>
-                {% empty %}
-                  <tr><td colspan="3">Nenhum rateio cadastrado.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
-        {% else %}
-          <div class="alert alert-info mt-4">Nenhuma nota fiscal encontrada.</div>
-        {% endif %}
+          <button type="submit" class="btn btn-primary mt-2">Salvar Rateio</button>
+        </form>
+      {% else %}
+        <div class="alert alert-info mt-4">Nenhuma nota fiscal encontrada.</div>
       {% endif %}
     </div>
   </div>
