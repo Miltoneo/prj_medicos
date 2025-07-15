@@ -6,7 +6,7 @@ import datetime
 
 class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
     medico = django_filters.ModelChoiceFilter(queryset=Socio.objects.filter(ativo=True), label="Médico")
-    nota_fiscal = django_filters.NumberFilter(label="Nota Fiscal")
+    nota_fiscal = django_filters.CharFilter(field_name='nota_fiscal__numero', lookup_expr='icontains', label="Nota Fiscal")
     competencia = django_filters.DateFilter(
         field_name='nota_fiscal__dtEmissao',
         label="Competência",
