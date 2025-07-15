@@ -1,0 +1,19 @@
+{# Sidebar para o cenário financeiro #}
+<nav id="sidebar" class="sidebar bg-dark text-light">
+  <div class="sidebar-header p-3">
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-coins me-2"></i>Financeiro</a>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+  </div>
+  <hr class="border-secondary m-0">
+  <ul class="nav flex-column">
+    <li class="nav-item">
+      <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+      </a>
+    </li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-list me-2"></i>Lançamentos</a></li>
+    <li class="nav-item"><a class="nav-link text-light disabled" href="#"><i class="fas fa-chart-line me-2"></i>Notas Fiscais: recebimento (em breve)</a></li>
+    <li class="nav-item"><a class="nav-link text-light disabled" href="#"><i class="fas fa-chart-line me-2"></i>Aplicações Financeiras (em breve)</a></li>
+
+  </ul>
+</nav>

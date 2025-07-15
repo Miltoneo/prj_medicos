@@ -87,6 +87,16 @@ Todas as views devem seguir o padrão de formatação Django:
 - Sempre revisar e, se necessário, remover ou ajustar validações duplicadas ou conflitantes tanto no formulário quanto no modelo.
 - Garantir que a alteração foi testada na interface e no backend.
 - Esta diretiva visa evitar retrabalho e garantir que as validações estejam centralizadas e alinhadas com as regras de negócio atuais do projeto.
+
+# Regra de CRUD em Views de Lista
+
+Toda view de lista deve obrigatoriamente incluir a implementação completa de CRUD (Create, Read, Update, Delete) utilizando Class-Based Views (CBV) do Django. Isso garante padronização, facilidade de manutenção e evolução do sistema.
+
+Exemplo:
+- Para cada model listado, devem existir views para criação, edição, exclusão e visualização detalhada, além da listagem.
+- Os templates devem ser organizados por operação (`lista`, `form`, `confirm_delete`, etc).
+- As rotas devem ser padronizadas e documentadas.
+
 # Regras Gerais do Projeto
 
 - Sempre que modificar um arquivo, corrija e padronize a formatação antes de finalizar a alteração.
