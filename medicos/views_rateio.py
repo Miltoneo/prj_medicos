@@ -48,24 +48,30 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
                 pass
         # Save rateio for each medico
         from medicos.models.fiscal import NotaFiscalRateioMedico
+        from decimal import Decimal, InvalidOperation
+        valores_brutos = []
         for medico in medicos_empresa:
             field_name = f"valor_bruto_medico_{medico.id}"
             valor_bruto = request.POST.get(field_name)
-            from decimal import Decimal, InvalidOperation
             try:
                 valor_bruto = Decimal(valor_bruto) if valor_bruto else Decimal('0')
             except (InvalidOperation, TypeError, ValueError):
                 valor_bruto = Decimal('0')
+            valores_brutos.append(valor_bruto)
+        total_rateio = sum(valores_brutos)
+        try:
+            val_bruto_nota = Decimal(nota_fiscal.val_bruto)
+        except (InvalidOperation, TypeError, ValueError):
+            val_bruto_nota = Decimal('0')
+        if val_bruto_nota > 0 and total_rateio > val_bruto_nota:
+            from django.contrib import messages
+            messages.error(request, 'O total do rateio não pode exceder o valor bruto da nota fiscal.')
+            return self.get(request, *args, **kwargs)
+        # Se não excedeu, salva normalmente
+        for idx, medico in enumerate(medicos_empresa):
+            valor_bruto = valores_brutos[idx]
             if valor_bruto > 0:
-                # Only create/update if valor_bruto > 0
-                try:
-                    val_bruto_nota = Decimal(nota_fiscal.val_bruto)
-                except (InvalidOperation, TypeError, ValueError):
-                    val_bruto_nota = Decimal('0')
-                if val_bruto_nota > 0:
-                    percentual_participacao = (valor_bruto / val_bruto_nota) * Decimal('100')
-                else:
-                    percentual_participacao = Decimal('0')
+                percentual_participacao = (valor_bruto / val_bruto_nota) * Decimal('100') if val_bruto_nota > 0 else Decimal('0')
                 rateio_obj_qs = NotaFiscalRateioMedico.objects.filter(nota_fiscal=nota_fiscal, medico=medico)
                 if rateio_obj_qs.exists():
                     rateio_obj = rateio_obj_qs.first()
@@ -83,11 +89,8 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
                     )
                     rateio_obj.save()
             else:
-                # Only delete, never create if valor_bruto is zero or missing
                 NotaFiscalRateioMedico.objects.filter(nota_fiscal=nota_fiscal, medico=medico).delete()
-        # Optionally, remove rateios for medicos no longer active
         nota_fiscal.rateios_medicos.exclude(medico__in=medicos_empresa).delete()
-        # Redirect to same page with nota_id
         return redirect(f"{request.path}?nota_id={nota_fiscal.id}")
     model = NotaFiscal
     template_name = 'faturamento/lista_notas_rateio.html'
@@ -141,9 +144,12 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             nota_fiscal = NotaFiscal.objects.get(id=nota_fiscal.id)
         medicos_rateio = []
         rateios_map = {}
+        total_percentual_rateado = None
         if nota_fiscal:
             rateios_qs = nota_fiscal.rateios_medicos.select_related('medico')
             rateios_map = {r.medico_id: r for r in rateios_qs}
+            # Calcula o total percentual rateado
+            total_percentual_rateado = sum([float(r.percentual_participacao) for r in rateios_qs]) if rateios_qs.exists() else 0.0
         for medico in medicos_empresa:
             rateio = rateios_map.get(medico.id)
             if rateio:
@@ -162,6 +168,7 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             'nota_fiscal': nota_fiscal,
             'medicos_rateio': medicos_rateio,
             'titulo_pagina': 'Rateio de Notas Fiscais',
+            'total_percentual_rateado': total_percentual_rateado,
         })
         return context
 
