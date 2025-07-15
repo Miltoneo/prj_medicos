@@ -3,6 +3,37 @@
 {% block title %}Notas Fiscais Rateadas por Médico{% endblock %}
 {% block content %}
 <div class="container py-4">
+  {% if table.rows %}
+    <div class="mb-3">
+      <h5 class="fw-bold mb-2">Totalização</h5>
+      <table class="table table-bordered w-auto mb-0">
+        <thead>
+          <tr>
+            <th>Total de notas rateadas</th>
+            <th>Total Valor Bruto</th>
+            <th>Total Valor Líquido</th>
+            <th>Total ISS</th>
+            <th>Total PIS</th>
+            <th>Total COFINS</th>
+            <th>Total IR</th>
+            <th>Total CSLL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ table.data|length }}</td>
+            <td>R$ {{ total_bruto|floatformat:2 }}</td>
+            <td>R$ {{ total_liquido|floatformat:2 }}</td>
+            <td>R$ {{ total_iss|floatformat:2 }}</td>
+            <td>R$ {{ total_pis|floatformat:2 }}</td>
+            <td>R$ {{ total_cofins|floatformat:2 }}</td>
+            <td>R$ {{ total_ir|floatformat:2 }}</td>
+            <td>R$ {{ total_csll|floatformat:2 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
   <form method="get" class="mb-3">
     <div class="row g-2 align-items-end">
       {% for field in filter.form.visible_fields %}
@@ -16,6 +47,7 @@
       </div>
     </div>
   </form>
+  <h5 class="fw-bold mt-4 mb-2">Notas filtradas no período</h5>
   <div class="table-responsive">
     {% render_table table %}
   </div>

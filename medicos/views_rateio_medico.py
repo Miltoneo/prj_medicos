@@ -40,4 +40,13 @@ class NotaFiscalRateioMedicoListView(FilterView):
         if self.nota_fiscal:
             context['nota_fiscal'] = self.nota_fiscal
         # Removido campo 'competencia' do contexto
+        # Totalização dos valores exibidos
+        qs = self.get_queryset()
+        context['total_bruto'] = sum(getattr(obj, 'valor_bruto_medico', 0) or 0 for obj in qs)
+        context['total_liquido'] = sum(getattr(obj, 'valor_liquido_medico', 0) or 0 for obj in qs)
+        context['total_iss'] = sum(getattr(obj, 'valor_iss_medico', 0) or 0 for obj in qs)
+        context['total_pis'] = sum(getattr(obj, 'valor_pis_medico', 0) or 0 for obj in qs)
+        context['total_cofins'] = sum(getattr(obj, 'valor_cofins_medico', 0) or 0 for obj in qs)
+        context['total_ir'] = sum(getattr(obj, 'valor_ir_medico', 0) or 0 for obj in qs)
+        context['total_csll'] = sum(getattr(obj, 'valor_csll_medico', 0) or 0 for obj in qs)
         return context
