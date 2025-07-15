@@ -54,13 +54,17 @@
     </div>
     <div class="col-md-5">
       {% if nota_fiscal %}
-        <h5>Rateio por Médico para NF Nº {{ nota_fiscal.numero }}</h5>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Rateio por Médico para NF Nº {{ nota_fiscal.numero }}</h5>
+          <a href="{% url 'medicos:novo_rateio_medico' nota_fiscal.id %}" class="btn btn-sm btn-success">Adicionar Rateio</a>
+        </div>
         <div class="table-responsive">
           <table class="table table-bordered table-striped">
             <thead>
               <tr>
                 <th>Nome do Médico</th>
                 <th>Valor Bruto Rateado</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -68,15 +72,51 @@
                 <tr>
                   <td>{{ rateio.medico.pessoa.name }}</td>
                   <td>{{ rateio.valor_bruto_medico }}</td>
+                  <td>
+                    <a href="{% url 'medicos:editar_rateio_medico' nota_fiscal.id rateio.id %}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                    <a href="{% url 'medicos:excluir_rateio_medico' nota_fiscal.id rateio.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir este rateio?');">Excluir</a>
+                  </td>
                 </tr>
               {% empty %}
-                <tr><td colspan="2">Nenhum rateio cadastrado.</td></tr>
+                <tr><td colspan="3">Nenhum rateio cadastrado.</td></tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       {% else %}
-        <div class="alert alert-info mt-4">Selecione uma nota fiscal para ver os rateios.</div>
+        {% if table.data|length > 0 %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Rateio por Médico para NF Nº {{ table.data.0.numero }}</h5>
+            <a href="{% url 'medicos:novo_rateio_medico' table.data.0.id %}" class="btn btn-sm btn-success">Adicionar Rateio</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>Nome do Médico</th>
+                  <th>Valor Bruto Rateado</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for rateio in table.data.0.rateios_medicos.all %}
+                  <tr>
+                    <td>{{ rateio.medico.pessoa.name }}</td>
+                    <td>{{ rateio.valor_bruto_medico }}</td>
+                    <td>
+                      <a href="{% url 'medicos:editar_rateio_medico' table.data.0.id rateio.id %}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                      <a href="{% url 'medicos:excluir_rateio_medico' table.data.0.id rateio.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir este rateio?');">Excluir</a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3">Nenhum rateio cadastrado.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="alert alert-info mt-4">Nenhuma nota fiscal encontrada.</div>
+        {% endif %}
       {% endif %}
     </div>
   </div>

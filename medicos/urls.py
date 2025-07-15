@@ -1,5 +1,11 @@
 from . import views_cenario
-from .views_rateio import NotaFiscalRateioListView, NotaFiscalRateioMedicoListView, NotaFiscalRateioMedicoCreateView
+from .views_rateio import (
+    NotaFiscalRateioListView,
+    NotaFiscalRateioMedicoListView,
+    NotaFiscalRateioMedicoCreateView,
+    NotaFiscalRateioMedicoUpdateView,
+    NotaFiscalRateioMedicoDeleteView,
+)
 from django.urls import path
 # ...existing code...
 from . import views_user
@@ -23,6 +29,10 @@ urlpatterns = [
          NotaFiscalRateioMedicoListView.as_view(), name='lista_rateio_medicos'),
     path('novo_rateio_medico/<int:nota_id>/',
          NotaFiscalRateioMedicoCreateView.as_view(), name='novo_rateio_medico'),
+    path('editar_rateio_medico/<int:nota_id>/<int:rateio_id>/',
+         NotaFiscalRateioMedicoUpdateView.as_view(), name='editar_rateio_medico'),
+    path('excluir_rateio_medico/<int:nota_id>/<int:rateio_id>/',
+         NotaFiscalRateioMedicoDeleteView.as_view(), name='excluir_rateio_medico'),
     # Compatibilidade: rota antiga para lista_notas_rateio
     path('lista_notas_rateio/', NotaFiscalRateioListView.as_view(), name='lista_notas_rateio'),
     path('cenario_cadastro/', views_cenario.cenario_cadastro, name='cenario_cadastro'),
