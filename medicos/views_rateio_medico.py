@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from .tables_rateio_medico import NotaFiscalRateioMedicoTable
 from .filters_rateio_medico import NotaFiscalRateioMedicoFilter
 from medicos.models.fiscal import NotaFiscalRateioMedico, NotaFiscal
+from medicos.models.base import Empresa
 
 @method_decorator(login_required, name='dispatch')
 class NotaFiscalRateioMedicoListView(FilterView):
@@ -39,6 +40,16 @@ class NotaFiscalRateioMedicoListView(FilterView):
         context['titulo_pagina'] = 'Notas Fiscais Rateadas por Médico'
         if self.nota_fiscal:
             context['nota_fiscal'] = self.nota_fiscal
+        # Padronização: empresa no contexto
+        empresa = getattr(self.request, 'empresa', None)
+        if not empresa and hasattr(self.request, 'session'):
+            empresa_id = self.request.session.get('empresa_id')
+            if empresa_id:
+                try:
+                    empresa = Empresa.objects.get(id=empresa_id)
+                except Empresa.DoesNotExist:
+                    empresa = None
+        context['empresa'] = empresa
         # Removido campo 'competencia' do contexto
         # Totalização dos valores exibidos
         qs = self.get_queryset()
