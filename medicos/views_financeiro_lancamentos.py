@@ -51,5 +51,11 @@ class FinanceiroUpdateView(UpdateView):
 class FinanceiroDeleteView(DeleteView):
     model = Financeiro
     template_name = 'financeiro/confirm_delete.html'
+
     def get_success_url(self):
         return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['empresa_id'] = self.kwargs['empresa_id']
+        return context

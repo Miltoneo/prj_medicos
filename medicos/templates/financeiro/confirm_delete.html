@@ -1,0 +1,17 @@
+{% extends 'layouts/base_cenario_financeiro.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h3 class="mb-4 text-danger">Confirma exclusão?</h3>
+      <p>Tem certeza que deseja excluir esta movimentação financeira?</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Excluir</button>
+        <a href="{% url 'financeiro:lancamentos' empresa_id %}" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
