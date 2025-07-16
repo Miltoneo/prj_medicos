@@ -301,28 +301,18 @@ class FinanceiroAdmin(admin.ModelAdmin):
 
 @admin.register(MeioPagamento)
 class MeioPagamentoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'codigo', 'categoria_display', 'taxa_info', 'prazo_compensacao_dias', 'disponivel_display', 'ativo')
-    list_filter = ('ativo', 'tipo_movimentacao', 'data_inicio_vigencia', 'data_fim_vigencia')
-    search_fields = ('nome', 'codigo', 'descricao')
+    list_display = ('nome', 'codigo', 'ativo')
+    list_filter = ('ativo',)
+    search_fields = ('nome', 'codigo')
     ordering = ('nome', 'codigo')
     
     fieldsets = (
         ('💳 MEIOS DE PAGAMENTO', {
             'fields': (),
-            'description': 'Configuração dos meios de pagamento disponíveis para movimentações financeiras. '
-                          'Estes meios controlam taxas, prazos e validações específicas para cada forma de pagamento.'
+            'description': 'Configuração dos meios de pagamento disponíveis para movimentações financeiras.'
         }),
         ('Identificação', {
-            'fields': ('codigo', 'nome', 'descricao')
-        }),
-        ('Configurações Financeiras', {
-            'fields': ('taxa_percentual', 'taxa_fixa', 'valor_minimo', 'valor_maximo')
-        }),
-        ('Prazos e Disponibilidade', {
-            'fields': ('prazo_compensacao_dias', 'horario_limite', 'data_inicio_vigencia', 'data_fim_vigencia')
-        }),
-        ('Configurações de Uso', {
-            'fields': ('tipo_movimentacao', 'exige_documento', 'exige_aprovacao')
+            'fields': ('codigo', 'nome')
         }),
         ('Status e Controle', {
             'fields': ('ativo', 'observacoes')
@@ -330,37 +320,6 @@ class MeioPagamentoAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('created_at', 'updated_at')
-    
-    def categoria_display(self, obj):
-        """Mostra a categoria com base no tipo de movimentação"""
-        if obj.tipo_movimentacao == 'credito':
-            return format_html('<span style="color: green;">📈 Recebimentos</span>')
-        elif obj.tipo_movimentacao == 'debito':
-            return format_html('<span style="color: red;">📉 Pagamentos</span>')
-        else:
-            return format_html('<span style="color: blue;">🔄 Ambos</span>')
-    categoria_display.short_description = 'Tipo'
-    
-    def taxa_info(self, obj):
-        """Mostra informações sobre taxas"""
-        partes = []
-        if obj.taxa_percentual > 0:
-            partes.append(f"{obj.taxa_percentual}%")
-        if obj.taxa_fixa > 0:
-            partes.append(f"R$ {obj.taxa_fixa}")
-        
-        if partes:
-            return " + ".join(partes)
-        return "Sem taxa"
-    taxa_info.short_description = 'Taxas'
-    
-    def disponivel_display(self, obj):
-        """Mostra se está disponível para uso"""
-        if obj.disponivel_para_uso:
-            return format_html('<span style="color: green;">✅ Sim</span>')
-        else:
-            return format_html('<span style="color: red;">❌ Não</span>')
-    disponivel_display.short_description = 'Disponível'
     
     def save_model(self, request, obj, form, change):
         """Automaticamente definir o usuário criador"""
