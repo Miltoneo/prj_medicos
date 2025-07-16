@@ -46,7 +46,7 @@ class MeioPagamento(models.Model):
         blank=True,
         null=True
     )
-    
+     
     descricao = models.TextField(
         blank=True,
         verbose_name="Descrição",
