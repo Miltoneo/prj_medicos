@@ -337,6 +337,21 @@ class DescricaoMovimentacaoFinanceiraForm(forms.ModelForm):
             'descricao', 'codigo_contabil', 'observacoes'
         ]
         widgets = {
-            'descricao': forms.Textarea(attrs={'rows': 3}),
-            'observacoes': forms.Textarea(attrs={'rows': 2}),
+            'descricao': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'style': 'min-width: 400px; max-width: 900px;',
+                'placeholder': 'Descrição detalhada'
+            }),
+            'codigo_contabil': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 200px;',
+                'placeholder': 'Código contábil'
+            }),
+            'observacoes': forms.Textarea(attrs={
+                'rows': 2,
+                'class': 'form-control',
+                'style': 'min-width: 300px; max-width: 600px;',
+                'placeholder': 'Observações'
+            }),
         }
