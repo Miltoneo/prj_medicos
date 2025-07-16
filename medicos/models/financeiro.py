@@ -1,10 +1,11 @@
-# Modelo restaurado: MeioPagamento
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import Q
 from .base import Conta, SaaSBaseModel, Empresa, Socio
 
+# Modelo restaurado: MeioPagamento
 class MeioPagamento(models.Model):
     """
     Meios de pagamento cadastrados pelos usuários
@@ -441,6 +442,9 @@ class MeioPagamento(models.Model):
                 meios_criados.append(meio)
         
         return meios_criados
+
+
+
 """
 Modelos relacionados ao sistema financeiro manual
 
@@ -448,12 +452,6 @@ Este módulo contém todos os modelos relacionados ao fluxo de caixa manual
 da aplicação de médicos, incluindo descrições de movimentação, lançamentos
 financeiros e saldos mensais consolidados.
 """
-
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.conf import settings
-from django.utils import timezone
-from .base import Conta, SaaSBaseModel, Empresa, Socio
 
 # Constantes específicas para financeiro
 TIPO_MOVIMENTACAO_CONTA_CREDITO = 1    # entradas, creditos, depositos
