@@ -6,39 +6,38 @@ from django.db.models import Q
 from .base import Conta, SaaSBaseModel, Empresa, Socio
 
 # Modelo restaurado: MeioPagamento
+
 class MeioPagamento(models.Model):
     """
     Meios de pagamento cadastrados pelos usuários
     
-    Este modelo armazena os meios de pagamento específicos que podem ser
-    utilizados nas movimentações financeiras, com suas respectivas taxas,
-    prazos de compensação e outras características.
+    Agora o meio de pagamento é definido por empresa, não mais por conta.
     """
-    
     class Meta:
         db_table = 'meio_pagamento'
-        unique_together = ('conta', 'codigo')
+        unique_together = ('empresa', 'codigo')
         verbose_name = "Meio de Pagamento"
         verbose_name_plural = "Meios de Pagamento"
         indexes = [
-            models.Index(fields=['conta', 'ativo']),
+            models.Index(fields=['empresa', 'ativo']),
             models.Index(fields=['codigo']),
         ]
 
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='meios_pagamento', 
-        null=False
+    empresa = models.ForeignKey(
+        'Empresa',
+        on_delete=models.CASCADE,
+        related_name='meios_pagamento',
+        verbose_name="Empresa",
+        help_text="Empresa à qual este meio de pagamento pertence"
     )
-    
+
     # Identificação do meio
     codigo = models.CharField(
         max_length=20,
         verbose_name="Código",
         help_text="Código único para identificar o meio de pagamento (ex: DINHEIRO, PIX, CARTAO_CREDITO)"
     )
-    
+
     nome = models.CharField(
         max_length=100,
         verbose_name="Nome",
@@ -46,16 +45,14 @@ class MeioPagamento(models.Model):
         blank=True,
         null=True
     )
-     
+
     # Status e controle
     ativo = models.BooleanField(
         default=True,
         verbose_name="Ativo",
         help_text="Se este meio de pagamento está disponível para uso"
     )
-    
-    #
-    
+
     # Auditoria
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
@@ -67,7 +64,7 @@ class MeioPagamento(models.Model):
         related_name='meios_pagamento_criados',
         verbose_name="Criado Por"
     )
-    
+
     observacoes = models.TextField(
         blank=True,
         verbose_name="Observações",
@@ -75,17 +72,17 @@ class MeioPagamento(models.Model):
     )
 
     def clean(self):
-        """Validação de unicidade do código por conta."""
+        """Validação de unicidade do código por empresa."""
         if self.codigo:
             qs = MeioPagamento.objects.filter(
-                conta=self.conta,
+                empresa=self.empresa,
                 codigo=self.codigo
             )
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             if qs.exists():
                 raise ValidationError({
-                    'codigo': 'Já existe um meio de pagamento com este código nesta conta'
+                    'codigo': 'Já existe um meio de pagamento com este código nesta empresa'
                 })
 
     def __str__(self):

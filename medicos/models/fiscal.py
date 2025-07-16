@@ -861,22 +861,21 @@ class Aliquotas(models.Model):
         return observacoes
     
     @classmethod
-    def obter_aliquota_vigente(cls, conta, data_referencia=None):
-        """Obtém a configuração de alíquotas vigente para uma conta"""
+    def obter_aliquota_vigente(cls, empresa, data_referencia=None):
+        """Obtém a configuração de alíquotas vigente para uma empresa"""
         if data_referencia is None:
             data_referencia = timezone.now().date()
-        
         return cls.objects.filter(
-            conta=conta,
+            empresa=empresa,
             ativa=True,
             data_vigencia_inicio__lte=data_referencia
         ).filter(
-            models.Q(data_vigencia_fim__isnull=True) | 
+            models.Q(data_vigencia_fim__isnull=True) |
             models.Q(data_vigencia_fim__gte=data_referencia)
         ).first()
     
     @classmethod
-    def obter_aliquota_ou_padrao(cls, conta, tipo_servico='consultas', data_referencia=None):
+    def obter_aliquota_ou_padrao(cls, empresa, tipo_servico='consultas', data_referencia=None):
         """
         Obtém a alíquota ISS específica ou valor padrão se não houver configuração
         
@@ -888,7 +887,7 @@ class Aliquotas(models.Model):
         Returns:
             Decimal: Alíquota a ser aplicada
         """
-        aliquotas = cls.obter_aliquota_vigente(conta, data_referencia)
+        aliquotas = cls.obter_aliquota_vigente(empresa, data_referencia)
         
         if aliquotas:
             if tipo_servico == 'consultas':
@@ -921,7 +920,7 @@ class Aliquotas(models.Model):
         Returns:
             dict: Detalhamento completo dos impostos
         """
-        aliquotas = cls.obter_aliquota_vigente(empresa.conta, data_referencia)
+        aliquotas = cls.obter_aliquota_vigente(empresa, data_referencia)
         
         if aliquotas:
             return aliquotas.calcular_impostos_com_regime(
@@ -934,7 +933,7 @@ class Aliquotas(models.Model):
             # Fallback - cálculo básico usando alíquotas padrão
             from decimal import Decimal
             
-            aliquota_iss = cls.obter_aliquota_ou_padrao(empresa.conta, tipo_servico, data_referencia)
+            aliquota_iss = cls.obter_aliquota_ou_padrao(empresa, tipo_servico, data_referencia)
             valor_iss = valor_bruto * (aliquota_iss / 100)
             
             return {
@@ -1197,8 +1196,8 @@ class NotaFiscal(models.Model):
         # Preencher aliquotas automaticamente se não estiver definido
         if not self.aliquotas:
             from medicos.models.fiscal import Aliquotas
-            conta = self.empresa_destinataria.conta
-            aliquota_vigente = Aliquotas.obter_aliquota_vigente(conta, self.dtEmissao)
+            empresa = self.empresa_destinataria
+            aliquota_vigente = Aliquotas.obter_aliquota_vigente(empresa, self.dtEmissao)
             if aliquota_vigente:
                 self.aliquotas = aliquota_vigente
 
@@ -1210,10 +1209,9 @@ class NotaFiscal(models.Model):
         e no regime tributário vigente na data de emissão
         """
         try:
-            # Obter alíquotas vigentes para a conta da empresa
-            conta = self.empresa_destinataria.conta
-            aliquotas = Aliquotas.obter_aliquota_vigente(conta, self.dtEmissao)
-            
+            # Obter alíquotas vigentes para a empresa
+            empresa = self.empresa_destinataria
+            aliquotas = Aliquotas.obter_aliquota_vigente(empresa, self.dtEmissao)
             if aliquotas:
                 # Determinar tipo de serviço para as alíquotas
                 tipo_servico_map = {
@@ -1221,15 +1219,13 @@ class NotaFiscal(models.Model):
                     self.TIPO_SERVICO_OUTROS: 'outros',
                 }
                 tipo_servico = tipo_servico_map.get(self.tipo_servico, 'consultas')
-                
                 # Calcular impostos considerando regime tributário
                 resultado = aliquotas.calcular_impostos_com_regime(
                     valor_bruto=self.val_bruto,
                     tipo_servico=tipo_servico,
-                    empresa=self.empresa_destinataria,
+                    empresa=empresa,
                     data_referencia=self.dtEmissao
                 )
-                
                 # Aplicar valores calculados
                 self.val_ISS = resultado['valor_iss']
                 self.val_PIS = resultado['valor_pis']
@@ -1237,7 +1233,6 @@ class NotaFiscal(models.Model):
                 self.val_IR = resultado['valor_ir']
                 self.val_CSLL = resultado['valor_csll']
                 self.val_liquido = resultado['valor_liquido']
-                
             else:
                 # Fallback: cálculo básico usando apenas ISS padrão
                 tipo_servico_map = {
@@ -1245,11 +1240,10 @@ class NotaFiscal(models.Model):
                     self.TIPO_SERVICO_OUTROS: 'outros',
                 }
                 aliquota_iss = Aliquotas.obter_aliquota_ou_padrao(
-                    conta, 
+                    empresa,
                     tipo_servico_map.get(self.tipo_servico, 'consultas'),
                     self.dtEmissao
                 )
-                
                 from decimal import Decimal
                 self.val_ISS = self.val_bruto * (Decimal(str(aliquota_iss)) / Decimal('100'))
                 self.val_PIS = 0
@@ -1257,7 +1251,6 @@ class NotaFiscal(models.Model):
                 self.val_IR = 0
                 self.val_CSLL = 0
                 self.val_liquido = self.val_bruto - self.val_ISS
-                
         except Exception as e:
             # Em caso de erro, manter valores zerados para impostos federais
             # e calcular apenas ISS básico
@@ -1410,6 +1403,8 @@ class NotaFiscal(models.Model):
 
 
 class NotaFiscalRateioMedico(models.Model):
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
     def save(self, *args, **kwargs):
         # Calculate all required fields before saving
         if self.nota_fiscal and self.valor_bruto_medico is not None:
@@ -1539,49 +1534,21 @@ class NotaFiscalRateioMedico(models.Model):
     
     configurado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Configurado por",
-        help_text="Usuário que configurou este rateio"
-    )
-    
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Atualizado em",
-        help_text="Data da última atualização deste rateio"
+        null=True, blank=True, related_name='rateios_configurados',
+        verbose_name="Configurado por"
     )
 
     def clean(self):
-        """Validações do modelo de rateio"""
-        # Calcula percentual automaticamente se não estiver definido
-        if self.percentual_participacao is None and self.nota_fiscal and self.valor_bruto_medico is not None:
-            total = self.nota_fiscal.val_bruto
-            if total and total > 0:
-                self.percentual_participacao = (self.valor_bruto_medico / total) * 100
-
-        # Validar percentual de participação
-        if self.percentual_participacao is None or self.percentual_participacao <= 0:
-            raise ValidationError({
-                'percentual_participacao': 'Percentual de participação deve ser maior que zero'
-            })
-
-        # Validar valores rateados
-        if self.valor_bruto_medico is None or self.valor_bruto_medico <= 0:
-            raise ValidationError({
-                'valor_bruto_medico': 'Valor bruto para médico deve ser maior que zero'
-            })
-
         # Validar que o total dos rateios não excede o valor bruto da nota fiscal
         total_rateado = NotaFiscalRateioMedico.objects.filter(
             nota_fiscal=self.nota_fiscal
         ).exclude(pk=self.pk).aggregate(
             total=models.Sum('valor_bruto_medico')
         )['total'] or 0
-        
-        if total_rateado + self.valor_bruto_medico > self.nota_fiscal.val_bruto:
+        if total_rateado + (self.valor_bruto_medico or 0) > self.nota_fiscal.val_bruto:
             raise ValidationError({
                 'valor_bruto_medico': 'O total dos rateios não pode exceder o valor bruto da nota fiscal'
             })
-        
         # Validar datas
         if self.data_rateio and self.data_rateio > timezone.now():
             raise ValidationError({

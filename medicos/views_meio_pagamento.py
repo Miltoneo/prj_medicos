@@ -19,7 +19,7 @@ class MeioPagamentoListView(SingleTableView):
         empresa_id = self.kwargs.get('empresa_id')
         empresa = get_object_or_404(Empresa, pk=empresa_id)
         self.empresa_id = empresa_id
-        qs = MeioPagamento.objects.filter(conta=empresa.conta)
+        qs = MeioPagamento.objects.filter(empresa=empresa)
         nome = self.request.GET.get('nome')
         if nome:
             qs = qs.filter(nome__icontains=nome)
@@ -62,8 +62,7 @@ class MeioPagamentoCreateView(CreateView):
         form = super().get_form(form_class)
         empresa_id = int(self.kwargs.get('empresa_id'))
         empresa = get_object_or_404(Empresa, pk=empresa_id)
-        conta = empresa.conta
-        form.instance.conta = conta
+        form.instance.empresa = empresa
         return form
 
     def form_valid(self, form):
@@ -71,7 +70,7 @@ class MeioPagamentoCreateView(CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        empresa = Empresa.objects.filter(conta=self.object.conta).first()
+        empresa = self.object.empresa
         if empresa:
             return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.pk})
         return reverse_lazy('medicos:empresas')
@@ -95,10 +94,9 @@ class MeioPagamentoUpdateView(UpdateView):
     template_name = 'cadastro/editar_meio_pagamento.html'
 
     def get_success_url(self):
-        conta = self.object.conta
-        empresa = conta.empresas.first() if conta else None
+        empresa = self.object.empresa
         if empresa:
-            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.id})
+            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.pk})
         else:
             return reverse_lazy('medicos:empresas')
 
@@ -120,10 +118,8 @@ class MeioPagamentoDeleteView(DeleteView):
     template_name = 'cadastro/excluir_meio_pagamento.html'
 
     def get_success_url(self):
-        # Tenta obter a primeira empresa vinculada à conta
-        conta = self.object.conta
-        empresa = conta.empresas.first() if conta else None
+        empresa = self.object.empresa
         if empresa:
-            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.id})
+            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.pk})
         else:
             return reverse_lazy('medicos:empresas')  # Redireciona para lista geral de empresas
