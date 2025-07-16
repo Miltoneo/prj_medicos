@@ -316,7 +316,7 @@ class AplicacaoFinanceira(SaaSBaseModel):
         return f"{self.empresa.nome_fantasia} - {self.data_referencia.strftime('%m/%Y')} - R$ {self.saldo:,.2f}"
 
 
-class Financeiro(SaaSBaseModel):
+class Financeiro(models.Model):
     """
     Modelo principal para lançamentos financeiros manuais
     
@@ -330,13 +330,13 @@ class Financeiro(SaaSBaseModel):
         verbose_name = "Lançamento Financeiro"
         verbose_name_plural = "Lançamentos Financeiros"
         indexes = [
-            models.Index(fields=['conta', 'data_movimentacao']),
             models.Index(fields=['socio', 'data_movimentacao']),
             models.Index(fields=['descricao_movimentacao_financeira']),
         ]
         ordering = ['-data_movimentacao', '-created_at']
 
     # Relacionamentos principais
+    # campo conta removido
     socio = models.ForeignKey(
         Socio,
         on_delete=models.PROTECT,
@@ -344,7 +344,6 @@ class Financeiro(SaaSBaseModel):
         verbose_name="Médico/Sócio",
         help_text="Médico ou sócio responsável por esta movimentação"
     )
-    
     descricao_movimentacao_financeira = models.ForeignKey(
         DescricaoMovimentacaoFinanceira,
         on_delete=models.PROTECT,

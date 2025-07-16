@@ -62,8 +62,12 @@ class FinanceiroCreateView(CreateView):
     def form_valid(self, form):
         instance = form.save(commit=False)
         empresa_ctx = empresa_context(self.request)
-        # Garante que conta sempre existe
-        instance.conta = empresa_ctx['conta_atual']
+        empresa = empresa_ctx.get('empresa')
+        if not empresa:
+            form.add_error(None, 'Nenhuma empresa selecionada.')
+            return self.form_invalid(form)
+        # Relaciona a movimentação à empresa selecionada
+        instance.empresa = empresa
         instance.save()
         return super().form_valid(form)
 
