@@ -16,3 +16,12 @@
 ---
 
 Este guia deve ser seguido em todas as interações e operações realizadas pelo Copilot no projeto prj_medicos.
+
+## 2. Regra obrigatória: Busca detalhada na documentação
+
+Toda solicitação feita ao Copilot deve ser respondida com busca detalhada nos arquivos de documentação do projeto. A resposta deve sempre citar o trecho utilizado, o arquivo e as linhas correspondentes. Não é permitido responder apenas de memória ou por padrão; é obrigatório realizar uma busca ativa nos arquivos de documentação antes de responder.
+
+Exemplo de resposta:
+> "Fonte: docs/README.md, linhas 10-25. Trecho: ..."
+
+Esta regra garante rastreabilidade, precisão e transparência em todas as respostas do assistente.
