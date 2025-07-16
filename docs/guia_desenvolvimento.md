@@ -1,3 +1,45 @@
+
+# Regra de padronização: Contexto global de empresa
+
+Todas as views e templates que exibem informações dependentes da empresa devem seguir o padrão abaixo:
+
+- A variável `empresa` deve ser sempre injetada no contexto dos templates via context processor (`empresa_context`), nunca manualmente nas views.
+- A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como `empresa_atual_id`). Não deve haver fallback automático para a primeira empresa cadastrada.
+- Os templates devem usar apenas `{{ empresa }}` para exibir informações da empresa, e tratar o caso em que `empresa` é `None` (exibindo alerta ou bloqueando navegação).
+- O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}`.
+- Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto global e o template base para garantir consistência visual e semântica.
+
+Exemplo de função e localização:
+Localização: core/context_processors.py
+```python
+def empresa_context(request):
+    """
+    Regra de desenvolvimento para contexto de empresa:
+    - A variável 'empresa' deve ser sempre injetada no contexto dos templates via context processor (empresa_context), nunca manualmente nas views.
+    - A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como 'empresa_atual_id'). Não deve haver fallback automático para a primeira empresa cadastrada.
+    - Os templates devem usar apenas {{ empresa }} para exibir informações da empresa, e tratar o caso em que 'empresa' é None (exibindo alerta ou bloqueando navegação).
+    - O cabeçalho padrão deve ser incluído via {% include 'layouts/base_header.html' %}.
+    - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto global e o template base para garantir consistência visual e semântica.
+    """
+    conta_atual = get_current_account()
+    empresas_cadastradas = []
+    empresa = None
+    if conta_atual:
+        empresas_cadastradas = Empresa.objects.filter(conta=conta_atual, ativo=True).order_by('nome_fantasia','name')
+        empresa_id = request.session.get('empresa_atual_id')
+        if empresa_id:
+            try:
+                empresa = empresas_cadastradas.get(id=empresa_id)
+            except Empresa.DoesNotExist:
+                empresa = None
+        else:
+            empresa = None  # Não faz fallback automático
+    return {
+        'empresas_cadastradas': empresas_cadastradas,
+        'empresa': empresa,
+        'conta_atual': conta_atual,
+    }
+```
 # Padronização de Título de Páginas
 ## Regra obrigatória: Título da página
 

@@ -1,28 +1,22 @@
-
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from medicos.models.base import Socio
+from medicos.models.base import Socio, Empresa, ContaMembership
 from .tables_socio_lista import SocioListaTable
 from .filters_socio import SocioFilter
 from django_tables2 import RequestConfig
-
 from datetime import datetime
 import logging
-
 # Third Party
 from django_tables2.views import SingleTableView
-
 # Local
-from .models.base import Conta, Empresa, ContaMembership
+from .models.base import Conta
 from .tables import EmpresaTable
 from .forms import EmpresaForm
 from .filters import EmpresaFilter
-
 # Logger
 logger = logging.getLogger(__name__)
 

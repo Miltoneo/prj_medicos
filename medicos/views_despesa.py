@@ -1,5 +1,21 @@
-# Helper de contexto global
 from datetime import datetime
+# Imports: Django
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+# Imports: Third Party
+from django_tables2 import SingleTableView
+# Imports: Local
+from medicos.models.base import Empresa
+from medicos.models.despesas import GrupoDespesa
+from .models import ItemDespesa, GrupoDespesa
+from medicos.forms import GrupoDespesaForm, ItemDespesaForm
+from medicos.filters import GrupoDespesaFilter, ItemDespesaFilter
+from medicos.tables import ItemDespesaTable
+
 def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
     if not mes_ano:
@@ -17,24 +33,6 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     }
     return context
 
-# Imports: Django
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.core.paginator import Paginator
-from django.views.generic import ListView
-from django.contrib.auth.mixins import LoginRequiredMixin
-
-# Imports: Third Party
-from django_tables2 import SingleTableView
-
-# Imports: Local
-from medicos.models.base import Empresa
-from medicos.models.despesas import GrupoDespesa
-from .models import ItemDespesa, GrupoDespesa
-from medicos.forms import GrupoDespesaForm, ItemDespesaForm
-from medicos.filters import GrupoDespesaFilter, ItemDespesaFilter
-from medicos.tables import ItemDespesaTable
 
 # Views
 @login_required

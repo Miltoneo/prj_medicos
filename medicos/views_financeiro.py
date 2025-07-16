@@ -4,6 +4,8 @@
 # Python Standard
 from datetime import datetime
 
+from medicos.models.base import Empresa
+
 # Django
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -39,7 +41,6 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     context = {
         'mes_ano': mes_ano,
         'menu_nome': menu_nome or 'Financeiro',
-        'empresa': empresa,
         'user': getattr(request, 'user', None),
     }
     return context
@@ -68,20 +69,14 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
-        main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Lista de Movimentações')
+        # Contexto global (sem empresa manual)
+        main_context = main(self.request, menu_nome='Financeiro', cenario_nome='Lista de Movimentações')
         context.update(main_context)
-        context['empresa'] = empresa
         context['titulo_pagina'] = 'Descrições de Movimentação Financeira'
         context['empresa_id'] = empresa_id
         context['table'] = context.get('table')
         context['filter'] = context.get('filter')
-        # Garantir que empresa e titulo_pagina estejam sempre presentes
-        if 'empresa' not in context or not context['empresa']:
-            context['empresa'] = context.get('empresa')
-        if 'titulo_pagina' not in context or not context['titulo_pagina']:
-            context['titulo_pagina'] = 'Movimentação Financeira'
+        # 'empresa' será fornecida pelo context processor
         return context
 
 class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
@@ -107,17 +102,11 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
-        main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Nova Movimentação')
+        # Contexto global (sem empresa manual)
+        main_context = main(self.request, menu_nome='Financeiro', cenario_nome='Nova Movimentação')
         context.update(main_context)
-        context['empresa'] = empresa
         context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Nova Descrição de Movimentação Financeira'
-        if 'empresa' not in context or not context['empresa']:
-            context['empresa'] = context.get('empresa')
-        if 'titulo_pagina' not in context or not context['titulo_pagina']:
-            context['titulo_pagina'] = 'Movimentação Financeira'
         return context
 
 class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
@@ -143,17 +132,11 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
-        main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Editar Movimentação')
+        # Contexto global (sem empresa manual)
+        main_context = main(self.request, menu_nome='Financeiro', cenario_nome='Editar Movimentação')
         context.update(main_context)
-        context['empresa'] = empresa
         context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Editar Descrição de Movimentação Financeira'
-        if 'empresa' not in context or not context['empresa']:
-            context['empresa'] = context.get('empresa')
-        if 'titulo_pagina' not in context or not context['titulo_pagina']:
-            context['titulo_pagina'] = 'Movimentação Financeira'
         return context
 
     def get_success_url(self):
@@ -167,17 +150,11 @@ class DescricaoMovimentacaoFinanceiraDeleteView(LoginRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
-        main_context = main(self.request, empresa=empresa, menu_nome='Financeiro', cenario_nome='Excluir Movimentação')
+        # Contexto global (sem empresa manual)
+        main_context = main(self.request, menu_nome='Financeiro', cenario_nome='Excluir Movimentação')
         context.update(main_context)
-        context['empresa_atual'] = empresa
         context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Excluir Descrição de Movimentação Financeira'
-        if 'empresa_atual' not in context or not context['empresa_atual']:
-            context['empresa_atual'] = context.get('empresa')
-        if 'titulo_pagina' not in context or not context['titulo_pagina']:
-            context['titulo_pagina'] = 'Movimentação Financeira'
         return context
 
     def get_success_url(self):
@@ -204,10 +181,8 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
+        # Contexto global (sem empresa manual)
         context['empresa_id'] = empresa_id
-        context['empresa'] = empresa
         context['table'] = context.get('table')
         context['filter'] = context.get('filter')
         context['mes_ano'] = self.request.session.get('mes_ano')
@@ -237,10 +212,8 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
+        # Contexto global (sem empresa manual)
         context['empresa_id'] = empresa_id
-        context['empresa'] = empresa
         context['titulo_pagina'] = 'Nova Descrição de Movimentação Financeira'
         return context
 
@@ -267,10 +240,8 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
+        # Contexto global (sem empresa manual)
         context['empresa_id'] = empresa_id
-        context['empresa'] = empresa
         context['titulo_pagina'] = 'Editar Descrição de Movimentação Financeira'
         return context
 
@@ -285,10 +256,8 @@ class DescricaoMovimentacaoFinanceiraDeleteView(LoginRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        empresa = Empresa.objects.filter(id=empresa_id).first()
+        # Contexto global (sem empresa manual)
         context['empresa_id'] = empresa_id
-        context['empresa'] = empresa
         context['titulo_pagina'] = 'Excluir Descrição de Movimentação Financeira'
         return context
 

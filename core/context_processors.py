@@ -1,3 +1,4 @@
+
 from django.conf import settings
 from medicos.models import Conta, Empresa
 from medicos.middleware.tenant_middleware import get_current_account
@@ -7,27 +8,28 @@ def app_version(request):
 
 def empresa_context(request):
     """
-    Injeta empresas_cadastradas, empresa e conta_atual no contexto global.
-    - empresas_cadastradas: todas as empresas da conta ativa
-    - empresa: empresa selecionada (por sessão ou primeira da lista)
-    - conta_atual: conta ativa (tenant)
+    Regra de desenvolvimento para contexto de empresa:
+    - A variável 'empresa' deve ser sempre injetada no contexto dos templates via context processor (empresa_context), nunca manualmente nas views.
+    - A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como 'empresa_id'). Não deve haver fallback automático para a primeira empresa cadastrada.
+    - Os templates devem usar apenas {{ empresa }} para exibir informações da empresa, e tratar o caso em que 'empresa' é None (exibindo alerta ou bloqueando navegação).
+    - O cabeçalho padrão deve ser incluído via {% include 'layouts/base_header.html' %}.
+    - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto global e o template base para garantir consistência visual e semântica.
     """
-    conta_atual = get_current_account()
-    empresas_cadastradas = []
+    empresas_cadastradas = Empresa.objects.all().order_by('nome_fantasia','name')
     empresa = None
-    
-    if conta_atual:
-        empresas_cadastradas = Empresa.objects.filter(conta=conta_atual, ativo=True).order_by('nome_fantasia','name')
-        empresa_id = request.session.get('empresa_atual_id')
-        if empresa_id:
-            try:
-                empresa = empresas_cadastradas.get(id=empresa_id)
-            except Empresa.DoesNotExist:
-                empresa = empresas_cadastradas.first() if empresas_cadastradas else None
-        else:
-            empresa = empresas_cadastradas.first() if empresas_cadastradas else None
+    empresa_context_error = None
+    empresa_id = request.session.get('empresa_id')
+    if empresa_id:
+        try:
+            empresa = Empresa.objects.get(id=empresa_id)
+        except Empresa.DoesNotExist:
+            empresa = None
+            empresa_context_error = 'Empresa selecionada não encontrada. Selecione novamente.'
+    else:
+        empresa = None
+        empresa_context_error = 'Nenhuma empresa selecionada. Selecione uma empresa para continuar.'
     return {
         'empresas_cadastradas': empresas_cadastradas,
         'empresa': empresa,
-        'conta_atual': conta_atual,
+        'empresa_context_error': empresa_context_error,
     }

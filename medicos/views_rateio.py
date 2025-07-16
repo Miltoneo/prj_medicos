@@ -1,3 +1,4 @@
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.utils.decorators import method_decorator
@@ -117,20 +118,10 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        empresa_id = self.request.session.get('empresa_id')
-        empresa = None
-        medicos_empresa = []
-        if empresa_id:
-            try:
-                empresa = Empresa.objects.get(id=int(empresa_id))
-                medicos_empresa = list(Socio.objects.filter(empresa=empresa, ativo=True).select_related('pessoa'))
-            except Empresa.DoesNotExist:
-                empresa = None
         queryset = self.get_queryset()
         table = self.table_class(queryset)
         RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
         nota_id = self.request.GET.get('nota_id')
-        # Adiciona o filtro ao contexto para o template
         context['filter'] = getattr(self, 'filter', None)
         nota_fiscal = None
         if nota_id:
@@ -140,31 +131,27 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
                 nota_fiscal = None
         elif queryset.exists():
             nota_fiscal = queryset.first()
-        # Always re-query nota_fiscal and its rateios to get latest values after POST
         if nota_fiscal:
             nota_fiscal = NotaFiscal.objects.get(id=nota_fiscal.id)
+        medicos_empresa = []
+        if nota_fiscal and nota_fiscal.empresa_destinataria:
+            medicos_empresa = list(Socio.objects.filter(empresa=nota_fiscal.empresa_destinataria, ativo=True).select_related('pessoa'))
         medicos_rateio = []
         rateios_map = {}
         total_percentual_rateado = None
         if nota_fiscal:
             rateios_qs = nota_fiscal.rateios_medicos.select_related('medico')
             rateios_map = {r.medico_id: r for r in rateios_qs}
-            # Calcula o total percentual rateado
             total_percentual_rateado = sum([float(r.percentual_participacao) for r in rateios_qs]) if rateios_qs.exists() else 0.0
         for medico in medicos_empresa:
             rateio = rateios_map.get(medico.id)
-            if rateio:
-                valor_bruto_medico = float(rateio.valor_bruto_medico)
-            else:
-                valor_bruto_medico = 0.0
+            valor_bruto_medico = float(rateio.valor_bruto_medico) if rateio else 0.0
             medicos_rateio.append({
                 'medico': medico,
                 'valor_bruto_medico': valor_bruto_medico,
                 'rateio_id': rateio.id if rateio else None,
             })
         context.update({
-            'empresa_id': empresa_id,
-            'empresa': empresa,
             'table': table,
             'nota_fiscal': nota_fiscal,
             'medicos_rateio': medicos_rateio,
@@ -194,6 +181,7 @@ class NotaFiscalRateioMedicoListView(RateioContextMixin, ListView):
         table = self.table_class(self.get_queryset())
         RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
         context['table'] = table
+        context['titulo_pagina'] = 'Rateio de Notas Fiscais por Médico'
         return context
 
 @method_decorator(login_required, name='dispatch')

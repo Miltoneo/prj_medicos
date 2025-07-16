@@ -26,8 +26,16 @@ class MeioPagamentoListView(SingleTableView):
         return qs
 
     def get_context_data(self, **kwargs):
+        """
+        Regra de padronização:
+        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
+        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
+        - Injete também 'titulo_pagina' para exibição do título padrão no header.
+        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        """
         context = super().get_context_data(**kwargs)
-        context['empresa_id'] = self.empresa_id
+        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
+        context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Meios de Pagamento'
         return context
 
@@ -37,8 +45,16 @@ class MeioPagamentoCreateView(CreateView):
     template_name = 'cadastro/criar_meio_pagamento.html'
 
     def get_context_data(self, **kwargs):
+        """
+        Regra de padronização:
+        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
+        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
+        - Injete também 'titulo_pagina' para exibição do título padrão no header.
+        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        """
         context = super().get_context_data(**kwargs)
-        context['empresa_id'] = self.kwargs.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
+        context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Novo Meio de Pagamento'
         return context
 
@@ -62,7 +78,16 @@ class MeioPagamentoCreateView(CreateView):
 
 class MeioPagamentoUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
+        """
+        Regra de padronização:
+        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
+        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
+        - Injete também 'titulo_pagina' para exibição do título padrão no header.
+        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        """
         context = super().get_context_data(**kwargs)
+        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
+        context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Editar Meio de Pagamento'
         return context
     model = MeioPagamento
@@ -79,7 +104,16 @@ class MeioPagamentoUpdateView(UpdateView):
 
 class MeioPagamentoDeleteView(DeleteView):
     def get_context_data(self, **kwargs):
+        """
+        Regra de padronização:
+        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
+        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
+        - Injete também 'titulo_pagina' para exibição do título padrão no header.
+        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        """
         context = super().get_context_data(**kwargs)
+        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
+        context['empresa_id'] = empresa_id
         context['titulo_pagina'] = 'Excluir Meio de Pagamento'
         return context
     model = MeioPagamento

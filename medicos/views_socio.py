@@ -1,6 +1,4 @@
 
-
-
 from datetime import datetime
 
 from django.contrib import messages
@@ -30,7 +28,6 @@ class SocioContextMixin(ContextMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['empresa'] = getattr(self, 'empresa', None)
         context['menu_nome'] = self.menu_nome
         #context['cenario_nome'] = self.cenario_nome
         context['titulo_pagina'] = getattr(self, 'titulo_pagina', 'Sócios')
@@ -104,14 +101,11 @@ class SocioCreateView(CreateView):
     success_url = reverse_lazy('medicos:lista_socios_empresa')
 
     def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        empresa = get_object_or_404(Empresa, id=empresa_id)
         step = self.request.GET.get('step') or self.request.POST.get('step') or 'cpf'
-        context = {
-            'empresa': empresa,
-            'titulo_pagina': 'Cadastro de Sócio',
-            'step': step,
-        }
+        context['titulo_pagina'] = 'Cadastro de Sócio'
+        context['step'] = step
         if step == 'cpf':
             context['cpf_form'] = SocioCPFForm(self.request.POST or None)
         else:

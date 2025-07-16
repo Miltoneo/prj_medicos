@@ -9,6 +9,7 @@ from django.contrib import messages
 # Imports: Local
 from .models.base import ContaMembership, Conta
 from .forms import CustomUserForm
+from medicos.models.base import Empresa
 
 User = get_user_model()
 
@@ -23,6 +24,12 @@ class StaffRequiredMixin(UserPassesTestMixin):
         return reverse_lazy('medicos:user_list')
 
 # Views
+
+def get_empresa_from_request(request):
+    empresa_id = getattr(request, 'empresa_id', None) or request.session.get('empresa_id')
+    if empresa_id:
+        return Empresa.objects.filter(id=empresa_id).first()
+    return None
 
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     def get_context_data(self, **kwargs):

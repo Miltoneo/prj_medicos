@@ -1,11 +1,10 @@
-from datetime import datetime
 
+from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from django.urls import reverse
-
 from medicos.models.base import Empresa, ContaMembership
 from medicos.filters import EmpresaFilter
 from medicos.contexto import *

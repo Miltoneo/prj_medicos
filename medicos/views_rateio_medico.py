@@ -1,3 +1,4 @@
+
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django_filters.views import FilterView
@@ -33,6 +34,13 @@ class NotaFiscalRateioMedicoListView(FilterView):
         return self.filter.qs
 
     def get_context_data(self, **kwargs):
+        """
+        Regra de padronização:
+        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']).
+        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
+        - Injete também 'titulo_pagina' para exibição do título padrão no header.
+        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        """
         context = super().get_context_data(**kwargs)
         table = self.table_class(self.get_queryset())
         context['table'] = table
@@ -40,18 +48,8 @@ class NotaFiscalRateioMedicoListView(FilterView):
         context['titulo_pagina'] = 'Notas Fiscais Rateadas por Médico'
         if self.nota_fiscal:
             context['nota_fiscal'] = self.nota_fiscal
-        # Padronização: empresa no contexto
-        empresa = getattr(self.request, 'empresa', None)
-        if not empresa and hasattr(self.request, 'session'):
-            empresa_id = self.request.session.get('empresa_id')
-            if empresa_id:
-                try:
-                    empresa = Empresa.objects.get(id=empresa_id)
-                except Empresa.DoesNotExist:
-                    empresa = None
-        context['empresa'] = empresa
+        # 'empresa' já é fornecida pelo context processor
         # Removido campo 'competencia' do contexto
-        # Totalização dos valores exibidos
         qs = self.get_queryset()
         context['total_bruto'] = sum(getattr(obj, 'valor_bruto_medico', 0) or 0 for obj in qs)
         context['total_liquido'] = sum(getattr(obj, 'valor_liquido_medico', 0) or 0 for obj in qs)

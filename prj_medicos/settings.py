@@ -78,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.empresa_context',
             ],
         },
     },
@@ -101,9 +102,7 @@ DATABASES = {
         'PASSWORD': DATABASE_PASSWORD,
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
-        'TEST': {
-            'NAME': DATABASE_NAME,  # Usa o banco real para testes (NÃO RECOMENDADO em produção)
-        },
+
     }
 }
 
