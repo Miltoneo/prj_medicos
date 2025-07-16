@@ -296,7 +296,7 @@ class ItemDespesaForm(forms.ModelForm):
         self.fields['codigo'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'Código',
-            'style': 'max-width: 100px;'
+            'style': 'max-width: 200px;'
         })
         self.fields['grupo'].widget.attrs.update({
             'class': 'form-select',
@@ -304,7 +304,7 @@ class ItemDespesaForm(forms.ModelForm):
         })
         self.fields['descricao'].widget.attrs.update({
             'class': 'form-control',
-            'rows': 4,
+            'rows': 3,
             'placeholder': 'Descrição detalhada',
             'style': 'min-width: 400px; max-width: 900px;'
         })
