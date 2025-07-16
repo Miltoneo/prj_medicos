@@ -53,17 +53,6 @@
                   <div class="form-text">{{ field.help_text }}</div>
                 {% endif %}
               </div>
-            <!-- Campo 'tipo' removido da lista -->
-              <div class="mb-2 d-flex flex-column" style="max-width: 120px;">
-                <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
-                {% endif %}
-                {% if field.help_text %}
-                  <div class="form-text">{{ field.help_text }}</div>
-                {% endif %}
-              </div>
             {% endif %}
           {% endfor %}
           <div class="col-lg-3 col-md-4 col-sm-6 mb-2 d-flex align-items-end">
