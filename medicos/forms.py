@@ -284,7 +284,7 @@ class AliquotaForm(forms.ModelForm):
 class GrupoDespesaForm(forms.ModelForm):
     class Meta:
         model = GrupoDespesa
-        fields = ['codigo', 'descricao']
+        fields = ['codigo', 'descricao', 'tipo_rateio']
         widgets = {
             'descricao': forms.Textarea(attrs={'rows': 2}),
         }
@@ -293,13 +293,29 @@ class ItemDespesaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['grupo'].label_from_instance = lambda obj: obj.descricao
+        self.fields['codigo'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Código',
+            'style': 'max-width: 100px;'
+        })
+        self.fields['grupo'].widget.attrs.update({
+            'class': 'form-select',
+            'style': 'max-width: 300px;'
+        })
+        self.fields['descricao'].widget.attrs.update({
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': 'Descrição detalhada',
+            'style': 'min-width: 400px; max-width: 900px;'
+        })
+
     class Meta:
         model = ItemDespesa
-        fields = ['codigo', 'descricao', 'grupo']
+        fields = ['codigo', 'grupo', 'descricao']  # 'grupo' já está acima de 'descricao'
         widgets = {
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
-            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'grupo': forms.Select(attrs={'class': 'form-control'}),
+            'codigo': forms.TextInput(),
+            'grupo': forms.Select(),
+            'descricao': forms.Textarea(),
         }
 
 class DescricaoMovimentacaoFinanceiraForm(forms.ModelForm):
