@@ -22,6 +22,7 @@ class FinanceiroListView(SingleTableMixin, FilterView):
         context = super().get_context_data(**kwargs)
         empresa_ctx = empresa_context(self.request)
         context['empresa_atual'] = empresa_ctx.get('empresa')
+        context['titulo_pagina'] = 'Lançamentos'
         return context
 
 

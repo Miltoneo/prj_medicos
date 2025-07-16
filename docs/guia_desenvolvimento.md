@@ -1,4 +1,9 @@
 # Padronização de Título de Páginas
+## Regra obrigatória: Título da página
+
+O título da página deve ser exibido exclusivamente pelo header base do sistema (template base/layout). Não é permitido incluir o título manualmente em templates filhos, evitando duplicidade e garantindo consistência visual. Caso o título seja incluído em um template filho, ele deve ser removido imediatamente.
+
+Essa regra reforça a padronização e centralização do layout, facilitando manutenção e evolução visual do sistema.
 
 Todas as páginas do sistema devem exibir o título no topo do conteúdo principal, conforme o padrão:
 
