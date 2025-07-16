@@ -265,20 +265,20 @@ class Aliquotas(models.Model):
         db_table = 'aliquotas'
         verbose_name = "Configuração de Alíquotas"
         verbose_name_plural = "Configurações de Alíquotas"
-        # Permitir múltiplas configurações por conta com vigências diferentes
+        # Permitir múltiplas configurações por empresa com vigências diferentes
         # A unicidade será garantida por validação personalizada
         indexes = [
-            models.Index(fields=['conta', 'ativa', 'data_vigencia_inicio']),
-            models.Index(fields=['conta', 'data_vigencia_inicio', 'data_vigencia_fim']),
+            models.Index(fields=['empresa', 'ativa', 'data_vigencia_inicio']),
+            models.Index(fields=['empresa', 'data_vigencia_inicio', 'data_vigencia_fim']),
         ]
 
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='aliquotas', 
+    empresa = models.ForeignKey(
+        Empresa,
+        on_delete=models.CASCADE,
+        related_name='aliquotas',
         null=False,
-        verbose_name="Conta",
-        help_text="Conta/cliente proprietária destas configurações tributárias"
+        verbose_name="Empresa",
+        help_text="Empresa proprietária destas configurações tributárias"
     )
     
     # === IMPOSTOS MUNICIPAIS ===
@@ -405,10 +405,10 @@ class Aliquotas(models.Model):
             raise ValidationError({
                 'data_vigencia_fim': 'Data fim deve ser posterior à data início'
             })
-        # Validar sobreposição de vigências para a mesma conta
+        # Validar sobreposição de vigências para a mesma empresa
         if self.ativa and self.data_vigencia_inicio:
             qs = Aliquotas.objects.filter(
-                conta=self.conta,
+                empresa=self.empresa,
                 ativa=True
             )
             if self.pk:
@@ -421,14 +421,14 @@ class Aliquotas(models.Model):
                         f'Período de vigência sobrepõe com configuração existente de '
                         f'{aliquota.data_vigencia_inicio} até {aliquota.data_vigencia_fim or "indeterminado"}'
                     })
-        # REGRA: Só pode haver uma alíquota ativa por conta
+        # REGRA: Só pode haver uma alíquota ativa por empresa
         if self.ativa:
-            qs_ativas = Aliquotas.objects.filter(conta=self.conta, ativa=True)
+            qs_ativas = Aliquotas.objects.filter(empresa=self.empresa, ativa=True)
             if self.pk:
                 qs_ativas = qs_ativas.exclude(pk=self.pk)
             if qs_ativas.exists():
                 raise ValidationError({
-                    'ativa': 'Já existe uma alíquota ativa para esta conta. Desative a configuração anterior antes de ativar uma nova.'
+                    'ativa': 'Já existe uma alíquota ativa para esta empresa. Desative a configuração anterior antes de ativar uma nova.'
                 })
 
     def _vigencias_se_sobrepoe(self, outra_aliquota):
@@ -455,7 +455,7 @@ class Aliquotas(models.Model):
         return not (fim_self < inicio_outra or fim_outra < inicio_self)
 
     def __str__(self):
-        return f"Alíquotas - {self.conta.name} (ISS: {self.ISS}%)"
+        return f"Alíquotas - {self.empresa.name} (ISS: {self.ISS}%)"
     
     @property
     def eh_vigente(self):

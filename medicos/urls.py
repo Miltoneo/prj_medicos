@@ -47,6 +47,7 @@ urlpatterns = [
     # =====================
     # Empresa Views
     # =====================
+    path('lista_empresas/', views_empresa.EmpresaListView.as_view(), name='lista_empresas'),
     path('startempresa/<int:empresa_id>/', views_empresa.dashboard_empresa, name='startempresa'),
     path('empresa_create/nova/', views_empresa.empresa_create, name='empresa_create'),
     path('empresa_detail/<int:empresa_id>/detalhe/', views_empresa.empresa_detail, name='empresa_detail'),
@@ -94,19 +95,23 @@ urlpatterns = [
     # =====================
     # Despesa Views
     # =====================
-    path('lista_grupos_despesa/<int:empresa_id>/grupos-despesa/', views_despesa.lista_grupos_despesa, name='lista_grupos_despesa'),
-    path('grupo_despesa_edit/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa.grupo_despesa_edit, name='grupo_despesa_edit'),
-    path('item_despesa_create/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/novo/', views_despesa.item_despesa_create, name='item_despesa_create'),
-    path('lista_itens_despesa/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
-    path('item_despesa_edit/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/editar/', views_despesa.item_despesa_edit, name='item_despesa_edit'),
-    path('item_despesa_delete/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/excluir/', views_despesa.item_despesa_delete, name='item_despesa_delete'),
-    path('grupo_despesa_delete/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
+
+# Grupos de Despesa
+path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa.lista_grupos_despesa, name='lista_grupos_despesa'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa.grupo_despesa_edit, name='grupo_despesa_edit'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
+
+# Itens de Despesa
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/novo/', views_despesa.item_despesa_create, name='item_despesa_create'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/editar/', views_despesa.item_despesa_edit, name='item_despesa_edit'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/excluir/', views_despesa.item_despesa_delete, name='item_despesa_delete'),
 
     # =====================
     # Aliquota Views
     # =====================
-    path('lista_aliquotas/<int:empresa_id>/aliquotas/', views_aliquota.ListaAliquotasView.as_view(), name='lista_aliquotas'),
-    path('aliquota_edit/<int:empresa_id>/aliquotas/<int:aliquota_id>/editar/', views_aliquota.aliquota_edit, name='aliquota_edit'),
+    path('aliquotas/<int:empresa_id>/', views_aliquota.ListaAliquotasView.as_view(), name='lista_aliquotas'),
+    path('aliquotas/<int:empresa_id>/<int:aliquota_id>/editar/', views_aliquota.aliquota_edit, name='aliquota_edit'),
 
     # =====================
     # Cadastro e Cenário Views

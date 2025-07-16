@@ -44,7 +44,10 @@ class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
 from django import forms
 from .models.base import Socio, Pessoa
 
-class SocioPessoaCompletaForm(forms.Form):
+class SocioPessoaCompletaForm(forms.ModelForm):
+    class Meta:
+        model = Socio
+        fields = ['name', 'cpf', 'rg', 'data_nascimento', 'telefone', 'celular', 'email', 'crm', 'especialidade', 'pessoa_ativo', 'socio_ativo', 'data_entrada', 'data_saida', 'observacoes']
     """
     Formulário único para cadastro de sócio e pessoa.
     """
@@ -242,9 +245,9 @@ class SocioPessoaForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        # Garante que a conta seja definida
+        # Garante que a empresa seja definida
         if self.empresa:
-            instance.conta = self.empresa.conta
+            instance.empresa = self.empresa
         if commit:
             instance.save()
         return instance
@@ -267,6 +270,7 @@ class AliquotaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.empresa = kwargs.pop('empresa', None)
         super().__init__(*args, **kwargs)
         self.fields['data_vigencia_inicio'].input_formats = ['%Y-%m-%d']
         self.fields['data_vigencia_fim'].input_formats = ['%Y-%m-%d']

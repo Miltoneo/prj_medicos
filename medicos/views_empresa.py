@@ -83,11 +83,11 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
-        context.update(main(self.request))
+        context['titulo_pagina'] = 'Empresas'
         return context
 
 
-@staff_member_required
+@login_required
 def empresa_create(request):
     membership = ContaMembership.objects.filter(user=request.user, is_active=True).first()
     conta_id = membership.conta_id if membership else None
@@ -106,10 +106,11 @@ def empresa_create(request):
             return redirect('medicos:empresa_create')
     else:
         form = EmpresaForm()
-    contexto = main(request)
-    contexto['form'] = form
-    if 'cenario_nome' in contexto:
-        del contexto['cenario_nome']
+    contexto = {
+        'form': form,
+        'titulo_pagina': 'Nova Empresa',
+        'menu_nome': 'empresas',
+    }
     return render(request, 'empresa/empresa_create.html', contexto)
 
 
@@ -122,7 +123,7 @@ def empresa_detail(request, empresa_id):
     return render(request, 'empresa/empresa_detail.html', contexto)
 
 
-@staff_member_required
+@login_required
 def empresa_update(request, empresa_id):
     contexto = main(request, empresa_id=empresa_id)
     empresa = contexto['empresa']
@@ -143,7 +144,6 @@ def empresa_update(request, empresa_id):
 
 
 @login_required
-@staff_member_required
 def empresa_delete(request, empresa_id):
     contexto = main(request, empresa_id=empresa_id)
     empresa = contexto['empresa']

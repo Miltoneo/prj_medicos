@@ -129,18 +129,18 @@ class NotaFiscalAdmin(admin.ModelAdmin):
 @admin.register(Aliquotas)
 class AliquotasAdmin(admin.ModelAdmin):
     list_display = (
-        'conta', 'ISS', 'PIS', 'COFINS',
+        'empresa', 'ISS', 'PIS', 'COFINS',
         'IRPJ_BASE_CAL', 'IRPJ_ALIQUOTA_OUTROS', 'IRPJ_ALIQUOTA_CONSULTA', 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', 'IRPJ_ADICIONAL',
         'CSLL_BASE_CAL', 'CSLL_ALIQUOTA_OUTROS', 'CSLL_ALIQUOTA_CONSULTA',
         'data_vigencia_inicio', 'data_vigencia_fim', 'ativa'
     )
-    list_filter = ('data_vigencia_inicio', 'data_vigencia_fim', 'conta', 'ativa')
-    search_fields = ('conta__empresa__name', 'observacoes')
+    list_filter = ('data_vigencia_inicio', 'data_vigencia_fim', 'empresa', 'ativa')
+    search_fields = ('empresa__name', 'observacoes')
     ordering = ('-data_vigencia_inicio',)
     
     fieldsets = (
-        ('Conta', {
-            'fields': ('conta',)
+        ('Empresa', {
+            'fields': ('empresa',)
         }),
         ('ISS - Alíquotas por Tipo de Serviço', {
             'fields': ('ISS_CONSULTAS', 'ISS_PLANTAO', 'ISS_OUTROS'),
