@@ -23,8 +23,8 @@ class FinanceiroFilter(django_filters.FilterSet):
             year, month = value.split('-')
             return queryset.filter(data_movimentacao__year=year, data_movimentacao__month=month)
         return queryset
-    tipo = django_filters.ChoiceFilter(field_name='tipo', choices=Financeiro.TIPOS_MOVIMENTACAO, label='Tipo')
+    # Filtro 'tipo' removido: campo não existe mais no modelo Financeiro
 
     class Meta:
         model = Financeiro
-        fields = ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao', 'tipo']
+        fields = ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao']

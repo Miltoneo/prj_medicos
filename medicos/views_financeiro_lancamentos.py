@@ -4,7 +4,7 @@ from django_filters.views import FilterView
 from django.views.generic import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.db import models
-from .models.financeiro import Financeiro, TIPO_MOVIMENTACAO_CONTA_CREDITO, TIPO_MOVIMENTACAO_CONTA_DEBITO
+from .models.financeiro import Financeiro
 from .tables_financeiro import FinanceiroTable
 from .filters_financeiro import FinanceiroFilter
 from .forms_financeiro import FinanceiroForm

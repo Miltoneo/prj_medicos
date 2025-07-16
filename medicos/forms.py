@@ -280,7 +280,7 @@ class AliquotaForm(forms.ModelForm):
 class GrupoDespesaForm(forms.ModelForm):
     class Meta:
         model = GrupoDespesa
-        fields = ['codigo', 'descricao', 'tipo_rateio']
+        fields = ['codigo', 'descricao']
         widgets = {
             'descricao': forms.Textarea(attrs={'rows': 2}),
         }
@@ -300,13 +300,21 @@ class ItemDespesaForm(forms.ModelForm):
 
 class DescricaoMovimentacaoFinanceiraForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        self.empresa = kwargs.pop('empresa', None)
         super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.empresa:
+            instance.empresa = self.empresa
+        if commit:
+            instance.save()
+        return instance
 
     class Meta:
         model = DescricaoMovimentacaoFinanceira
         fields = [
-            'descricao', 'tipo_movimentacao', 'exige_documento', 'exige_aprovacao',
-            'codigo_contabil', 'possui_retencao_ir', 'percentual_retencao_ir', 'uso_frequente', 'observacoes'
+            'descricao', 'codigo_contabil', 'observacoes'
         ]
         widgets = {
             'descricao': forms.Textarea(attrs={'rows': 3}),

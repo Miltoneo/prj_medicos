@@ -177,8 +177,8 @@ class DespesaAdmin(admin.ModelAdmin):
 
 @admin.register(Financeiro)
 class FinanceiroAdmin(admin.ModelAdmin):
-    list_display = ('data_movimentacao', 'socio', 'descricao_movimentacao_financeira', 'tipo', 'valor')
-    list_filter = ('tipo', 'socio', 'data_movimentacao')
+    list_display = ('data_movimentacao', 'socio', 'descricao_movimentacao_financeira', 'valor_formatado')
+    list_filter = ('socio', 'data_movimentacao')
     search_fields = ('socio__pessoa__name', 'descricao_movimentacao_financeira__nome', 'descricao_movimentacao_financeira__descricao')
     ordering = ('-data_movimentacao', '-created_at')
     readonly_fields = ('created_at', 'updated_at')
@@ -190,7 +190,7 @@ class FinanceiroAdmin(admin.ModelAdmin):
                           'Receitas de notas fiscais são tratadas separadamente no sistema contábil.'
         }),
         ('Dados Básicos do Lançamento', {
-            'fields': ('data', 'empresa', 'socio', 'tipo', 'descricao', 'valor')
+            'fields': ('data', 'empresa', 'socio', 'descricao', 'valor')
         }),
         ('Meio de Pagamento e Taxas', {
             'fields': ('meio_pagamento', 'taxa_aplicada', 'valor_liquido_recebido'),
@@ -232,17 +232,15 @@ class FinanceiroAdmin(admin.ModelAdmin):
         return "Sem descrição"
     get_descricao_display.short_description = 'Descrição'
     
-    def get_tipo_display(self, obj):
-        """Display do tipo com cor"""
-        if obj.tipo == obj.tipo_t.CREDITO:
-            return format_html('<span style="color: green; font-weight: bold;">+ CRÉDITO</span>')
-        else:
-            return format_html('<span style="color: red; font-weight: bold;">- DÉBITO</span>')
-    get_tipo_display.short_description = 'Tipo'
+    # Removido get_tipo_display pois campo tipo foi excluído
     
     def valor_formatado(self, obj):
-        """Valor formatado com sinal"""
-        return obj.valor_formatado
+        """Valor formatado com cor: verde para positivo, vermelho para negativo"""
+        valor = obj.valor
+        if valor >= 0:
+            return format_html('<span style="color:green;">R$ {:,.2f}</span>', valor)
+        else:
+            return format_html('<span style="color:red;">R$ {:,.2f}</span>', valor)
     valor_formatado.short_description = 'Valor'
     
     def origem_lancamento_manual(self, obj):
@@ -372,8 +370,8 @@ class MeioPagamentoAdmin(admin.ModelAdmin):
 
 @admin.register(DescricaoMovimentacaoFinanceira)
 class DescricaoMovimentacaoFinanceiraAdmin(admin.ModelAdmin):
-    list_display = ('tipo_movimentacao', 'uso_frequente', 'exige_documento', 'exige_aprovacao', 'descricao', 'codigo_contabil', 'observacoes')
-    list_filter = ('tipo_movimentacao', 'uso_frequente', 'exige_documento', 'exige_aprovacao')
+    list_display = ('descricao', 'codigo_contabil', 'observacoes')
+    list_filter = ()
     search_fields = ('nome', 'descricao', 'codigo_contabil')
     ordering = ('descricao',)
     readonly_fields = ('created_at', 'updated_at')

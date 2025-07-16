@@ -68,13 +68,12 @@ class ItemDespesaTable(tables.Table):
 
 class DescricaoMovimentacaoFinanceiraTable(tables.Table):
     codigo_contabil = tables.Column(verbose_name='Código Contábil')
-    tipo_movimentacao = tables.Column(verbose_name='Tipo', accessor='get_tipo_movimentacao_display')
     descricao = tables.Column(verbose_name='Descrição')
     observacoes = tables.Column(verbose_name='Observações')
     actions = tables.TemplateColumn(
         template_code='''
-        <a href="{% url 'financeiro:descricao_movimentacao_edit' empresa_id=record.conta_id pk=record.pk %}" class="btn btn-sm btn-primary">Editar</a>
-        <a href="{% url 'financeiro:descricao_movimentacao_delete' empresa_id=record.conta_id pk=record.pk %}" class="btn btn-sm btn-danger">Excluir</a>
+        <a href="{% url 'financeiro:descricao_movimentacao_edit' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-primary">Editar</a>
+        <a href="{% url 'financeiro:descricao_movimentacao_delete' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-danger">Excluir</a>
         ''',
         verbose_name='Ações', orderable=False
     )
@@ -82,6 +81,6 @@ class DescricaoMovimentacaoFinanceiraTable(tables.Table):
     class Meta:
         model = DescricaoMovimentacaoFinanceira
         template_name = "django_tables2/bootstrap5.html"
-        fields = ('codigo_contabil', 'tipo_movimentacao', 'descricao', 'observacoes')
-        sequence = ('codigo_contabil', 'tipo_movimentacao', 'descricao', 'observacoes', 'actions')
+        fields = ('codigo_contabil', 'descricao', 'observacoes')
+        sequence = ('codigo_contabil', 'descricao', 'observacoes', 'actions')
         attrs = {'class': 'table table-striped'}

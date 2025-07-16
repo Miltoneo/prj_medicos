@@ -457,29 +457,9 @@ financeiros e saldos mensais consolidados.
 TIPO_MOVIMENTACAO_CONTA_CREDITO = 1    # entradas, creditos, depositos
 TIPO_MOVIMENTACAO_CONTA_DEBITO = 2     # retiradas, transferencia
 
-# DESCRICAO PADRONIZADA DE MOVIMENTAÇÃO AUTOMÁTICA REALIZADA PELO SISTEMA
-DESC_MOVIMENTACAO_CREDITO_SALDO_MES_SEGUINTE = 'CREDITO SALDO MES ANTERIOR'
-DESC_MOVIMENTACAO_DEBITO_IMPOSTO_PROVISIONADOS = 'DEBITO PAGAMENTO DE IMPOSTOS'
-
-
-
 
 class DescricaoMovimentacaoFinanceira(models.Model):
-    def pode_ser_usada_para(self, tipo):
-        """
-        Verifica se esta descrição pode ser usada para o tipo de movimentação informado.
-        tipo: int ou str ('credito' ou 'debito')
-        """
-        # Se tipo_movimentacao for 'ambos', permite qualquer tipo
-        if self.tipo_movimentacao == 'ambos':
-            return True
-        # Se for 'credito', só permite tipo crédito (1)
-        if self.tipo_movimentacao == 'credito' and (tipo == 1 or str(tipo).lower() == 'credito'):
-            return True
-        # Se for 'debito', só permite tipo débito (2)
-        if self.tipo_movimentacao == 'debito' and (tipo == 2 or str(tipo).lower() == 'debito'):
-            return True
-        return False
+    # Removido método pode_ser_usada_para pois tipo_movimentacao foi excluído
     """
     Descrições de movimentação financeira cadastradas pelos usuários
     
@@ -494,15 +474,16 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         constraints = []
         verbose_name = "Descrição de Movimentação"
         verbose_name_plural = "Descrições de Movimentação"
-        indexes = [
-            models.Index(fields=['conta']),
-        ]
+        indexes = []
 
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='descricoes_movimentacao', 
-        null=False
+    # Removido campo conta: descrição agora é específica para empresa
+
+    empresa = models.ForeignKey(
+        Empresa,
+        on_delete=models.CASCADE,
+        related_name='descricoes_movimentacao',
+        verbose_name="Empresa",
+        help_text="Empresa à qual esta descrição pertence"
     )
     
     # Identificação da descrição
@@ -512,32 +493,8 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         help_text="Descrição completa sobre quando usar esta movimentação"
     )
     
-    # Configurações de comportamento
-    TIPOS_MOVIMENTACAO = [
-        ('credito', 'Apenas Créditos'),
-        ('debito', 'Apenas Débitos'),
-        ('ambos', 'Créditos e Débitos'),
-    ]
+    # Removido bloco TIPOS_MOVIMENTACAO pois tipo_movimentacao foi excluído
     
-    tipo_movimentacao = models.CharField(
-        max_length=10,
-        choices=TIPOS_MOVIMENTACAO,
-        default='ambos',
-        verbose_name="Tipo de Movimentação",
-        help_text="Tipos de movimentação permitidos com esta descrição"
-    )
-    
-    exige_documento = models.BooleanField(
-        default=False,
-        verbose_name="Exige Documento",
-        help_text="Se movimentações com esta descrição exigem número de documento"
-    )
-    
-    exige_aprovacao = models.BooleanField(
-        default=False,
-        verbose_name="Exige Aprovação",
-        help_text="Se movimentações com esta descrição exigem aprovação adicional"
-    )
     
     # Configurações contábeis/fiscais
     codigo_contabil = models.CharField(
@@ -547,28 +504,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         help_text="Código contábil para classificação (plano de contas)"
     )
     
-    possui_retencao_ir = models.BooleanField(
-        default=False,
-        verbose_name="Possui Retenção IR",
-        help_text="Se esta movimentação possui retenção de Imposto de Renda"
-    )
     
-    percentual_retencao_ir = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0.00,
-        verbose_name="% Retenção IR",
-        help_text="Percentual de retenção de IR aplicado",
-        blank=True,
-        null=True
-    )
-    
-    # Controle de uso
-    uso_frequente = models.BooleanField(
-        default=False,
-        verbose_name="Uso Frequente",
-        help_text="Marcar para mostrar em destaque nas seleções"
-    )
     
     # Auditoria
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
@@ -588,19 +524,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         help_text="Observações sobre o uso desta descrição"
     )
 
-    def clean(self):
-        """Validações personalizadas"""
-        # Validar percentual de retenção
-        if self.percentual_retencao_ir < 0 or self.percentual_retencao_ir > 100:
-            raise ValidationError({
-                'percentual_retencao_ir': 'Percentual de retenção deve estar entre 0% e 100%'
-            })
-        
-        # Se não possui retenção, o percentual deve ser zero
-        if not self.possui_retencao_ir and self.percentual_retencao_ir > 0:
-            raise ValidationError({
-                'percentual_retencao_ir': 'Percentual deve ser zero se não possui retenção'
-            })
+    # Removido clean pois campos de retenção foram excluídos
 
     def __str__(self):
         return self.descricao or f"DescriçãoMovimentacaoFinanceira #{self.pk}"
@@ -623,155 +547,49 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         """Verifica se a descrição está disponível para uso"""
         return self.ativa and self.esta_vigente
     
-    def calcular_retencao_ir(self, valor_base):
-        """Calcula o valor da retenção de IR"""
-        if not self.possui_retencao_ir or self.percentual_retencao_ir <= 0:
-            return 0
-        
-        return valor_base * (self.percentual_retencao_ir / 100)
+    # Removido calcular_retencao_ir pois campos de retenção foram excluídos
     
     @classmethod
-    def obter_ativas(cls, conta):
-        """Obtém todas as descrições para uma conta"""
-        return cls.objects.filter(
-            conta=conta
-        ).order_by(
-            'nome'
-        )
+    def obter_ativas(cls, empresa):
+        """Obtém todas as descrições para uma empresa"""
+        return cls.objects.filter(empresa=empresa).order_by('descricao')
+    
+    # Removido obter_creditos pois tipo_movimentacao foi excluído
+    
+    # Removido obter_debitos pois tipo_movimentacao foi excluído
+    
+    # Removido obter_frequentes pois uso_frequente foi excluído
     
     @classmethod
-    def obter_creditos(cls, conta):
-        """Obtém apenas descrições para crédito"""
-        return cls.objects.filter(
-            conta=conta,
-            tipo_movimentacao__in=['credito', 'ambos']
-        ).order_by(
-            'nome'
-        )
-    
-    @classmethod
-    def obter_debitos(cls, conta):
-        """Obtém apenas descrições para débito"""
-        return cls.objects.filter(
-            conta=conta,
-            tipo_movimentacao__in=['debito', 'ambos']
-        ).order_by(
-            'nome'
-        )
-    
-    @classmethod
-    def obter_frequentes(cls, conta):
-        """Obtém descrições marcadas como uso frequente"""
-        return cls.objects.filter(
-            conta=conta,
-            ativa=True,
-            uso_frequente=True
-        ).order_by(
-            'nome'
-        )
-    
-    @classmethod
-    def criar_descricoes_padrao(cls, conta, usuario=None):
-        """Cria descrições padrão para uma nova conta"""
+    def criar_descricoes_padrao(cls, empresa, usuario=None):
+        """Cria descrições padrão para uma nova empresa"""
         descricoes_padrao = [
-            # Receitas
-            {
-                'nome': 'Recebimento de Honorários Médicos',
-                'tipo_movimentacao': 'credito',
-                'descricao': 'Recebimento de honorários por serviços médicos prestados',
-                'uso_frequente': True,
-                'exige_documento': True,
-            },
-            {
-                'nome': 'Recebimento de Consultas',
-                'tipo_movimentacao': 'credito',
-                'descricao': 'Recebimento por consultas médicas realizadas',
-                'uso_frequente': True,
-            },
-            {
-                'nome': 'Recebimento de Plantão',
-                'tipo_movimentacao': 'credito',
-                'descricao': 'Recebimento por plantões médicos realizados',
-                'uso_frequente': True,
-            },
-            
-            # Adiantamentos
-            {
-                'nome': 'Adiantamento de Lucros',
-                'tipo_movimentacao': 'credito',
-                'descricao': 'Adiantamento de lucros da sociedade médica',
-                'uso_frequente': True,
-            },
-            {
-                'nome': 'Adiantamento para Despesas',
-                'tipo_movimentacao': 'debito',
-                'descricao': 'Adiantamento concedido para cobrir despesas',
-            },
-            
-            # Despesas
-            {
-                'nome': 'Despesas com Material Médico',
-                'tipo_movimentacao': 'debito',
-                'descricao': 'Gastos com materiais médicos e insumos',
-                'exige_documento': True,
-            },
-            {
-                'nome': 'Despesas com Educação Médica',
-                'tipo_movimentacao': 'debito',
-                'descricao': 'Gastos com cursos, congressos e capacitação',
-                'exige_documento': True,
-            },
-            {
-                'nome': 'Retirada para Uso Pessoal',
-                'tipo_movimentacao': 'debito',
-                'descricao': 'Retirada de valores para uso pessoal',
-                'uso_frequente': True,
-            },
-            
-            # Transferências
-            {
-                'nome': 'Transferência Bancária Recebida',
-                'tipo_movimentacao': 'credito',
-                'descricao': 'Transferência bancária recebida de terceiros',
-                'exige_documento': True,
-            },
-            {
-                'nome': 'Transferência Bancária Enviada',
-                'tipo_movimentacao': 'debito',
-                'descricao': 'Transferência bancária enviada para terceiros',
-                'exige_documento': True,
-            },
-            
-            # Ajustes
-            {
-                'nome': 'Ajuste Contábil a Crédito',
-                'tipo_movimentacao': 'credito',
-                'descricao': 'Ajuste contábil positivo',
-                'exige_aprovacao': True,
-            },
-            {
-                'nome': 'Ajuste Contábil a Débito',
-                'tipo_movimentacao': 'debito',
-                'descricao': 'Ajuste contábil negativo',
-                'exige_aprovacao': True,
-            },
+            {'descricao': 'Recebimento de honorários por serviços médicos prestados'},
+            {'descricao': 'Recebimento por consultas médicas realizadas'},
+            {'descricao': 'Recebimento por plantões médicos realizados'},
+            {'descricao': 'Adiantamento de lucros da sociedade médica'},
+            {'descricao': 'Adiantamento concedido para cobrir despesas'},
+            {'descricao': 'Gastos com materiais médicos e insumos'},
+            {'descricao': 'Gastos com cursos, congressos e capacitação'},
+            {'descricao': 'Retirada de valores para uso pessoal'},
+            {'descricao': 'Transferência bancária recebida de terceiros'},
+            {'descricao': 'Transferência bancária enviada para terceiros'},
+            {'descricao': 'Ajuste contábil positivo'},
+            {'descricao': 'Ajuste contábil negativo'},
         ]
-        
         descricoes_criadas = []
         for desc_data in descricoes_padrao:
-            # Verificar se já existe
             if not cls.objects.filter(
-                conta=conta,
-                nome=desc_data['nome']
+                empresa=empresa,
+                descricao=desc_data['descricao']
             ).exists():
                 descricao = cls.objects.create(
-                    conta=conta,
+                    empresa=empresa,
                     criada_por=usuario,
                     observacoes='Descrição criada automaticamente',
-                    **desc_data
+                    descricao=desc_data['descricao']
                 )
                 descricoes_criadas.append(descricao)
-        
         return descricoes_criadas
 
 
@@ -869,7 +687,6 @@ class Financeiro(SaaSBaseModel):
             models.Index(fields=['conta', 'data_movimentacao']),
             models.Index(fields=['socio', 'data_movimentacao']),
             models.Index(fields=['descricao_movimentacao_financeira']),
-            models.Index(fields=['data_movimentacao', 'tipo']),
         ]
         ordering = ['-data_movimentacao', '-created_at']
 
@@ -889,37 +706,20 @@ class Financeiro(SaaSBaseModel):
         verbose_name="Descrição da Movimentação",
         help_text="Descrição padronizada desta movimentação"
     )
-    # aplicacao_financeira = models.ForeignKey(
-    #     AplicacaoFinanceira,
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name='movimentacoes',
-    #     verbose_name="Aplicação Financeira",
-    #     help_text="Aplicação financeira relacionada (opcional)"
-    # )
+
     # Dados do lançamento
     data_movimentacao = models.DateField(
         verbose_name="Data da Movimentação",
         help_text="Data em que a movimentação foi realizada"
     )
     
-    TIPOS_MOVIMENTACAO = [
-        (TIPO_MOVIMENTACAO_CONTA_CREDITO, 'Crédito'),
-        (TIPO_MOVIMENTACAO_CONTA_DEBITO, 'Débito'),
-    ]
-    
-    tipo = models.PositiveSmallIntegerField(
-        choices=TIPOS_MOVIMENTACAO,
-        verbose_name="Tipo de Movimentação",
-        help_text="Se é um crédito (entrada) ou débito (saída)"
-    )
+    # Campo 'tipo' removido: agora o lançamento não diferencia crédito/débito por campo específico
     
     valor = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         verbose_name="Valor",
-        help_text="Valor da movimentação em reais"
+        help_text="Valor da movimentação em reais. Use valor positivo para crédito (entrada) e negativo para débito (saída)."
     )
     
 
@@ -939,43 +739,22 @@ class Financeiro(SaaSBaseModel):
     def clean(self):
         """Validações personalizadas"""
         super().clean()
-        
-        # Validar valor
-        if self.valor <= 0:
-            raise ValidationError({
-                'valor': 'Valor deve ser positivo'
-            })
-        
-
-        
-        # Validar compatibilidade entre tipo e descrição
-        if self.descricao_movimentacao_financeira:
-            if not self.descricao_movimentacao_financeira.pode_ser_usada_para(self.tipo):
-                tipo_display = self.get_tipo_display()
+        # Permitir valor positivo ou negativo. Valor zero pode ser tratado conforme regra de negócio.
+        # Validação: data de movimentação não pode ser futura
+        hoje = timezone.now().date()
+        if self.data_movimentacao:
+            if self.data_movimentacao > hoje:
                 raise ValidationError({
-                    'descricao_movimentacao_financeira': f'A descrição selecionada não permite movimentações do tipo {tipo_display}'
+                    'data_movimentacao': 'A data da movimentação não pode ser futura.'
                 })
-        
-        # Validar data de movimentação (não pode ser futura)
-        if self.data_movimentacao and self.data_movimentacao > timezone.now().date():
-            raise ValidationError({
-                'data_movimentacao': 'Data de movimentação não pode ser futura'
-            })
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        sinal = "+" if self.tipo == TIPO_MOVIMENTACAO_CONTA_CREDITO else "-"
-        return f"{self.socio.pessoa.name} - {self.data_movimentacao.strftime('%d/%m/%Y')} - {sinal}R$ {self.valor:,.2f}"
+        return f"{self.socio.pessoa.name} - {self.data_movimentacao.strftime('%d/%m/%Y')} - R$ {self.valor:,.2f}"
     
-    @property
-    def tipo_display_sinal(self):
-        """Retorna o tipo com sinal visual"""
-        if self.tipo == TIPO_MOVIMENTACAO_CONTA_CREDITO:
-            return f"+ {self.get_tipo_display()}"
-        else:
-            return f"- {self.get_tipo_display()}"
+    # Removido tipo_display_sinal pois campo tipo foi excluído
     
     @property
     def mes_referencia(self):
@@ -999,33 +778,23 @@ class Financeiro(SaaSBaseModel):
         pass  # Método mantido para compatibilidade
     
     @classmethod
-    def obter_saldo_periodo(cls, conta, socio, data_inicio, data_fim):
-        """Calcula o saldo de um período específico"""
+    def obter_saldo_periodo(cls, socio, data_inicio, data_fim):
+        """Calcula o saldo de um período específico para um sócio"""
         lancamentos = cls.objects.filter(
-            conta=conta,
             socio=socio,
             data_movimentacao__range=[data_inicio, data_fim]
         )
-        
-        creditos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_CREDITO).aggregate(
-            total=models.Sum('valor')
-        )['total'] or 0
-        
-        debitos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_DEBITO).aggregate(
-            total=models.Sum('valor')
-        )['total'] or 0
-        
+        total = lancamentos.aggregate(total=models.Sum('valor'))['total'] or 0
         return {
-            'total_creditos': creditos,
-            'total_debitos': debitos,
-            'saldo_liquido': creditos - debitos,
+            'total_creditos': total,
+            'total_debitos': 0,
+            'saldo_liquido': total,
             'quantidade_lancamentos': lancamentos.count()
         }
-    
+
     @classmethod
-    def obter_saldo_mensal(cls, conta, socio, mes_referencia):
-        """Calcula o saldo de um mês específico"""
-        # Primeiro e último dia do mês
+    def obter_saldo_mensal(cls, socio, mes_referencia):
+        """Calcula o saldo de um mês específico para um sócio"""
         data_inicio = mes_referencia.replace(day=1)
         ultimo_dia = 31
         while ultimo_dia > 28:
@@ -1034,12 +803,11 @@ class Financeiro(SaaSBaseModel):
                 break
             except ValueError:
                 ultimo_dia -= 1
-        
-        return cls.obter_saldo_periodo(conta, socio, data_inicio, data_fim)
-    
+        return cls.obter_saldo_periodo(socio, data_inicio, data_fim)
+
     @classmethod
-    def obter_consolidado_conta(cls, conta, mes_referencia):
-        """Obtém o consolidado de toda a conta em um mês"""
+    def obter_consolidado_empresa(cls, empresa, mes_referencia):
+        """Obtém o consolidado de toda a empresa em um mês"""
         data_inicio = mes_referencia.replace(day=1)
         ultimo_dia = 31
         while ultimo_dia > 28:
@@ -1048,64 +816,40 @@ class Financeiro(SaaSBaseModel):
                 break
             except ValueError:
                 ultimo_dia -= 1
-        
         lancamentos = cls.objects.filter(
-            conta=conta,
+            socio__empresa=empresa,
             data_movimentacao__range=[data_inicio, data_fim]
         )
-        
         consolidado = {
             'total_lancamentos': lancamentos.count(),
-            'total_creditos': 0,
+            'total_creditos': lancamentos.aggregate(total=models.Sum('valor'))['total'] or 0,
             'total_debitos': 0,
-            'saldo_geral': 0,
-            'medicos_ativos': 0,
+            'saldo_geral': lancamentos.aggregate(total=models.Sum('valor'))['total'] or 0,
+            'medicos_ativos': lancamentos.values('socio').distinct().count(),
             'por_socio': {},
             'por_categoria': {},
         }
-        
-        # Totais gerais
-        creditos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_CREDITO).aggregate(
-            total=models.Sum('valor')
-        )['total'] or 0
-        
-        debitos = lancamentos.filter(tipo=TIPO_MOVIMENTACAO_CONTA_DEBITO).aggregate(
-            total=models.Sum('valor')
-        )['total'] or 0
-        
-        consolidado['total_creditos'] = creditos
-        consolidado['total_debitos'] = debitos
-        consolidado['saldo_geral'] = creditos - debitos
-        
-        # Médicos ativos
-        consolidado['medicos_ativos'] = lancamentos.values('socio').distinct().count()
-        
-        # Por sócio
         for socio in Socio.objects.filter(
+            empresa=empresa,
             id__in=lancamentos.values_list('socio', flat=True).distinct()
         ):
-            saldo_socio = cls.obter_saldo_periodo(conta, socio, data_inicio, data_fim)
+            saldo_socio = cls.obter_saldo_periodo(socio, data_inicio, data_fim)
             consolidado['por_socio'][socio.id] = {
                 'socio': socio,
                 'saldo': saldo_socio
             }
-        
-        # Por categoria (agora por descrição de movimentação)
-        from django.db.models import Q
         categorias = lancamentos.values(
-            'descricao_movimentacao_financeira__nome'
+            'descricao_movimentacao_financeira__descricao'
         ).annotate(
             total=models.Sum('valor'),
             quantidade=models.Count('id')
         ).filter(total__gt=0)
-        
         for categoria in categorias:
-            nome_categoria = categoria['descricao_movimentacao_financeira__nome'] or 'Sem categoria'
+            nome_categoria = categoria['descricao_movimentacao_financeira__descricao'] or 'Sem categoria'
             consolidado['por_categoria'][nome_categoria] = {
                 'total': categoria['total'],
                 'quantidade': categoria['quantidade']
             }
-        
         return consolidado
 
 

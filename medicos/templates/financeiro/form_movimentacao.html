@@ -20,6 +20,7 @@
               {% endif %}
             </div>
           {% endif %}
+          <!-- Campo 'tipo' removido do formulário -->
           {% if form.data_movimentacao %}
             <div class="mb-3 col-md-3 col-6">
               <label for="id_data_movimentacao" class="form-label">{{ form.data_movimentacao.label }}</label>
@@ -60,7 +61,7 @@
           {% endif %}
         </div>
         {% for field in form.visible_fields %}
-          {% if field.name != 'tipo' and field.name != 'data_movimentacao' and field.name != 'socio' and field.name != 'descricao_movimentacao_financeira' %}
+          {% if field.name != 'data_movimentacao' and field.name != 'socio' and field.name != 'descricao_movimentacao_financeira' %}
             <div class="mb-3 {% if field.name == 'valor' %}col-md-3 col-6{% else %}col-12{% endif %}">
               <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
               {{ field }}
