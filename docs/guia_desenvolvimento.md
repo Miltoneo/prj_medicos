@@ -2,8 +2,11 @@
 
 ### Regra única para contexto global, título e cenário
 
-1. **Contexto global de empresa:**
+1. **Contexto global de empresa e navegação multi-tenant:**
+   - O parâmetro `empresa_id` deve ser mantido na URL das views para garantir navegação RESTful e escopo explícito da empresa (multi-tenant), mesmo que a empresa já esteja disponível globalmente via sessão/context processor.
+   - Nunca dependa apenas da sessão para navegação entre empresas; a URL deve ser a fonte de verdade para o escopo da empresa.
    - Sempre injete a variável `empresa` no contexto dos templates via context processor (`empresa_context`). Nunca injete manualmente nas views.
+   - O context processor é a única fonte de verdade para a variável `empresa` em templates e views. Nunca busque a empresa manualmente via query ou diretamente da sessão.
    - A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como `empresa_atual_id`). Não faça fallback automático para a primeira empresa cadastrada.
    - Os templates devem usar apenas `{{ empresa }}` para exibir informações da empresa, tratando o caso em que `empresa` é `None` (exibindo alerta ou bloqueando navegação).
 

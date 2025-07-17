@@ -28,7 +28,7 @@
           <div class="table-responsive">
             {% render_table table %}
           </div>
-          {% if table.page and table.paginator.num_pages > 1 %}
+          {% if table.page %}
           <nav aria-label="Page navigation" class="mt-3">
             <ul class="pagination justify-content-center">
               {% if table.page.has_previous %}
@@ -59,6 +59,7 @@
             </ul>
           </nav>
           {% endif %}
+          </div>
         </div>
       </div>
     </div>
