@@ -12,6 +12,12 @@ class FinanceiroTable(tables.Table):
         orderable=False
     )
     socio = tables.Column(verbose_name='Médico/Sócio', accessor='socio.pessoa.name')
+    nota_fiscal = tables.Column(
+        accessor='nota_fiscal.numero',
+        verbose_name='Nota Fiscal',
+        default='-',
+        orderable=True
+    )
     descricao_movimentacao_financeira = tables.Column(verbose_name='Descrição')
     data_movimentacao = tables.DateColumn(verbose_name='Data')
     from django.utils.safestring import mark_safe
@@ -27,5 +33,5 @@ class FinanceiroTable(tables.Table):
     class Meta:
         model = Financeiro
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('socio', 'descricao_movimentacao_financeira', 'data_movimentacao', 'valor', 'created_at', 'acoes')
+        fields = ('socio', 'nota_fiscal', 'descricao_movimentacao_financeira', 'data_movimentacao', 'valor', 'created_at', 'acoes')
         order_by = ('-data_movimentacao', '-created_at')
