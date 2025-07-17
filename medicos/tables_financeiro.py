@@ -14,7 +14,7 @@ class FinanceiroTable(tables.Table):
     socio = tables.Column(verbose_name='Médico/Sócio', accessor='socio.pessoa.name')
     descricao_movimentacao_financeira = tables.Column(verbose_name='Descrição')
     data_movimentacao = tables.DateColumn(verbose_name='Data')
-    # Removido campo 'tipo' pois foi excluído do modelo
+    nota_fiscal = tables.Column(verbose_name='Nota Fiscal', accessor='nota_fiscal', orderable=False)
     from django.utils.safestring import mark_safe
     def render_valor(self, value):
         if value >= 0:
@@ -22,11 +22,16 @@ class FinanceiroTable(tables.Table):
         else:
             return mark_safe(f'<span style="color:red;">R$ {value:,.2f}</span>')
 
+    def render_nota_fiscal(self, value):
+        if value:
+            return f"{value.numero} ({value.dtEmissao.strftime('%d/%m/%Y')})"
+        return "—"
+
     valor = tables.Column(verbose_name='Valor (R$)', attrs={"td": {"class": "text-end"}}, orderable=True)
     created_at = tables.DateTimeColumn(verbose_name='Criado em')
 
     class Meta:
         model = Financeiro
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('socio', 'descricao_movimentacao_financeira', 'data_movimentacao', 'valor', 'created_at', 'acoes')
+        fields = ('socio', 'descricao_movimentacao_financeira', 'data_movimentacao', 'nota_fiscal', 'valor', 'created_at', 'acoes')
         order_by = ('-data_movimentacao', '-created_at')

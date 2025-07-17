@@ -336,6 +336,15 @@ class Financeiro(models.Model):
 
     # Relacionamentos principais
     # campo conta removido
+    nota_fiscal = models.ForeignKey(
+        'medicos.NotaFiscal',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lancamentos_financeiros',
+        verbose_name="Nota Fiscal",
+        help_text="Nota fiscal relacionada a este lançamento, se houver."
+    )
     socio = models.ForeignKey(
         Socio,
         on_delete=models.PROTECT,

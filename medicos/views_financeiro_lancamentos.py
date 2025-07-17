@@ -48,9 +48,14 @@ class FinanceiroCreateView(CreateView):
     def get_success_url(self):
         return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        empresa = empresa_context(self.request).get('empresa')
+        kwargs['empresa'] = empresa
+        return kwargs
+
     def form_valid(self, form):
         instance = form.save(commit=False)
-        # Use o context processor para obter a empresa
         empresa = empresa_context(self.request).get('empresa')
         if not empresa:
             form.add_error(None, 'Nenhuma empresa selecionada.')
