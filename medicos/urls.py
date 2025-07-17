@@ -22,6 +22,12 @@ from . import views_faturamento
 from . import views_socio
 from . import views_aliquota
 from . import views_despesa
+
+from .views_aplicacoes_financeiras import (
+    AplicacaoFinanceiraListView,
+    AplicacaoFinanceiraCreateView,
+    AplicacaoFinanceiraUpdateView,
+)
 from django.contrib.auth import views as auth_views
 
 
@@ -138,4 +144,10 @@ path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id
     # Autenticação
     # =====================
     path('logout/', auth_views.LogoutView.as_view(next_page='/medicos/auth/login/'), name='logout'),
+    # =====================
+    # Aplicações Financeiras (Fluxo Isolado)
+    # =====================
+    path('aplicacoes-financeiras/', AplicacaoFinanceiraListView.as_view(), name='aplicacoes_financeiras'),
+    path('aplicacoes-financeiras/novo/', AplicacaoFinanceiraCreateView.as_view(), name='aplicacao_financeira_add'),
+    path('aplicacoes-financeiras/<int:pk>/editar/', AplicacaoFinanceiraUpdateView.as_view(), name='aplicacao_financeira_edit'),
 ]

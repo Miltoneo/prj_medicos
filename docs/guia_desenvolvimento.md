@@ -1,3 +1,25 @@
+
+## Diretriz Obrigatória: Uso de Context Processor para Instâncias Globais (empresa, conta, etc)
+
+> **ATENÇÃO:**
+>
+> Sempre que uma variável global (ex: `empresa`, `conta`, `usuario_atual`, etc) for necessária em views, templates ou forms, verifique primeiro se ela já está sendo injetada por um context processor.
+>
+> **É OBRIGATÓRIO:**
+> - Usar a instância já disponível no contexto (ex: `empresa`), nunca buscar manualmente em `request.session`, nem fazer queries diretas nas views para obter a empresa ativa.
+> - Toda lógica de obtenção, validação e fallback dessas instâncias deve estar centralizada no context processor correspondente.
+> - Se a variável não estiver disponível ou for `None`, o context processor já deve tratar o erro e exibir mensagem apropriada.
+> - Nunca duplique lógica de obtenção de instâncias globais em views, forms ou templates.
+>
+> **Resumo:**
+> - Use sempre a variável do contexto (ex: `empresa`).
+> - Não acesse `request.session['empresa_id']` nem faça `Empresa.objects.get(...)` nas views para obter a empresa ativa.
+> - Se precisar de uma nova variável global, crie um context processor para ela.
+>
+> **Este padrão é obrigatório para garantir isolamento multi-tenant, consistência, centralização de regras e evitar bugs recorrentes.**
+
+---
+
 ## Padronização de Contexto, Header e Título em Views e Templates
 
 ### Regra única para contexto global, título e cenário

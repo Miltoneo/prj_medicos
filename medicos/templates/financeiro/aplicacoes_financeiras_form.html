@@ -1,0 +1,47 @@
+{% extends 'layouts/base_cenario_financeiro.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card shadow-sm border-0 mt-4">
+      <div class="card-body">
+        <h5 class="card-title mb-3">{{ view.object.pk|yesno:"Editar Lançamento,Novo Lançamento" }}</h5>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="id_data_referencia" class="form-label">Mês/Ano de Referência</label>
+            {{ form.data_referencia }}
+            {% if form.data_referencia.errors %}
+              <div class="text-danger small">{{ form.data_referencia.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="id_saldo" class="form-label">Saldo Total (R$)</label>
+            {{ form.saldo }}
+            {% if form.saldo.errors %}
+              <div class="text-danger small">{{ form.saldo.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="id_ir_cobrado" class="form-label">IR Pago no Mês (R$)</label>
+            {{ form.ir_cobrado }}
+            {% if form.ir_cobrado.errors %}
+              <div class="text-danger small">{{ form.ir_cobrado.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="id_descricao" class="form-label">Descrição</label>
+            {{ form.descricao }}
+            {% if form.descricao.errors %}
+              <div class="text-danger small">{{ form.descricao.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="text-end">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{% url 'medicos:aplicacoes_financeiras' %}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -8,6 +8,16 @@ def app_version(request):
 
 def empresa_context(request):
     """
+    DIRETRIZ OBRIGATÓRIA: Contexto de Empresa Multi-tenant
+    -----------------------------------------------------
+    - Sempre utilize a variável 'empresa' injetada por este context processor em views, forms e templates.
+    - Nunca busque manualmente a empresa ativa em request.session ou via query nas views.
+    - Toda lógica de obtenção, validação e fallback da empresa deve estar centralizada aqui.
+    - Se a empresa não estiver disponível, este context processor já trata o erro e exibe mensagem apropriada.
+    - Se precisar de outra variável global (ex: conta, tenant), crie um novo context processor.
+    - Este padrão é obrigatório para garantir isolamento multi-tenant, consistência e evitar bugs recorrentes.
+    """
+    """
     Regra de desenvolvimento para contexto de empresa:
     - A variável 'empresa' deve ser sempre injetada no contexto dos templates via context processor (empresa_context), nunca manualmente nas views.
     - A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como 'empresa_id'). Não deve haver fallback automático para a primeira empresa cadastrada.
