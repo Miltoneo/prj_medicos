@@ -319,7 +319,7 @@ class AplicacaoFinanceira(SaaSBaseModel):
 class Financeiro(models.Model):
     """
     Modelo principal para lançamentos financeiros manuais
-    
+    sdf
     Este modelo substitui e simplifica o antigo sistema de saldos mensais,
     permitindo lançamentos individuais que são consolidados dinamicamente
     conforme necessário para relatórios.
