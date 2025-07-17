@@ -23,7 +23,24 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         empresa_id = self.request.session.get('empresa_id')
         if not empresa_id:
             return NotaFiscal.objects.none()
-        return NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
+        qs = NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
+        # Filtro por mês/ano de emissão
+        mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
+        if mes_ano_emissao:
+            try:
+                ano, mes = mes_ano_emissao.split('-')
+                qs = qs.filter(dtEmissao__year=int(ano), dtEmissao__month=int(mes))
+            except Exception:
+                pass
+        # Filtro por mês/ano de recebimento
+        mes_ano_recebimento = self.request.GET.get('mes_ano_recebimento')
+        if mes_ano_recebimento:
+            try:
+                ano, mes = mes_ano_recebimento.split('-')
+                qs = qs.filter(dtRecebimento__year=int(ano), dtRecebimento__month=int(mes))
+            except Exception:
+                pass
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
