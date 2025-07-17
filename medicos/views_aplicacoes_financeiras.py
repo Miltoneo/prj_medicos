@@ -15,26 +15,39 @@ class AplicacaoFinanceiraListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         from medicos.models.base import Empresa
         ano = self.request.GET.get('ano')
-        if not ano:
-            ano = timezone.now().year
+        print(f"[DEBUG] ano param: {ano}")
+        try:
+            # Aceita strings como '2.024' e converte para inteiro corretamente
+            ano_str = str(ano).replace('.', '').replace(',', '').strip()
+            ano_int = int(ano_str)
+        except (TypeError, ValueError):
+            ano_int = timezone.now().year
+        print(f"[DEBUG] ano usado no filtro: {ano_int}")
         empresa_id = self.request.session.get('empresa_id')
         if not empresa_id:
+            print("[DEBUG] empresa_id não encontrado na sessão")
             return AplicacaoFinanceira.objects.none()
         try:
             empresa = Empresa.objects.get(id=empresa_id)
         except Empresa.DoesNotExist:
+            print(f"[DEBUG] Empresa id={empresa_id} não encontrada")
             return AplicacaoFinanceira.objects.none()
-        return AplicacaoFinanceira.objects.filter(
+        qs = AplicacaoFinanceira.objects.filter(
             empresa=empresa,
-            data_referencia__year=ano
+            data_referencia__year=ano_int
         ).order_by('-data_referencia')
+        print(f"[DEBUG] Query gerada: {qs.query}")
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        ano = self.request.GET.get('ano')
-        if not ano:
+        ano_param = self.request.GET.get('ano')
+        try:
+            ano_str = str(ano_param).replace('.', '').replace(',', '').strip()
+            ano = int(ano_str)
+        except (TypeError, ValueError):
             ano = timezone.now().year
-        context['ano'] = int(ano)
+        context['ano'] = ano
         context['anos'] = list(range(timezone.now().year - 5, timezone.now().year + 2))
         return context
 

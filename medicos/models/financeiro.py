@@ -239,7 +239,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         return descricoes_criadas
 
 
-class AplicacaoFinanceira(SaaSBaseModel):
+class AplicacaoFinanceira(models.Model):
     """
     Modelo simplificado para controle de aplicações financeiras.
     
