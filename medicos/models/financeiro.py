@@ -249,11 +249,10 @@ class AplicacaoFinanceira(SaaSBaseModel):
     
     class Meta:
         db_table = 'aplicacao_financeira'
-        unique_together = ('conta', 'data_referencia', 'empresa')
+        unique_together = ('data_referencia', 'empresa')
         verbose_name = "Aplicação Financeira"
         verbose_name_plural = "Aplicações Financeiras"
         indexes = [
-            models.Index(fields=['conta', 'data_referencia']),
             models.Index(fields=['empresa', 'data_referencia']),
             models.Index(fields=['data_referencia']),
         ]
