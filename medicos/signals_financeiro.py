@@ -14,7 +14,7 @@ logger = logging.getLogger('medicos.signals_financeiro')
 def criar_ou_atualizar_lancamentos_financeiros(sender, instance, created, **kwargs):
     logger.warning(f"Signal NotaFiscal disparado: id={instance.id}, status_recebimento={getattr(instance, 'status_recebimento', None)}, rateio_completo={getattr(instance, 'rateio_completo', None)}")
     # Só processa se a nota está recebida e tem rateio completo
-    if getattr(instance, 'status_recebimento', None) == 'completo' and getattr(instance, 'rateio_completo', False):
+    if getattr(instance, 'status_recebimento', None) == 'recebido' and getattr(instance, 'rateio_completo', False):
         logger.warning(f"Criando lançamentos financeiros para NotaFiscal id={instance.id}")
         Financeiro.objects.filter(nota_fiscal=instance).delete()
         descricao, _ = DescricaoMovimentacaoFinanceira.objects.get_or_create(

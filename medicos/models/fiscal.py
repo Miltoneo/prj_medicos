@@ -1096,7 +1096,7 @@ class NotaFiscal(models.Model):
     # === CONTROLE DE RECEBIMENTO ===
     STATUS_RECEBIMENTO_CHOICES = [
         ('pendente', 'Pendente'),
-        ('completo', 'Recebido Completamente'),
+        ('recebido', 'Recebido'),
         ('cancelado', 'Cancelado'),
     ]
     
@@ -1170,10 +1170,21 @@ class NotaFiscal(models.Model):
             })
         # (Regra removida: meio de pagamento não é mais obrigatório quando há data de recebimento)
         # Validar consistência do status de recebimento
-        if self.status_recebimento == 'completo' and not self.dtRecebimento:
+        if self.status_recebimento == 'recebido' and not self.dtRecebimento:
             raise ValidationError({
-                'status_recebimento': 'Status "Recebido Completamente" requer data de recebimento'
+                'status_recebimento': 'Status "Recebido" requer data de recebimento'
             })
+        # Bloquear recebimento se rateio não estiver completo
+        if self.status_recebimento == 'recebido':
+            # Só bloqueia se houver pelo menos um rateio cadastrado
+            if self.tem_rateio and not self.rateio_completo:
+                raise ValidationError({
+                    'status_recebimento': (
+                        'Não é permitido marcar como "Recebido" enquanto o rateio não estiver completo. '
+                        f'Total rateado: {self.percentual_total_rateado:.2f}%. '
+                        f'Faltam {self.percentual_pendente_rateio:.2f}% para completar 100%.'
+                    )
+                })
         # Corrigir validação de unicidade para edição
         if self.pk:
             if NotaFiscal.objects.filter(
@@ -1276,7 +1287,7 @@ class NotaFiscal(models.Model):
             if self.eh_vencida:
                 return f"Pendente (vencida há {self.dias_atraso} dias)"
             return "Pendente"
-        elif self.status_recebimento == 'completo':
+        elif self.status_recebimento == 'recebido':
             return f"Completo (recebido em {self.dtRecebimento})"
         return self.get_status_recebimento_display()
 
