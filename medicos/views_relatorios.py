@@ -13,7 +13,7 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
 
     # Menu e cenário
     request.session['menu_nome'] = menu_nome or 'Relatórios'
-    request.session['cenario_nome'] = 'Relatórios'  # Always save 'Relatórios' in session
+    # cenario_nome agora deve ser passado no contexto, não na sessão
 
     # Usuário
     request.session['user_id'] = request.user.id
@@ -32,11 +32,13 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
 @login_required
 def relatorio_executivo(request):
     context = main(request, menu_nome='Relatórios', cenario_nome='Relatório Executivo')
+    context['cenario_nome'] = 'Relatórios'
     return render(request, 'relatorios/relatorio_executivo.html', context)
 
 
 @login_required
 def relatorio_executivo_pdf(request, conta_id):
     context = main(request, menu_nome='Relatórios', cenario_nome='Relatório Executivo PDF')
+    context['cenario_nome'] = 'Relatórios'
     context['conta_id'] = conta_id
     return render(request, 'relatorios/relatorio_executivo.html', context)

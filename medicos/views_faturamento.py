@@ -11,12 +11,12 @@ from django.utils.decorators import method_decorator
 from django_tables2 import SingleTableMixin
 from django_filters.views import FilterView
 
-# Local imports
 from medicos.models.fiscal import NotaFiscal, Aliquotas
 from .tables_notafiscal_lista import NotaFiscalListaTable
 from .filters_notafiscal import NotaFiscalFilter
 from medicos.models.base import Empresa
 from .forms_notafiscal import NotaFiscalForm
+from core.context_processors import empresa_context
 
 class NotaFiscalCreateView(CreateView):
     model = NotaFiscal
@@ -28,19 +28,11 @@ class NotaFiscalCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Nova Nota Fiscal'
-        # Busca empresa do context processor ou da sessão
-        empresa = context.get('empresa')
-        if not empresa:
-            empresa_id = self.request.session.get('empresa_id')
-            if empresa_id:
-                from medicos.models.base import Empresa
-                try:
-                    empresa = Empresa.objects.get(id=int(empresa_id))
-                except Empresa.DoesNotExist:
-                    empresa = None
+        context['cenario_nome'] = 'Faturamento'
+        # Use empresa do context processor
+        empresa = empresa_context(self.request).get('empresa')
         aliquota_vigente = None
         if empresa:
-            # Sempre carrega a alíquota ativa mais recente da empresa
             aliquota_vigente = Aliquotas.obter_aliquota_vigente(empresa)
             context.update({
                 'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0) if aliquota_vigente else 0,
@@ -57,7 +49,6 @@ class NotaFiscalCreateView(CreateView):
                     'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento', 'dtVencimento', 'descricao_servicos', 'serie', 'criado_por'
                 ]
             })
-            # Se o usuário já preencheu a data de emissão, tenta buscar a alíquota vigente para a data
             dt_emissao = self.request.POST.get('dtEmissao') or self.request.GET.get('dtEmissao')
             if dt_emissao:
                 aliquota_para_data = Aliquotas.obter_aliquota_vigente(empresa, dt_emissao)
@@ -65,7 +56,6 @@ class NotaFiscalCreateView(CreateView):
                     context['erro_aliquota'] = 'Não foi encontrada alíquota vigente para a empresa e data informada. Cadastre uma alíquota antes de emitir a nota fiscal.'
                     context['aliquota_vigente'] = False
                 else:
-                    # Atualiza os campos se encontrou uma alíquota específica para a data
                     context.update({
                         'aliquota_ISS': getattr(aliquota_para_data, 'ISS', 0),
                         'aliquota_PIS': getattr(aliquota_para_data, 'PIS', 0),
@@ -76,7 +66,6 @@ class NotaFiscalCreateView(CreateView):
                         'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_ALIQUOTA_OUTROS', 0),
                     })
         else:
-            # Se não houver empresa, zera as alíquotas
             context.update({
                 'aliquota_ISS': 0,
                 'aliquota_PIS': 0,
@@ -92,11 +81,10 @@ class NotaFiscalCreateView(CreateView):
         return super().get_form(form_class)
 
     def form_valid(self, form):
-        empresa_id = self.request.session.get('empresa_id')
-        if not empresa_id:
-            form.add_error(None, 'Nenhuma empresa selecionada na sessão. Selecione uma empresa antes de continuar.')
+        empresa = empresa_context(self.request).get('empresa')
+        if not empresa:
+            form.add_error(None, 'Nenhuma empresa selecionada. Selecione uma empresa antes de continuar.')
             return self.form_invalid(form)
-        empresa = Empresa.objects.get(id=int(empresa_id))
         form.instance.empresa_destinataria = empresa
         dt_emissao = form.cleaned_data.get('dtEmissao')
         aliquota_vigente = None
@@ -120,6 +108,7 @@ class NotaFiscalUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Nota Fiscal'
+        context['cenario_nome'] = 'Faturamento'
         empresa = context.get('empresa')  # Usar empresa do context processor
         aliquota_vigente = None
         dt_emissao = self.object.dtEmissao if hasattr(self.object, 'dtEmissao') else None
@@ -181,6 +170,6 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
             'menu_nome': 'Notas Fiscais',
             'mes_ano': self.request.session.get('mes_ano')
         })
-        self.request.session['cenario_nome'] = 'Faturamento'
+        context['cenario_nome'] = 'Faturamento'
         # Não injeta empresa manualmente
         return context

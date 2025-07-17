@@ -15,6 +15,7 @@ from django.urls import reverse
 
 from medicos.forms import SocioCPFForm, SocioForm, SocioPessoaCompletaForm
 from medicos.models.base import Empresa, Pessoa, Socio
+from core.context_processors import empresa_context
 from .filters_socio import SocioFilter
 
 
@@ -24,7 +25,7 @@ from .tables_socio_lista import SocioListaTable
 # Mixin para contexto/session
 class SocioContextMixin(ContextMixin):
     menu_nome = 'Cadastro de Sócios'
-    #cenario_nome = 'Cadastro de Sócio'
+    cenario_nome = 'Cadastro de Sócios'
 
     def get_context_data(self, **kwargs):
         # Garante compatibilidade com CreateView, UpdateView, DetailView
@@ -33,7 +34,7 @@ class SocioContextMixin(ContextMixin):
         else:
             context = super().get_context_data(**kwargs)
         context['menu_nome'] = self.menu_nome
-        #context['cenario_nome'] = self.cenario_nome
+        context['cenario_nome'] = self.cenario_nome
         context['titulo_pagina'] = getattr(self, 'titulo_pagina', 'Sócios')
         return context
 
@@ -45,7 +46,6 @@ class SocioContextMixin(ContextMixin):
         request.session.update({
             'mes_ano': mes_ano,
             'menu_nome': self.menu_nome,
-            #'cenario_nome': self.cenario_nome,
             'user_id': request.user.id,
         })
         return super().dispatch(request, *args, **kwargs)
@@ -100,8 +100,10 @@ class SocioListView(SocioContextMixin, FilterView):
 
 class SocioCreateView(CreateView):
     def form_valid(self, form):
-        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        empresa = get_object_or_404(Empresa, id=empresa_id)
+        empresa = empresa_context(self.request).get('empresa')
+        if not empresa:
+            form.add_error(None, 'Nenhuma empresa selecionada.')
+            return self.form_invalid(form)
         self.object = form.save(empresa=empresa)
         messages.success(self.request, 'Sócio cadastrado com sucesso!')
         return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id)

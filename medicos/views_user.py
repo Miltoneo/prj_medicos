@@ -10,6 +10,7 @@ from django.contrib import messages
 from .models.base import ContaMembership, Conta
 from .forms import CustomUserForm
 from medicos.models.base import Empresa
+from core.context_processors import empresa_context
 
 User = get_user_model()
 
@@ -26,15 +27,14 @@ class StaffRequiredMixin(UserPassesTestMixin):
 # Views
 
 def get_empresa_from_request(request):
-    empresa_id = getattr(request, 'empresa_id', None) or request.session.get('empresa_id')
-    if empresa_id:
-        return Empresa.objects.filter(id=empresa_id).first()
-    return None
+    # Use apenas o context processor para obter a empresa
+    return empresa_context(request).get('empresa')
 
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Usuários'
+        context['cenario_nome'] = 'Usuários'
         return context
     model = User
     template_name = "common/user_list.html"
@@ -51,6 +51,7 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Novo Usuário'
+        context['cenario_nome'] = 'Usuários'
         return context
     model = User
     form_class = CustomUserForm
@@ -95,6 +96,7 @@ class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Usuário'
+        context['cenario_nome'] = 'Usuários'
         return context
     model = User
     form_class = CustomUserForm
@@ -116,6 +118,7 @@ class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Excluir Usuário'
+        context['cenario_nome'] = 'Usuários'
         return context
     model = User
     template_name = "common/user_confirm_delete.html"
@@ -135,6 +138,7 @@ class UserDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Detalhes do Usuário'
+        context['cenario_nome'] = 'Usuários'
         return context
     model = User
     template_name = "common/user_detail.html"

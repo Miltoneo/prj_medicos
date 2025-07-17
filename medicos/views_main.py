@@ -16,7 +16,7 @@ def main(request):
     contas_ids = memberships.values_list('conta_id', flat=True)
     empresas_cadastradas = Empresa.objects.filter(conta_id__in=contas_ids)
 
-    request.session['cenario_nome'] = 'Home'
+    # cenario_nome agora deve ser passado no contexto, não na sessão
     contexto = {
         'mes_ano': request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m'),
         'menu_nome': 'Home',
@@ -54,6 +54,7 @@ class DashboardEmpresaListView(LoginRequiredMixin, ListView):
         if self.get_queryset().exists():
             empresa = self.get_queryset().first()
         context.update(main(self.request, empresa=empresa, menu_nome='Dashboard', cenario_nome='Dashboard'))
+        context['cenario_nome'] = 'Dashboard'
         
         context['empresa_id_atual'] = self.request.session.get('empresa_id')
         return context

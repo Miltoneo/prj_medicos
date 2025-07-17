@@ -1,61 +1,52 @@
+## Padronização de Contexto, Header e Título em Views e Templates
 
-# Regra de padronização: Contexto global de empresa
+### Regra única para contexto global, título e cenário
 
-Todas as views e templates que exibem informações dependentes da empresa devem seguir o padrão abaixo:
+1. **Contexto global de empresa:**
+   - Sempre injete a variável `empresa` no contexto dos templates via context processor (`empresa_context`). Nunca injete manualmente nas views.
+   - A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como `empresa_atual_id`). Não faça fallback automático para a primeira empresa cadastrada.
+   - Os templates devem usar apenas `{{ empresa }}` para exibir informações da empresa, tratando o caso em que `empresa` é `None` (exibindo alerta ou bloqueando navegação).
 
-- A variável `empresa` deve ser sempre injetada no contexto dos templates via context processor (`empresa_context`), nunca manualmente nas views.
-- A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como `empresa_atual_id`). Não deve haver fallback automático para a primeira empresa cadastrada.
-- Os templates devem usar apenas `{{ empresa }}` para exibir informações da empresa, e tratar o caso em que `empresa` é `None` (exibindo alerta ou bloqueando navegação).
-- O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}`.
-- Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto global e o template base para garantir consistência visual e semântica.
+2. **Uso de get_context_data em views baseadas em classe:**
+   - Sempre sobrescreva `get_context_data(self, **kwargs)` para adicionar variáveis específicas da página (ex: `titulo_pagina`, filtros, listas).
+   - Sempre chame `super().get_context_data(**kwargs)` para herdar o contexto padrão.
+   - Defina a variável `titulo_pagina` no contexto para exibição padronizada do título no header.
+   - Defina o nome do cenário na sessão do usuário usando `self.request.session['cenario_nome'] = 'Nome do Cenário'` para exibição correta no header.
+   - O contexto deve ser passado como dicionário para o template.
 
-Exemplo de função e localização:
-Localização: core/context_processors.py
+3. **Padronização do header e título:**
+   - O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}`.
+   - O título da página deve ser exibido exclusivamente pelo header base do sistema (template base/layout), usando a variável `titulo_pagina` definida na view.
+   - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base para garantir consistência visual e semântica.
+   - O título é exibido em um elemento `<h4>` com as classes Bootstrap `fw-bold text-primary` e segue o formato: `Título: [nome da página]`.
+   - Caso a variável não esteja definida, será exibido automaticamente o texto `Título: erro`.
+
+#### Exemplo de uso em view:
+```python
+def get_context_data(self, **kwargs):
+    context = super().get_context_data(**kwargs)
+    context['titulo_pagina'] = 'Lançamentos'
+    self.request.session['cenario_nome'] = 'Financeiro'
+    return context
+```
+
+#### Exemplo de context processor (core/context_processors.py):
 ```python
 def empresa_context(request):
-    """
-    Regra de desenvolvimento para contexto de empresa:
-    - A variável 'empresa' deve ser sempre injetada no contexto dos templates via context processor (empresa_context), nunca manualmente nas views.
-    - A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como 'empresa_atual_id'). Não deve haver fallback automático para a primeira empresa cadastrada.
-    - Os templates devem usar apenas {{ empresa }} para exibir informações da empresa, e tratar o caso em que 'empresa' é None (exibindo alerta ou bloqueando navegação).
-    - O cabeçalho padrão deve ser incluído via {% include 'layouts/base_header.html' %}.
-    - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto global e o template base para garantir consistência visual e semântica.
-    """
-    conta_atual = get_current_account()
-    empresas_cadastradas = []
-    empresa = None
-    if conta_atual:
-        empresas_cadastradas = Empresa.objects.filter(conta=conta_atual, ativo=True).order_by('nome_fantasia','name')
-        empresa_id = request.session.get('empresa_atual_id')
-        if empresa_id:
-            try:
-                empresa = empresas_cadastradas.get(id=empresa_id)
-            except Empresa.DoesNotExist:
-                empresa = None
-        else:
-            empresa = None  # Não faz fallback automático
+    # ...código para obter empresa...
     return {
-        'empresas_cadastradas': empresas_cadastradas,
         'empresa': empresa,
-        'conta_atual': conta_atual,
+        # ...outros itens do contexto global...
     }
 ```
-# Padronização de Título de Páginas
-## Regra obrigatória: Título da página
 
-O título da página deve ser exibido exclusivamente pelo header base do sistema (template base/layout). Não é permitido incluir o título manualmente em templates filhos, evitando duplicidade e garantindo consistência visual. Caso o título seja incluído em um template filho, ele deve ser removido imediatamente.
+#### Exemplo no template base:
+```django
+<h4 class="fw-bold text-primary">Título: {{ titulo_pagina|default:'erro' }}</h4>
+{% include 'layouts/base_header.html' %}
+```
 
-Essa regra reforça a padronização e centralização do layout, facilitando manutenção e evolução visual do sistema.
-
-Todas as páginas do sistema devem exibir o título no topo do conteúdo principal, conforme o padrão:
-
-- O título é exibido em um elemento `<h4>` com as classes Bootstrap `fw-bold text-primary`.
-- O texto segue o formato: `Título: [nome da página]`.
-- O nome da página é definido pela variável de contexto `titulo_pagina` em cada view.
-- Caso a variável não esteja definida, será exibido automaticamente o texto `Título: erro`.
-- Este padrão deve ser aplicado em todos os templates base do projeto.
-
-Exemplo no template base:
+> Seguindo esta regra única, todas as páginas do sistema terão contexto, header e título padronizados, facilitando manutenção, evolução visual e experiência do usuário.
 ```django
 <div class="mb-3">
   <h4 class="fw-bold text-primary">Título: {{ titulo_pagina|default:'erro' }}</h4>

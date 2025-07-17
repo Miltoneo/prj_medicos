@@ -12,8 +12,6 @@ from core.context_processors import empresa_context
 from medicos.models.base import Empresa
 
 
-
-
 class FinanceiroListView(SingleTableMixin, FilterView):
     """
     View para listagem de lançamentos financeiros.
@@ -28,22 +26,13 @@ class FinanceiroListView(SingleTableMixin, FilterView):
     def get_context_data(self, **kwargs):
         """
         Regra de padronização:
-        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']).
+        - NÃO injete manualmente a variável 'empresa' no contexto. Ela já estará disponível via context processor.
         - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
-        - Injete também 'titulo_pagina' para exibição do título padrão no header.
-        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        - Injete apenas 'titulo_pagina' e 'cenario_nome' para exibição correta no header.
         """
         context = super().get_context_data(**kwargs)
-        empresa_id = self.request.session.get('empresa_id')
-        if empresa_id:
-            try:
-                context['empresa'] = Empresa.objects.get(id=int(empresa_id))
-            except Empresa.DoesNotExist:
-                context['empresa'] = None
-        else:
-            context['empresa'] = None
-        # O nome da empresa será exibido automaticamente pelo base_header.html
         context['titulo_pagina'] = 'Lançamentos'
+        context['cenario_nome'] = 'Financeiro'
         return context
 
 
@@ -61,12 +50,11 @@ class FinanceiroCreateView(CreateView):
 
     def form_valid(self, form):
         instance = form.save(commit=False)
-        empresa_ctx = empresa_context(self.request)
-        empresa = empresa_ctx.get('empresa')
+        # Use o context processor para obter a empresa
+        empresa = empresa_context(self.request).get('empresa')
         if not empresa:
             form.add_error(None, 'Nenhuma empresa selecionada.')
             return self.form_invalid(form)
-        # Relaciona a movimentação à empresa selecionada
         instance.empresa = empresa
         instance.save()
         return super().form_valid(form)

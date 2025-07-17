@@ -22,7 +22,7 @@
     </div>
   </div>
   <div>
-    <span class="badge bg-primary px-3 py-2 text-light"><i class="fas fa-briefcase me-1"></i>Cenário: {{ request.session.cenario_nome|default_if_none:'ERRO' }}</span>
+    <span class="badge bg-primary px-3 py-2 text-light"><i class="fas fa-briefcase me-1"></i>Cenário: {{ cenario_nome|default_if_none:'ERRO' }}</span>
     <div>
       <span class="h6 mb-0 text-dark ms-4">Menu: {{ menu_nome }}</span>
     </div>
