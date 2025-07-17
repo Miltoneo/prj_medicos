@@ -1,37 +1,44 @@
 {% extends 'layouts/base_cenario_financeiro.html' %}
 {% load render_table from django_tables2 %}
+
 {% block content %}
-<div class="card mb-4">
-  <div class="card-body">
-    <form method="get" class="row g-3 align-items-end">
-      <div class="col-md-3">
-        <label for="id_numero" class="form-label">Número NF</label>
-        <input type="text" id="id_numero" name="numero" class="form-control" value="{{ request.GET.numero }}">
+<div class="row justify-content-center">
+  <div class="col-12 col-md-10 col-lg-8">
+    <div class="card mb-4 shadow-sm border-0">
+      <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label for="id_numero" class="form-label">Número NF</label>
+            <input type="text" id="id_numero" name="numero" class="form-control" value="{{ request.GET.numero }}">
+          </div>
+          <div class="col-md-3">
+            <label for="id_mes_ano_emissao" class="form-label">Mês/Ano de Emissão</label>
+            <input type="month" id="id_mes_ano_emissao" name="mes_ano_emissao" class="form-control" value="{{ request.GET.mes_ano_emissao }}">
+          </div>
+          <div class="col-md-3">
+            <label for="id_mes_ano_recebimento" class="form-label">Mês/Ano de Recebimento</label>
+            <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ request.GET.mes_ano_recebimento }}">
+          </div>
+          <div class="col-md-3">
+            <label for="id_status_recebimento" class="form-label">Status de Recebimento</label>
+            <select id="id_status_recebimento" name="status_recebimento" class="form-select">
+              <option value="">Todos</option>
+              <option value="PENDENTE" {% if request.GET.status_recebimento == 'PENDENTE' %}selected{% endif %}>Pendente</option>
+              <option value="RECEBIDO" {% if request.GET.status_recebimento == 'RECEBIDO' %}selected{% endif %}>Recebido</option>
+            </select>
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="{% url 'medicos:recebimento_notas_fiscais' %}" class="btn btn-outline-secondary ms-2">Limpar</a>
+          </div>
+        </form>
       </div>
-      <div class="col-md-3">
-        <label for="id_mes_ano_emissao" class="form-label">Mês/Ano de Emissão</label>
-        <input type="month" id="id_mes_ano_emissao" name="mes_ano_emissao" class="form-control" value="{{ request.GET.mes_ano_emissao }}">
-      </div>
-      <div class="col-md-3">
-        <label for="id_mes_ano_recebimento" class="form-label">Mês/Ano de Recebimento</label>
-        <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ request.GET.mes_ano_recebimento }}">
-      </div>
-      <div class="col-md-3">
-        <label for="id_status_recebimento" class="form-label">Status de Recebimento</label>
-        <select id="id_status_recebimento" name="status_recebimento" class="form-select">
-          <option value="">Todos</option>
-          <option value="PENDENTE" {% if request.GET.status_recebimento == 'PENDENTE' %}selected{% endif %}>Pendente</option>
-          <option value="RECEBIDO" {% if request.GET.status_recebimento == 'RECEBIDO' %}selected{% endif %}>Recebido</option>
-        </select>
-      </div>
-      <div class="col-12 text-end">
-        <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
-        <a href="{% url 'medicos:recebimento_notas_fiscais' %}" class="btn btn-outline-secondary ms-2">Limpar</a>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
-<div class="mt-4">
-  {% render_table table %}
+<div class="row justify-content-center mt-4">
+  <div class="col-12 col-md-10 col-lg-8">
+    {% render_table table %}
+  </div>
 </div>
 {% endblock %}
