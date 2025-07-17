@@ -18,13 +18,6 @@ class FinanceiroFilter(django_filters.FilterSet):
         widget=forms.TextInput(attrs={'type': 'month'})
     )
 
-    from medicos.models.fiscal import NotaFiscal
-    nota_fiscal = django_filters.ModelChoiceFilter(
-        field_name='nota_fiscal',
-        queryset=NotaFiscal.objects.all(),
-        label='Nota Fiscal',
-        widget=forms.Select
-    )
 
     def filter_by_month(self, queryset, name, value):
         if value:

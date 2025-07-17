@@ -14,6 +14,7 @@ from . import views_main
 from . import views_relatorios
 from . import views_empresa
 from . import views_faturamento
+from .views_recebimento_notafiscal import NotaFiscalRecebimentoListView, NotaFiscalRecebimentoUpdateView
 from . import views_meio_pagamento
 from . import views_faturamento
 # from . import views_home_cenario  # Removido: arquivo não existe
@@ -39,10 +40,12 @@ urlpatterns = [
     path('lista_notas_rateio/', NotaFiscalRateioListView.as_view(), name='lista_notas_rateio'),
     path('lista_notas_rateio_medicos/', NotaFiscalRateioMedicoListView.as_view(), name='lista_notas_rateio_medicos'),
 
+
     # =====================
     # Financeiro Views
     # =====================
     path('financeiro/lancamentos/', FinanceiroListView.as_view(), name='financeiro_lancamentos'),
+
 
     # =====================
     # Empresa Views
@@ -83,6 +86,10 @@ urlpatterns = [
     path('editar_nota_fiscal/<int:pk>/editar/', views_faturamento.NotaFiscalUpdateView.as_view(), name='editar_nota_fiscal'),
     path('excluir_nota_fiscal/<int:pk>/excluir/', views_faturamento.NotaFiscalDeleteView.as_view(), name='excluir_nota_fiscal'),
     path('cenario_faturamento/', views_cenario.cenario_faturamento, name='cenario_faturamento'),
+
+    # Recebimento de Notas Fiscais (Fluxo Isolado do Financeiro)
+    path('recebimento-notas/', NotaFiscalRecebimentoListView.as_view(), name='recebimento_notas_fiscais'),
+    path('recebimento-notas/<int:pk>/editar/', NotaFiscalRecebimentoUpdateView.as_view(), name='editar_recebimento_nota_fiscal'),
 
     # =====================
     # Meios de Pagamento Views

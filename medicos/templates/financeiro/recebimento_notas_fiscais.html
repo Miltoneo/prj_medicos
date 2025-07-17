@@ -1,0 +1,40 @@
+{% extends 'layouts/base_cenario_financeiro.html' %}
+{% load render_table from django_tables2 %}
+{% block content %}
+<div class="card mb-4">
+  <div class="card-header bg-primary text-light fw-bold">
+    <i class="fas fa-filter me-2"></i>Filtros de Pesquisa
+  </div>
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label for="id_numero" class="form-label">Número NF</label>
+        <input type="text" id="id_numero" name="numero" class="form-control" value="{{ request.GET.numero }}">
+      </div>
+      <div class="col-md-3">
+        <label for="id_dtEmissao" class="form-label">Data de Emissão</label>
+        <input type="date" id="id_dtEmissao" name="dtEmissao" class="form-control" value="{{ request.GET.dtEmissao }}">
+      </div>
+      <div class="col-md-3">
+        <label for="id_dtRecebimento" class="form-label">Data de Recebimento</label>
+        <input type="date" id="id_dtRecebimento" name="dtRecebimento" class="form-control" value="{{ request.GET.dtRecebimento }}">
+      </div>
+      <div class="col-md-3">
+        <label for="id_status_recebimento" class="form-label">Status de Recebimento</label>
+        <select id="id_status_recebimento" name="status_recebimento" class="form-select">
+          <option value="">Todos</option>
+          <option value="PENDENTE" {% if request.GET.status_recebimento == 'PENDENTE' %}selected{% endif %}>Pendente</option>
+          <option value="RECEBIDO" {% if request.GET.status_recebimento == 'RECEBIDO' %}selected{% endif %}>Recebido</option>
+        </select>
+      </div>
+      <div class="col-12 text-end">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
+        <a href="{% url 'medicos:recebimento_notas_fiscais' %}" class="btn btn-outline-secondary ms-2">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="mt-4">
+  {% render_table table %}
+</div>
+{% endblock %}
