@@ -37,7 +37,8 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
 # Views
 @login_required
 def lista_grupos_despesa(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
+    from core.context_processors import empresa_context
+    empresa = empresa_context(request).get('empresa')
     sort = request.GET.get('sort', 'codigo')
     if sort not in ['codigo', 'descricao', '-codigo', '-descricao']:
         sort = 'codigo'
@@ -55,7 +56,8 @@ def lista_grupos_despesa(request, empresa_id):
 
 @login_required
 def grupo_despesa_edit(request, empresa_id, grupo_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
+    from core.context_processors import empresa_context
+    empresa = empresa_context(request).get('empresa')
     grupo = None
     if grupo_id != 0:
         grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
@@ -74,7 +76,8 @@ def grupo_despesa_edit(request, empresa_id, grupo_id):
 
 @login_required
 def item_despesa_create(request, empresa_id, grupo_id):
-    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    from core.context_processors import empresa_context
+    empresa = empresa_context(request).get('empresa')
     grupos = GrupoDespesa.objects.filter(conta=empresa.conta)
     grupo_inicial = None
     if int(grupo_id) != 0:
@@ -114,20 +117,19 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
     filterset_class = ItemDespesaFilter
 
     def get_table_data(self):
-        empresa_id = self.kwargs.get('empresa_id')
-        empresa = Empresa.objects.get(pk=empresa_id)
-        qs = ItemDespesa.objects.filter(conta=empresa.conta)
-        # Aplica filtro se houver
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        qs = ItemDespesa.objects.filter(conta=empresa.conta) if empresa else ItemDespesa.objects.none()
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
         return self.filter.qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        empresa_id = self.kwargs.get('empresa_id')
-        empresa = Empresa.objects.get(pk=empresa_id)
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
         main_context = main(self.request, empresa=empresa, menu_nome='Despesas', cenario_nome='Itens de Despesa')
         context.update(main_context)
-        context['empresa_id'] = empresa_id
+        context['empresa_id'] = empresa.id if empresa else None
         context['filter'] = getattr(self, 'filter', None)
         return context
 

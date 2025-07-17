@@ -62,11 +62,9 @@ class DescricaoMovimentacaoFinanceiraListView(LoginRequiredMixin, SingleTableMix
     paginate_by = 20
 
     def get_queryset(self):
-        empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        try:
-            empresa = Empresa.objects.get(id=empresa_id)
-        except Empresa.DoesNotExist:
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        if not empresa:
             return DescricaoMovimentacaoFinanceira.objects.none()
         return DescricaoMovimentacaoFinanceira.objects.filter(empresa=empresa)
 
@@ -89,19 +87,17 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
     template_name = 'financeiro/descricao_movimentacao_form.html'
 
     def form_valid(self, form):
-        empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        try:
-            empresa = Empresa.objects.get(id=empresa_id)
-        except Empresa.DoesNotExist:
-            messages.error(self.request, f'Empresa com id {empresa_id} não existe.')
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        if not empresa:
+            messages.error(self.request, 'Empresa não encontrada no contexto.')
             return self.form_invalid(form)
         form.empresa = empresa
         descricao = form.save(commit=False)
         descricao.created_by = self.request.user
         descricao.save()
         messages.success(self.request, 'Descrição cadastrada com sucesso!')
-        return redirect('financeiro:lista_descricoes_movimentacao', empresa_id=empresa_id)
+        return redirect('financeiro:lista_descricoes_movimentacao', empresa_id=empresa.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -120,18 +116,16 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
 
 
     def form_valid(self, form):
+        from core.context_processors import empresa_context
         descricao = form.save(commit=False)
-        empresa_id = self.kwargs.get('empresa_id')
-        from medicos.models.base import Empresa
-        try:
-            empresa = Empresa.objects.get(id=empresa_id)
-            descricao.empresa = empresa
-        except Empresa.DoesNotExist:
-            messages.error(self.request, f'Empresa com id {empresa_id} não existe.')
+        empresa = empresa_context(self.request).get('empresa')
+        if not empresa:
+            messages.error(self.request, 'Empresa não encontrada no contexto.')
             return self.form_invalid(form)
+        descricao.empresa = empresa
         descricao.save()
         messages.success(self.request, 'Descrição atualizada com sucesso!')
-        return redirect('financeiro:lista_descricoes_movimentacao', empresa_id=empresa_id)
+        return redirect('financeiro:lista_descricoes_movimentacao', empresa_id=empresa.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

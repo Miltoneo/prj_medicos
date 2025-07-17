@@ -36,10 +36,9 @@ class NotaFiscalRateioMedicoListView(FilterView):
     def get_context_data(self, **kwargs):
         """
         Regra de padronização:
-        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']).
+        - NÃO injete manualmente a variável 'empresa' no contexto. Ela já estará disponível via context processor.
         - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
-        - Injete também 'titulo_pagina' para exibição do título padrão no header.
-        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        - Injete apenas 'titulo_pagina' para exibição correta no header.
         """
         context = super().get_context_data(**kwargs)
         table = self.table_class(self.get_queryset())
@@ -48,8 +47,6 @@ class NotaFiscalRateioMedicoListView(FilterView):
         context['titulo_pagina'] = 'Notas Fiscais Rateadas por Médico'
         if self.nota_fiscal:
             context['nota_fiscal'] = self.nota_fiscal
-        # 'empresa' já é fornecida pelo context processor
-        # Removido campo 'competencia' do contexto
         qs = self.get_queryset()
         context['total_bruto'] = sum(getattr(obj, 'valor_bruto_medico', 0) or 0 for obj in qs)
         context['total_liquido'] = sum(getattr(obj, 'valor_liquido_medico', 0) or 0 for obj in qs)
