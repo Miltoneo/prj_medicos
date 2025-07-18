@@ -292,13 +292,13 @@ class GrupoDespesaForm(forms.ModelForm):
 class ItemDespesaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['grupo'].label_from_instance = lambda obj: obj.descricao
+        self.fields['grupo_despesa'].label_from_instance = lambda obj: obj.descricao
         self.fields['codigo'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'Código',
             'style': 'max-width: 200px;'
         })
-        self.fields['grupo'].widget.attrs.update({
+        self.fields['grupo_despesa'].widget.attrs.update({
             'class': 'form-select',
             'style': 'max-width: 300px;'
         })
@@ -311,10 +311,10 @@ class ItemDespesaForm(forms.ModelForm):
 
     class Meta:
         model = ItemDespesa
-        fields = ['codigo', 'grupo', 'descricao']  # 'grupo' já está acima de 'descricao'
+        fields = ['codigo', 'grupo_despesa', 'descricao']  # 'grupo_despesa' já está acima de 'descricao'
         widgets = {
             'codigo': forms.TextInput(),
-            'grupo': forms.Select(),
+            'grupo_despesa': forms.Select(),
             'descricao': forms.Textarea(),
         }
 

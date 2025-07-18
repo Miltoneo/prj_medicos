@@ -42,7 +42,7 @@ def lista_grupos_despesa(request, empresa_id):
     sort = request.GET.get('sort', 'codigo')
     if sort not in ['codigo', 'descricao', '-codigo', '-descricao']:
         sort = 'codigo'
-    qs = GrupoDespesa.objects.filter(conta=empresa.conta).order_by(sort, 'descricao')
+    qs = GrupoDespesa.objects.all().order_by(sort, 'descricao')
     filtro = GrupoDespesaFilter(request.GET, queryset=qs)
     grupos_list = filtro.qs
     paginator = Paginator(grupos_list, 20)
@@ -60,7 +60,7 @@ def grupo_despesa_edit(request, empresa_id, grupo_id):
     empresa = empresa_context(request).get('empresa')
     grupo = None
     if grupo_id != 0:
-        grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
+        grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
     form = GrupoDespesaForm(request.POST or None, instance=grupo)
     if request.method == 'POST' and form.is_valid():
         grupo = form.save(commit=False)
@@ -78,28 +78,27 @@ def grupo_despesa_edit(request, empresa_id, grupo_id):
 def item_despesa_create(request, empresa_id, grupo_id):
     from core.context_processors import empresa_context
     empresa = empresa_context(request).get('empresa')
-    grupos = GrupoDespesa.objects.filter(conta=empresa.conta)
+    grupos = GrupoDespesa.objects.all()
     grupo_inicial = None
     if int(grupo_id) != 0:
-        grupo_inicial = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
+        grupo_inicial = get_object_or_404(GrupoDespesa, id=grupo_id)
     if request.method == 'POST':
         form = ItemDespesaForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
-            item.grupo = form.cleaned_data['grupo']
-            item.conta = item.grupo.conta
+            item.grupo_despesa = form.cleaned_data['grupo_despesa']
             if request.user.is_authenticated:
                 item.created_by = request.user
-            # Validação: código único por conta
-            if ItemDespesa.objects.filter(conta=item.conta, codigo=item.codigo).exists():
-                form.add_error('codigo', 'Já existe um item com este código para esta conta.')
+            # Validação: código único por grupo_despesa
+            if ItemDespesa.objects.filter(grupo_despesa=item.grupo_despesa, codigo=item.codigo).exists():
+                form.add_error('codigo', 'Já existe um item com este código para este grupo de despesa.')
             else:
                 item.save()
                 messages.success(request, 'Item de despesa cadastrado com sucesso!')
                 # Redireciona para o grupo correto
-                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo.id)
+                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo_despesa.id)
     else:
-        initial = {'grupo': grupo_inicial} if grupo_inicial else {}
+        initial = {'grupo_despesa': grupo_inicial} if grupo_inicial else {}
         form = ItemDespesaForm(initial=initial)
     context = main(request, empresa=empresa, menu_nome='Despesas', cenario_nome='Novo Item de Despesa')
     context['form'] = form
@@ -119,7 +118,11 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
     def get_table_data(self):
         from core.context_processors import empresa_context
         empresa = empresa_context(self.request).get('empresa')
-        qs = ItemDespesa.objects.filter(conta=empresa.conta) if empresa else ItemDespesa.objects.none()
+        if empresa:
+            grupos = GrupoDespesa.objects.all()
+            qs = ItemDespesa.objects.filter(grupo_despesa__in=grupos)
+        else:
+            qs = ItemDespesa.objects.none()
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
         return self.filter.qs
 
@@ -137,21 +140,20 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
 @login_required
 def item_despesa_edit(request, empresa_id, grupo_id, item_id):
     empresa = get_object_or_404(Empresa, pk=empresa_id)
-    grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
-    item = get_object_or_404(ItemDespesa, id=item_id, grupo=grupo)
+    grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
+    item = get_object_or_404(ItemDespesa, id=item_id, grupo_despesa=grupo)
     if request.method == 'POST':
         form = ItemDespesaForm(request.POST, instance=item)
         if form.is_valid():
             item = form.save(commit=False)
-            item.grupo = form.cleaned_data['grupo']
-            item.conta = item.grupo.conta
-            # Validação: código único por conta
-            if ItemDespesa.objects.filter(conta=item.conta, codigo=item.codigo).exclude(id=item.id).exists():
-                form.add_error('codigo', 'Já existe um item com este código para esta conta.')
+            item.grupo_despesa = form.cleaned_data['grupo_despesa']
+            # Validação: código único por grupo_despesa
+            if ItemDespesa.objects.filter(grupo_despesa=item.grupo_despesa, codigo=item.codigo).exclude(id=item.id).exists():
+                form.add_error('codigo', 'Já existe um item com este código para este grupo de despesa.')
             else:
                 item.save()
                 messages.success(request, 'Item de despesa atualizado com sucesso!')
-                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo.pk)
+                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo_despesa.pk)
     else:
         form = ItemDespesaForm(instance=item)
     context = main(request, empresa=empresa, menu_nome='Despesas', cenario_nome='Editar Item de Despesa')
@@ -165,8 +167,8 @@ def item_despesa_edit(request, empresa_id, grupo_id, item_id):
 @login_required
 def item_despesa_delete(request, empresa_id, grupo_id, item_id):
     empresa = get_object_or_404(Empresa, pk=empresa_id)
-    grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
-    item = get_object_or_404(ItemDespesa, id=item_id, grupo=grupo)
+    grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
+    item = get_object_or_404(ItemDespesa, id=item_id, grupo_despesa=grupo)
     if request.method == 'POST':
         item.delete()
         messages.success(request, 'Item de despesa excluído com sucesso!')
@@ -181,7 +183,7 @@ def item_despesa_delete(request, empresa_id, grupo_id, item_id):
 @login_required
 def grupo_despesa_delete(request, empresa_id, grupo_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
+    grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
     if request.method == 'POST':
         grupo.delete()
         messages.success(request, 'Grupo de despesa excluído com sucesso!')
@@ -197,7 +199,7 @@ def lista_grupos_despesa(request, empresa_id):
     sort = request.GET.get('sort', 'codigo')
     if sort not in ['codigo', 'descricao', '-codigo', '-descricao']:
         sort = 'codigo'
-    qs = GrupoDespesa.objects.filter(conta=empresa.conta).order_by(sort, 'descricao')
+    qs = GrupoDespesa.objects.all().order_by(sort, 'descricao')
     filtro = GrupoDespesaFilter(request.GET, queryset=qs)
     grupos_list = filtro.qs
     paginator = Paginator(grupos_list, 20)
@@ -217,7 +219,7 @@ def grupo_despesa_edit(request, empresa_id, grupo_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     grupo = None
     if grupo_id != 0:
-        grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
+        grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
     form = GrupoDespesaForm(request.POST or None, instance=grupo)
     if request.method == 'POST' and form.is_valid():
         grupo = form.save(commit=False)
@@ -235,28 +237,27 @@ def grupo_despesa_edit(request, empresa_id, grupo_id):
 @login_required
 def item_despesa_create(request, empresa_id, grupo_id):
     empresa = get_object_or_404(Empresa, pk=empresa_id)
-    grupos = GrupoDespesa.objects.filter(conta=empresa.conta)
+    grupos = GrupoDespesa.objects.all()
     grupo_inicial = None
     if int(grupo_id) != 0:
-        grupo_inicial = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
+        grupo_inicial = get_object_or_404(GrupoDespesa, id=grupo_id)
     if request.method == 'POST':
         form = ItemDespesaForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
-            item.grupo = form.cleaned_data['grupo']
-            item.conta = item.grupo.conta
+            item.grupo_despesa = form.cleaned_data['grupo_despesa']
             if request.user.is_authenticated:
                 item.created_by = request.user
-            # Validação: código único por conta
-            if ItemDespesa.objects.filter(conta=item.conta, codigo=item.codigo).exists():
-                form.add_error('codigo', 'Já existe um item com este código para esta conta.')
+            # Validação: código único por grupo_despesa
+            if ItemDespesa.objects.filter(grupo_despesa=item.grupo_despesa, codigo=item.codigo).exists():
+                form.add_error('codigo', 'Já existe um item com este código para este grupo de despesa.')
             else:
                 item.save()
                 messages.success(request, 'Item de despesa cadastrado com sucesso!')
                 # Redireciona para o grupo correto
-                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo.id)
+                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo_despesa.id)
     else:
-        initial = {'grupo': grupo_inicial} if grupo_inicial else {}
+        initial = {'grupo_despesa': grupo_inicial} if grupo_inicial else {}
         form = ItemDespesaForm(initial=initial)
     context = {
         'form': form,
@@ -278,10 +279,11 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
     filterset_class = ItemDespesaFilter
 
     def get_table_data(self):
-        empresa_id = self.kwargs.get('empresa_id')
-        empresa = Empresa.objects.get(pk=empresa_id)
-        qs = ItemDespesa.objects.filter(conta=empresa.conta)
-        # Aplica filtro se houver
+        grupo_id = self.kwargs.get('grupo_id')
+        if grupo_id and int(grupo_id) != 0:
+            qs = ItemDespesa.objects.filter(grupo_despesa_id=grupo_id)
+        else:
+            qs = ItemDespesa.objects.all()
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
         return self.filter.qs
 
@@ -298,21 +300,20 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
 @login_required
 def item_despesa_edit(request, empresa_id, grupo_id, item_id):
     empresa = get_object_or_404(Empresa, pk=empresa_id)
-    grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
-    item = get_object_or_404(ItemDespesa, id=item_id, grupo=grupo)
+    grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
+    item = get_object_or_404(ItemDespesa, id=item_id, grupo_despesa=grupo)
     if request.method == 'POST':
         form = ItemDespesaForm(request.POST, instance=item)
         if form.is_valid():
             item = form.save(commit=False)
-            item.grupo = form.cleaned_data['grupo']
-            item.conta = item.grupo.conta
-            # Validação: código único por conta
-            if ItemDespesa.objects.filter(conta=item.conta, codigo=item.codigo).exclude(id=item.id).exists():
-                form.add_error('codigo', 'Já existe um item com este código para esta conta.')
+            item.grupo_despesa = form.cleaned_data['grupo_despesa']
+            # Validação: código único por grupo_despesa
+            if ItemDespesa.objects.filter(grupo_despesa=item.grupo_despesa, codigo=item.codigo).exclude(id=item.id).exists():
+                form.add_error('codigo', 'Já existe um item com este código para este grupo de despesa.')
             else:
                 item.save()
                 messages.success(request, 'Item de despesa atualizado com sucesso!')
-                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo.pk)
+                return redirect('medicos:lista_itens_despesa', empresa_id=empresa_id, grupo_id=item.grupo_despesa.pk)
     else:
         form = ItemDespesaForm(instance=item)
     return render(request, 'empresa/item_despesa_create.html', {'form': form, 'grupo': grupo, 'empresa_id': empresa_id, 'edit_mode': True})
@@ -320,8 +321,8 @@ def item_despesa_edit(request, empresa_id, grupo_id, item_id):
 @login_required
 def item_despesa_delete(request, empresa_id, grupo_id, item_id):
     empresa = get_object_or_404(Empresa, pk=empresa_id)
-    grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
-    item = get_object_or_404(ItemDespesa, id=item_id, grupo=grupo)
+    grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
+    item = get_object_or_404(ItemDespesa, id=item_id, grupo_despesa=grupo)
     if request.method == 'POST':
         item.delete()
         messages.success(request, 'Item de despesa excluído com sucesso!')
@@ -331,7 +332,7 @@ def item_despesa_delete(request, empresa_id, grupo_id, item_id):
 @login_required
 def grupo_despesa_delete(request, empresa_id, grupo_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    grupo = get_object_or_404(GrupoDespesa, id=grupo_id, conta=empresa.conta)
+    grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
     if request.method == 'POST':
         grupo.delete()
         messages.success(request, 'Grupo de despesa excluído com sucesso!')

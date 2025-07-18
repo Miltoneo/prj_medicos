@@ -1,20 +1,27 @@
-"""
-Modelos relacionados a gestão de despesas e rateio
-
-Este módulo contém todos os modelos relacionados ao sistema de gestão de despesas
-da aplicação de médicos, incluindo grupos, itens, despesas e sistema de rateio.
-"""
 
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
-from .base import Conta, SaaSBaseModel, Empresa, Socio
+from .base import SaaSBaseModel, Empresa, Socio
 
-# Constantes específicas para despesas
-CODIGO_GRUPO_DESPESA_GERAL = 'GERAL'
-CODIGO_GRUPO_DESPESA_FOLHA = 'FOLHA'
-CODIGO_GRUPO_DESPESA_SOCIO = 'SOCIO'
+# MODELO ABSTRATO DE AUDITORIA
+class AuditoriaModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="%(class)s_criados",
+        verbose_name="Criado Por"
+    )
+
+    class Meta:
+        abstract = True
+
+
 
 TIPO_DESPESA_COM_RATEIO = 1
 TIPO_DESPESA_SEM_RATEIO = 2
@@ -23,21 +30,15 @@ GRUPO_ITEM_COM_RATEIO = 1
 GRUPO_ITEM_SEM_RATEIO = 2
 
 
-class GrupoDespesa(models.Model):
+class GrupoDespesa(AuditoriaModel):
     """Grupos de despesas para organização contábil"""
     
     class Meta:
         db_table = 'despesa_grupo'
-        unique_together = ('conta', 'codigo')
+        unique_together = ('codigo',)
         verbose_name = "Grupo de Despesa"
         verbose_name_plural = "Grupos de Despesas"
-
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='grupos_despesa', 
-        null=False
-    )
+    # campo 'conta' removido
     
     class Tipo_t(models.IntegerChoices):
         COM_RATEIO = GRUPO_ITEM_COM_RATEIO, "COM RATEIO"
@@ -65,24 +66,26 @@ class GrupoDespesa(models.Model):
         return f"{self.codigo}"
 
 
-class ItemDespesa(models.Model):
+class ItemDespesa(AuditoriaModel):
     """Itens específicos de despesas dentro de cada grupo"""
     
     class Meta:
         db_table = 'despesa_item'
-        unique_together = ('conta', 'codigo')
+        unique_together = ('grupo_despesa', 'codigo')
         verbose_name = "Item de Despesa"
         verbose_name_plural = "Itens de Despesas"
-
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='itens_despesa', 
-        null=False
+    # campo 'conta' removido
+    grupo_despesa = models.ForeignKey(
+        GrupoDespesa,
+        on_delete=models.CASCADE,
+        related_name="itens_despesa",
+        verbose_name="Grupo de Despesa",
+        help_text="Grupo ao qual este item pertence",
+        null=True,
+        blank=True
     )
-    grupo = models.ForeignKey(GrupoDespesa, on_delete=models.CASCADE)
-    codigo = models.CharField(max_length=20, null=False)
-    descricao = models.CharField(max_length=255, null=False, default="")
+    codigo = models.CharField(max_length=20, null=False, verbose_name="Código", help_text="Código do item dentro do grupo")
+    descricao = models.CharField(max_length=255, null=False, default="", verbose_name="Descrição", help_text="Descrição detalhada do item de despesa")
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
@@ -98,18 +101,18 @@ class ItemDespesa(models.Model):
     @property
     def permite_rateio(self):
         """Verifica se o item permite rateio baseado no grupo"""
-        return self.grupo.codigo in ['FOLHA', 'GERAL']
+        return self.grupo_despesa.codigo in ['FOLHA', 'GERAL']
     
     @property
     def codigo_completo(self):
         """Retorna código completo no formato GRUPO.ITEM"""
-        return f"{self.grupo.codigo}.{self.codigo}"
+        return f"{self.grupo_despesa.codigo}.{self.codigo}"
 
     def __str__(self):
-        return f"{self.grupo.codigo} {self.descricao}"
+        return f"{self.grupo_despesa.codigo} {self.descricao}"
 
 
-class ItemDespesaRateioMensal(models.Model):
+class ItemDespesaRateioMensal(AuditoriaModel):
     """
     Configuração de rateio mensal percentual para itens de despesa entre médicos/sócios
     
@@ -158,7 +161,7 @@ class ItemDespesaRateioMensal(models.Model):
     
     class Meta:
         db_table = 'item_despesa_rateio_mensal'
-        unique_together = ('conta', 'item_despesa', 'socio', 'mes_referencia')
+        unique_together = ('item_despesa', 'socio', 'mes_referencia')
         verbose_name = "Rateio Mensal de Item de Despesa"
         verbose_name_plural = "Rateios Mensais de Itens de Despesa"
         indexes = [
@@ -166,29 +169,20 @@ class ItemDespesaRateioMensal(models.Model):
             models.Index(fields=['socio', 'mes_referencia']),
             models.Index(fields=['item_despesa', 'ativo']),
         ]
-
-    # Tenant isolation
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='rateios_itens_despesa', 
-        null=False,
-        verbose_name="Conta"
-    )
+    # campo 'conta' removido
     
     # Relacionamentos principais
     item_despesa = models.ForeignKey(
-        'ItemDespesa', 
-        on_delete=models.CASCADE, 
+        'ItemDespesa',
+        on_delete=models.CASCADE,
         related_name='rateios_mensais',
         verbose_name="Item de Despesa",
         help_text="Item de despesa que será rateado"
     )
-    
     socio = models.ForeignKey(
-        Socio, 
-        on_delete=models.CASCADE, 
-        related_name='rateios_despesas',
+        Socio,
+        on_delete=models.CASCADE,
+        related_name='rateios_mensais_despesa',
         verbose_name="Médico/Sócio",
         help_text="Médico que participará do rateio"
     )
@@ -272,12 +266,7 @@ class ItemDespesaRateioMensal(models.Model):
                 )
             })
         
-        # Verificar se sócio e item pertencem à mesma conta (tenant isolation)
-        if self.socio and self.item_despesa:
-            if self.socio.empresa.conta != self.item_despesa.conta:
-                raise ValidationError({
-                    'socio': 'Sócio e item de despesa devem pertencer à mesma conta/empresa.'
-                })
+        # validação de conta removida
 
     def save(self, *args, **kwargs):
         """
@@ -292,9 +281,7 @@ class ItemDespesaRateioMensal(models.Model):
         if self.mes_referencia:
             self.mes_referencia = self.mes_referencia.replace(day=1)
         
-        # Garantir que a conta seja consistente (tenant isolation)
-        if self.item_despesa:
-            self.conta = self.item_despesa.conta
+        # ajuste de conta removido
         
         # Executar todas as validações antes de salvar
         self.full_clean()
@@ -388,7 +375,6 @@ class ItemDespesaRateioMensal(models.Model):
         rateios_criados = []
         for medico in medicos_lista:
             rateio = cls.objects.create(
-                conta=item_despesa.conta,
                 item_despesa=item_despesa,
                 socio=medico,
                 mes_referencia=mes_referencia.replace(day=1),
@@ -431,7 +417,6 @@ class ItemDespesaRateioMensal(models.Model):
             percentual = config['percentual']
             
             rateio = cls.objects.create(
-                conta=item_despesa.conta,
                 item_despesa=item_despesa,
                 socio=medico,
                 mes_referencia=mes_referencia.replace(day=1),
@@ -444,25 +429,17 @@ class ItemDespesaRateioMensal(models.Model):
         return rateios_criados
 
 
-class Despesa(models.Model):
+class Despesa(AuditoriaModel):
     """Despesas unificadas com sistema de grupos e rateio"""
     
     class Meta:
         db_table = 'despesa'
         indexes = [
-            # Consultas principais otimizadas
-            models.Index(fields=['conta', 'data', 'status']),
-            models.Index(fields=['item', 'data']),
+            models.Index(fields=['item_despesa', 'data']),
             models.Index(fields=['empresa', 'socio', 'data']),
             models.Index(fields=['created_at']),
         ]
-
-    conta = models.ForeignKey(
-        Conta, 
-        on_delete=models.CASCADE, 
-        related_name='despesas', 
-        null=False
-    )
+    # campo 'conta' removido
     
     class Tipo_t(models.IntegerChoices):
         COM_RATEIO = TIPO_DESPESA_COM_RATEIO, "DESPESA FOLHA/GERAL - COM RATEIO"
@@ -470,26 +447,32 @@ class Despesa(models.Model):
 
     # Classificação - CAMPO ELIMINADO: tipo_rateio (redundante, derivado do grupo)
     # Usar property tipo_rateio para acesso transparente
-    item = models.ForeignKey(
-        'ItemDespesa', 
-        on_delete=models.PROTECT, 
-        verbose_name="Item de Despesa"
+    item_despesa = models.ForeignKey(
+        'ItemDespesa',
+        on_delete=models.PROTECT,
+        related_name='despesas',
+        verbose_name="Item de Despesa",
+        help_text="Item de despesa relacionado a esta despesa",
+        null=True,
+        blank=True
     )
     
     # Relacionamentos
     empresa = models.ForeignKey(
-        Empresa, 
-        on_delete=models.CASCADE, 
-        verbose_name="Empresa/Associação"
+        Empresa,
+        on_delete=models.CASCADE,
+        related_name='despesas',
+        verbose_name="Empresa/Associação",
+        help_text="Empresa ou associação responsável pela despesa"
     )
     socio = models.ForeignKey(
-        Socio, 
-        on_delete=models.CASCADE, 
-        null=True, 
+        Socio,
+        on_delete=models.CASCADE,
+        null=True,
         blank=True,
+        related_name='despesas_socio',
         verbose_name="Sócio Responsável",
-        help_text="OBRIGATÓRIO para despesas SEM rateio (grupo SOCIO). "
-                 "DEVE SER NULL para despesas COM rateio (grupos FOLHA/GERAL)."
+        help_text="OBRIGATÓRIO para despesas SEM rateio (grupo SOCIO). DEVE SER NULL para despesas COM rateio (grupos FOLHA/GERAL)."
     )
     
     # Dados da despesa
@@ -543,14 +526,14 @@ class Despesa(models.Model):
                 })
         
         # Verificar se o item pertence ao tipo correto
-        if self.item:
-            if self.tipo_rateio == self.Tipo_t.SEM_RATEIO and self.item.grupo.codigo != 'SOCIO':
+        if self.item_despesa:
+            if self.tipo_rateio == self.Tipo_t.SEM_RATEIO and self.item_despesa.grupo_despesa.codigo != 'SOCIO':
                 raise ValidationError({
-                    'item': 'Para despesas sem rateio, o item deve ser do grupo SOCIO.'
+                    'item_despesa': 'Para despesas sem rateio, o item deve ser do grupo SOCIO.'
                 })
-            elif self.tipo_rateio == self.Tipo_t.COM_RATEIO and self.item.grupo.codigo not in ['FOLHA', 'GERAL']:
+            elif self.tipo_rateio == self.Tipo_t.COM_RATEIO and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
                 raise ValidationError({
-                    'item': 'Para despesas com rateio, o item deve ser do grupo FOLHA ou GERAL.'
+                    'item_despesa': 'Para despesas com rateio, o item deve ser do grupo FOLHA ou GERAL.'
                 })
 
     def save(self, *args, **kwargs):
@@ -559,7 +542,7 @@ class Despesa(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"[{self.item.grupo.codigo}] {self.item.descricao} - {self.data}"
+        return f"[{self.item_despesa.grupo_despesa.codigo}] {self.item_despesa.descricao} - {self.data}"
     
     # ===============================
     # PROPERTIES DERIVADAS (substituem campo eliminado)
@@ -568,14 +551,14 @@ class Despesa(models.Model):
     @property
     def tipo_rateio(self):
         """Tipo de rateio derivado do grupo do item (substitui campo eliminado)"""
-        if not self.item or not self.item.grupo:
+        if not self.item_despesa or not self.item_despesa.grupo_despesa:
             return None
-        return self.item.grupo.tipo_rateio
+        return self.item_despesa.grupo_despesa.tipo_rateio
     
     @property
     def grupo(self):
         """Acesso rápido ao grupo da despesa"""
-        return self.item.grupo if self.item else None
+        return self.item_despesa.grupo_despesa if self.item_despesa else None
     
     @property
     def pode_ser_rateada(self):
@@ -622,7 +605,7 @@ class Despesa(models.Model):
         
         Para obter rateio de uma despesa, use:
         ItemDespesaRateioMensal.objects.filter(
-            item_despesa=self.item,
+            item_despesa=self.item_despesa,
             mes_referencia=self.data.replace(day=1),
             ativo=True
         )
@@ -674,7 +657,7 @@ class Despesa(models.Model):
         
         mes_referencia = self.data.replace(day=1)
         return ItemDespesaRateioMensal.objects.filter(
-            item_despesa=self.item,
+            item_despesa=self.item_despesa,
             mes_referencia=mes_referencia,
             ativo=True
         ).select_related('socio__pessoa')

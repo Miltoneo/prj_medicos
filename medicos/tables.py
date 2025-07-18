@@ -43,19 +43,17 @@ class AliquotasTable(tables.Table):
         order_by = "-data_vigencia_inicio"
 
 class ItemDespesaTable(tables.Table):
-    grupo = tables.Column(accessor='grupo.descricao', verbose_name='Grupo')
+    grupo_despesa = tables.Column(accessor='grupo_despesa.descricao', verbose_name='Grupo')
     codigo = tables.Column(verbose_name='Código')
     descricao = tables.Column(verbose_name='Descrição')
     acoes = tables.TemplateColumn(
         template_code='''
-        {% with empresa_id=record.conta.empresas.first.id %}
-          {% if empresa_id %}
-            <a href="{% url 'medicos:item_despesa_edit' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
-            <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id grupo_id=record.grupo.id item_id=record.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
-          {% else %}
-            <span class="text-muted">Empresa não definida</span>
-          {% endif %}
-        {% endwith %}
+        {% if record.grupo_despesa %}
+          <a href="{% url 'medicos:item_despesa_edit' empresa_id=empresa_id grupo_id=record.grupo_despesa.id item_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
+          <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id grupo_id=record.grupo_despesa.id item_id=record.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
+        {% else %}
+          <span class="text-muted">Grupo não definido</span>
+        {% endif %}
         ''',
         verbose_name="Ações",
         orderable=False
@@ -63,8 +61,8 @@ class ItemDespesaTable(tables.Table):
     class Meta:
         model = ItemDespesa
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('grupo', 'codigo', 'descricao', 'acoes')
-        order_by = ('grupo', 'codigo', 'descricao')
+        fields = ('grupo_despesa', 'codigo', 'descricao', 'acoes')
+        order_by = ('grupo_despesa', 'codigo', 'descricao')
 
 class DescricaoMovimentacaoFinanceiraTable(tables.Table):
     codigo_contabil = tables.Column(verbose_name='Código Contábil')
