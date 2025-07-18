@@ -550,11 +550,15 @@ class Socio(models.Model):
         db_table = 'socio'
         verbose_name = "Sócio/Médico"
         verbose_name_plural = "Sócios/Médicos"
-        unique_together = ('conta', 'pessoa')
+        unique_together = ('conta', 'pessoa', 'empresa')
+        indexes = [
+            models.Index(fields=['conta', 'empresa', 'pessoa']),
+            models.Index(fields=['ativo']),
+        ]
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='socios', null=False)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
-    pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE)
+    conta = models.ForeignKey(Conta, on_delete=models.PROTECT, related_name='socios', null=False)
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)
+    pessoa = models.ForeignKey(Pessoa, on_delete=models.PROTECT)
 
     # Status e controle
     ativo = models.BooleanField(default=True, verbose_name="Ativo")

@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin
 
 from .models import *
+from .models.despesas import DespesaRateada, DespesaSocio
 
 # Register your models here.
 
@@ -166,11 +167,21 @@ class AliquotasAdmin(admin.ModelAdmin):
         )
     get_iss_rates.short_description = 'ISS por Tipo'
 
-@admin.register(Despesa)
-class DespesaAdmin(admin.ModelAdmin):
+
+# Admin para DespesaRateada
+@admin.register(DespesaRateada)
+class DespesaRateadaAdmin(admin.ModelAdmin):
+    list_display = ('data', 'item_despesa', 'empresa')
+    list_filter = ('item_despesa', 'data')
+    search_fields = ('item_despesa__descricao', 'item_despesa__grupo_despesa__empresa__name')
+    ordering = ('-data',)
+
+# Admin para DespesaSocio
+@admin.register(DespesaSocio)
+class DespesaSocioAdmin(admin.ModelAdmin):
     list_display = ('data', 'item_despesa', 'empresa', 'socio')
-    list_filter = ('empresa', 'socio', 'data')
-    search_fields = ('item__descricao', 'empresa__name', 'socio__pessoa__name')
+    list_filter = ('item_despesa', 'socio', 'data')
+    search_fields = ('item_despesa__descricao', 'socio__pessoa__name', 'item_despesa__grupo_despesa__empresa__name')
     ordering = ('-data',)
 
 # Desc_movimentacao_financeiro admin removed - replaced by DescricaoMovimentacao

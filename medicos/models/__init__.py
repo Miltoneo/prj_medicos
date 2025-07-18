@@ -15,7 +15,6 @@ __all__ = [
     # Modelos Fiscais
     'Aliquotas', 'NotaFiscal',
     # Modelos de Despesas
-    'Despesa',
     
     # Modelos Financeiros
     'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',

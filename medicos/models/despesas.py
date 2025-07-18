@@ -38,7 +38,9 @@ class GrupoDespesa(AuditoriaModel):
         on_delete=models.CASCADE,
         related_name='grupos_despesa',
         verbose_name="Empresa/Associação",
-        help_text="Empresa ou associação responsável pelo grupo de despesa"
+        help_text="Empresa ou associação responsável pelo grupo de despesa",
+        null=False,
+        blank=False
     )
     """Grupos de despesas para organização contábil"""
     
@@ -47,7 +49,7 @@ class GrupoDespesa(AuditoriaModel):
         unique_together = ('codigo',)
         verbose_name = "Grupo de Despesa"
         verbose_name_plural = "Grupos de Despesas"
-    # campo 'conta' removido
+    # ...
     
     class Tipo_t(models.IntegerChoices):
         COM_RATEIO = GRUPO_ITEM_COM_RATEIO, "COM RATEIO"
@@ -74,7 +76,7 @@ class ItemDespesa(AuditoriaModel):
         unique_together = ('grupo_despesa', 'codigo')
         verbose_name = "Item de Despesa"
         verbose_name_plural = "Itens de Despesas"
-    # campo 'conta' removido
+    # ...
     grupo_despesa = models.ForeignKey(
         GrupoDespesa,
         on_delete=models.CASCADE,
@@ -165,7 +167,7 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             models.Index(fields=['item_despesa', 'ativo']),
             models.Index(fields=['item_despesa', 'data_referencia', 'ativo']),
         ]
-    # campo 'conta' removido
+    # ...
     
     # Relacionamentos principais
     item_despesa = models.ForeignKey(
@@ -414,13 +416,13 @@ class DespesaBase(AuditoriaModel):
     item_despesa = models.ForeignKey(
         'ItemDespesa',
         on_delete=models.PROTECT,
-        related_name='despesas_base',
+        related_name="%(class)s_set",
         verbose_name="Item de Despesa",
         help_text="Item de despesa relacionado a esta despesa",
         null=True,
         blank=True
     )
-    # empresa removida: acessar via self.item_despesa.grupo_despesa.empresa
+    # ...
     data = models.DateField(null=False, verbose_name="Data da Despesa")
     valor = models.DecimalField(
         max_digits=15,
