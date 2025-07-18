@@ -49,8 +49,8 @@ class ItemDespesaTable(tables.Table):
     acoes = tables.TemplateColumn(
         template_code='''
         {% if record.grupo_despesa %}
-          <a href="{% url 'medicos:item_despesa_edit' empresa_id=empresa_id grupo_id=record.grupo_despesa.id item_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
-          <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id grupo_id=record.grupo_despesa.id item_id=record.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
+          <a href="{% url 'medicos:item_despesa_edit' empresa_id=empresa_id item_id=record.id %}" class="btn btn-sm btn-primary">Editar</a>
+          <a href="{% url 'medicos:item_despesa_delete' empresa_id=empresa_id item_id=record.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
         {% else %}
           <span class="text-muted">Grupo não definido</span>
         {% endif %}
