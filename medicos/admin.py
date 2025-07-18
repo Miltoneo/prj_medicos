@@ -177,6 +177,26 @@ class DespesaAdmin(admin.ModelAdmin):
 
 @admin.register(Financeiro)
 class FinanceiroAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        """
+        Força filtro padrão para o mês/ano de competência atual na lista do admin,
+        redirecionando para a URL filtrada apenas na primeira visita (sem loops).
+        """
+        from datetime import date
+        from django.http import HttpResponseRedirect
+        if (
+            not request.GET.get('data_movimentacao__month')
+            and not request.GET.get('data_movimentacao__year')
+            and '_filter_applied' not in request.GET
+        ):
+            today = date.today()
+            params = request.GET.copy()
+            params['data_movimentacao__month'] = str(today.month)
+            params['data_movimentacao__year'] = str(today.year)
+            params['_filter_applied'] = '1'
+            url = request.path + '?' + params.urlencode()
+            return HttpResponseRedirect(url)
+        return super().changelist_view(request, extra_context=extra_context)
     list_display = ('data_movimentacao', 'socio', 'descricao_movimentacao_financeira', 'valor_formatado')
     list_filter = ('socio', 'data_movimentacao')
     search_fields = ('socio__pessoa__name', 'descricao_movimentacao_financeira__nome', 'descricao_movimentacao_financeira__descricao')

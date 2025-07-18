@@ -23,6 +23,18 @@ class FinanceiroListView(SingleTableMixin, FilterView):
     template_name = 'financeiro/lista_lancamentos_financeiros.html'
     paginate_by = 25
 
+    def get_filterset(self, filterset_class):
+        """
+        Só aplica o filtro padrão de mês/ano se não houver nenhum filtro na query string.
+        """
+        import datetime
+        data = self.request.GET.copy()
+        # Se não há nenhum filtro na query string, aplica o mês atual
+        if not data and not self.request.GET.urlencode():
+            today = datetime.date.today()
+            data['data_movimentacao_mes'] = today.strftime('%Y-%m')
+        return filterset_class(data, queryset=self.get_queryset(), request=self.request)
+
     def get_context_data(self, **kwargs):
         """
         Regra de padronização:
