@@ -161,13 +161,14 @@ class ItemDespesaRateioMensal(AuditoriaModel):
     
     class Meta:
         db_table = 'item_despesa_rateio_mensal'
-        unique_together = ('item_despesa', 'socio', 'mes_referencia')
+        unique_together = ('item_despesa', 'socio', 'data_referencia')
         verbose_name = "Rateio Mensal de Item de Despesa"
         verbose_name_plural = "Rateios Mensais de Itens de Despesa"
         indexes = [
-            models.Index(fields=['mes_referencia', 'item_despesa']),
-            models.Index(fields=['socio', 'mes_referencia']),
+            models.Index(fields=['data_referencia', 'item_despesa']),
+            models.Index(fields=['socio', 'data_referencia']),
             models.Index(fields=['item_despesa', 'ativo']),
+            models.Index(fields=['item_despesa', 'data_referencia', 'ativo']),
         ]
     # campo 'conta' removido
     
@@ -188,8 +189,8 @@ class ItemDespesaRateioMensal(AuditoriaModel):
     )
     
     # Data de referência (mês/ano)
-    mes_referencia = models.DateField(
-        verbose_name="Mês de Referência",
+    data_referencia = models.DateField(
+        verbose_name="Data de Referência (Mês/Ano)",
         help_text="Data no formato YYYY-MM-01 (primeiro dia do mês). Define o período em que esta configuração de rateio será aplicada."
     )
     
@@ -258,11 +259,11 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             })
         
         # Verificar se o item é dos grupos corretos (FOLHA ou GERAL)
-        if self.item_despesa and self.item_despesa.grupo.codigo not in ['FOLHA', 'GERAL']:
+        if self.item_despesa and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
             raise ValidationError({
                 'item_despesa': (
                     f'Rateios só podem ser definidos para itens dos grupos FOLHA e GERAL. '
-                    f'O item selecionado é do grupo "{self.item_despesa.grupo.codigo}".'
+                    f'O item selecionado é do grupo "{self.item_despesa.grupo_despesa.codigo}".'
                 )
             })
         
@@ -278,8 +279,8 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         3. Executa todas as validações antes de salvar
         """
         # Normalizar a data para o primeiro dia do mês (formato padrão do sistema)
-        if self.mes_referencia:
-            self.mes_referencia = self.mes_referencia.replace(day=1)
+        if self.data_referencia:
+            self.data_referencia = self.data_referencia.replace(day=1)
         
         # ajuste de conta removido
         
@@ -288,17 +289,18 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
+        nome = getattr(getattr(self.socio, 'pessoa', None), 'name', str(self.socio))
         return (
             f"{self.item_despesa.codigo_completo} - "
-            f"{self.socio.pessoa.name} - "
+            f"{nome} - "
             f"{self.percentual_rateio}% "
-            f"({self.mes_referencia.strftime('%m/%Y')})"
+            f"({self.data_referencia.strftime('%m/%Y')})"
         )
     
     @property
     def mes_ano_formatado(self):
         """Retorna o mês/ano formatado"""
-        return self.mes_referencia.strftime('%m/%Y')
+        return self.data_referencia.strftime('%m/%Y')
     
     @property
     def valor_rateio_display(self):
@@ -311,13 +313,13 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         Método de classe para obter o rateio para um item/sócio em uma data específica
         """
         # Normalizar para o primeiro dia do mês
-        mes_referencia = data_despesa.replace(day=1)
+        data_referencia = data_despesa.replace(day=1)
         
         try:
             rateio_obj = cls.objects.get(
                 item_despesa=item_despesa,
                 socio=socio,
-                mes_referencia=mes_referencia,
+                data_referencia=data_referencia,
                 ativo=True
             )
             return rateio_obj
@@ -326,13 +328,13 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             return None
     
     @classmethod
-    def validar_rateios_mes(cls, item_despesa, mes_referencia):
+    def validar_rateios_mes(cls, item_despesa, data_referencia):
         """
         Valida se a configuração de rateios percentuais para um item em um mês específico está correta
         """
         rateios = cls.objects.filter(
             item_despesa=item_despesa,
-            mes_referencia=mes_referencia,
+            data_referencia=data_referencia,
             ativo=True
         )
         
@@ -347,14 +349,14 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         }
     
     @classmethod
-    def criar_rateio_igualitario(cls, item_despesa, medicos_lista, mes_referencia, usuario=None):
+    def criar_rateio_igualitario(cls, item_despesa, medicos_lista, data_referencia, usuario=None):
         """
         Cria rateio igualitário entre uma lista de médicos para um item de despesa
         
         Args:
             item_despesa: Instância do ItemDespesa
             medicos_lista: Lista de instâncias de Socio
-            mes_referencia: Data do mês de referência
+            data_referencia: Data do mês de referência
             usuario: Usuário que está criando o rateio
         
         Returns:
@@ -369,7 +371,7 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         # Limpar rateios existentes para este item/mês
         cls.objects.filter(
             item_despesa=item_despesa,
-            mes_referencia=mes_referencia.replace(day=1)
+            data_referencia=data_referencia.replace(day=1)
         ).delete()
         
         rateios_criados = []
@@ -377,7 +379,7 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             rateio = cls.objects.create(
                 item_despesa=item_despesa,
                 socio=medico,
-                mes_referencia=mes_referencia.replace(day=1),
+                data_referencia=data_referencia.replace(day=1),
                 percentual_rateio=percentual_por_medico,
                 created_by=usuario,
                 observacoes=f'Rateio igualitário entre {len(medicos_lista)} médicos'
@@ -387,28 +389,28 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         return rateios_criados
     
     @classmethod
-    def criar_rateio_por_percentuais(cls, item_despesa, rateios_config, mes_referencia, usuario=None):
+    def criar_rateio_por_percentuais(cls, item_despesa, rateios_config, data_referencia, usuario=None):
         """
         Cria rateio baseado em percentuais específicos
         
         Args:
             item_despesa: Instância do ItemDespesa
             rateios_config: Lista de dicts com 'medico' e 'percentual'
-            mes_referencia: Data do mês de referência
+            data_referencia: Data do mês de referência
             usuario: Usuário que está criando o rateio
         
         Returns:
             list: Lista dos rateios criados
         """
-        # Validar que o total dos percentuais não excede 100%
+        # Validar que o total dos percentuais seja exatamente 100%
         total_percentual = sum(config['percentual'] for config in rateios_config)
-        if total_percentual > 100:
-            raise ValidationError(f'Total dos percentuais ({total_percentual}%) excede 100%')
+        if abs(total_percentual - 100) > 0.01:
+            raise ValidationError(f'Total dos percentuais ({total_percentual}%) deve ser exatamente 100%')
         
         # Limpar rateios existentes
         cls.objects.filter(
             item_despesa=item_despesa,
-            mes_referencia=mes_referencia.replace(day=1)
+            data_referencia=data_referencia.replace(day=1)
         ).delete()
         
         rateios_criados = []
@@ -419,7 +421,7 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             rateio = cls.objects.create(
                 item_despesa=item_despesa,
                 socio=medico,
-                mes_referencia=mes_referencia.replace(day=1),
+                data_referencia=data_referencia.replace(day=1),
                 percentual_rateio=percentual,
                 created_by=usuario,
                 observacoes=config.get('observacoes', '')
@@ -477,22 +479,15 @@ class Despesa(AuditoriaModel):
     
     # Dados da despesa
     data = models.DateField(null=False, verbose_name="Data da Despesa")
-    
-    # Status da despesa (NOVO CAMPO)
-    STATUS_CHOICES = [
-        ('pendente', 'Pendente de Aprovação'),
-        ('aprovada', 'Aprovada'),
-        ('paga', 'Paga'),
-        ('cancelada', 'Cancelada'),
-        ('vencida', 'Vencida'),
-    ]
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pendente',
-        verbose_name="Status da Despesa"
+    valor = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=False,
+        verbose_name="Valor da Despesa",
+        help_text="Valor total da despesa"
     )
     
+
     # Controle e auditoria (NOMENCLATURA PADRONIZADA)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -517,16 +512,14 @@ class Despesa(AuditoriaModel):
                 raise ValidationError({
                     'socio': 'Sócio é obrigatório para despesas sem rateio (grupo SOCIO).'
                 })
-        
         # Para despesas com rateio, sócio deve estar vazio
         elif self.tipo_rateio == self.Tipo_t.COM_RATEIO:
             if self.socio:
                 raise ValidationError({
                     'socio': 'Sócio deve ser vazio para despesas com rateio (grupos FOLHA/GERAL).'
                 })
-        
         # Verificar se o item pertence ao tipo correto
-        if self.item_despesa:
+        if self.item_despesa and self.item_despesa.grupo_despesa:
             if self.tipo_rateio == self.Tipo_t.SEM_RATEIO and self.item_despesa.grupo_despesa.codigo != 'SOCIO':
                 raise ValidationError({
                     'item_despesa': 'Para despesas sem rateio, o item deve ser do grupo SOCIO.'
@@ -542,7 +535,9 @@ class Despesa(AuditoriaModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"[{self.item_despesa.grupo_despesa.codigo}] {self.item_despesa.descricao} - {self.data}"
+        grupo = getattr(getattr(self.item_despesa, 'grupo_despesa', None), 'codigo', '-')
+        descricao = getattr(self.item_despesa, 'descricao', '-')
+        return f"[{grupo}] {descricao} - {self.data}"
     
     # ===============================
     # PROPERTIES DERIVADAS (substituem campo eliminado)
@@ -573,7 +568,9 @@ class Despesa(AuditoriaModel):
     @property
     def valor_formatado(self):
         """Retorna o valor formatado em real brasileiro"""
-        return f"R$ {self.valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+        if self.valor is not None:
+            return f"R$ {self.valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+        return "R$ 0,00"
     
     def calcular_rateio_automatico(self):
         """
