@@ -1,58 +1,19 @@
 
-## Diretriz Obrigatória: Uso de Context Processor para Instâncias Globais (empresa, conta, etc)
 
-> **ATENÇÃO:**
->
-> Sempre que uma variável global (ex: `empresa`, `conta`, `usuario_atual`, etc) for necessária em views, templates ou forms, verifique primeiro se ela já está sendo injetada por um context processor.
->
-> **É OBRIGATÓRIO:**
-> - Usar a instância já disponível no contexto (ex: `empresa`), nunca buscar manualmente em `request.session`, nem fazer queries diretas nas views para obter a empresa ativa.
-> - Toda lógica de obtenção, validação e fallback dessas instâncias deve estar centralizada no context processor correspondente.
-> - Se a variável não estiver disponível ou for `None`, o context processor já deve tratar o erro e exibir mensagem apropriada.
-> - Nunca duplique lógica de obtenção de instâncias globais em views, forms ou templates.
->
-> **Resumo:**
-> - Use sempre a variável do contexto (ex: `empresa`).
-> - Não acesse `request.session['empresa_id']` nem faça `Empresa.objects.get(...)` nas views para obter a empresa ativa.
-> - Se precisar de uma nova variável global, crie um context processor para ela.
->
-> **Este padrão é obrigatório para garantir isolamento multi-tenant, consistência, centralização de regras e evitar bugs recorrentes.**
+# Guia de Desenvolvimento: Regras e Padrões do Projeto
 
----
+## 1. Contexto Global, Header e Título (Obrigatório)
 
-## Padronização de Contexto, Header e Título em Views e Templates
+- Sempre utilize context processors para variáveis globais como `empresa`, `conta`, `usuario_atual`, etc. Nunca busque manualmente em `request.session` ou faça queries diretas nas views para obter instâncias globais.
+- Toda lógica de obtenção, validação e fallback dessas instâncias deve estar centralizada no context processor correspondente.
+- Se a variável não estiver disponível ou for `None`, o context processor deve tratar o erro e exibir mensagem apropriada.
+- O parâmetro `empresa_id` deve ser mantido na URL das views para garantir navegação RESTful e escopo explícito da empresa (multi-tenant).
+- Sempre sobrescreva `get_context_data(self, **kwargs)` em CBVs para adicionar variáveis específicas da página (ex: `titulo_pagina`, filtros, listas), chamando `super().get_context_data(**kwargs)`.
+- Defina a variável `titulo_pagina` no contexto para exibição padronizada do título no header.
+- O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}` e o título exibido exclusivamente pelo header base do sistema, usando a variável `titulo_pagina`.
+- É terminantemente proibido definir títulos de página manualmente em templates filhos. O título deve ser sempre passado pela variável `titulo_pagina` no contexto da view e exibido exclusivamente pelo header do template base. Qualquer ocorrência de `<h4 class="fw-bold text-primary">` ou similar fora do layout base deve ser considerada erro de padronização e corrigida imediatamente.
 
-### Regra única para contexto global, título e cenário
-
-1. **Contexto global de empresa e navegação multi-tenant:**
-   - O parâmetro `empresa_id` deve ser mantido na URL das views para garantir navegação RESTful e escopo explícito da empresa (multi-tenant), mesmo que a empresa já esteja disponível globalmente via sessão/context processor.
-   - Nunca dependa apenas da sessão para navegação entre empresas; a URL deve ser a fonte de verdade para o escopo da empresa.
-   - Sempre injete a variável `empresa` no contexto dos templates via context processor (`empresa_context`). Nunca injete manualmente nas views.
-   - O context processor é a única fonte de verdade para a variável `empresa` em templates e views. Nunca busque a empresa manualmente via query ou diretamente da sessão.
-   - A empresa exibida deve ser explicitamente selecionada pelo usuário (armazenada na sessão como `empresa_atual_id`). Não faça fallback automático para a primeira empresa cadastrada.
-   - Os templates devem usar apenas `{{ empresa }}` para exibir informações da empresa, tratando o caso em que `empresa` é `None` (exibindo alerta ou bloqueando navegação).
-
-2. **Uso de get_context_data em views baseadas em classe:**
-   - Sempre sobrescreva `get_context_data(self, **kwargs)` para adicionar variáveis específicas da página (ex: `titulo_pagina`, filtros, listas).
-   - Sempre chame `super().get_context_data(**kwargs)` para herdar o contexto padrão.
-   - Defina a variável `titulo_pagina` no contexto para exibição padronizada do título no header.
-   - Defina o nome do cenário na sessão do usuário usando `self.request.session['cenario_nome'] = 'Nome do Cenário'` para exibição correta no header.
-   - O contexto deve ser passado como dicionário para o template.
-
-
-**Regra de aderência obrigatória:**
-Antes de qualquer alteração, sugestão ou implementação, é obrigatório consultar e aplicar as regras documentadas neste guia. Toda decisão técnica, visual ou de código deve estar 100% alinhada com as diretrizes oficiais do projeto. Qualquer desvio ou exceção só pode ser feito mediante justificativa formal e aprovação em revisão de código/documentação.
-3. **Padronização do header e título:**
-
-   - O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}`.
-   - O título da página deve ser exibido exclusivamente pelo header base do sistema (template base/layout), usando a variável `titulo_pagina` definida na view.
-   - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base para garantir consistência visual e semântica.
-   - O título é exibido em um elemento `<h4>` com as classes Bootstrap `fw-bold text-primary` e segue o formato: `Título: [nome da página]`.
-   - Caso a variável não esteja definida, será exibido automaticamente o texto `Título: erro`.
-
-   > **ATENÇÃO:** É terminantemente proibido definir títulos de página manualmente em templates filhos. O título deve ser sempre passado pela variável `titulo_pagina` no contexto da view e exibido exclusivamente pelo header do template base. Qualquer ocorrência de `<h4 class="fw-bold text-primary">` ou similar fora do layout base deve ser considerada erro de padronização e corrigida imediatamente.
-
-#### Exemplo de uso em view:
+**Exemplo de uso em view:**
 ```python
 def get_context_data(self, **kwargs):
     context = super().get_context_data(**kwargs)
@@ -60,8 +21,7 @@ def get_context_data(self, **kwargs):
     self.request.session['cenario_nome'] = 'Financeiro'
     return context
 ```
-
-#### Exemplo de context processor (core/context_processors.py):
+**Exemplo de context processor:**
 ```python
 def empresa_context(request):
     # ...código para obter empresa...
@@ -70,30 +30,16 @@ def empresa_context(request):
         # ...outros itens do contexto global...
     }
 ```
-
-#### Exemplo no template base:
+**Exemplo no template base:**
 ```django
 <h4 class="fw-bold text-primary">Título: {{ titulo_pagina|default:'erro' }}</h4>
 {% include 'layouts/base_header.html' %}
 ```
 
-> Seguindo esta regra única, todas as páginas do sistema terão contexto, header e título padronizados, facilitando manutenção, evolução visual e experiência do usuário.
-```django
-<div class="mb-3">
-  <h4 class="fw-bold text-primary">Título: {{ titulo_pagina|default:'erro' }}</h4>
-</div>
-```
+---
 
-Exemplo de definição na view:
-```python
-context['titulo_pagina'] = 'Cadastro de Médicos'
-```
+## 2. Código, Nomenclatura e Formatação
 
-Essa regra garante consistência visual e semântica em todas as telas do sistema.
-# Regras de Desenvolvimento (migradas de praticas_e_padroes.md)
-
-## Formatação de Views Django
-Todas as views devem seguir o padrão de formatação Django:
 - Imports organizados no topo do arquivo, separados por grupos: padrão Python, terceiros, depois do próprio projeto.
 - Funções e classes organizadas por ordem lógica (helpers, views, etc), com uma linha de espaço entre elas.
 - Funções de view recebem `request` como primeiro argumento.
@@ -101,64 +47,36 @@ Todas as views devem seguir o padrão de formatação Django:
 - Uso de decorators (`@login_required`, etc) acima das views.
 - Nomes de funções e variáveis em inglês, exceto quando o projeto exigir o contrário.
 - Indentação de 4 espaços.
+- Modelos: PascalCase; campos: snake_case; constantes: UPPER_SNAKE_CASE.
+- Elimine aliases legacy e padronize nomenclaturas conforme código real.
+- Atualize referências em `admin.py`, `forms.py`, `views.py`, `tables.py` quando necessário.
+- Teste todas as alterações em ambiente de desenvolvimento.
+- Mantenha compatibilidade com Django 4.x.
+- Documente breaking changes quando necessário.
+- Mantenha `requirements.txt` atualizado.
+- Sempre que modificar um arquivo, corrija e padronize a formatação antes de finalizar a alteração.
+    - Organize imports por categoria (Django, terceiros, local).
+    - Remova duplicidades e imports não utilizados.
+    - Mantenha espaçamento e indentação consistente.
+    - Agrupe classes e funções relacionadas.
+    - Garanta legibilidade e clareza do código.
 
-## Código como Fonte da Verdade
+## 3. Código como Fonte da Verdade
+
 - O código hardcoded é SEMPRE a referência absoluta para documentação.
-- Nunca gerar documentação baseada em versões anteriores ou memória.
+- Nunca gere documentação baseada em versões anteriores ou memória.
 - Toda documentação deve ser regenerada a partir do código atual.
-- Eliminar aliases legacy e padronizar nomenclaturas conforme código real.
-- Validar sempre que documentação reflete exatamente o estado do código.
+- Valide sempre que a documentação reflete exatamente o estado do código.
 
-## Arquitetura e Modularização
-- Manter separação clara entre módulos: `base.py`, `fiscal.py`, `financeiro.py`, `despesas.py`, `auditoria.py`, `relatorios.py`.
-- Respeitar isolamento multi-tenant através do modelo `Conta`.
-- Preservar hierarquia de relacionamentos e constraints definidas no código.
-- Não criar dependências circulares entre módulos.
-- Manter modelos simples, focados e com responsabilidade única.
+## 4. Arquitetura e Modularização
 
-## Nomenclatura e Padrões
-- Modelos: PascalCase exato conforme definido no código.
-- Campos: snake_case conforme implementação atual.
-- Constantes: UPPER_SNAKE_CASE conforme padrões Django.
-- Eliminar aliases de compatibilidade quando não utilizados.
-- Manter consistência de nomes em todo o projeto.
-- Atualizar referências em `admin.py`, `forms.py`, `views.py`, `tables.py` quando necessário.
+- Mantenha separação clara entre módulos: `base.py`, `fiscal.py`, `financeiro.py`, `despesas.py`, `auditoria.py`, `relatorios.py`.
+- Respeite isolamento multi-tenant através do modelo `Conta`.
+- Preserve hierarquia de relacionamentos e constraints definidas no código.
+- Não crie dependências circulares entre módulos.
+- Mantenha modelos simples, focados e com responsabilidade única.
 
-## Desenvolvimento e Manutenção
-- Testar todas as alterações em ambiente de desenvolvimento.
-- Manter compatibilidade com Django 4.x.
-- Preservar funcionalidades existentes ao fazer refatorações.
-- Documentar breaking changes quando necessário.
-- Manter requirements.txt atualizado.
-- Otimizar queries com base em padrões de uso reais.
-- Implementar paginação em listagens grandes.
-
-## Segurança e Auditoria
-- Manter isolamento de dados por tenant (Conta).
-- Preservar rastreamento de IP e user-agent.
-- Implementar controles de acesso granulares.
-- Implementar validações client-side quando apropriado.
-- Manter responsividade para dispositivos móveis.
-- Mudanças de layout e estilo devem ser aplicadas de forma centralizada, facilitando manutenção e evolução visual.
-- A padronização deve priorizar clareza, legibilidade e responsividade.
-- O menu deve destacar a página ativa e exibir informações do usuário autenticado quando aplicável.
-- Melhorias de usabilidade e acessibilidade devem ser priorizadas em toda evolução do menu.
-
-## Melhores Práticas para Menus de Navegação
-- Menus laterais (sidebar) são indicados para sistemas com múltiplas áreas, módulos ou funcionalidades agrupadas.
-- O menu ativo deve ser destacado visualmente para orientar o usuário.
-- Evitar menus excessivamente profundos ou complexos; priorizar clareza e rapidez de acesso.
-- A escolha entre menu lateral ou topo deve considerar o perfil do usuário, quantidade de funcionalidades e contexto de uso.
-
-## Views Django
-
-## Revisão de Métodos de Validação
-- Sempre revisar e, se necessário, remover ou ajustar validações duplicadas ou conflitantes tanto no formulário quanto no modelo.
-- Garantir que a alteração foi testada na interface e no backend.
-- Esta diretiva visa evitar retrabalho e garantir que as validações estejam centralizadas e alinhadas com as regras de negócio atuais do projeto.
-
-
-## Views de Lista: CRUD, Tables, Filtros e Paginação (Regra Obrigatória)
+## 5. Views de Lista: CRUD, Tables, Filtros e Paginação (Regra Obrigatória)
 
 Todas as views de listagem devem obrigatoriamente:
 - Implementar CRUD completo (Create, Read, Update, Delete) usando Class-Based Views (CBV) do Django.
@@ -173,41 +91,29 @@ Todas as views de listagem devem obrigatoriamente:
 
 Essas regras garantem padronização de UI/UX, facilitam manutenção e asseguram experiência consistente ao usuário.
 
-# Regras Gerais do Projeto
+## 6. Validação e Revisão
 
-- Sempre que modificar um arquivo, corrija e padronize a formatação antes de finalizar a alteração.
-    - Organize imports por categoria (Django, terceiros, local).
-    - Remova duplicidades e imports não utilizados.
-    - Mantenha espaçamento e indentação consistente.
-    - Agrupe classes e funções relacionadas.
-    - Garanta legibilidade e clareza do código.
+- Sempre revise e, se necessário, remova ou ajuste validações duplicadas ou conflitantes tanto no formulário quanto no modelo.
+- Garanta que a alteração foi testada na interface e no backend.
 
-Outras regras podem ser adicionadas conforme o projeto evoluir.
-# Regras Gerais de Desenvolvimento
+## 7. Segurança, Auditoria e UI/UX
 
-- Sempre que modificar um arquivo, corrija e padronize a formatação antes de finalizar a alteração.
-    - Organize imports por categoria (Django, terceiros, local).
-    - Remova duplicidades e imports não utilizados.
-    - Mantenha espaçamento e indentação consistente.
-    - Agrupe classes e funções relacionadas.
-    - Garanta legibilidade e clareza do código.
+- Mantenha isolamento de dados por tenant (Conta).
+- Preserve rastreamento de IP e user-agent.
+- Implemente controles de acesso granulares.
+- Implemente validações client-side quando apropriado.
+- Mantenha responsividade para dispositivos móveis.
+- Mudanças de layout e estilo devem ser aplicadas de forma centralizada.
+- A padronização deve priorizar clareza, legibilidade e responsividade.
+- O menu deve destacar a página ativa e exibir informações do usuário autenticado quando aplicável.
+- Melhorias de usabilidade e acessibilidade devem ser priorizadas em toda evolução do menu.
+- Menus laterais (sidebar) são indicados para sistemas com múltiplas áreas, módulos ou funcionalidades agrupadas.
+- O menu ativo deve ser destacado visualmente para orientar o usuário.
+- Evite menus excessivamente profundos ou complexos; priorize clareza e rapidez de acesso.
+- A escolha entre menu lateral ou topo deve considerar o perfil do usuário, quantidade de funcionalidades e contexto de uso.
+- Templates devem indicar rotas/funcionalidades pendentes com `href="#"` ou botão desabilitado.
 
-Outras regras podem ser adicionadas conforme o projeto evoluir.
-# Regra de Comportamento do Copilot
-
-Sempre que for necessário remover fisicamente um arquivo do projeto, o Copilot deve executar o comando de exclusão diretamente no terminal Copilot, garantindo que a remoção seja efetiva no sistema de arquivos e não apenas lógica ou documental.
-
-Exemplo:
-Para remover um arquivo no Windows:
-```
-del "caminho/do/arquivo.ext"
-```
-Para remover um arquivo no Linux/Mac:
-```
-rm caminho/do/arquivo.ext
-```
-
-## Padronização de Rotas Django (Regra Obrigatória)
+## 8. Padronização de Rotas Django (Regra Obrigatória)
 
 Sempre que definir uma rota no Django, o parâmetro `name` deve ser semanticamente alinhado ao parâmetro `path`, usando snake_case e refletindo o segmento principal da URL. Evite nomes diferentes entre path e rota.
 
@@ -230,3 +136,20 @@ path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='startempresa')
 - Documente esta regra em todos os projetos Django.
 
 Essa padronização facilita o uso do `{% url %}` nos templates, a manutenção do código e a navegação entre as rotas do projeto.
+
+## 9. Automação e Comportamento do Copilot
+
+Sempre que for necessário remover fisicamente um arquivo do projeto, o Copilot deve executar o comando de exclusão diretamente no terminal Copilot, garantindo que a remoção seja efetiva no sistema de arquivos e não apenas lógica ou documental.
+
+**Exemplo:**
+Para remover um arquivo no Windows:
+```
+del "caminho/do/arquivo.ext"
+```
+Para remover um arquivo no Linux/Mac:
+```
+rm caminho/do/arquivo.ext
+```
+
+---
+Outras regras podem ser adicionadas conforme o projeto evoluir.
