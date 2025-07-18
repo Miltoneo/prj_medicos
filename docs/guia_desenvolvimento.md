@@ -39,12 +39,18 @@
    - Defina o nome do cenário na sessão do usuário usando `self.request.session['cenario_nome'] = 'Nome do Cenário'` para exibição correta no header.
    - O contexto deve ser passado como dicionário para o template.
 
+
+**Regra de aderência obrigatória:**
+Antes de qualquer alteração, sugestão ou implementação, é obrigatório consultar e aplicar as regras documentadas neste guia. Toda decisão técnica, visual ou de código deve estar 100% alinhada com as diretrizes oficiais do projeto. Qualquer desvio ou exceção só pode ser feito mediante justificativa formal e aprovação em revisão de código/documentação.
 3. **Padronização do header e título:**
+
    - O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}`.
    - O título da página deve ser exibido exclusivamente pelo header base do sistema (template base/layout), usando a variável `titulo_pagina` definida na view.
    - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base para garantir consistência visual e semântica.
    - O título é exibido em um elemento `<h4>` com as classes Bootstrap `fw-bold text-primary` e segue o formato: `Título: [nome da página]`.
    - Caso a variável não esteja definida, será exibido automaticamente o texto `Título: erro`.
+
+   > **ATENÇÃO:** É terminantemente proibido definir títulos de página manualmente em templates filhos. O título deve ser sempre passado pela variável `titulo_pagina` no contexto da view e exibido exclusivamente pelo header do template base. Qualquer ocorrência de `<h4 class="fw-bold text-primary">` ou similar fora do layout base deve ser considerada erro de padronização e corrigida imediatamente.
 
 #### Exemplo de uso em view:
 ```python
@@ -151,14 +157,21 @@ Todas as views devem seguir o padrão de formatação Django:
 - Garantir que a alteração foi testada na interface e no backend.
 - Esta diretiva visa evitar retrabalho e garantir que as validações estejam centralizadas e alinhadas com as regras de negócio atuais do projeto.
 
-# Regra de CRUD em Views de Lista
 
-Toda view de lista deve obrigatoriamente incluir a implementação completa de CRUD (Create, Read, Update, Delete) utilizando Class-Based Views (CBV) do Django. Isso garante padronização, facilidade de manutenção e evolução do sistema.
+## Views de Lista: CRUD, Tables, Filtros e Paginação (Regra Obrigatória)
 
-Exemplo:
-- Para cada model listado, devem existir views para criação, edição, exclusão e visualização detalhada, além da listagem.
-- Os templates devem ser organizados por operação (`lista`, `form`, `confirm_delete`, etc).
-- As rotas devem ser padronizadas e documentadas.
+Todas as views de listagem devem obrigatoriamente:
+- Implementar CRUD completo (Create, Read, Update, Delete) usando Class-Based Views (CBV) do Django.
+- Utilizar tables (preferencialmente com django-tables2) para exibição dos dados, exceto dashboards ou visualizações específicas justificadas na documentação.
+- Implementar filtros para todos os campos relevantes, utilizando django-filter ou solução equivalente.
+- Incluir paginação em todas as listagens com potencial de crescimento.
+- Integrar o CRUD à navegação da tabela.
+- Seguir o padrão visual do projeto, com responsividade e clareza.
+- Documentar e aprovar em revisão de código qualquer exceção a essas regras.
+
+**Stack recomendada:** django-tables2, django-filter, paginação nativa do Django ou equivalente.
+
+Essas regras garantem padronização de UI/UX, facilitam manutenção e asseguram experiência consistente ao usuário.
 
 # Regras Gerais do Projeto
 
@@ -193,123 +206,27 @@ Para remover um arquivo no Linux/Mac:
 ```
 rm caminho/do/arquivo.ext
 ```
-# Padronização de Rotas Django
 
-## Objetivo
-Evitar confusão e garantir clareza na navegação e manutenção do projeto.
+## Padronização de Rotas Django (Regra Obrigatória)
 
-## Regra
-Sempre que definir uma rota no Django, o nome da rota (`name`) deve refletir o path da URL. Ou seja:
-- Se o path é `empresas/<int:empresa_id>/`, o nome da rota deve ser `empresas`.
-- Se o path é `startempresa/<int:empresa_id>/`, o nome da rota deve ser `startempresa`.
+Sempre que definir uma rota no Django, o parâmetro `name` deve ser semanticamente alinhado ao parâmetro `path`, usando snake_case e refletindo o segmento principal da URL. Evite nomes diferentes entre path e rota.
 
-## Justificativa
-- Facilita o uso do `{% url 'namespace:rota' %}` em templates e código Python.
-- Evita ambiguidades e erros de reversão de URL.
-- Torna o projeto mais intuitivo para novos desenvolvedores.
-
-## Exemplo
+**Exemplo correto:**
 ```python
-# Correto:
 path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='empresas')
-
-# Errado:
-path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='startempresa')
-```
-
-## Aplicação
-- Sempre revise e padronize as rotas ao criar ou modificar URLs.
-- Documente esta regra em todos os projetos Django.
-# Regras Gerais e de Negócio
-
-- Templates devem indicar rotas/funcionalidades pendentes com `href="#"` ou botão desabilitado.
-- Sempre revisar e atualizar este documento quando novas regras de negócio ou fluxos específicos forem implementados no projeto.
-
-
-# Padronização de Rotas Django
-
-## Objetivo
-Evitar confusão e garantir clareza na navegação e manutenção do projeto.
-
-## Regra
-Sempre que definir uma rota no Django, o nome da rota (`name`) deve refletir o path da URL, usando snake_case e alinhamento semântico. Ou seja:
-- Se o path é `empresas/<int:empresa_id>/`, o nome da rota deve ser `empresas`.
-- Se o path é `startempresa/<int:empresa_id>/`, o nome da rota deve ser `startempresa`.
-- O valor do parâmetro `path` deve ser igual ao valor do parâmetro `name` (exceto por barras e snake_case), garantindo alinhamento total e previsibilidade.
-
-## Justificativa
-- Facilita o uso do `{% url 'namespace:rota' %}` em templates e código Python.
-- Evita ambiguidades e erros de reversão de URL.
-- Torna o projeto mais intuitivo para novos desenvolvedores.
-
-## Exemplos
-```python
-# Correto:
-path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='empresas')
-path('lista_notas_rateio/', view, name='lista_notas_rateio')
-path('rateio/', ..., name='rateio')
 path('rateio/<int:nota_id>/', ..., name='rateio_nota')
 path('usuarios/', ..., name='usuarios')
 path('usuarios/<int:user_id>/', ..., name='usuario_detalhe')
-
-# Errado:
-path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='startempresa')
 ```
-
-## Diretrizes
-- O valor de `name` deve ser o mais próximo possível do path, usando snake_case.
-- Evite nomes genéricos ou duplicados.
-- Sempre revise se o path e o name estão alinhados antes de aprovar um PR.
-- Documente esta regra em todos os projetos Django.
-Facilita a manutenção, o uso do reverse e a padronização do projeto.
-# Padrão para Rotas Django: Alinhamento entre path e name
-
-**Regra:**
-Para todas as rotas Django, o parâmetro `path` e o parâmetro `name` devem ser semanticamente alinhados, seguindo o mesmo padrão de nomenclatura, para garantir clareza, previsibilidade e padronização em todo o projeto.
-
-**Exemplo:**
+**Exemplo errado:**
 ```python
-path('rateio/', ..., name='rateio')
-path('rateio/<int:nota_id>/', ..., name='rateio_nota')
-path('usuarios/', ..., name='usuarios')
-path('usuarios/<int:user_id>/', ..., name='usuario_detalhe')
+path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='startempresa')
 ```
 
 **Diretrizes:**
 - O valor de `name` deve ser o mais próximo possível do path, usando snake_case.
 - Evite nomes genéricos ou duplicados.
 - Sempre revise se o path e o name estão alinhados antes de aprovar um PR.
-
-**Motivação:**
-Essa padronização facilita o uso do `{% url %}` nos templates, a manutenção do código e a navegação entre as rotas do projeto.
-# Guia de Desenvolvimento
-
-## Padronização de Rotas Django
-
-### Regra
-
-**Regra:** O nome da rota (`name`) deve ser igual ao segmento principal do path da URL.
-
-Ou seja:
-- Se o path é `empresas/<int:empresa_id>/`, o nome da rota deve ser `empresas`.
-- Se o path é `startempresa/<int:empresa_id>/`, o nome da rota deve ser `startempresa`.
-
-Evite nomes diferentes entre path e rota, pois isso dificulta manutenção e entendimento do código.
-
-### Justificativa
-- Facilita o uso do `{% url 'namespace:rota' %}` em templates e código Python.
-- Evita ambiguidades e erros de reversão de URL.
-- Torna o projeto mais intuitivo para novos desenvolvedores.
-
-### Exemplo
-```python
-# Correto:
-path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='empresas')
-
-# Errado:
-path('empresas/<int:empresa_id>/', views.dashboard_empresa, name='startempresa')
-```
-
-### Aplicação
-- Sempre revise e padronize as rotas ao criar ou modificar URLs.
 - Documente esta regra em todos os projetos Django.
+
+Essa padronização facilita o uso do `{% url %}` nos templates, a manutenção do código e a navegação entre as rotas do projeto.

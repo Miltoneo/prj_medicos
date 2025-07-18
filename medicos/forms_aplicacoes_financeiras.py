@@ -34,8 +34,8 @@ class AplicacaoFinanceiraForm(forms.ModelForm):
         model = AplicacaoFinanceira
         fields = ['data_referencia', 'saldo', 'ir_cobrado', 'descricao']
         widgets = {
-            'data_referencia': forms.DateInput(attrs={'type': 'month', 'class': 'form-control'}),
-            'saldo': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'ir_cobrado': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'descricao': forms.TextInput(attrs={'class': 'form-control'}),
+            'data_referencia': forms.DateInput(attrs={'type': 'month', 'class': 'form-control form-control-sm', 'style': 'max-width: 140px;'}),
+            'saldo': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'style': 'max-width: 120px;'}),
+            'ir_cobrado': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'style': 'max-width: 120px;'}),
+            'descricao': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'maxlength': '60', 'style': 'max-width: 300px;'}),
         }
