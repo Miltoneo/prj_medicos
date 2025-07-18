@@ -114,11 +114,11 @@ path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa.lista_grupos_des
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa.grupo_despesa_edit, name='grupo_despesa_edit'),
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
 
-# Itens de Despesa (simplificado)
-path('empresas/<int:empresa_id>/itens-despesa/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
-path('empresas/<int:empresa_id>/itens-despesa/novo/', views_despesa.ItemDespesaCreateView.as_view(), name='item_despesa_create'),
-path('empresas/<int:empresa_id>/itens-despesa/<int:item_id>/editar/', views_despesa.ItemDespesaUpdateView.as_view(), name='item_despesa_edit'),
-path('empresas/<int:empresa_id>/itens-despesa/<int:item_id>/excluir/', views_despesa.ItemDespesaDeleteView.as_view(), name='item_despesa_delete'),
+# Itens de Despesa (padronizado)
+path('lista_itens_despesa/<int:empresa_id>/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
+path('item_despesa_create/<int:empresa_id>/', views_despesa.ItemDespesaCreateView.as_view(), name='item_despesa_create'),
+path('item_despesa_edit/<int:empresa_id>/<int:item_id>/', views_despesa.ItemDespesaUpdateView.as_view(), name='item_despesa_edit'),
+path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa.ItemDespesaDeleteView.as_view(), name='item_despesa_delete'),
 
     # =====================
     # Aliquota Views
@@ -147,7 +147,7 @@ path('empresas/<int:empresa_id>/itens-despesa/<int:item_id>/excluir/', views_des
     # =====================
     # Aplicações Financeiras (Fluxo Isolado)
     # =====================
-    path('aplicacoes-financeiras/', AplicacaoFinanceiraListView.as_view(), name='aplicacoes_financeiras'),
-    path('aplicacoes-financeiras/novo/', AplicacaoFinanceiraCreateView.as_view(), name='aplicacao_financeira_add'),
-    path('aplicacoes-financeiras/<int:pk>/editar/', AplicacaoFinanceiraUpdateView.as_view(), name='aplicacao_financeira_edit'),
+path('aplicacoes_financeiras/<int:empresa_id>/', AplicacaoFinanceiraListView.as_view(), name='aplicacoes_financeiras'),
+path('aplicacao_financeira_add/<int:empresa_id>/', AplicacaoFinanceiraCreateView.as_view(), name='aplicacao_financeira_add'),
+path('aplicacoes_financeiras_edit/<int:empresa_id>/<int:pk>/', AplicacaoFinanceiraUpdateView.as_view(), name='aplicacoes_financeiras_edit'),
 ]

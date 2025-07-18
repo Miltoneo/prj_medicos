@@ -1,5 +1,42 @@
 
 
+# Convenção e Padronização de URLs Django
+
+## 1. Alinhamento entre path e name
+
+- O início do path deve ser igual ao início do name, ambos em snake_case.
+- Para rotas de listagem, use o prefixo `lista_` tanto no path quanto no name, se aplicável.
+
+ O path deve ser direto, descritivo e sem redundâncias.
+
+**Exemplo correto:**
+```python
+path('lista_itens_despesa/<int:empresa_id>/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa')
+```
+**Nunca use:**
+```python
+path('itens_despesa/', ..., name='lista_itens_despesa')  # ERRADO
+```
+
+## 2. Parâmetros obrigatórios de contexto
+
+Todo endpoint que depende de contexto de empresa deve obrigatoriamente incluir o parâmetro `empresa_id` no path, garantindo clareza e alinhamento entre nome e path.
+
+**Exemplo:**
+```python
+path('aplicacoes_financeiras/<int:empresa_id>/', AplicacaoFinanceiraListView.as_view(), name='aplicacoes_financeiras'),
+path('aplicacao_financeira_add/<int:empresa_id>/', AplicacaoFinanceiraCreateView.as_view(), name='aplicacao_financeira_add'),
+path('aplicacao_financeira_edit/<int:empresa_id>/<int:pk>/', AplicacaoFinanceiraUpdateView.as_view(), name='aplicacao_financeira_edit'),
+```
+
+> **Importante:** Sempre inclua `empresa_id` em todos os recursos que dependem de contexto de empresa. Siga este padrão para todos os fluxos CRUD e revise periodicamente os paths.
+
+Essa padronização facilita leitura, manutenção, busca, uso do reverse no Django e garante consistência em todo o projeto.
+
+---
+
+
+
 # Guia de Desenvolvimento: Regras e Padrões do Projeto
 
 ## 1. Contexto Global, Header e Título (Obrigatório)

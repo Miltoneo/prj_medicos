@@ -1,3 +1,29 @@
+# Sempre considere e siga a documentação do projeto
+
+Antes de propor, revisar ou alterar qualquer código, leia e siga rigorosamente a documentação oficial do projeto (guia de desenvolvimento, padrões de URL, exemplos, etc). Todas as decisões devem estar alinhadas com as regras e exemplos documentados.
+
+**Nunca assuma padrões apenas por dedução ou experiência prévia.**
+
+**Checklist obrigatório:**
+- Consulte a documentação do projeto antes de sugerir ou aprovar qualquer padrão.
+- Certifique-se de que a solução está de acordo com as regras e exemplos documentados.
+- Se houver dúvida, questione e peça esclarecimento antes de aplicar mudanças.
+
+**Exemplo de comportamento correto:**
+"Antes de definir o padrão de URL, consultei o guia de desenvolvimento e alinhei o path e name conforme o exemplo documentado, incluindo todos os parâmetros necessários."
+# Evite comportamento superficial (lazy) na análise de URLs
+
+Ao revisar ou criar URLs, nunca se limite apenas à padronização de nomes (path e name). Sempre:
+- Verifique se todos os parâmetros necessários ao contexto de negócio estão presentes (ex: empresa_id, usuario_id, etc).
+- Compare com padrões já adotados para recursos semelhantes no projeto.
+- Questione se a ausência de parâmetros pode causar ambiguidade, falhas de segurança ou inconsistência.
+- Priorize a consistência e a lógica de negócio, não apenas a sintaxe.
+
+**Exemplo de comportamento a evitar:**
+"Apenas alinhar path e name sem analisar se falta algum parâmetro essencial para o contexto."
+
+**Exemplo de comportamento correto:**
+"Além de alinhar path e name, garantir que todos os parâmetros de contexto (como empresa_id) estejam presentes, conforme o padrão dos outros recursos do projeto."
 # Regras de Comportamento do Copilot (migradas de praticas_e_padroes.md)
 
 - Sempre revisar e, se necessário, remover ou ajustar validações duplicadas ou conflitantes tanto no formulário quanto no modelo.

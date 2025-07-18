@@ -22,7 +22,7 @@ class AplicacaoFinanceiraListView(LoginRequiredMixin, SingleTableMixin, ListView
             ano_int = int(ano_str)
         except (TypeError, ValueError):
             ano_int = timezone.now().year
-        empresa_id = self.request.session.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id')
         if not empresa_id:
             return AplicacaoFinanceira.objects.none()
         try:
@@ -47,24 +47,29 @@ class AplicacaoFinanceiraListView(LoginRequiredMixin, SingleTableMixin, ListView
         context['titulo_pagina'] = 'Aplicações Financeiras'
         context['cenario_nome'] = 'Financeiro'
         context['menu_nome'] = 'aplicacoes_financeiras'
+        context['empresa_id'] = self.kwargs.get('empresa_id')
         return context
 
 class AplicacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
+    model = AplicacaoFinanceira
+    form_class = AplicacaoFinanceiraForm
+    template_name = 'financeiro/aplicacoes_financeiras_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('medicos:aplicacoes_financeiras', kwargs={'empresa_id': self.kwargs.get('empresa_id')})
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Nova Aplicação Financeira'
         context['cenario_nome'] = 'Financeiro'
         context['menu_nome'] = 'aplicacoes_financeiras'
+        context['empresa_id'] = self.kwargs.get('empresa_id')
         return context
-    model = AplicacaoFinanceira
-    form_class = AplicacaoFinanceiraForm
-    template_name = 'financeiro/aplicacoes_financeiras_form.html'
-    success_url = reverse_lazy('medicos:aplicacoes_financeiras')
 
     def form_valid(self, form):
         from django.db import IntegrityError
         from django.contrib import messages
-        empresa_id = self.request.session.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id')
         from medicos.models.base import Empresa
         if empresa_id:
             try:
@@ -84,11 +89,18 @@ class AplicacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
     model = AplicacaoFinanceira
     form_class = AplicacaoFinanceiraForm
     template_name = 'financeiro/aplicacoes_financeiras_form.html'
-    success_url = reverse_lazy('medicos:aplicacoes_financeiras')
+
+    def get_success_url(self):
+        empresa_id = self.kwargs.get('empresa_id')
+        if not empresa_id or str(empresa_id).strip() == '':
+            empresa_id = getattr(self.object, 'empresa_id', None)
+        if not empresa_id:
+            raise Exception('empresa_id não encontrado para redirecionamento')
+        return reverse_lazy('medicos:aplicacoes_financeiras', kwargs={'empresa_id': int(empresa_id)})
 
     def get_queryset(self):
         from medicos.models.base import Empresa
-        empresa_id = self.request.session.get('empresa_id')
+        empresa_id = self.kwargs.get('empresa_id')
         if not empresa_id:
             return AplicacaoFinanceira.objects.none()
         try:
