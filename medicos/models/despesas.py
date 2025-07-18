@@ -60,16 +60,7 @@ class GrupoDespesa(AuditoriaModel):
         default=Tipo_t.COM_RATEIO
     )
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='grupos_despesa_criados',
-        verbose_name="Criado Por"
-    )
+    # campos de auditoria herdados de AuditoriaModel
 
     def __str__(self):
         return f"{self.codigo}"
@@ -96,16 +87,7 @@ class ItemDespesa(AuditoriaModel):
     codigo = models.CharField(max_length=20, null=False, verbose_name="Código", help_text="Código do item dentro do grupo")
     descricao = models.CharField(max_length=255, null=False, default="", verbose_name="Descrição", help_text="Descrição detalhada do item de despesa")
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='itens_despesa_criados',
-        verbose_name="Criado Por"
-    )
+    # campos de auditoria herdados de AuditoriaModel
 
     @property
     def permite_rateio(self):
@@ -215,7 +197,7 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         help_text="Percentual que este médico deve pagar deste item (0-100%). A soma de todos os médicos deve ser 100%."
     )
     
-    # Controle e auditoria
+    # Controle
     ativo = models.BooleanField(
         default=True, 
         verbose_name="Ativo",
