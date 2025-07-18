@@ -44,15 +44,26 @@ class AplicacaoFinanceiraListView(LoginRequiredMixin, SingleTableMixin, ListView
             ano = timezone.now().year
         context['ano'] = ano
         context['anos'] = list(range(timezone.now().year - 5, timezone.now().year + 2))
+        context['titulo_pagina'] = 'Aplicações Financeiras'
+        context['cenario_nome'] = 'Financeiro'
+        context['menu_nome'] = 'aplicacoes_financeiras'
         return context
 
 class AplicacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Nova Aplicação Financeira'
+        context['cenario_nome'] = 'Financeiro'
+        context['menu_nome'] = 'aplicacoes_financeiras'
+        return context
     model = AplicacaoFinanceira
     form_class = AplicacaoFinanceiraForm
     template_name = 'financeiro/aplicacoes_financeiras_form.html'
     success_url = reverse_lazy('medicos:aplicacoes_financeiras')
 
     def form_valid(self, form):
+        from django.db import IntegrityError
+        from django.contrib import messages
         empresa_id = self.request.session.get('empresa_id')
         from medicos.models.base import Empresa
         if empresa_id:
@@ -62,7 +73,12 @@ class AplicacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
             except Empresa.DoesNotExist:
                 pass
         form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        try:
+            return super().form_valid(form)
+        except IntegrityError:
+            form.add_error('data_referencia', 'Já existe uma aplicação financeira para este mês/ano nesta empresa.')
+            messages.error(self.request, 'Já existe uma aplicação financeira para este mês/ano nesta empresa.')
+            return self.form_invalid(form)
 
 class AplicacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
     model = AplicacaoFinanceira
