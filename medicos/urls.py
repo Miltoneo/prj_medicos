@@ -116,9 +116,9 @@ path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_d
 
 # Itens de Despesa
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
-path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/novo/', views_despesa.item_despesa_create, name='item_despesa_create'),
-path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/editar/', views_despesa.item_despesa_edit, name='item_despesa_edit'),
-path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/excluir/', views_despesa.item_despesa_delete, name='item_despesa_delete'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/novo/', views_despesa.ItemDespesaCreateView.as_view(), name='item_despesa_create'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/editar/', views_despesa.ItemDespesaUpdateView.as_view(), name='item_despesa_edit'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/excluir/', views_despesa.ItemDespesaDeleteView.as_view(), name='item_despesa_delete'),
 
     # =====================
     # Aliquota Views
