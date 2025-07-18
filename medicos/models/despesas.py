@@ -5,6 +5,8 @@ from django.conf import settings
 from django.utils import timezone
 from .base import SaaSBaseModel, Empresa, Socio
 
+from django.utils.translation import gettext_lazy as _
+
 # MODELO ABSTRATO DE AUDITORIA
 class AuditoriaModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
@@ -31,6 +33,13 @@ GRUPO_ITEM_SEM_RATEIO = 2
 
 
 class GrupoDespesa(AuditoriaModel):
+    empresa = models.ForeignKey(
+        Empresa,
+        on_delete=models.CASCADE,
+        related_name='grupos_despesa',
+        verbose_name="Empresa/Associação",
+        help_text="Empresa ou associação responsável pelo grupo de despesa"
+    )
     """Grupos de despesas para organização contábil"""
     
     class Meta:
@@ -101,15 +110,19 @@ class ItemDespesa(AuditoriaModel):
     @property
     def permite_rateio(self):
         """Verifica se o item permite rateio baseado no grupo"""
-        return self.grupo_despesa.codigo in ['FOLHA', 'GERAL']
-    
+        return self.grupo_despesa and self.grupo_despesa.codigo in ['FOLHA', 'GERAL']
+
     @property
     def codigo_completo(self):
         """Retorna código completo no formato GRUPO.ITEM"""
-        return f"{self.grupo_despesa.codigo}.{self.codigo}"
+        if self.grupo_despesa:
+            return f"{self.grupo_despesa.codigo}.{self.codigo}"
+        return self.codigo
 
     def __str__(self):
-        return f"{self.grupo_despesa.codigo} {self.descricao}"
+        if self.grupo_despesa:
+            return f"{self.grupo_despesa.codigo} {self.descricao}"
+        return self.descricao
 
 
 class ItemDespesaRateioMensal(AuditoriaModel):
@@ -208,18 +221,7 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         verbose_name="Ativo",
         help_text="Se este rateio está ativo para o período"
     )
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
-    
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='rateios_despesa_criados',
-        verbose_name="Criado Por"
-    )
+    # campos de auditoria herdados de AuditoriaModel
     
     observacoes = models.TextField(
         blank=True, 
@@ -230,25 +232,17 @@ class ItemDespesaRateioMensal(AuditoriaModel):
     def clean(self):
         """
         Validações personalizadas para garantir consistência do rateio percentual
-        
-        Validações implementadas:
-        1. Obrigatoriedade do percentual de rateio
-        2. Limites válidos para percentuais (0-100%)
-        3. Verificação se o item permite rateio (apenas grupos FOLHA e GERAL)
-        4. Consistência entre sócio e item (mesma conta/empresa)
         """
         # Verificar se o percentual de rateio foi informado
-        if not self.percentual_rateio:
+        if self.percentual_rateio is None:
             raise ValidationError({
                 'percentual_rateio': 'Percentual de rateio é obrigatório'
             })
-        
         # Verificar se o percentual está no range válido (0-100%)
         if self.percentual_rateio < 0 or self.percentual_rateio > 100:
             raise ValidationError({
                 'percentual_rateio': 'Percentual deve estar entre 0 e 100%'
             })
-        
         # Verificar se o item permite rateio (apenas grupos FOLHA e GERAL)
         if self.item_despesa and not self.item_despesa.permite_rateio:
             raise ValidationError({
@@ -257,17 +251,14 @@ class ItemDespesaRateioMensal(AuditoriaModel):
                     f'Apenas itens dos grupos FOLHA e GERAL permitem rateio.'
                 )
             })
-        
         # Verificar se o item é dos grupos corretos (FOLHA ou GERAL)
-        if self.item_despesa and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
+        if self.item_despesa and self.item_despesa.grupo_despesa and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
             raise ValidationError({
                 'item_despesa': (
                     f'Rateios só podem ser definidos para itens dos grupos FOLHA e GERAL. '
                     f'O item selecionado é do grupo "{self.item_despesa.grupo_despesa.codigo}".'
                 )
             })
-        
-        # validação de conta removida
 
     def save(self, *args, **kwargs):
         """
@@ -431,53 +422,23 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         return rateios_criados
 
 
-class Despesa(AuditoriaModel):
-    """Despesas unificadas com sistema de grupos e rateio"""
-    
-    class Meta:
-        db_table = 'despesa'
-        indexes = [
-            models.Index(fields=['item_despesa', 'data']),
-            models.Index(fields=['empresa', 'socio', 'data']),
-            models.Index(fields=['created_at']),
-        ]
-    # campo 'conta' removido
-    
-    class Tipo_t(models.IntegerChoices):
-        COM_RATEIO = TIPO_DESPESA_COM_RATEIO, "DESPESA FOLHA/GERAL - COM RATEIO"
-        SEM_RATEIO = TIPO_DESPESA_SEM_RATEIO, "DESPESA DE SOCIO - SEM RATEIO"
 
-    # Classificação - CAMPO ELIMINADO: tipo_rateio (redundante, derivado do grupo)
-    # Usar property tipo_rateio para acesso transparente
+# ===============================
+# ESPECIALIZAÇÃO: DESPESA BASE, RATEADA E DE SÓCIO
+# ===============================
+
+class DespesaBase(AuditoriaModel):
+    """Base abstrata para despesas"""
     item_despesa = models.ForeignKey(
         'ItemDespesa',
         on_delete=models.PROTECT,
-        related_name='despesas',
+        related_name='despesas_base',
         verbose_name="Item de Despesa",
         help_text="Item de despesa relacionado a esta despesa",
         null=True,
         blank=True
     )
-    
-    # Relacionamentos
-    empresa = models.ForeignKey(
-        Empresa,
-        on_delete=models.CASCADE,
-        related_name='despesas',
-        verbose_name="Empresa/Associação",
-        help_text="Empresa ou associação responsável pela despesa"
-    )
-    socio = models.ForeignKey(
-        Socio,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='despesas_socio',
-        verbose_name="Sócio Responsável",
-        help_text="OBRIGATÓRIO para despesas SEM rateio (grupo SOCIO). DEVE SER NULL para despesas COM rateio (grupos FOLHA/GERAL)."
-    )
-    
-    # Dados da despesa
+    # empresa removida: acessar via self.item_despesa.grupo_despesa.empresa
     data = models.DateField(null=False, verbose_name="Data da Despesa")
     valor = models.DecimalField(
         max_digits=15,
@@ -486,203 +447,65 @@ class Despesa(AuditoriaModel):
         verbose_name="Valor da Despesa",
         help_text="Valor total da despesa"
     )
-    
-
-    # Controle e auditoria (NOMENCLATURA PADRONIZADA)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='despesas_criadas',
-        verbose_name="Criada Por"
-    )
     possui_rateio = models.BooleanField(
         default=False,
         verbose_name="Possui Rateio",
         help_text="Indica se a despesa é rateada entre sócios/participantes"
     )
 
-    def clean(self):
-        """Validações personalizadas aprimoradas"""
-        # Para despesas de sócio, sócio é obrigatório
-        if self.tipo_rateio == self.Tipo_t.SEM_RATEIO:
-            if not self.socio:
-                raise ValidationError({
-                    'socio': 'Sócio é obrigatório para despesas sem rateio (grupo SOCIO).'
-                })
-        # Para despesas com rateio, sócio deve estar vazio
-        elif self.tipo_rateio == self.Tipo_t.COM_RATEIO:
-            if self.socio:
-                raise ValidationError({
-                    'socio': 'Sócio deve ser vazio para despesas com rateio (grupos FOLHA/GERAL).'
-                })
-        # Verificar se o item pertence ao tipo correto
-        if self.item_despesa and self.item_despesa.grupo_despesa:
-            if self.tipo_rateio == self.Tipo_t.SEM_RATEIO and self.item_despesa.grupo_despesa.codigo != 'SOCIO':
-                raise ValidationError({
-                    'item_despesa': 'Para despesas sem rateio, o item deve ser do grupo SOCIO.'
-                })
-            elif self.tipo_rateio == self.Tipo_t.COM_RATEIO and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
-                raise ValidationError({
-                    'item_despesa': 'Para despesas com rateio, o item deve ser do grupo FOLHA ou GERAL.'
-                })
-
-    def save(self, *args, **kwargs):
-        # Validações antes de salvar (tipo_rateio agora é property derivada)
-        self.full_clean()
-        super().save(*args, **kwargs)
+    class Meta:
+        abstract = True
 
     def __str__(self):
         grupo = getattr(getattr(self.item_despesa, 'grupo_despesa', None), 'codigo', '-')
         descricao = getattr(self.item_despesa, 'descricao', '-')
-        return f"[{grupo}] {descricao} - {self.data}"
-    
-    # ===============================
-    # PROPERTIES DERIVADAS (substituem campo eliminado)
-    # ===============================
-    
+        empresa = getattr(getattr(self.item_despesa, 'grupo_despesa', None), 'empresa', None)
+        empresa_nome = getattr(empresa, 'nome_fantasia', getattr(empresa, 'name', '-')) if empresa else '-'
+        return f"[{grupo}] {descricao} - {empresa_nome} - {self.data}"
+
     @property
-    def tipo_rateio(self):
-        """Tipo de rateio derivado do grupo do item (substitui campo eliminado)"""
-        if not self.item_despesa or not self.item_despesa.grupo_despesa:
-            return None
-        return self.item_despesa.grupo_despesa.tipo_rateio
-    
-    @property
-    def grupo(self):
-        """Acesso rápido ao grupo da despesa"""
-        return self.item_despesa.grupo_despesa if self.item_despesa else None
-    
+    def empresa(self):
+        if self.item_despesa and self.item_despesa.grupo_despesa:
+            return self.item_despesa.grupo_despesa.empresa
+        return None
+
+class DespesaRateada(DespesaBase):
+    """Despesas FOLHA/GERAL - COM RATEIO (sem sócio)"""
+    class Meta:
+        db_table = 'despesa_rateada'
+        verbose_name = _(u"Despesa Rateada")
+        verbose_name_plural = _(u"Despesas Rateadas")
+        indexes = [
+            models.Index(fields=['item_despesa', 'data']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def clean(self):
+        # Só permite itens dos grupos FOLHA/GERAL
+        if self.item_despesa and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
+            raise ValidationError({'item_despesa': 'Para despesas rateadas, o item deve ser do grupo FOLHA ou GERAL.'})
+
     @property
     def pode_ser_rateada(self):
-        """Verifica se a despesa pode ser rateada"""
-        return self.tipo_rateio == self.Tipo_t.COM_RATEIO
-    
-    @property
-    def eh_despesa_socio(self):
-        """Verifica se é despesa de sócio"""
-        return self.tipo_rateio == self.Tipo_t.SEM_RATEIO
-    
-    @property
-    def valor_formatado(self):
-        """Retorna o valor formatado em real brasileiro"""
-        if self.valor is not None:
-            return f"R$ {self.valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-        return "R$ 0,00"
-    
-    def calcular_rateio_automatico(self):
-        """
-        Calcula rateio automático usando o valor da própria despesa
-        
-        Returns:
-            list: Lista de dicts com rateio por médico
-        """
-        return self.calcular_rateio_dinamico()
-    
-    def obter_total_rateado(self):
-        """
-        Calcula o total que seria rateado baseado na configuração atual
-        
-        Returns:
-            Decimal: Total dos rateios calculados
-        """
-        rateios = self.calcular_rateio_dinamico()
-        return sum(rateio['valor_rateio'] for rateio in rateios)
-    
-    def criar_rateio_automatico(self, usuario=None):
-        """
-        MÉTODO DESABILITADO: Sistema simplificado - rateios são apenas consultados
-        
-        No sistema simplificado:
-        1. Configuração: ItemDespesaRateioMensal define como ratear
-        2. Execução: Não há persistência de rateios por despesa
-        3. Consulta: Rateios são calculados dinamicamente quando necessário
-        
-        Para obter rateio de uma despesa, use:
-        ItemDespesaRateioMensal.objects.filter(
-            item_despesa=self.item_despesa,
-            mes_referencia=self.data.replace(day=1),
-            ativo=True
-        )
-        
-        Benefícios desta abordagem:
-        - Elimina redundância de dados
-        - Evita inconsistências entre configuração e execução  
-        - Simplifica manutenção do sistema
-        - Rateios sempre atualizados conforme configuração atual
-        """
-        raise NotImplementedError(
-            "Sistema simplificado: Use ItemDespesaRateioMensal para consultar "
-            "configurações de rateio. Não há persistência de rateios por despesa."
-        )
-    
-    def criar_lancamentos_financeiros(self, usuario=None):
-        """
-        MÉTODO DESABILITADO: Sistema manual simplificado
-        
-        No sistema simplificado, lançamentos financeiros devem ser feitos
-        manualmente pela contabilidade, sem automação de rateios.
-        
-        Fluxo recomendado:
-        1. Contabilidade configura ItemDespesaRateioMensal por mês
-        2. Despesas são lançadas e classificadas por item
-        3. Relatórios mostram rateios calculados dinamicamente
-        4. Lançamentos financeiros individuais são feitos manualmente
-        
-        Esta abordagem garante:
-        - Controle total da contabilidade sobre lançamentos
-        - Auditabilidade completa de todas as operações
-        - Flexibilidade para ajustes e correções
-        - Eliminação de automação que pode gerar inconsistências
-        """
-        raise NotImplementedError(
-            "Sistema manual: Lançamentos devem ser feitos manualmente pela contabilidade. "
-            "Use relatórios de rateio dinâmicos como base para os lançamentos."
-        )
-    
+        return True
+
     def obter_configuracao_rateio(self):
-        """
-        Obtém a configuração de rateio para esta despesa
-        
-        Returns:
-            QuerySet: Configurações de rateio do item no mês da despesa
-        """
         if not self.pode_ser_rateada:
             return ItemDespesaRateioMensal.objects.none()
-        
-        mes_referencia = self.data.replace(day=1)
+        data_referencia = self.data.replace(day=1)
         return ItemDespesaRateioMensal.objects.filter(
             item_despesa=self.item_despesa,
-            mes_referencia=mes_referencia,
+            data_referencia=data_referencia,
             ativo=True
         ).select_related('socio__pessoa')
-    
+
     def calcular_rateio_dinamico(self, valor_despesa=None):
-        """
-        Calcula rateio dinâmico baseado na configuração mensal percentual
-        
-        Args:
-            valor_despesa: Valor total da despesa para calcular rateios.
-                          Se não informado, usa self.valor
-            
-        Returns:
-            list: Lista de dicts com rateio por médico
-        """
-        if not self.pode_ser_rateada:
-            return []
-        
-        # Usar valor da despesa se não foi passado como parâmetro
         if valor_despesa is None:
             valor_despesa = self.valor
-        
         if not valor_despesa or valor_despesa <= 0:
             return []
-        
         configuracoes = self.obter_configuracao_rateio()
         rateios_calculados = []
-        
         for config in configuracoes:
             if config.percentual_rateio:
                 valor_rateio = valor_despesa * (config.percentual_rateio / 100)
@@ -692,17 +515,41 @@ class Despesa(AuditoriaModel):
                     'valor_rateio': valor_rateio,
                     'observacoes': config.observacoes
                 })
-        
         return rateios_calculados
-    
+
     def tem_configuracao_rateio(self):
-        """Verifica se existe configuração de rateio para esta despesa"""
         return self.obter_configuracao_rateio().exists()
-    
+
     @property
     def medicos_participantes_rateio(self):
-        """Lista de médicos que participam do rateio desta despesa"""
-        if not self.pode_ser_rateada:
-            return []
         return [config.socio for config in self.obter_configuracao_rateio()]
+
+class DespesaSocio(DespesaBase):
+    """Despesas do grupo SOCIO - SEM RATEIO (com sócio obrigatório)"""
+    socio = models.ForeignKey(
+        Socio,
+        on_delete=models.CASCADE,
+        related_name='despesas_socio',
+        verbose_name="Sócio Responsável",
+        help_text="Sócio responsável pela despesa"
+    )
+
+    class Meta:
+        db_table = 'despesa_socio'
+        verbose_name = _(u"Despesa de Sócio")
+        verbose_name_plural = _(u"Despesas de Sócio")
+        indexes = [
+            models.Index(fields=['item_despesa', 'data']),
+            models.Index(fields=['socio', 'data']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def clean(self):
+        # Só permite itens do grupo SOCIO
+        if self.item_despesa and self.item_despesa.grupo_despesa and self.item_despesa.grupo_despesa.codigo != 'SOCIO':
+            raise ValidationError({'item_despesa': 'Para despesas de sócio, o item deve ser do grupo SOCIO.'})
+    def __str__(self):
+        socio_nome = getattr(getattr(self.socio, 'pessoa', None), 'name', str(self.socio))
+        item = self.item_despesa.descricao if self.item_despesa else '-'
+        return f"{socio_nome} - {item} - {self.data}"
 

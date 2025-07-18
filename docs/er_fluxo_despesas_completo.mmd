@@ -1,0 +1,125 @@
+erDiagram
+    CONTA ||--o{ EMPRESA : possui
+    EMPRESA ||--o{ GRUPO_DESPESA : possui
+    GRUPO_DESPESA ||--o{ ITEM_DESPESA : possui
+    ITEM_DESPESA ||--o{ DESPESARATEADA : classifica
+    ITEM_DESPESA ||--o{ DESPESASOCIO : classifica
+    ITEM_DESPESA ||--o{ ITEM_DESPESA_RATEIO_MENSAL : "configura rateio"
+    SOCIO ||--o{ DESPESASOCIO : "é responsável"
+    SOCIO ||--o{ ITEM_DESPESA_RATEIO_MENSAL : participa
+    DESPESARATEADA ||--o{ AUDITORIAMODEL : auditoria
+    DESPESASOCIO ||--o{ AUDITORIAMODEL : auditoria
+    ITEM_DESPESA_RATEIO_MENSAL ||--o{ AUDITORIAMODEL : auditoria
+    SOCIO ||--o{ EMPRESA : pertence
+    SOCIO ||--o{ CONTA : pertence
+    PESSOA ||--o{ SOCIO : "é pessoa de"
+
+    CONTA {
+        int id PK
+        string name
+        string cnpj
+    }
+    EMPRESA {
+        int id PK
+        int conta_id FK
+        string name
+        string nome_fantasia
+        string cnpj
+        string inscricao_estadual
+        string inscricao_municipal
+        string telefone
+        string email
+        string site
+        string endereco
+        string numero
+        string complemento
+        string bairro
+        string cidade
+        string estado
+        string cep
+        int regime_tributario
+        decimal receita_bruta_ano_anterior
+        date data_ultima_alteracao_regime
+        string periodicidade_irpj_csll
+        int dia_vencimento_iss
+    }
+    GRUPO_DESPESA {
+        int id PK
+        int empresa_id FK
+        string codigo
+        string descricao
+        int tipo_rateio
+        datetime created_at
+        datetime updated_at
+        int created_by FK
+    }
+    ITEM_DESPESA {
+        int id PK
+        int grupo_despesa_id FK
+        string codigo
+        string descricao
+        datetime created_at
+        datetime updated_at
+        int created_by FK
+    }
+    SOCIO {
+        int id PK
+        int conta_id FK
+        int empresa_id FK
+        int pessoa_id FK
+        bool ativo
+        date data_entrada
+        date data_saida
+        string observacoes
+    }
+    PESSOA {
+        int id PK
+        string name
+        string cpf
+        string rg
+        date data_nascimento
+        string telefone
+        string celular
+        string email
+        string endereco
+        string numero
+        string complemento
+        string bairro
+        string cidade
+        string estado
+        string cep
+        string crm
+        string especialidade
+        bool ativo
+        datetime created_at
+        datetime updated_at
+    }
+    DESPESARATEADA {
+        int id PK
+        int item_despesa_id FK
+        date data
+        decimal valor
+        bool possui_rateio
+    }
+    DESPESASOCIO {
+        int id PK
+        int item_despesa_id FK
+        int socio_id FK
+        date data
+        decimal valor
+        bool possui_rateio
+    }
+    ITEM_DESPESA_RATEIO_MENSAL {
+        int id PK
+        int item_despesa_id FK
+        int socio_id FK
+        date data_referencia
+        decimal percentual_rateio
+        bool ativo
+        string observacoes
+    }
+    AUDITORIAMODEL {
+        datetime created_at
+        datetime updated_at
+        int created_by FK
+    }
