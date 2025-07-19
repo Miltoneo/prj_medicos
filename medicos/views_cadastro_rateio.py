@@ -19,7 +19,16 @@ def cadastro_rateio_list(request):
     # Mês padrão
     default_mes = date.today().strftime('%Y-%m')
     mes_competencia = request.GET.get('mes_competencia', default_mes)
-    itens_despesa = ItemDespesa.objects.all()
+    # Filtrar apenas itens de despesa que pertencem a grupo com rateio
+    grupos_com_rateio = GrupoDespesa.objects.filter(rateio=True)
+    itens_grupo_rateio = ItemDespesa.objects.filter(grupo__in=grupos_com_rateio)
+    # Itens de despesa com rateio para o mês selecionado
+    itens_com_rateio_ids = ItemDespesaRateioMensal.objects.filter(data_referencia=mes_competencia).values_list('item_despesa_id', flat=True).distinct()
+    itens_com_rateio = itens_grupo_rateio.filter(id__in=itens_com_rateio_ids)
+    itens_sem_rateio = itens_grupo_rateio.exclude(id__in=itens_com_rateio_ids)
+    # Lista: primeiro os com rateio, depois os demais
+    itens_despesa = list(itens_com_rateio) + list(itens_sem_rateio)
+    itens_com_rateio_ids = list(itens_com_rateio_ids)
     selected_item_id = request.GET.get('item_despesa')
     rateios = []
     total_percentual = 0
@@ -37,6 +46,7 @@ def cadastro_rateio_list(request):
         'default_mes': default_mes,
         'mes_competencia': mes_competencia,
         'itens_despesa': itens_despesa,
+        'itens_com_rateio_ids': itens_com_rateio_ids,
         'selected_item_id': int(selected_item_id) if selected_item_id else None,
         'rateios': rateios,
         'total_percentual': '{:.2f}'.format(total_percentual),

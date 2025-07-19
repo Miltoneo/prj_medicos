@@ -18,8 +18,9 @@
                             <label class="form-label"><b>Itens de Despesa:</b></label>
                             <div class="list-group" style="max-height: 320px; overflow-y: auto;">
                                 {% for item in itens_despesa %}
-                                    <button type="submit" name="item_despesa" value="{{ item.id }}" class="list-group-item list-group-item-action {% if item.id == selected_item_id %}active{% endif %}">
-                                        {{ item.nome }}
+                                    <button type="submit" name="item_despesa" value="{{ item.id }}" class="list-group-item list-group-item-action {% if item.id == selected_item_id %}active{% endif %}{% if item.id in itens_com_rateio_ids %} list-group-item-info fw-bold{% endif %}">
+                                        {{ item.nome|default:item|default:'(sem nome)' }}
+                                        {% if item.id in itens_com_rateio_ids %}<span class="badge bg-info text-dark ms-2">Com Rateio</span>{% endif %}
                                     </button>
                                 {% empty %}
                                     <span class="text-muted">Nenhum item cadastrado.</span>
