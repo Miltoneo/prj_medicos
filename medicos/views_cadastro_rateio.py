@@ -33,15 +33,30 @@ def cadastro_rateio_list(request):
     rateios = []
     total_percentual = 0
     if selected_item_id:
+        # Buscar o item de despesa selecionado
+        try:
+            item = ItemDespesa.objects.select_related('grupo_despesa').get(id=selected_item_id)
+            grupo = getattr(item, 'grupo_despesa', None)
+            empresa = getattr(grupo, 'empresa', None) if grupo else None
+        except ItemDespesa.DoesNotExist:
+            item = None
+            empresa = None
+        # Sócios da empresa do grupo do item, ou nenhum se não houver empresa
+        if empresa:
+            socios_empresa = Socio.objects.filter(empresa=empresa, ativo=True)
+        else:
+            socios_empresa = Socio.objects.none()
         rateios_qs = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia)
-        for r in rateios_qs:
+        rateios_dict = {r.socio_id: r for r in rateios_qs}
+        for socio in socios_empresa:
+            r = rateios_dict.get(socio.id)
             rateios.append({
-                'id': r.id,
-                'socio': r.socio,
-                'percentual': r.percentual,
-                'observacoes': r.observacoes,
+                'id': r.id if r else None,
+                'socio': socio,
+                'percentual': r.percentual if r else '',
+                'observacoes': r.observacoes if r else '',
             })
-        total_percentual = sum([float(r['percentual']) for r in rateios])
+        total_percentual = sum([float(r['percentual']) for r in rateios if r['percentual']])
     context = {
         'default_mes': default_mes,
         'mes_competencia': mes_competencia,
@@ -49,6 +64,8 @@ def cadastro_rateio_list(request):
         'itens_com_rateio_ids': itens_com_rateio_ids,
         'selected_item_id': int(selected_item_id) if selected_item_id else None,
         'rateios': rateios,
+        'socios_empresa_debug': list(socios_empresa) if selected_item_id else [],
+        'rateios_debug': rateios,
         'total_percentual': '{:.2f}'.format(total_percentual),
     }
     return render(request, 'cadastro/rateio_list.html', context)

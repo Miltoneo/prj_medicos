@@ -1,5 +1,26 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
 {% block content %}
+{% if socios_empresa_debug or rateios_debug %}
+<div class="alert alert-warning mt-2">
+  <b>DEBUG:</b><br>
+  <b>Sócios ativos encontrados:</b>
+  <ul>
+    {% for socio in socios_empresa_debug %}
+      <li>{{ socio.pessoa.name }} (id={{ socio.id }}) ativo={{ socio.ativo }}</li>
+    {% empty %}
+      <li>Nenhum sócio ativo encontrado.</li>
+    {% endfor %}
+  </ul>
+  <b>Rateios enviados:</b>
+  <ul>
+    {% for r in rateios_debug %}
+      <li>{{ r.socio.pessoa.name }} | percentual: {{ r.percentual }} | id: {{ r.id }}</li>
+    {% empty %}
+      <li>Nenhum rateio enviado.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 <div class="container mt-4">
     <div class="row">
         <!-- Coluna 1: Seleção de mês e lista de itens de despesa -->
@@ -52,7 +73,7 @@
                             <tbody>
                                 {% for rateio in rateios %}
                                 <tr>
-                                    <td>{{ rateio.socio.nome }}</td>
+                                    <td>{{ rateio.socio.pessoa.name }}</td>
                                     <td><input type="number" name="percentual_{{ rateio.id }}" value="{{ rateio.percentual }}" min="0" max="100" step="0.01" class="form-control"></td>
                                     <td>{{ rateio.observacoes }}</td>
                                     <td class="actions">
@@ -65,7 +86,6 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                        <button name="add_socio" value="1" class="btn btn-outline-success mb-2">+ Adicionar Sócio</button>
                         <div class="total fw-bold mt-2">Total Percentual: {{ total_percentual|default:"0,00" }}%</div>
                         <div class="controls mt-3">
                             <button type="submit" class="btn btn-success">Salvar</button>
