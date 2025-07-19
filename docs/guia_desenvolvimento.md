@@ -1,3 +1,25 @@
+## Padrão obrigatório para templates Django
+
+**Sempre utilize o bloco `{% block content %}` nos templates filhos.**
+
+Todos os templates base do projeto (como `base_cenario_cadastro.html`, `base_cenario_empresa.html`, etc.) esperam que o conteúdo principal seja definido dentro desse bloco. Não utilize blocos personalizados como `{% block conteudo_cadastro %}` ou similares, pois isso pode impedir a renderização correta do conteúdo.
+
+**Exemplo correto:**
+
+```django
+{% extends 'layouts/base_cenario_cadastro.html' %}
+{% block content %}
+<!-- Conteúdo da tela aqui -->
+{% endblock %}
+```
+
+**Exemplo incorreto:**
+
+```django
+{% block conteudo_cadastro %}
+<!-- Não utilize blocos personalizados! -->
+{% endblock %}
+```
 
 
 # Convenção e Padronização de URLs Django

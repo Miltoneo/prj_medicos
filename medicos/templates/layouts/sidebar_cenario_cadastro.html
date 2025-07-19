@@ -16,7 +16,7 @@
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_grupos_despesa' empresa_id=request.session.empresa_id %}"><i class="fas fa-layer-group me-2"></i>Cadastro de Grupo de Despesas</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_itens_despesa' empresa_id=request.session.empresa_id %}"><i class="fas fa-list me-2"></i>Cadastro de Item de Despesa</a></li>
     <li class="nav-item">
-      <a class="nav-link text-light" href="{% url 'cadastro_rateio' %}">
+      <a class="nav-link text-light" href="{% url 'medicos:cadastro_rateio' %}">
         <i class="fas fa-divide me-2"></i>Configuração de Rateio
       </a>
     </li>
