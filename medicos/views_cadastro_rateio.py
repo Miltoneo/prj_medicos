@@ -1,14 +1,48 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+
+
+
+from datetime import date
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
-from medicos.models.despesas import ItemDespesaRateioMensal, ItemDespesa, GrupoDespesa, Socio
-from medicos.forms import ItemDespesaRateioMensalForm
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django_filters.views import FilterView
 import django_tables2 as tables
 from django_tables2.views import SingleTableMixin
+from medicos.models.despesas import ItemDespesaRateioMensal, ItemDespesa, GrupoDespesa, Socio
+from medicos.forms import ItemDespesaRateioMensalForm
 from medicos.filters_rateio_medico import ItemDespesaRateioMensalFilter
+
+
+def cadastro_rateio_list(request):
+    # Mês padrão
+    default_mes = date.today().strftime('%Y-%m')
+    mes_competencia = request.GET.get('mes_competencia', default_mes)
+    itens_despesa = ItemDespesa.objects.all()
+    selected_item_id = request.GET.get('item_despesa')
+    rateios = []
+    total_percentual = 0
+    if selected_item_id:
+        rateios_qs = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia)
+        for r in rateios_qs:
+            rateios.append({
+                'id': r.id,
+                'socio': r.socio,
+                'percentual': r.percentual,
+                'observacoes': r.observacoes,
+            })
+        total_percentual = sum([float(r['percentual']) for r in rateios])
+    context = {
+        'default_mes': default_mes,
+        'mes_competencia': mes_competencia,
+        'itens_despesa': itens_despesa,
+        'selected_item_id': int(selected_item_id) if selected_item_id else None,
+        'rateios': rateios,
+        'total_percentual': '{:.2f}'.format(total_percentual),
+    }
+    return render(request, 'cadastro/rateio_list.html', context)
+
 
 class ItemDespesaRateioMensalTable(tables.Table):
     class Meta:
@@ -29,6 +63,12 @@ class CadastroRateioView(SingleTableMixin, FilterView):
         context['titulo_pagina'] = _(u"Configuração de Rateio Mensal")
         context['itens_despesa'] = ItemDespesa.objects.all()
         context['socios'] = Socio.objects.all()
+        # Adiciona mes_competencia e default_mes ao contexto para compatibilidade com o template
+        from datetime import date
+        default_mes = date.today().strftime('%Y-%m')
+        mes_competencia = self.request.GET.get('mes_competencia', default_mes)
+        context['default_mes'] = default_mes
+        context['mes_competencia'] = mes_competencia
         return context
 
 class CadastroRateioCreateView(CreateView):
