@@ -85,6 +85,7 @@ class GrupoDespesaCreateView(CreateView):
         empresa = get_object_or_404(Empresa, id=empresa_id)
         grupo = form.save(commit=False)
         grupo.conta = empresa.conta
+        grupo.empresa = empresa  # Garante que o campo empresa nunca fique nulo
         grupo.save()
         messages.success(self.request, 'Grupo de despesas salvo com sucesso!')
         return redirect('medicos:lista_grupos_despesa', empresa_id=empresa.id)
@@ -112,6 +113,7 @@ class GrupoDespesaUpdateView(UpdateView):
         empresa = get_object_or_404(Empresa, id=empresa_id)
         grupo = form.save(commit=False)
         grupo.conta = empresa.conta
+        grupo.empresa = empresa  # Garante que o campo empresa nunca fique nulo
         grupo.save()
         messages.success(self.request, 'Grupo de despesas salvo com sucesso!')
         return redirect('medicos:lista_grupos_despesa', empresa_id=empresa.id)
@@ -295,6 +297,7 @@ def grupo_despesa_edit(request, empresa_id, grupo_id):
     if request.method == 'POST' and form.is_valid():
         grupo = form.save(commit=False)
         grupo.conta = empresa.conta
+        grupo.empresa = empresa  # Garante que o campo empresa nunca fique nulo
         grupo.save()
         messages.success(request, 'Grupo de despesas salvo com sucesso!')
         return redirect('medicos:lista_grupos_despesa', empresa_id=empresa.id)

@@ -13,6 +13,7 @@ from .views_cadastro_rateio import (
     CadastroRateioCreateView,
     CadastroRateioUpdateView,
     CadastroRateioDeleteView,
+    cadastro_rateio_list,
 )
 from . import views_user
 from . import views_main
@@ -45,7 +46,7 @@ urlpatterns = [
     # =====================
     # Configuração de Rateio Views
     # =====================
-    path('cadastro/rateio/', CadastroRateioView.as_view(), name='cadastro_rateio'),
+    path('cadastro/rateio/', cadastro_rateio_list, name='cadastro_rateio'),
     path('cadastro/rateio/novo/', CadastroRateioCreateView.as_view(), name='cadastro_rateio_create'),
     path('cadastro/rateio/<int:pk>/editar/', CadastroRateioUpdateView.as_view(), name='cadastro_rateio_update'),
     path('cadastro/rateio/<int:pk>/remover/', CadastroRateioDeleteView.as_view(), name='cadastro_rateio_delete'),

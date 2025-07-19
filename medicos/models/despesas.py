@@ -91,10 +91,11 @@ class ItemDespesa(AuditoriaModel):
 
     # campos de auditoria herdados de AuditoriaModel
 
+
     @property
     def permite_rateio(self):
-        """Verifica se o item permite rateio baseado no grupo"""
-        return self.grupo_despesa and self.grupo_despesa.codigo in ['FOLHA', 'GERAL']
+        """Verifica se o item permite rateio baseado no grupo (COM RATEIO)"""
+        return self.grupo_despesa and self.grupo_despesa.tipo_rateio == self.grupo_despesa.Tipo_t.COM_RATEIO
 
     @property
     def codigo_completo(self):
@@ -227,20 +228,15 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             raise ValidationError({
                 'percentual_rateio': 'Percentual deve estar entre 0 e 100%'
             })
-        # Verificar se o item permite rateio (apenas grupos FOLHA e GERAL)
-        if self.item_despesa and not self.item_despesa.permite_rateio:
+        # Verificar se o item permite rateio (grupo com tipo_rateio=COM_RATEIO)
+        if self.item_despesa and (
+            not self.item_despesa.grupo_despesa or
+            self.item_despesa.grupo_despesa.tipo_rateio != self.item_despesa.grupo_despesa.Tipo_t.COM_RATEIO
+        ):
             raise ValidationError({
                 'item_despesa': (
                     f'O item "{self.item_despesa.descricao}" não permite rateio. '
-                    f'Apenas itens dos grupos FOLHA e GERAL permitem rateio.'
-                )
-            })
-        # Verificar se o item é dos grupos corretos (FOLHA ou GERAL)
-        if self.item_despesa and self.item_despesa.grupo_despesa and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
-            raise ValidationError({
-                'item_despesa': (
-                    f'Rateios só podem ser definidos para itens dos grupos FOLHA e GERAL. '
-                    f'O item selecionado é do grupo "{self.item_despesa.grupo_despesa.codigo}".'
+                    f'Apenas itens de grupos COM RATEIO permitem rateio.'
                 )
             })
 
