@@ -1,0 +1,14 @@
+{% extends 'cenarios/base_cadastro.html' %}
+{% load render_table from django_tables2 %}
+
+{% block conteudo_cadastro %}
+<h4 class="fw-bold text-primary">{{ titulo_pagina|default:'Configuração de Rateio Mensal' }}</h4>
+<div class="mb-3">
+    <a href="{% url 'cadastro_rateio_create' %}" class="btn btn-success">Novo Rateio</a>
+</div>
+<form method="get" class="form-inline mb-3">
+    {{ filter.form.as_p }}
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+{% render_table table %}
+{% endblock %}

@@ -1,3 +1,13 @@
+
+# Corrigir ordem dos imports para garantir que 'forms' esteja definido antes de ser usado
+from django import forms
+from medicos.models.despesas import ItemDespesaRateioMensal
+
+# Formulário para configuração de rateio mensal de item de despesa
+class ItemDespesaRateioMensalForm(forms.ModelForm):
+    class Meta:
+        model = ItemDespesaRateioMensal
+        fields = ['item_despesa', 'socio', 'data_referencia', 'percentual_rateio', 'ativo', 'observacoes']
 from django import forms
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.base import Socio

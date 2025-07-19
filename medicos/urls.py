@@ -8,7 +8,12 @@ from .views_rateio import (
 from .views_rateio_medico import NotaFiscalRateioMedicoListView
 from .views_financeiro_lancamentos import FinanceiroListView
 from django.urls import path
-# ...existing code...
+from .views_cadastro_rateio import (
+    CadastroRateioView,
+    CadastroRateioCreateView,
+    CadastroRateioUpdateView,
+    CadastroRateioDeleteView,
+)
 from . import views_user
 from . import views_main
 from . import views_relatorios
@@ -37,6 +42,13 @@ app_name = 'medicos'
 # Rateio Views
 # =====================
 urlpatterns = [
+    # =====================
+    # Configuração de Rateio Views
+    # =====================
+    path('cadastro/rateio/', CadastroRateioView.as_view(), name='cadastro_rateio'),
+    path('cadastro/rateio/novo/', CadastroRateioCreateView.as_view(), name='cadastro_rateio_create'),
+    path('cadastro/rateio/<int:pk>/editar/', CadastroRateioUpdateView.as_view(), name='cadastro_rateio_update'),
+    path('cadastro/rateio/<int:pk>/remover/', CadastroRateioDeleteView.as_view(), name='cadastro_rateio_delete'),
     # Rateio por Médico
     path('lista_rateio_medicos/<int:nota_id>/', NotaFiscalRateioMedicoListView.as_view(), name='lista_rateio_medicos'),
     path('novo_rateio_medico/<int:nota_id>/', NotaFiscalRateioMedicoCreateView.as_view(), name='novo_rateio_medico'),
