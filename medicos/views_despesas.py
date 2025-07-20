@@ -47,6 +47,7 @@ class NovaDespesaEmpresaView(View):
         return render(request, 'despesas/form_empresa.html', {
             'form': form,
             'titulo_pagina': 'Nova Despesa da Empresa',
+            'cenario_nome': 'Despesas',
         })
 
     def post(self, request, empresa_id):
@@ -60,6 +61,7 @@ class NovaDespesaEmpresaView(View):
         return render(request, 'despesas/form_empresa.html', {
             'form': form,
             'titulo_pagina': 'Nova Despesa da Empresa',
+            'cenario_nome': 'Despesas',
         })
 
 # Consolidado de Despesas
@@ -68,6 +70,7 @@ class ConsolidadoDespesasView(View):
         # Exemplo de contexto consolidado
         context = {
             'titulo_pagina': 'Consolidado de Despesas',
+            'cenario_nome': 'Despesas',
         }
         return render(request, 'despesas/lista_consolidado.html', context)
 
@@ -92,6 +95,7 @@ class ListaDespesasEmpresaView(View):
         tables.RequestConfig(request, paginate={'per_page': 20}).configure(table)
         context = {
             'titulo_pagina': 'Despesas da Empresa',
+            'cenario_nome': 'Despesas',
             'filtro': filtro,
             'table': table,
             'competencia': competencia,
