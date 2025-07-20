@@ -1,3 +1,28 @@
+## 11. Cenário de Apropriação de Despesas – Fluxo e Interfaces
+
+### 1. Fluxo Geral
+O cenário de despesas trata da apropriação mensal das despesas da empresa e dos sócios, sempre considerando o mês de competência ativo (`request.session['mes_ano']`). O usuário pode:
+- Incluir, editar e excluir despesas da empresa (com ou sem rateio).
+- Incluir, editar e excluir despesas de cada sócio (com ou sem rateio).
+
+### 2. Interfaces
+**a) Interface de Lista de Despesas do Mês de Competência**
+- Exibe todas as despesas da empresa para o mês/ano corrente.
+- Permite inclusão, edição e deleção de despesas.
+- Ao acessar esta interface, o sistema verifica se existe lista de rateio para o mês/ano corrente; se não existir, copia automaticamente a lista do mês anterior (ver seção 10).
+- Deve existir uma opção explícita para o usuário copiar manualmente as despesas do mês anterior, caso deseje.
+- As despesas podem ser cadastradas como “com rateio” (apropriadas entre os sócios) ou “sem rateio” (apenas da empresa).
+
+**b) Interface de Lista de Despesas dos Sócios**
+- Exibe a lista de despesas apropriadas para cada sócio, já preenchida automaticamente com as despesas de rateio do mês corrente.
+- Permite visualizar e editar os valores apropriados a cada sócio.
+- Para cada item, devem ser exibidos: descrição da despesa, grupo, valor total, taxa de rateio (se aplicável), valor final, entre outros campos relevantes.
+- Deve existir uma opção explícita para o usuário copiar manualmente as despesas do mês anterior para os sócios, caso deseje.
+
+### 3. Referências
+- .github/documentacao_especifica_instructions.md, seção 10 (automação e opção manual de cópia)
+- .github/guia-desenvolvimento-instructions.md, seção 4 (contexto de competência e UI/UX)
+- docs/README.md, linhas 1-25 (visão geral do fluxo de despesas)
 # Instruções Específicas de Negócio e Modelagem – prj_medicos
 
 > Para regras comportamentais, exemplos de resposta, rastreabilidade e busca detalhada, consulte exclusivamente `.github/copilot-instructions.md`.

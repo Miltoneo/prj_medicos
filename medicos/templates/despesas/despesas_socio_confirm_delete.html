@@ -1,0 +1,12 @@
+{% extends 'layouts/base_cenario_despesas.html' %}
+{% block content %}
+<div class="mb-3">
+  <h5>Confirmação de Exclusão</h5>
+  <form method="post">
+    {% csrf_token %}
+    <p>Tem certeza que deseja excluir esta despesa de sócio?</p>
+    <button type="submit" class="btn btn-danger">Excluir</button>
+    <a href="{{ cancel_url }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

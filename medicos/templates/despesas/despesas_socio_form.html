@@ -1,0 +1,12 @@
+{% extends 'layouts/base_cenario_despesas.html' %}
+{% block content %}
+<div class="mb-3">
+  <h5>Cadastro/Edição de Despesa de Sócio</h5>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{{ cancel_url }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,8 +1,66 @@
-# Editar despesa da empresa
-from django.views.generic import UpdateView, DeleteView
-from .models.despesas import DespesaRateada
-from .forms_despesas import DespesaEmpresaForm
+# Imports padrão Python
 
+# Imports de terceiros
+from django.views.generic import View, CreateView, UpdateView, DeleteView
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.contrib import messages
+import django_tables2 as tables
+
+# Imports do projeto
+from .models.despesas import DespesaSocio, DespesaRateada
+from .forms_despesas import DespesaSocioForm, DespesaEmpresaForm
+from .filters_despesas import DespesaEmpresaFilter
+from .tables_despesas import DespesaEmpresaTable
+
+
+# CRUD Despesa de Sócio
+class DespesaSocioCreateView(CreateView):
+    model = DespesaSocio
+    form_class = DespesaSocioForm
+    template_name = 'despesas/despesas_socio_form.html'
+
+    def get_success_url(self):
+        empresa_id = self.kwargs.get('empresa_id')
+        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Nova Despesa de Sócio'
+        context['cancel_url'] = self.get_success_url()
+        return context
+
+class DespesaSocioUpdateView(UpdateView):
+    model = DespesaSocio
+    form_class = DespesaSocioForm
+    template_name = 'despesas/despesas_socio_form.html'
+
+    def get_success_url(self):
+        empresa_id = self.kwargs.get('empresa_id')
+        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Editar Despesa de Sócio'
+        context['cancel_url'] = self.get_success_url()
+        return context
+
+class DespesaSocioDeleteView(DeleteView):
+    model = DespesaSocio
+    template_name = 'despesas/despesas_socio_confirm_delete.html'
+
+    def get_success_url(self):
+        empresa_id = self.kwargs.get('empresa_id')
+        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Excluir Despesa de Sócio'
+        context['cancel_url'] = self.get_success_url()
+        return context
+
+
+# CRUD Despesa da Empresa
 class EditarDespesaEmpresaView(UpdateView):
     model = DespesaRateada
     form_class = DespesaEmpresaForm
@@ -30,17 +88,7 @@ class ExcluirDespesaEmpresaView(DeleteView):
         context['titulo_pagina'] = 'Excluir Despesa da Empresa'
         return context
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
-from django.views import View
-from django.contrib import messages
-import django_tables2 as tables
-from .models.despesas import DespesaRateada
-from .filters_despesas import DespesaEmpresaFilter
-from .tables_despesas import DespesaEmpresaTable
-from .forms_despesas import DespesaEmpresaForm
 
-# Cadastro de nova despesa da empresa
 class NovaDespesaEmpresaView(View):
     def get(self, request, empresa_id):
         form = DespesaEmpresaForm()
@@ -64,17 +112,16 @@ class NovaDespesaEmpresaView(View):
             'cenario_nome': 'Despesas',
         })
 
-# Consolidado de Despesas
+
 class ConsolidadoDespesasView(View):
     def get(self, request, empresa_id):
-        # Exemplo de contexto consolidado
         context = {
             'titulo_pagina': 'Consolidado de Despesas',
             'cenario_nome': 'Despesas',
         }
         return render(request, 'despesas/lista_consolidado.html', context)
 
-# Lista de Despesas da Empresa
+
 class ListaDespesasEmpresaView(View):
     def get(self, request, empresa_id):
         competencia = request.GET.get('competencia') or request.session.get('mes_ano')
@@ -82,7 +129,6 @@ class ListaDespesasEmpresaView(View):
             item_despesa__grupo_despesa__empresa_id=empresa_id
         )
         if competencia:
-            # Espera formato yyyy-mm
             try:
                 ano, mes = competencia.split('-')
                 despesas_qs = despesas_qs.filter(data__year=ano, data__month=mes)
@@ -103,12 +149,31 @@ class ListaDespesasEmpresaView(View):
         }
         return render(request, 'despesas/lista_empresa.html', context)
 
-# Lista de Despesas de Sócio
+
 class ListaDespesasSocioView(View):
     def get(self, request, empresa_id):
-        # despesas = DespesaSocio.objects.filter(empresa_id=empresa_id, competencia=request.session['mes_ano'])
+        competencia = request.GET.get('competencia') or request.session.get('mes_ano')
+        socio_id = request.GET.get('socio')
+        despesas_qs = DespesaSocio.objects.filter(
+            socio__empresa_id=empresa_id
+        )
+        if competencia:
+            try:
+                ano, mes = competencia.split('-')
+                despesas_qs = despesas_qs.filter(data__year=ano, data__month=mes)
+            except Exception:
+                pass
+        if socio_id:
+            despesas_qs = despesas_qs.filter(socio_id=socio_id)
+        despesas = despesas_qs.select_related('socio', 'item_despesa', 'item_despesa__grupo_despesa')
+        total_despesas = sum([d.valor for d in despesas])
+        socios = despesas_qs.values_list('socio__id', 'socio__pessoa__name').distinct()
         context = {
-            'titulo_pagina': 'Despesas de Sócio',
-            # 'despesas': despesas,
+            'titulo_pagina': 'Despesas Apropriadas dos Sócios',
+            'despesas': despesas,
+            'socios': socios,
+            'competencia': competencia,
+            'socio_id': socio_id,
+            'total_despesas': total_despesas,
         }
-        return render(request, 'despesas/lista_socio.html', context)
+        return render(request, 'despesas/despesas_socio_lista.html', context)

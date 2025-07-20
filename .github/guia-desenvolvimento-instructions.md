@@ -15,6 +15,13 @@ Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, te
   <!-- Conteúdo da tela aqui -->
   {% endblock %}
   ```
+- O nome do template deve iniciar com o nome do fluxo, seguido do contexto funcional, separados por underline.
+- Exemplo de nomenclatura de arquivos para o fluxo de despesas de sócio:
+  ```
+  despesas/despesas_socio_lista.html
+  despesas/despesas_socio_form.html
+  despesas/despesas_socio_confirm_delete.html
+  ```
 - Exemplo incorreto:
   ```django
   {% block conteudo_cadastro %}

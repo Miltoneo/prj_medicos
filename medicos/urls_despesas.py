@@ -8,5 +8,8 @@ urlpatterns = [
     path('nova_despesa_empresa/<int:empresa_id>/', views_despesas.NovaDespesaEmpresaView.as_view(), name='nova_despesa_empresa'),
     path('editar_despesa_empresa/<int:empresa_id>/<int:pk>/', views_despesas.EditarDespesaEmpresaView.as_view(), name='editar_despesa_empresa'),
     path('excluir_despesa_empresa/<int:empresa_id>/<int:pk>/', views_despesas.ExcluirDespesaEmpresaView.as_view(), name='excluir_despesa_empresa'),
-    path('lista_despesas_socio/<int:empresa_id>/', views_despesas.ListaDespesasSocioView.as_view(), name='lista_despesas_socio'),
+path('despesas_socio/<int:empresa_id>/', views_despesas.ListaDespesasSocioView.as_view(), name='despesas_socio_lista'),
+path('despesas_socio/<int:empresa_id>/novo/', views_despesas.DespesaSocioCreateView.as_view(), name='despesas_socio_form'),
+path('despesas_socio/<int:empresa_id>/<int:pk>/editar/', views_despesas.DespesaSocioUpdateView.as_view(), name='despesas_socio_form_edit'),
+path('despesas_socio/<int:empresa_id>/<int:pk>/excluir/', views_despesas.DespesaSocioDeleteView.as_view(), name='despesas_socio_confirm_delete'),
 ]
