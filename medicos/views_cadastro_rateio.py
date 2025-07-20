@@ -64,7 +64,69 @@ def cadastro_rateio_list(request):
         # Só processa rateio se o item permitir
         if permite_rateio:
             if request.method == 'POST':
-                # Atualizar existentes
+                # Validação do total do rateio
+                total_percentual_post = 0
+                for socio in socios_empresa:
+                    r_id = None
+                    val = None
+                    # Verifica se já existe rateio para esse sócio
+                    rateio_existente = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia_date, socio=socio).first()
+                    if rateio_existente:
+                        r_id = rateio_existente.id
+                        val = request.POST.get(f'percentual_{r_id}')
+                    else:
+                        val = request.POST.get(f'percentual_socio_{socio.id}')
+                    if val is not None and val != '':
+                        try:
+                            val_num = float(str(val).replace(',', '.'))
+                        except Exception:
+                            val_num = 0
+                        total_percentual_post += val_num
+                # Permite pequena margem de erro de ponto flutuante (0.01)
+                if abs(total_percentual_post - 100.0) > 0.01:
+                    messages.error(request, 'O total do rateio deve ser exatamente 100%. Corrija os percentuais antes de salvar.')
+                    # Monta rateios para reexibir na tela com os valores do POST
+                    rateios = []
+                    for socio in socios_empresa:
+                        rateio_existente = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia_date, socio=socio).first()
+                        if rateio_existente:
+                            r_id = rateio_existente.id
+                            val = request.POST.get(f'percentual_{r_id}')
+                        else:
+                            val = request.POST.get(f'percentual_socio_{socio.id}')
+                        percentual = None
+                        if val is not None and val != '':
+                            try:
+                                percentual = float(str(val).replace(',', '.'))
+                            except Exception:
+                                percentual = None
+                        fake = ItemDespesaRateioMensal(
+                            item_despesa_id=selected_item_id,
+                            socio=socio,
+                            percentual_rateio=percentual,
+                            observacoes=getattr(rateio_existente, 'observacoes', ''),
+                            data_referencia=mes_competencia_date,
+                            ativo=True
+                        )
+                        rateios.append(fake)
+                    total_percentual = total_percentual_post
+                    context = {
+                        'default_mes': default_mes,
+                        'mes_competencia': mes_competencia[:7] if mes_competencia else '',
+                        'itens_despesa': itens_despesa,
+                        'itens_com_rateio_ids': itens_com_rateio_ids,
+                        'selected_item_id': int(selected_item_id) if selected_item_id else None,
+                        'rateios': rateios,
+                        'socios_empresa_debug': list(socios_empresa) if selected_item_id else [],
+                        'rateios_debug': rateios,
+                        'total_percentual': '{:.2f}'.format(total_percentual),
+                        'item_debug': item,
+                        'grupo_debug': grupo,
+                        'empresa_debug': empresa,
+                        'permite_rateio': permite_rateio,
+                    }
+                    return render(request, 'cadastro/rateio_list.html', context)
+                # Se passou na validação, salva normalmente
                 rateios_qs = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia_date)
                 rateios_dict = {r.socio_id: r for r in rateios_qs}
                 for socio in socios_empresa:

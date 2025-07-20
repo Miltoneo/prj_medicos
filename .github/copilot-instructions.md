@@ -1,0 +1,88 @@
+# Copilot Instructions for prj_medicos
+
+## 1. Regras Comportamentais e de Busca (AI/Agent)
+
+- Sempre siga rigorosamente a documentação oficial do projeto antes de propor, revisar ou alterar qualquer código. Nunca assuma padrões por dedução ou experiência prévia.
+- Antes de qualquer alteração:
+  - Consulte a documentação relevante.
+  - Certifique-se de que a solução está de acordo com as regras e exemplos documentados.
+  - Em caso de dúvida, questione antes de aplicar mudanças.
+- Sempre cite o arquivo e as linhas para qualquer documentação ou código referenciado na resposta.
+- Nunca invente ou assuma convenções—busque e alinhe com a documentação existente.
+
+**Exemplo correto:**
+> "Antes de definir o padrão de URL, consultei o guia de desenvolvimento e alinhei o path e name conforme o exemplo documentado, incluindo todos os parâmetros necessários."
+
+**Exemplo incorreto:**
+> "Apenas alinhar path e name sem analisar se falta algum parâmetro essencial para o contexto."
+
+**Ao revisar ou criar URLs:**
+- Verifique se todos os parâmetros necessários ao contexto de negócio estão presentes (ex: empresa_id, usuario_id, etc).
+- Compare com padrões já adotados para recursos semelhantes.
+- Questione se a ausência de parâmetros pode causar ambiguidade, falhas de segurança ou inconsistência.
+- Priorize a lógica de negócio e a consistência, não apenas a sintaxe.
+
+**Validação e Mudanças de Modelos:**
+- Remova ou ajuste validações duplicadas ou conflitantes tanto no formulário quanto no modelo.
+- Toda alteração de modelo deve respeitar unique_together, constraints e validação em métodos clean().
+- Garanta que a alteração foi testada na interface e no backend.
+
+**Formato das Respostas:**
+- Sempre cite o(s) trecho(s) utilizado(s), o arquivo e as linhas correspondentes para qualquer regra ou exemplo usado.
+- Nunca afirme que um arquivo foi removido sem confirmação real no ambiente.
+- Se uma operação não puder ser realizada por limitações do ambiente, informe claramente ao usuário.
+
+---
+
+## 2. Busca Detalhada e Rastreabilidade
+
+- Toda solicitação deve ser respondida com busca detalhada no código fonte e documentação oficial.
+- Sempre cite o(s) trecho(s), arquivo e linhas utilizados.
+- Exemplo:
+  > "Fonte: docs/README.md, linhas 10-25. Trecho: ..."
+  > "Fonte: medicos/views_aplicacoes_financeiras.py, linhas 10-30. Trecho: ..."
+
+---
+
+## Big Picture & Architecture
+
+- Django-based SaaS for medical/financial management, multi-tenant (each user linked to one or more `Conta` tenants).
+- Data isolation and business logic enforced at model and middleware level (`medicos/models/`, `medicos/middleware/`).
+- Modularized models: split by domain (`base.py`, `fiscal.py`, `despesas.py`, `financeiro.py`, `auditoria.py`, `relatorios.py`), all imported in `medicos/models.py`.
+- Main app: `medicos`. Core config: `prj_medicos/settings.py`.
+- Context parameters (e.g., `empresa_id`) are required in all business URLs/views. See `docs/guia_desenvolvimento.md`.
+- Temporal context (`mes/ano`) is always in `request.session['mes_ano']` and must be respected by all business logic and UI.
+
+## Developer Workflows
+
+- Use Docker Compose (`compose.dev.yaml`) for local dev: `app` (Django), `db` (Postgres), `redis`.
+- Start: `docker compose -f compose.dev.yaml up --build`
+- Migrations and server startup are handled automatically by the app container.
+- Dependencies: `requirements.txt`. Logs: `django_logs/`.
+
+## Project-Specific Conventions
+
+- **Templates:** Use `{% block content %}` in all child templates. Never use custom block names (e.g., `{% block conteudo_cadastro %}`), as this breaks rendering. See `docs/guia_desenvolvimento.md`, linhas 1-18.
+- **URLs:** URL patterns must align `path` and `name` (both in snake_case), and always include required context parameters (e.g., `empresa_id`). See `docs/guia_desenvolvimento.md`, linhas 19-49.
+- **Context Processors:** Use context processors for global variables (e.g., `empresa`, `conta`, `usuario_atual`). Never fetch these directly in views or templates. See `docs/guia_desenvolvimento.md`, linhas 52-70.
+- All business rules, especially for models and validation, are documented in `docs/documentacao_especifica.md`.
+- Multi-tenant logic: always filter/query by the active tenant (`conta`) and enforce license checks (see `medicos/middleware.py`).
+- The system uses custom user model (`CustomUser` in `medicos/models/base.py`).
+
+## Integration & Data Flow
+
+- External dependencies: Postgres, Redis, SMTP (for user registration/activation).
+- All user registration and activation flows are email-based and tokenized.
+- Data flows: User → Membership (ContaMembership) → Conta → Empresa → domain models (Despesas, Financeiro, etc.).
+- All business logic is enforced both in views and models; always check for duplicated/conflicting validation.
+
+## Documentation & Examples
+
+- All documentation is in `docs/` (see especially `guia_comportamento_copilot.md`, `guia_desenvolvimento.md`, `documentacao_especifica.md`).
+- Do not create new documentation files if a relevant one exists—update the existing file instead.
+
+---
+
+**Para padrões técnicos detalhados, consulte também:**
+- `.github/guia-desenvolvimento-instructions.md`
+- `.github/documentacao_especifica_instructions.md`

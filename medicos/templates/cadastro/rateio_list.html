@@ -1,37 +1,6 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
 {% block content %}
-{# DEBUG SEMPRE VISÍVEL #}
-<div class="alert alert-warning mt-2">
-  <b>DEBUG:</b><br>
-  <b>Sócios ativos encontrados:</b>
-  <ul>
-    {% for socio in socios_empresa_debug %}
-      <li>{{ socio.pessoa.name }} (id={{ socio.id }}) ativo={{ socio.ativo }}</li>
-    {% empty %}
-      <li>Nenhum sócio ativo encontrado.</li>
-    {% endfor %}
-  </ul>
-  <b>Rateios enviados:</b>
-  <ul>
-    {% for r in rateios_debug %}
-      <li>{{ r.socio.pessoa.name }} | percentual: {{ r.percentual_rateio }} | id: {{ r.id }}</li>
-    {% empty %}
-      <li>Nenhum rateio enviado.</li>
-    {% endfor %}
-  </ul>
-  <hr>
-  <b>DEBUG VÍNCULOS:</b><br>
-  <ul>
-    <li>Item: {{ item_debug.id }} - {{ item_debug.descricao }}</li>
-    <li>Grupo: {% if grupo_debug %}{{ grupo_debug.id }} - {{ grupo_debug.descricao }}{% else %}(nenhum){% endif %}</li>
-    <li>Empresa: {% if empresa_debug %}{{ empresa_debug.id }} - {{ empresa_debug.name }}{% else %}(nenhuma){% endif %}</li>
-  </ul>
-</div>
 <div class="container mt-4">
-    <div class="alert alert-info">
-      <b>Conteúdo de rateios:</b>
-      <pre>{{ rateios|safe }}</pre>
-    </div>
     <div class="row">
         <!-- Coluna 1: Seleção de mês e lista de itens de despesa -->
         <div class="col-md-4">
