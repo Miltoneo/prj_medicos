@@ -1,14 +1,16 @@
 # Copilot Instructions for prj_medicos
 
+
 ## 1. Regras Comportamentais e de Busca (AI/Agent)
 
-- Sempre siga rigorosamente a documentação oficial do projeto antes de propor, revisar ou alterar qualquer código. Nunca assuma padrões por dedução ou experiência prévia.
-- Antes de qualquer alteração:
-  - Consulte a documentação relevante.
-  - Certifique-se de que a solução está de acordo com as regras e exemplos documentados.
-  - Em caso de dúvida, questione antes de aplicar mudanças.
-- Sempre cite o arquivo e as linhas para qualquer documentação ou código referenciado na resposta.
-- Nunca invente ou assuma convenções—busque e alinhe com a documentação existente.
+- Sempre considere apenas o código presente no repositório como referência. Não utilize memória, versões antigas ou suposições.
+- Consulte a documentação oficial do projeto antes de qualquer alteração. Não deduza regras por experiência prévia.
+- Antes de propor, revisar ou alterar código:
+  - Leia a documentação relevante.
+  - Verifique se a solução segue exatamente as regras e exemplos documentados.
+  - Se houver dúvida, pergunte antes de modificar.
+- Ao citar regras ou exemplos, informe sempre o arquivo e as linhas exatas utilizadas.
+- Nunca crie, adapte ou assuma convenções não documentadas. Siga apenas o que está registrado oficialmente.
 
 **Exemplo correto:**
 > "Antes de definir o padrão de URL, consultei o guia de desenvolvimento e alinhei o path e name conforme o exemplo documentado, incluindo todos os parâmetros necessários."
@@ -60,12 +62,11 @@
 - Migrations and server startup are handled automatically by the app container.
 - Dependencies: `requirements.txt`. Logs: `django_logs/`.
 
-## Project-Specific Conventions
 
-- **Templates:** Use `{% block content %}` in all child templates. Never use custom block names (e.g., `{% block conteudo_cadastro %}`), as this breaks rendering. See `docs/guia_desenvolvimento.md`, linhas 1-18.
-- **URLs:** URL patterns must align `path` and `name` (both in snake_case), and always include required context parameters (e.g., `empresa_id`). See `docs/guia_desenvolvimento.md`, linhas 19-49.
-- **Context Processors:** Use context processors for global variables (e.g., `empresa`, `conta`, `usuario_atual`). Never fetch these directly in views or templates. See `docs/guia_desenvolvimento.md`, linhas 52-70.
-- All business rules, especially for models and validation, are documented in `docs/documentacao_especifica.md`.
+- **Templates:** Use `{% block content %}` in all child templates. Never use custom block names (e.g., `{% block conteudo_cadastro %}`), as this breaks rendering. Veja `.github/guia-desenvolvimento-instructions.md`, seção 1.
+- **URLs:** URL patterns must align `path` and `name` (both in snake_case), and always include required context parameters (e.g., `empresa_id`). Veja `.github/guia-desenvolvimento-instructions.md`, seção 2.
+- **Context Processors:** Use context processors for global variables (e.g., `empresa`, `conta`, `usuario_atual`). Never fetch these directly in views or templates. Veja `.github/guia-desenvolvimento-instructions.md`, seção 3.
+- All business rules, especially for models and validation, are documented in `.github/documentacao_especifica_instructions.md`.
 - Multi-tenant logic: always filter/query by the active tenant (`conta`) and enforce license checks (see `medicos/middleware.py`).
 - The system uses custom user model (`CustomUser` in `medicos/models/base.py`).
 
@@ -76,13 +77,14 @@
 - Data flows: User → Membership (ContaMembership) → Conta → Empresa → domain models (Despesas, Financeiro, etc.).
 - All business logic is enforced both in views and models; always check for duplicated/conflicting validation.
 
+
 ## Documentation & Examples
 
-- All documentation is in `docs/` (see especially `guia_comportamento_copilot.md`, `guia_desenvolvimento.md`, `documentacao_especifica.md`).
-- Do not create new documentation files if a relevant one exists—update the existing file instead.
+- Consulte sempre os arquivos de instrução em `.github/` para padrões comportamentais, técnicos e de negócio.
+- Não crie novos arquivos de documentação se já existir um relevante—atualize o arquivo existente.
 
 ---
 
 **Para padrões técnicos detalhados, consulte também:**
-- `.github/guia-desenvolvimento-instructions.md`
-- `.github/documentacao_especifica_instructions.md`
+- `.github/guia-desenvolvimento-instructions.md` (padrões técnicos e de desenvolvimento)
+- `.github/documentacao_especifica_instructions.md` (regras de modelagem e negócio)

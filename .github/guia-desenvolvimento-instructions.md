@@ -1,9 +1,9 @@
 
 # Guia de Desenvolvimento – prj_medicos
 
-> Para regras comportamentais, exemplos de resposta e rastreabilidade, consulte `.github/copilot-instructions.md`.
+> Para regras comportamentais, exemplos de resposta, rastreabilidade e busca detalhada, consulte exclusivamente `.github/copilot-instructions.md`.
 
-Este arquivo foca em padrões técnicos, arquitetura, modularização, templates, URLs, contexto, nomenclatura, views, segurança, UI/UX e automação.
+Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, templates, URLs, contexto, nomenclatura, views, segurança, UI/UX e automação.
 
 ## 1. Templates Django
 - Sempre utilize o bloco `{% block content %}` nos templates filhos.

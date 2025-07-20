@@ -1,8 +1,8 @@
 # Instruções Específicas de Negócio e Modelagem – prj_medicos
 
-> Para regras comportamentais, exemplos de resposta e rastreabilidade, consulte `.github/copilot-instructions.md`.
+> Para regras comportamentais, exemplos de resposta, rastreabilidade e busca detalhada, consulte exclusivamente `.github/copilot-instructions.md`.
 
-Este arquivo foca em regras de modelagem de dados, compliance, multi-tenant, fluxos de cadastro, organização e diagrama ER.
+Este arquivo foca apenas em regras de modelagem de dados, compliance, multi-tenant, fluxos de cadastro, organização e diagrama ER.
 
 ## 1. Modelagem de Dados
 - Respeite constraints de `unique_together` e demais constraints definidas nos models.
