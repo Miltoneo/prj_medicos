@@ -3,10 +3,33 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views import View
 from django.contrib import messages
+import django_tables2 as tables
 from .models.despesas import DespesaRateada
 from .filters_despesas import DespesaEmpresaFilter
 from .tables_despesas import DespesaEmpresaTable
-import django_tables2 as tables
+from .forms_despesas import DespesaEmpresaForm
+
+# Cadastro de nova despesa da empresa
+class NovaDespesaEmpresaView(View):
+    def get(self, request, empresa_id):
+        form = DespesaEmpresaForm()
+        return render(request, 'despesas/form_empresa.html', {
+            'form': form,
+            'titulo_pagina': 'Nova Despesa da Empresa',
+        })
+
+    def post(self, request, empresa_id):
+        form = DespesaEmpresaForm(request.POST)
+        if form.is_valid():
+            despesa = form.save(commit=False)
+            # associar empresa via item_despesa.grupo_despesa.empresa
+            despesa.save()
+            messages.success(request, 'Despesa cadastrada com sucesso!')
+            return redirect('medicos:lista_despesas_empresa', empresa_id=empresa_id)
+        return render(request, 'despesas/form_empresa.html', {
+            'form': form,
+            'titulo_pagina': 'Nova Despesa da Empresa',
+        })
 
 # Consolidado de Despesas
 class ConsolidadoDespesasView(View):

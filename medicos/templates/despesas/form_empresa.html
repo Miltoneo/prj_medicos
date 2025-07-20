@@ -1,0 +1,47 @@
+{% extends 'layouts/base_cenario_despesas.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 mt-4">
+      <div class="card-body px-4 py-4">
+        <h5 class="card-title mb-4 text-center fw-bold text-primary">Nova Despesa da Empresa</h5>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="id_item_despesa" class="form-label">Item de Despesa</label>
+            {{ form.item_despesa }}
+            {% if form.item_despesa.errors %}
+              <div class="text-danger small">{{ form.item_despesa.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="id_data" class="form-label">Data</label>
+            <input type="date" name="data" id="id_data" class="form-control" value="{{ form.data.value|default:'' }}">
+            {% if form.data.errors %}
+              <div class="text-danger small">{{ form.data.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="id_valor" class="form-label">Valor Total (R$)</label>
+            {{ form.valor }}
+            {% if form.valor.errors %}
+              <div class="text-danger small">{{ form.valor.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="id_possui_rateio" class="form-label">Com Rateio?</label>
+            {{ form.possui_rateio }}
+            {% if form.possui_rateio.errors %}
+              <div class="text-danger small">{{ form.possui_rateio.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="text-end mt-4 d-flex gap-2 justify-content-end">
+            <a href="{% url 'medicos:lista_despesas_empresa' empresa_id=request.session.empresa_id %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-success">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

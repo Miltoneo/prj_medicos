@@ -17,7 +17,7 @@
                   <a href="?" class="btn btn-outline-secondary ms-2">Limpar</a>
                 </div>
               </form>
-              <a href="#" class="btn btn-success ms-2"><i class="fas fa-plus me-1"></i>Nova Despesa</a>
+              <a href="{% url 'medicos:nova_despesa_empresa' empresa_id=request.session.empresa_id %}" class="btn btn-success ms-2"><i class="fas fa-plus me-1"></i>Nova Despesa</a>
               <a href="#" class="btn btn-outline-secondary ms-2">Copiar do mês anterior</a>
             </div>
           </div>
