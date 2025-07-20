@@ -4,6 +4,12 @@ from medicos.models.despesas import DespesaSocio
 
 # Formulário para Despesa de Sócio
 class DespesaSocioForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from medicos.models.despesas import ItemDespesa, GrupoDespesa
+        self.fields['item_despesa'].queryset = ItemDespesa.objects.filter(
+            grupo_despesa__tipo_rateio=GrupoDespesa.Tipo_t.SEM_RATEIO
+        )
     class Meta:
         model = DespesaSocio
         fields = ['socio', 'item_despesa', 'data', 'valor']

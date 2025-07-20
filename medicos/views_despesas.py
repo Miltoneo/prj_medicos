@@ -152,28 +152,156 @@ class ListaDespesasEmpresaView(View):
 
 class ListaDespesasSocioView(View):
     def get(self, request, empresa_id):
+        from .tables_despesas import DespesaSocioTable
+        from medicos.models.base import Socio
+        from .models.despesas import DespesaSocio, DespesaRateada, ItemDespesaRateioMensal
         competencia = request.GET.get('competencia') or request.session.get('mes_ano')
         socio_id = request.GET.get('socio')
-        despesas_qs = DespesaSocio.objects.filter(
-            socio__empresa_id=empresa_id
-        )
-        if competencia:
-            try:
-                ano, mes = competencia.split('-')
-                despesas_qs = despesas_qs.filter(data__year=ano, data__month=mes)
-            except Exception:
-                pass
+        # Sócios ativos para o filtro
+        socios = Socio.objects.filter(empresa_id=empresa_id, ativo=True).values_list('id', 'pessoa__name').order_by('pessoa__name')
+
+        despesas = []
+        total_despesas = 0
         if socio_id:
-            despesas_qs = despesas_qs.filter(socio_id=socio_id)
-        despesas = despesas_qs.select_related('socio', 'item_despesa', 'item_despesa__grupo_despesa')
-        total_despesas = sum([d.valor for d in despesas])
-        socios = despesas_qs.values_list('socio__id', 'socio__pessoa__name').distinct()
+            # Despesas individuais do sócio
+            despesas_individuais = DespesaSocio.objects.filter(
+                socio_id=socio_id,
+                socio__empresa_id=empresa_id
+            )
+            if competencia:
+                try:
+                    ano, mes = competencia.split('-')
+                    despesas_individuais = despesas_individuais.filter(data__year=ano, data__month=mes)
+                except Exception:
+                    pass
+            despesas_individuais = despesas_individuais.select_related('socio', 'item_despesa', 'item_despesa__grupo_despesa')
+
+            # Despesas rateadas do sócio
+            despesas_rateadas = []
+            if competencia:
+                try:
+                    ano, mes = competencia.split('-')
+                    data_ref = f"{ano}-{mes}-01"
+                except Exception:
+                    data_ref = None
+            else:
+                data_ref = None
+            if data_ref:
+                # Buscar todas as despesas rateadas da empresa no mês
+                rateadas_qs = DespesaRateada.objects.filter(
+                    item_despesa__grupo_despesa__empresa_id=empresa_id,
+                    data__year=ano, data__month=mes
+                ).select_related('item_despesa', 'item_despesa__grupo_despesa')
+                for despesa in rateadas_qs:
+                    # Para cada despesa rateada, buscar configuração de rateio do sócio
+                    rateio = ItemDespesaRateioMensal.obter_rateio_para_despesa(
+                        despesa.item_despesa, Socio.objects.get(id=socio_id), despesa.data
+                    )
+                    if rateio and rateio.percentual_rateio:
+                        valor_apropriado = despesa.valor * (rateio.percentual_rateio / 100)
+                        # Cria objeto fake para exibir na tabela
+                        class FakeGrupoDespesa:
+                            def __init__(self, descricao):
+                                self.descricao = descricao
+                            def __repr__(self):
+                                return f"FakeGrupoDespesa(descricao={self.descricao!r})"
+
+                        class FakeItemDespesa:
+                            def __init__(self, descricao, grupo_despesa):
+                                self.descricao = descricao
+                                self.grupo_despesa = grupo_despesa
+                            def __repr__(self):
+                                return f"FakeItemDespesa(descricao={self.descricao!r}, grupo_despesa={self.grupo_despesa!r})"
+
+                        class FakeDespesa:
+                            def __init__(self, socio, item_despesa, valor_total, taxa_rateio, valor_apropriado):
+                                self.socio = socio
+                                self.item_despesa = item_despesa
+                                self.valor_total = valor_total
+                                self.taxa_rateio = taxa_rateio
+                                self.valor_apropriado = valor_apropriado
+                                self.id = None  # Não permite editar/excluir
+                            def __repr__(self):
+                                return f"FakeDespesa(socio={self.socio!r}, item_despesa={self.item_despesa!r}, valor_total={self.valor_total!r}, taxa_rateio={self.taxa_rateio!r}, valor_apropriado={self.valor_apropriado!r})"
+
+                        socio_obj = Socio.objects.get(id=socio_id)
+                        item_desc = getattr(despesa.item_despesa, 'descricao', None) or '-'
+                        grupo_obj = getattr(despesa.item_despesa, 'grupo_despesa', None)
+                        grupo_desc = getattr(grupo_obj, 'descricao', None) or '-'
+                        fake_item = FakeItemDespesa(item_desc, FakeGrupoDespesa(grupo_desc))
+                        fake = FakeDespesa(
+                            socio=socio_obj,
+                            item_despesa=fake_item,
+                            valor_total=despesa.valor,
+                            taxa_rateio=rateio.percentual_rateio,
+                            valor_apropriado=valor_apropriado
+                        )
+                        despesas_rateadas.append(fake)
+            # Junta despesas individuais e rateadas
+            despesas = list(despesas_individuais)
+            # Converter objetos fake para dicionários padronizados
+            despesas_rateadas_dicts = []
+            for fake in despesas_rateadas:
+                despesas_rateadas_dicts.append({
+                    'socio': fake.socio,
+                    'descricao': getattr(fake.item_despesa, 'descricao', '-'),
+                    'grupo': getattr(getattr(fake.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'valor_total': fake.valor_total,
+                    'taxa_rateio': fake.taxa_rateio,
+                    'valor_apropriado': fake.valor_apropriado,
+                    'id': None,
+                })
+            # Para objetos reais, também padronizar para dicionário
+            despesas_dicts = []
+            for d in despesas:
+                despesas_dicts.append({
+                    'socio': d.socio,
+                    'descricao': getattr(d.item_despesa, 'descricao', '-'),
+                    'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'valor_total': getattr(d, 'valor', 0),
+                    'taxa_rateio': '-',
+                    'valor_apropriado': getattr(d, 'valor', 0),
+                    'id': d.id,
+                })
+            despesas = despesas_dicts + despesas_rateadas_dicts
+            # Garante que a lista passada para a Table é uma lista de dicionários
+            if not all(isinstance(d, dict) for d in despesas):
+                despesas = [d if isinstance(d, dict) else d.__dict__ for d in despesas]
+            total_despesas = sum([d.get('valor_apropriado', 0) or 0 for d in despesas])
+        else:
+            # Se não filtrar por sócio, mostra todas as despesas individuais
+            despesas_qs = DespesaSocio.objects.filter(
+                socio__empresa_id=empresa_id
+            )
+            if competencia:
+                try:
+                    ano, mes = competencia.split('-')
+                    despesas_qs = despesas_qs.filter(data__year=ano, data__month=mes)
+                except Exception:
+                    pass
+            despesas_qs = despesas_qs.select_related('socio', 'item_despesa', 'item_despesa__grupo_despesa')
+            despesas = []
+            for d in despesas_qs:
+                despesas.append({
+                    'socio': d.socio,
+                    'descricao': getattr(d.item_despesa, 'descricao', '-'),
+                    'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'valor_total': getattr(d, 'valor', 0),
+                    'taxa_rateio': '-',
+                    'valor_apropriado': getattr(d, 'valor', 0),
+                    'id': d.id,
+                })
+            total_despesas = sum([d.get('valor_apropriado', 0) or 0 for d in despesas])
+
+        table = DespesaSocioTable(despesas)
+        import django_tables2 as tables
+        tables.RequestConfig(request, paginate={'per_page': 20}).configure(table)
         context = {
             'titulo_pagina': 'Despesas Apropriadas dos Sócios',
-            'despesas': despesas,
             'socios': socios,
             'competencia': competencia,
             'socio_id': socio_id,
             'total_despesas': total_despesas,
+            'table': table,
         }
         return render(request, 'despesas/despesas_socio_lista.html', context)

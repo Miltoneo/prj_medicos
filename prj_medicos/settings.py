@@ -1,3 +1,19 @@
+# LOGGING para debug de despesas
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'despesas.debug': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+    },
+}
 """
 Django settings for prj_medicos project.
 ...

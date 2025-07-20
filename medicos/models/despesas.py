@@ -508,7 +508,7 @@ class DespesaRateada(DespesaBase):
         return [config.socio for config in self.obter_configuracao_rateio()]
 
 class DespesaSocio(DespesaBase):
-    """Despesas do grupo SOCIO - SEM RATEIO (com sócio obrigatório)"""
+    """Despesas SEM RATEIO (com sócio obrigatório)"""
     socio = models.ForeignKey(
         Socio,
         on_delete=models.CASCADE,
@@ -528,9 +528,9 @@ class DespesaSocio(DespesaBase):
         ]
 
     def clean(self):
-        # Só permite itens do grupo SOCIO
-        if self.item_despesa and self.item_despesa.grupo_despesa and self.item_despesa.grupo_despesa.codigo != 'SOCIO':
-            raise ValidationError({'item_despesa': 'Para despesas de sócio, o item deve ser do grupo SOCIO.'})
+        # Só permite itens de grupo SEM RATEIO
+        if self.item_despesa and self.item_despesa.grupo_despesa and self.item_despesa.grupo_despesa.tipo_rateio != self.item_despesa.grupo_despesa.Tipo_t.SEM_RATEIO:
+            raise ValidationError({'item_despesa': 'Para despesas de sócio, o item deve ser de grupo SEM RATEIO.'})
     def __str__(self):
         socio_nome = getattr(getattr(self.socio, 'pessoa', None), 'name', str(self.socio))
         item = self.item_despesa.descricao if self.item_despesa else '-'

@@ -1,10 +1,60 @@
 {% extends 'layouts/base_cenario_despesas.html' %}
+{% load django_tables2 %}
 {% block content %}
-<div class="mb-3">
-  <h5>Despesas Apropriadas dos Sócios</h5>
-  <!-- Filtros: competência, sócio -->
-  <!-- Tabela de despesas apropriadas (ver exemplo HTML) -->
-  <!-- Totalizadores -->
-  <!-- Botões: Nova Despesa, Copiar do mês anterior -->
+<div class="container-fluid px-0">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-11 col-lg-10 col-xl-9" style="max-width: 1200px;">
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+          <div class="mb-2">
+            <h4 class="fw-bold text-primary">Despesas Apropriadas dos Sócios</h4>
+          </div>
+          <form method="get" class="bg-light rounded-3 p-3 mb-4">
+            <div class="row g-2 align-items-center">
+              <div class="col-12 col-md-auto mb-2 mb-md-0">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <div class="w-100" style="max-width: 400px;">
+                    <label for="competencia" class="form-label mb-0">Competência:</label>
+                    <input type="month" id="competencia" name="competencia" class="form-control form-control-sm mb-2" value="{{ competencia }}" style="max-width: 160px;">
+                    <label for="socio" class="form-label mb-0">Sócio:</label>
+                    <select id="socio" name="socio" class="form-select form-select-sm">
+                      <option value="">Todos</option>
+                      {% for id, nome in socios %}
+                        <option value="{{ id }}" {% if socio_id|stringformat:'s' == id|stringformat:'s' %}selected{% endif %}>{{ nome }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-auto ms-md-auto text-md-end">
+                <div class="d-flex gap-2 justify-content-start justify-content-md-end">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i>Filtrar
+                  </button>
+                  <a href="{% url 'medicos:despesas_socio_form' empresa_id=request.resolver_match.kwargs.empresa_id %}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i>Nova Despesa
+                  </a>
+                  <a href="#" class="btn btn-outline-secondary disabled">
+                    <i class="fas fa-copy me-1"></i>Copiar do mês anterior
+                  </a>
+                </div>
+              </div>
+            </div>
+          </form>
+          <div class="table-responsive rounded-3 border">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+              <div class="fw-semibold">Total de despesas apropriadas: <span class="text-primary">{{ table.rows|length }}</span></div>
+              <div class="fw-bold">Total geral: <span class="text-success">R$ {{ total_despesas|floatformat:2 }}</span></div>
+            </div>
+            {% if table.rows %}
+              {% render_table table %}
+            {% else %}
+              <div class="text-center text-muted py-4">Nenhuma despesa apropriada encontrada para o mês selecionado.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
