@@ -7,7 +7,7 @@ from .views_rateio import (
 )
 from .views_rateio_medico import NotaFiscalRateioMedicoListView
 from .views_financeiro_lancamentos import FinanceiroListView
-from django.urls import path
+from django.urls import path, include
 from .views_cadastro_rateio import (
     CadastroRateioView,
     CadastroRateioCreateView,
@@ -28,6 +28,8 @@ from . import views_faturamento
 from . import views_socio
 from . import views_aliquota
 from . import views_despesa
+from . import views_despesas
+from . import urls_despesas
 
 from .views_aplicacoes_financeiras import (
     AplicacaoFinanceiraListView,
@@ -121,6 +123,9 @@ urlpatterns = [
     # =====================
     # Despesa Views
     # =====================
+
+    # Cenário Despesas
+    path('despesas/', include('medicos.urls_despesas')),
 
 # Grupos de Despesa
 path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa.lista_grupos_despesa, name='lista_grupos_despesa'),

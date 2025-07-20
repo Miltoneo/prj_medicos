@@ -6,7 +6,7 @@
 <html>
   <head>
     {% block bl_script %}{% endblock %}
-    <title>{% block title %}{% endblock %}</title>
+    <title>{% block title %}{{ titulo_pagina }}{% endblock %}</title>
     {% include 'layouts/base_css.html' %}
   </head>
   <body>
@@ -23,7 +23,7 @@
       <div class="content mt-5">
         {% include 'layouts/base_header.html' %}
         <div class="mb-3">
-          <h4 class="fw-bold text-primary">Título: {{ titulo_pagina|default:'erro' }}</h4>
+          <h4 class="fw-bold text-primary">Título: {{ titulo_pagina }}</h4>
         </div>
         {% block content %}{% endblock %}
       </div>

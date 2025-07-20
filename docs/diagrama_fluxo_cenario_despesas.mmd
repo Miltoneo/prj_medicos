@@ -1,0 +1,17 @@
+flowchart TD
+    menu_empresa["Menu Empresa"] --> btn_despesas["Botão: Despesas"]
+    btn_despesas --> cenario_despesas["Cenário Despesas (base_cenario_despesas.html)"]
+    cenario_despesas --> sidebar_despesas["Sidebar Despesas"]
+    sidebar_despesas --> consolidado["Consolidado de Despesas"]
+    sidebar_despesas --> empresa["Despesa da Empresa"]
+    sidebar_despesas --> socio["Despesas de Sócio"]
+    cenario_despesas --> conteudo["Conteúdo Dinâmico (por menu)"]
+    
+    classDef menu fill:#e3f2fd,stroke:#2196f3,stroke-width:2px;
+    class menu_empresa,btn_despesas menu;
+    classDef cenario fill:#fffde7,stroke:#fbc02d,stroke-width:2px;
+    class cenario_despesas cenario;
+    classDef sidebar fill:#e8f5e9,stroke:#43a047,stroke-width:2px;
+    class sidebar_despesas sidebar;
+    classDef conteudo fill:#fce4ec,stroke:#d81b60,stroke-width:2px;
+    class consolidado,empresa,socio,conteudo conteudo;

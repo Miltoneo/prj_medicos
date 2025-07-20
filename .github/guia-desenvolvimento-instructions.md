@@ -46,6 +46,7 @@ Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, te
 - Defina a variável `titulo_pagina` no contexto para exibição padronizada do título no header.
 - O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}`.
 - É proibido definir títulos manualmente em templates filhos.
+- Nunca inclua blocos de título (ex: <h1>, <h4>, etc.) ou exiba {{ titulo_pagina }} manualmente dentro do conteúdo dos templates filhos. O título deve aparecer apenas no header padrão incluído pelo template base.
 - Fonte: docs/guia_desenvolvimento.md, linhas 51-80
 
 ## 4. Código, Nomenclatura e Formatação

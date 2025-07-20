@@ -203,6 +203,7 @@ def cadastro_rateio_list(request):
         'grupo_debug': grupo,
         'empresa_debug': empresa,
         'permite_rateio': permite_rateio,
+        'titulo_pagina': 'Configuração de Rateio',
     }
     return render(request, 'cadastro/rateio_list.html', context)
 
@@ -246,7 +247,7 @@ class CadastroRateioCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['titulo_pagina'] = _(u"Nova Configuração de Rateio")
+        context['titulo_pagina'] = "Configuração de Rateio"
         return context
 
 class CadastroRateioUpdateView(UpdateView):
@@ -261,7 +262,7 @@ class CadastroRateioUpdateView(UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['titulo_pagina'] = _(u"Editar Configuração de Rateio")
+        context['titulo_pagina'] = "Configuração de Rateio"
         return context
 
 class CadastroRateioDeleteView(DeleteView):
@@ -275,5 +276,5 @@ class CadastroRateioDeleteView(DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['titulo_pagina'] = _(u"Remover Configuração de Rateio")
+        context['titulo_pagina'] = "Configuração de Rateio"
         return context

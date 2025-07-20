@@ -13,9 +13,9 @@
           <span>Dados Básicos da Empresa</span>
         </div>
         <div class="card-body py-4">
-          <p><strong>Razão Social:</strong> {{ empresa_atual.name }}</p>
-          <p><strong>CNPJ:</strong> {{ empresa_atual.cnpj }}</p>
-          <p><strong>Regime Tributário:</strong> {{ empresa_atual.get_regime_tributario_display }}</p>
+          <p><strong>Razão Social:</strong> {{ empresa.name }}</p>
+          <p><strong>CNPJ:</strong> {{ empresa.cnpj }}</p>
+          <p><strong>Regime Tributário:</strong> {{ empresa.get_regime_tributario_display }}</p>
         </div>
       </div>
     </div>

@@ -70,10 +70,13 @@ Este arquivo foca apenas em regras de modelagem de dados, compliance, multi-tena
 - Templates devem indicar rotas/funcionalidades pendentes com `href="#"` ou botão desabilitado.
 - Fonte: docs/documentacao_especifica.md, linhas 79-104
 
-## 9. Modelagem de Dados – Diagrama ER
-- Consulte o diagrama ER completo no final do arquivo para visualizar todos os relacionamentos entre entidades principais do sistema.
-- Fonte: docs/documentacao_especifica.md, linhas 106-153
 
----
 
 Este arquivo foi gerado a partir de docs/documentacao_especifica.md para servir como referência rápida e operacional para agentes e desenvolvedores.
+
+## 10. Automação da Lista de Rateio Mensal
+- Sempre que o usuário acessar a funcionalidade de apropriação de despesas para um mês de competência, o sistema deve verificar se já existe uma lista de rateio cadastrada para aquele mês, empresa e conta.
+- Caso não exista, a lista de rateio do mês anterior deve ser copiada automaticamente, respeitando todos os filtros de contexto (empresa_id, conta, mes_ano) e garantindo que não haja duplicidade de registros.
+- O usuário só precisará acessar o cadastro de rateio para ajustes pontuais, tornando o processo mais eficiente e menos sujeito a esquecimentos.
+- Esta automação deve ser validada para garantir integridade dos dados e rastreabilidade das operações.
+- Fonte: .github/documentacao_especifica_instructions.md, seção 10.
