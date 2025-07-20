@@ -1,3 +1,34 @@
+# Editar despesa da empresa
+from django.views.generic import UpdateView, DeleteView
+from .models.despesas import DespesaRateada
+from .forms_despesas import DespesaEmpresaForm
+
+class EditarDespesaEmpresaView(UpdateView):
+    model = DespesaRateada
+    form_class = DespesaEmpresaForm
+    template_name = 'despesas/form_empresa_edit.html'
+
+    def get_success_url(self):
+        empresa_id = self.object.item_despesa.grupo_despesa.empresa_id
+        return reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Editar Despesa da Empresa'
+        return context
+
+class ExcluirDespesaEmpresaView(DeleteView):
+    model = DespesaRateada
+    template_name = 'despesas/confirm_delete_empresa.html'
+
+    def get_success_url(self):
+        empresa_id = self.object.item_despesa.grupo_despesa.empresa_id
+        return reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Excluir Despesa da Empresa'
+        return context
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse

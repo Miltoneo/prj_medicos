@@ -1,0 +1,20 @@
+{% extends 'layouts/base_cenario_despesas.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 mt-4">
+      <div class="card-body px-4 py-4">
+        <h5 class="card-title mb-4 text-center fw-bold text-danger">Excluir Despesa da Empresa</h5>
+        <form method="post">
+          {% csrf_token %}
+          <p class="mb-4">Tem certeza que deseja excluir a despesa <strong>{{ object }}</strong>?</p>
+          <div class="text-start mt-4">
+            <button type="submit" class="btn btn-danger">Excluir</button>
+            <a href="{% url 'medicos:lista_despesas_empresa' empresa_id=request.session.empresa_id %}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

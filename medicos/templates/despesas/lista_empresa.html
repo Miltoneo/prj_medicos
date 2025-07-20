@@ -2,11 +2,11 @@
 {% block content %}
 <div class="container-fluid px-0">
   <div class="row justify-content-center">
-    <div class="col-12 col-md-10 col-lg-8 col-xl-7" style="max-width: 900px;">
+    <div class="col-12 col-md-11 col-lg-9 col-xl-8" style="max-width: 1100px; min-width: 320px;">
       <div class="card shadow-sm border-0 mt-4">
-        <div class="card-body">
-          <div class="mb-2">
-            <div class="d-flex flex-wrap align-items-end justify-content-between">
+        <div class="card-body px-2 px-md-4 py-4">
+          <div class="mb-3">
+            <div class="d-flex flex-column flex-md-row flex-wrap align-items-stretch align-items-md-end justify-content-between gap-2">
               <form method="get" class="row g-2 align-items-end flex-grow-1">
                 <div class="col-auto">
                   <label for="competencia" class="form-label mb-0">Competência:</label>
@@ -17,16 +17,18 @@
                   <a href="?" class="btn btn-outline-secondary ms-2">Limpar</a>
                 </div>
               </form>
-              <a href="{% url 'medicos:nova_despesa_empresa' empresa_id=request.session.empresa_id %}" class="btn btn-success ms-2"><i class="fas fa-plus me-1"></i>Nova Despesa</a>
-              <a href="#" class="btn btn-outline-secondary ms-2">Copiar do mês anterior</a>
+              <div class="d-flex flex-row gap-2 mt-2 mt-md-0">
+                <a href="{% url 'medicos:nova_despesa_empresa' empresa_id=request.session.empresa_id %}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Nova Despesa</a>
+                <a href="#" class="btn btn-outline-secondary">Copiar do mês anterior</a>
+              </div>
             </div>
           </div>
-          <div class="table-responsive rounded-3 border">
+          <div class="table-responsive rounded-3 border bg-white">
             {% load django_tables2 %}
             {% render_table table %}
           </div>
-          <div class="mt-2 text-end">
-            <strong>Total:</strong> R$ {{ total_despesas|floatformat:2 }}
+          <div class="mt-3 text-end">
+            <strong>Total:</strong> <span class="fs-5 text-primary">R$ {{ total_despesas|floatformat:2 }}</span>
           </div>
         </div>
       </div>

@@ -8,11 +8,6 @@ class DespesaEmpresaTable(tables.Table):
     def render_valor(self, value):
         return f'R$ {value:,.2f}'
 
-    def render_possui_rateio(self, value):
-        if value:
-            return '<span class="badge bg-success">Sim</span>'
-        return '<span class="badge bg-secondary">Não</span>'
-    possui_rateio = tables.Column(verbose_name='Com Rateio?', orderable=False)
     acoes = tables.TemplateColumn(
         template_name='despesas/col_acoes_empresa.html',
         orderable=False,
@@ -23,4 +18,4 @@ class DespesaEmpresaTable(tables.Table):
     class Meta:
         model = DespesaRateada
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('descricao', 'grupo', 'valor', 'possui_rateio')
+        fields = ('descricao', 'grupo', 'valor')

@@ -461,9 +461,12 @@ class DespesaRateada(DespesaBase):
         ]
 
     def clean(self):
-        # Só permite itens dos grupos FOLHA/GERAL
-        if self.item_despesa and self.item_despesa.grupo_despesa.codigo not in ['FOLHA', 'GERAL']:
-            raise ValidationError({'item_despesa': 'Para despesas rateadas, o item deve ser do grupo FOLHA ou GERAL.'})
+        # Só permite itens cujo grupo tem tipo COM_RATEIO
+        if self.item_despesa and self.item_despesa.grupo_despesa:
+            grupo = self.item_despesa.grupo_despesa
+            from medicos.models.despesas import GrupoDespesa
+            if grupo.tipo_rateio != GrupoDespesa.Tipo_t.COM_RATEIO:
+                raise ValidationError({'item_despesa': 'Para despesas rateadas, o grupo do item deve ser do tipo COM RATEIO.'})
 
     @property
     def pode_ser_rateada(self):
