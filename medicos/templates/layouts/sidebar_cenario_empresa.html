@@ -10,7 +10,7 @@
     <li class="nav-item"><a class="nav-link text-light" href="#"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_faturamento' %}">Faturamento</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-coins me-2"></i>Financeiro</a></li>
-    <li class="nav-item"><a class="nav-link text-light disabled" href="#">Despesas  (em breve)</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-file-invoice-dollar me-2"></i>Despesas</a></li>
     <li class="nav-item"><a class="nav-link text-light disabled" href="#">Apuração (em breve)</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_cadastro' %}"><i class="fas fa-arrow-left me-2"></i><b>Cadastro</b></a></li>
   </ul>

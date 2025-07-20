@@ -27,7 +27,7 @@ from . import views_faturamento
 # from . import views_dashboard_empresa  # Removido: arquivo não existe
 from . import views_socio
 from . import views_aliquota
-from . import views_despesa
+from . import views_despesa_cadastro
 from . import views_despesas
 from . import urls_despesas
 
@@ -128,15 +128,15 @@ urlpatterns = [
     path('despesas/', include('medicos.urls_despesas')),
 
 # Grupos de Despesa
-path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa.lista_grupos_despesa, name='lista_grupos_despesa'),
-path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa.grupo_despesa_edit, name='grupo_despesa_edit'),
-path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
+path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa_cadastro.lista_grupos_despesa, name='lista_grupos_despesa'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa_cadastro.grupo_despesa_edit, name='grupo_despesa_edit'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa_cadastro.grupo_despesa_delete, name='grupo_despesa_delete'),
 
 # Itens de Despesa (padronizado)
-path('lista_itens_despesa/<int:empresa_id>/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
-path('item_despesa_create/<int:empresa_id>/', views_despesa.ItemDespesaCreateView.as_view(), name='item_despesa_create'),
-path('item_despesa_edit/<int:empresa_id>/<int:item_id>/', views_despesa.ItemDespesaUpdateView.as_view(), name='item_despesa_edit'),
-path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa.ItemDespesaDeleteView.as_view(), name='item_despesa_delete'),
+path('lista_itens_despesa/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
+path('item_despesa_create/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaCreateView.as_view(), name='item_despesa_create'),
+path('item_despesa_edit/<int:empresa_id>/<int:item_id>/', views_despesa_cadastro.ItemDespesaUpdateView.as_view(), name='item_despesa_edit'),
+path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa_cadastro.ItemDespesaDeleteView.as_view(), name='item_despesa_delete'),
 
     # =====================
     # Aliquota Views
