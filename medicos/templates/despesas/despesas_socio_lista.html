@@ -6,45 +6,37 @@
     <div class="col-12 col-md-12 col-lg-12 col-xl-11" style="max-width: 1600px;">
       <div class="card shadow-sm border-0 mt-4">
         <div class="card-body">
-          <div class="mb-2">
-            <h4 class="fw-bold text-primary">Despesas Apropriadas dos Sócios</h4>
+          <div class="mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <h4 class="fw-bold text-primary mb-0">Despesas Apropriadas dos Sócios</h4>
+            <div class="d-flex gap-3 flex-wrap">
+              <div class="fw-semibold bg-light rounded-2 px-3 py-2 mb-0">Total de despesas: <span class="text-primary">{{ table.rows|length }}</span></div>
+              <div class="fw-bold bg-light rounded-2 px-3 py-2 mb-0">Total geral: <span class="text-success">R$ {{ total_despesas|floatformat:2 }}</span></div>
+            </div>
           </div>
-          <form method="get" class="bg-light rounded-3 p-3 mb-4">
-            <div class="row g-2 align-items-center">
-              <div class="col-12 col-md-auto mb-2 mb-md-0">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <div class="w-100" style="max-width: 400px;">
-                    <label for="competencia" class="form-label mb-0">Competência:</label>
-                    <input type="month" id="competencia" name="competencia" class="form-control form-control-sm mb-2" value="{{ competencia }}" style="max-width: 160px;">
-                    <label for="socio" class="form-label mb-0">Sócio:</label>
-                    <select id="socio" name="socio" class="form-select form-select-sm">
-                      {% for id, nome in socios %}
-                        <option value="{{ id }}" {% if forloop.first and not socio_id %}selected{% elif socio_id|stringformat:'s' == id|stringformat:'s' %}selected{% endif %}>{{ nome }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
+          <form method="get" class="bg-light rounded-3 p-3 mb-4 shadow-sm">
+            <div class="row g-3 align-items-end">
+              <div class="col-12 col-md-4 col-lg-3">
+                <label for="competencia" class="form-label mb-1">Competência:</label>
+                <input type="month" id="competencia" name="competencia" class="form-control form-control-sm" value="{{ competencia }}">
               </div>
-              <div class="col-12 col-md-auto ms-md-auto text-md-end">
-                <div class="d-flex gap-2 justify-content-start justify-content-md-end">
-                  <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-filter me-1"></i>Filtrar
-                  </button>
-                  <a href="{% url 'medicos:despesas_socio_form' empresa_id=request.resolver_match.kwargs.empresa_id %}?socio={{ socio_id }}{% if competencia %}&competencia={{ competencia }}{% endif %}" class="btn btn-success">
-                    <i class="fas fa-plus me-1"></i>Nova Despesa
-                  </a>
-                  <a href="#" class="btn btn-outline-secondary disabled">
-                    <i class="fas fa-copy me-1"></i>Copiar do mês anterior
-                  </a>
+              <div class="col-12 col-md-4 col-lg-3">
+                <label for="socio" class="form-label mb-1">Sócio:</label>
+                <select id="socio" name="socio" class="form-select form-select-sm">
+                  {% for id, nome in socios %}
+                    <option value="{{ id }}" {% if forloop.first and not socio_id %}selected{% elif socio_id|stringformat:'s' == id|stringformat:'s' %}selected{% endif %}>{{ nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 col-md-12 col-lg-6">
+                <div class="d-flex gap-2 align-items-end flex-nowrap">
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i>Filtrar</button>
+                  <a href="{% url 'medicos:despesas_socio_form' empresa_id=request.resolver_match.kwargs.empresa_id %}?socio={{ socio_id }}{% if competencia %}&competencia={{ competencia }}{% endif %}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Nova Despesa</a>
+                  <a href="#" class="btn btn-outline-secondary disabled"><i class="fas fa-copy me-1"></i>Copiar do mês anterior</a>
                 </div>
               </div>
             </div>
           </form>
-          <div class="table-responsive rounded-3 border">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-              <div class="fw-semibold">Total de despesas apropriadas: <span class="text-primary">{{ table.rows|length }}</span></div>
-              <div class="fw-bold">Total geral: <span class="text-success">R$ {{ total_despesas|floatformat:2 }}</span></div>
-            </div>
+          <div class="table-responsive rounded-3 border bg-white shadow-sm">
             {% if table.rows %}
               {% render_table table %}
               <script>
