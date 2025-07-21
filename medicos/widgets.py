@@ -8,6 +8,11 @@ class ItemDespesaSelect2Widget(ModelSelect2Widget):
         'descricao__icontains',
         'grupo_despesa__descricao__icontains',
     ]
+    # Permite mostrar todos os itens ao abrir o dropdown
+    def build_attrs(self, base_attrs, extra_attrs=None):
+        attrs = super().build_attrs(base_attrs, extra_attrs)
+        attrs['data-minimum-input-length'] = 0
+        return attrs
 
     def __init__(self, *args, **kwargs):
         self.empresa_id = kwargs.pop('empresa_id', None)
