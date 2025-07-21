@@ -17,36 +17,24 @@ def copiar_despesas_mes_anterior(request, empresa_id):
     if not mes_ano:
         return JsonResponse({'success': False, 'message': 'Contexto temporal não definido.'}, status=400)
     # Aceita tanto MM/YYYY quanto YYYY-MM
-    mes_atual = None
-    ano = None
-    mes = None
     formatos = ['%m/%Y', '%Y-%m']
+    ano = mes = None
     for fmt in formatos:
         try:
-            mes_atual = datetime.strptime(mes_ano, fmt)
-            ano = mes_atual.year
-            mes = mes_atual.month
+            dt = datetime.strptime(mes_ano, fmt)
+            ano, mes = dt.year, dt.month
             break
         except Exception:
             continue
-    if not mes_atual:
+    if ano is None or mes is None:
         return JsonResponse({'success': False, 'message': f'Formato de mês/ano inválido: {mes_ano}. Use MM/YYYY ou YYYY-MM.'}, status=400)
 
-    # O mês de competência selecionado é o destino
-    destino_ano = ano
-    destino_mes = mes
-    destino_primeiro_dia = datetime(destino_ano, destino_mes, 1)
-    # O mês anterior ao de competência é a origem
-    if destino_mes == 1:
-        origem_ano = destino_ano - 1
-        origem_mes = 12
+    destino_primeiro_dia = datetime(ano, mes, 1)
+    if mes == 1:
+        origem_ano, origem_mes = ano - 1, 12
     else:
-        origem_ano = destino_ano
-        origem_mes = destino_mes - 1
-    origem_primeiro_dia = datetime(origem_ano, origem_mes, 1)
-
-    # Debug: log origem e destino
-    print(f"[COPIA DESPESAS] Origem: {origem_mes:02d}/{origem_ano}, Destino: {destino_mes:02d}/{destino_ano}")
+        origem_ano, origem_mes = ano, mes - 1
+    print(f"[COPIA DESPESAS] Origem: {origem_mes:02d}/{origem_ano}, Destino: {mes:02d}/{ano}")
 
     with transaction.atomic():
         # Apaga todas as despesas do mês de competência (destino)
@@ -80,7 +68,7 @@ def copiar_despesas_mes_anterior(request, empresa_id):
                 possui_rateio=despesa.possui_rateio,
                 created_by=request.user
             )
-            total_copiadas += 1
+        total_copiadas += despesas_rateadas.count()
         for despesa in despesas_socios:
             DespesaSocio.objects.create(
                 item_despesa=despesa.item_despesa,
@@ -90,7 +78,7 @@ def copiar_despesas_mes_anterior(request, empresa_id):
                 possui_rateio=despesa.possui_rateio,
                 created_by=request.user
             )
-            total_copiadas += 1
+        total_copiadas += despesas_socios.count()
         print(f"[COPIA DESPESAS] Total copiadas: {total_copiadas}")
 
     return JsonResponse({'success': True, 'copiadas': total_copiadas, 'message': f'{total_copiadas} despesas copiadas para o mês atual.'})
@@ -261,6 +249,9 @@ class EditarDespesaEmpresaView(UpdateView):
         # Garante que competencia do GET seja propagada para o template
         competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
         self.competencia = competencia
+        # Passa empresa_id para o form, garantindo que o widget funcione
+        if self.object and self.object.item_despesa and self.object.item_despesa.grupo_despesa:
+            kwargs['empresa_id'] = self.object.item_despesa.grupo_despesa.empresa_id
         return kwargs
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -312,7 +303,7 @@ class ExcluirDespesaEmpresaView(DeleteView):
 class NovaDespesaEmpresaView(View):
     def get(self, request, empresa_id):
         competencia = request.GET.get('competencia') or ''
-        form = DespesaEmpresaForm()
+        form = DespesaEmpresaForm(empresa_id=empresa_id)
         url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
         params = []
         if competencia:
@@ -329,7 +320,7 @@ class NovaDespesaEmpresaView(View):
 
     def post(self, request, empresa_id):
         competencia = request.GET.get('competencia') or request.POST.get('competencia') or ''
-        form = DespesaEmpresaForm(request.POST)
+        form = DespesaEmpresaForm(request.POST, empresa_id=empresa_id)
         url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
         params = []
         if competencia:

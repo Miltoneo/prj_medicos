@@ -1,3 +1,9 @@
+## 12. Campos de Seleção com Busca/Filtro (Dropdowns)
+- Sempre utilize widgets ou componentes padronizados do Django para campos de seleção com busca/filtro (ex: Select2).
+- Recomenda-se o uso de bibliotecas como `django-select2` ou widgets customizados integrados ao formulário.
+- É proibido implementar filtros de busca em dropdowns via scripts manuais diretamente no template.
+- Motivo: garantir manutenção, compatibilidade, rastreabilidade e reaproveitamento em todo o projeto.
+- Referência: https://django-select2.readthedocs.io/en/latest/
 
 # Guia de Desenvolvimento – prj_medicos
 

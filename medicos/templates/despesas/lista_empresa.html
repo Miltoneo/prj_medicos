@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnCopiar) {
         btnCopiar.addEventListener('click', function(e) {
             e.preventDefault();
+            if (!confirm('ATENÇÃO: Todas as despesas do mês selecionado serão apagadas e substituídas pelas do mês anterior. Esta ação não pode ser desfeita. Deseja continuar?')) {
+                return;
+            }
             btnCopiar.classList.add('disabled');
             btnCopiar.innerText = 'Copiando...';
             // Obtém o valor do campo competencia (YYYY-MM)
