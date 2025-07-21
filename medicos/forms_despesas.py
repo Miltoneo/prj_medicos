@@ -12,9 +12,8 @@ class DespesaSocioForm(forms.ModelForm):
         )
     class Meta:
         model = DespesaSocio
-        fields = ['socio', 'item_despesa', 'data', 'valor']
+        fields = ['item_despesa', 'data', 'valor']
         widgets = {
-            'socio': forms.Select(attrs={'class': 'form-select'}),
             'item_despesa': forms.Select(attrs={'class': 'form-select'}),
             'data': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),

@@ -9,11 +9,7 @@
           <form method="post" autocomplete="off">
             {% csrf_token %}
             <div class="row g-3">
-              <div class="col-12 col-md-6">
-                <label for="id_socio" class="form-label">Sócio</label>
-                {{ form.socio }}
-                {% if form.socio.errors %}<div class="text-danger small">{{ form.socio.errors }}</div>{% endif %}
-              </div>
+              <!-- Sócio é definido pelo filtro da lista, não aparece mais no formulário -->
               <div class="col-12 col-md-6">
                 <label for="id_item_despesa" class="form-label">Item de Despesa</label>
                 {{ form.item_despesa }}

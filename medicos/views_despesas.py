@@ -20,9 +20,26 @@ class DespesaSocioCreateView(CreateView):
     form_class = DespesaSocioForm
     template_name = 'despesas/despesas_socio_form.html'
 
+    def get_initial(self):
+        initial = super().get_initial()
+        socio_id = self.request.GET.get('socio')
+        if socio_id:
+            initial['socio_id'] = socio_id
+        return initial
+
+    def form_valid(self, form):
+        socio_id = self.request.GET.get('socio')
+        if not socio_id:
+            from django.http import HttpResponseBadRequest
+            return HttpResponseBadRequest('Sócio não informado')
+        from medicos.models.base import Socio
+        socio = Socio.objects.get(id=socio_id)
+        form.instance.socio = socio
+        return super().form_valid(form)
+
     def get_success_url(self):
         empresa_id = self.kwargs.get('empresa_id')
-        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id}) + f'?socio={self.request.GET.get("socio", "")}'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
