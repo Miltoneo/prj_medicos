@@ -5,6 +5,13 @@
     <div class="col-12 col-md-11 col-lg-9 col-xl-8" style="max-width: 1100px; min-width: 320px;">
       <div class="card shadow-sm border-0 mt-4">
         <div class="card-body px-2 px-md-4 py-4">
+          <!-- TOTAL GERAL EM DESTAQUE -->
+          <div class="mb-3">
+            <div class="alert alert-info d-flex align-items-center justify-content-between mb-0" role="alert" style="font-size:1.25rem;">
+              <div class="fw-bold">Total geral de despesas da empresa:</div>
+              <div class="fw-bold text-success" style="font-size:1.5rem;">R$ {{ total_despesas|floatformat:2 }}</div>
+            </div>
+          </div>
           <div class="mb-3">
             <div class="d-flex flex-column flex-md-row flex-wrap align-items-stretch align-items-md-end justify-content-between gap-2">
               <form method="get" class="row g-2 align-items-end flex-grow-1">
@@ -26,9 +33,6 @@
           <div class="table-responsive rounded-3 border bg-white">
             {% load django_tables2 %}
             {% render_table table %}
-          </div>
-          <div class="mt-3 text-end">
-            <strong>Total:</strong> <span class="fs-5 text-primary">R$ {{ total_despesas|floatformat:2 }}</span>
           </div>
         </div>
       </div>

@@ -346,9 +346,9 @@ class ListaDespesasSocioView(View):
                     rateio = ItemDespesaRateioMensal.obter_rateio_para_despesa(
                         despesa.item_despesa, Socio.objects.get(id=socio_id), despesa.data
                     )
-                    if rateio and rateio.percentual_rateio:
+                    if rateio is not None:
                         valor_apropriado = despesa.valor * (rateio.percentual_rateio / 100)
-                        # Cria objeto fake para exibir na tabela
+                        # Cria objeto fake para exibir na tabela, mesmo se percentual for 0%
                         class FakeGrupoDespesa:
                             def __init__(self, descricao):
                                 self.descricao = descricao
