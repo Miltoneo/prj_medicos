@@ -10,19 +10,23 @@
             {% csrf_token %}
             <div class="row g-3">
               <!-- Sócio é definido pelo filtro da lista, não aparece mais no formulário -->
-              <div class="col-12 col-md-6">
+              <div class="col-12">
                 <label for="id_item_despesa" class="form-label">Item de Despesa</label>
                 {{ form.item_despesa }}
                 {% if form.item_despesa.errors %}<div class="text-danger small">{{ form.item_despesa.errors }}</div>{% endif %}
               </div>
-              <div class="col-12 col-md-6">
+              <div class="col-12">
                 <label for="id_data" class="form-label">Data</label>
-                {{ form.data }}
+                <div style="max-width: 180px;">
+                  {{ form.data }}
+                </div>
                 {% if form.data.errors %}<div class="text-danger small">{{ form.data.errors }}</div>{% endif %}
               </div>
-              <div class="col-12 col-md-6">
+              <div class="col-12">
                 <label for="id_valor" class="form-label">Valor (R$)</label>
-                {{ form.valor }}
+                <div style="max-width: 180px;">
+                  {{ form.valor }}
+                </div>
                 {% if form.valor.errors %}<div class="text-danger small">{{ form.valor.errors }}</div>{% endif %}
               </div>
             </div>
