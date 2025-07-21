@@ -6,13 +6,14 @@
     <div class="col-12 col-md-12 col-lg-12 col-xl-11" style="max-width: 1600px;">
       <div class="card shadow-sm border-0 mt-4">
         <div class="card-body">
-          <div class="mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-            <h4 class="fw-bold text-primary mb-0">Despesas Apropriadas dos Sócios</h4>
-            <div class="d-flex gap-3 flex-wrap">
-              <div class="fw-semibold bg-light rounded-2 px-3 py-2 mb-0">Total de despesas: <span class="text-primary">{{ table.rows|length }}</span></div>
-              <div class="fw-bold bg-light rounded-2 px-3 py-2 mb-0">Total geral: <span class="text-success">R$ {{ total_despesas|floatformat:2 }}</span></div>
+          <!-- TOTAL GERAL EM DESTAQUE -->
+          <div class="mb-3">
+            <div class="alert alert-info d-flex align-items-center justify-content-between mb-0" role="alert" style="font-size:1.25rem;">
+              <div class="fw-bold">Total geral de despesas apropriadas:</div>
+              <div class="fw-bold text-success" style="font-size:1.5rem;">R$ {{ total_despesas|floatformat:2 }}</div>
             </div>
           </div>
+          <!-- Linha removida: contador e total geral redundantes -->
           <form method="get" class="bg-light rounded-3 p-3 mb-4 shadow-sm">
             <div class="row g-3 align-items-end">
               <div class="col-12 col-md-4 col-lg-3">

@@ -281,22 +281,80 @@ class ItemDespesaRateioMensal(AuditoriaModel):
     @classmethod
     def obter_rateio_para_despesa(cls, item_despesa, socio, data_despesa):
         """
-        Método de classe para obter o rateio para um item/sócio em uma data específica
+        Obtém o rateio para um item/sócio em uma data específica.
+        Se não existir para o mês de competência, busca o mês anterior imediato.
+        Se encontrar, copia para o mês de competência para todos os sócios do item.
+        Se não houver nenhum anterior, cria rateio zerado para todos os sócios do item.
         """
-        # Normalizar para o primeiro dia do mês
+        from django.db import transaction
         data_referencia = data_despesa.replace(day=1)
-        
         try:
-            rateio_obj = cls.objects.get(
+            return cls.objects.get(
                 item_despesa=item_despesa,
                 socio=socio,
                 data_referencia=data_referencia,
                 ativo=True
             )
-            return rateio_obj
         except cls.DoesNotExist:
-            # Se não encontrar rateio específico, retornar None
-            return None
+            # Buscar mês anterior imediato com rateio
+            anterior = cls.objects.filter(
+                item_despesa=item_despesa,
+                socio=socio,
+                data_referencia__lt=data_referencia,
+                ativo=True
+            ).order_by('-data_referencia').first()
+            if anterior:
+                # Copia todos os rateios do mês anterior para o mês de competência
+                with transaction.atomic():
+                    anteriores = cls.objects.filter(
+                        item_despesa=item_despesa,
+                        data_referencia=anterior.data_referencia,
+                        ativo=True
+                    )
+                    novos = []
+                    for r in anteriores:
+                        novo, created = cls.objects.get_or_create(
+                            item_despesa=r.item_despesa,
+                            socio=r.socio,
+                            data_referencia=data_referencia,
+                            defaults={
+                                'percentual_rateio': r.percentual_rateio,
+                                'ativo': True,
+                                'created_by': r.created_by,
+                                'observacoes': f'Rateio copiado automaticamente de {anterior.data_referencia.strftime("%m/%Y")}'
+                            }
+                        )
+                        novos.append(novo)
+                # Retorna o rateio recém-copiado para o sócio
+                return cls.objects.get(
+                    item_despesa=item_despesa,
+                    socio=socio,
+                    data_referencia=data_referencia,
+                    ativo=True
+                )
+            else:
+                # Não existe rateio anterior: cria zerado para todos os sócios do item
+                from medicos.models.base import Socio
+                empresa = item_despesa.grupo_despesa.empresa
+                socios = Socio.objects.filter(empresa=empresa, ativo=True)
+                with transaction.atomic():
+                    for s in socios:
+                        cls.objects.get_or_create(
+                            item_despesa=item_despesa,
+                            socio=s,
+                            data_referencia=data_referencia,
+                            defaults={
+                                'percentual_rateio': 0,
+                                'ativo': True,
+                                'observacoes': 'Rateio zerado criado automaticamente'
+                            }
+                        )
+                return cls.objects.get(
+                    item_despesa=item_despesa,
+                    socio=socio,
+                    data_referencia=data_referencia,
+                    ativo=True
+                )
     
     @classmethod
     def validar_rateios_mes(cls, item_despesa, data_referencia):
