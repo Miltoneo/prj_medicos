@@ -77,12 +77,33 @@ class DespesaSocioUpdateView(UpdateView):
 
     def get_success_url(self):
         empresa_id = self.kwargs.get('empresa_id')
-        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        socio = self.request.GET.get('socio') or self.request.POST.get('socio') or ''
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        params = []
+        if socio:
+            params.append(f'socio={socio}')
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Despesa de Sócio'
-        context['cancel_url'] = self.get_success_url()
+        empresa_id = self.kwargs.get('empresa_id')
+        socio = self.request.GET.get('socio') or self.request.POST.get('socio') or ''
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        params = []
+        if socio:
+            params.append(f'socio={socio}')
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        context['cancel_url'] = url
         return context
 
 class DespesaSocioDeleteView(DeleteView):
@@ -91,12 +112,33 @@ class DespesaSocioDeleteView(DeleteView):
 
     def get_success_url(self):
         empresa_id = self.kwargs.get('empresa_id')
-        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        socio = self.request.GET.get('socio') or self.request.POST.get('socio') or ''
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        params = []
+        if socio:
+            params.append(f'socio={socio}')
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Excluir Despesa de Sócio'
-        context['cancel_url'] = self.get_success_url()
+        empresa_id = self.kwargs.get('empresa_id')
+        socio = self.request.GET.get('socio') or self.request.POST.get('socio') or ''
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        params = []
+        if socio:
+            params.append(f'socio={socio}')
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        context['cancel_url'] = url
         return context
 
 

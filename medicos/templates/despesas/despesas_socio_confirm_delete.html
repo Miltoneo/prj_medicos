@@ -3,6 +3,12 @@
 <div class="mb-3">
   <h5>Confirmação de Exclusão</h5>
   <form method="post">
+    {% if request.GET.socio %}
+      <input type="hidden" name="socio" value="{{ request.GET.socio }}">
+    {% endif %}
+    {% if request.GET.competencia %}
+      <input type="hidden" name="competencia" value="{{ request.GET.competencia }}">
+    {% endif %}
     {% csrf_token %}
     <p>Tem certeza que deseja excluir esta despesa de sócio?</p>
     <button type="submit" class="btn btn-danger">Excluir</button>

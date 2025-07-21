@@ -11,7 +11,7 @@ from medicos.models.despesas import DespesaSocio, DespesaRateada
 class DespesaSocioTable(tables.Table):
     data = tables.DateColumn(verbose_name='Data', format='d/m/Y', attrs={"td": {"style": "min-width: 110px; max-width: 120px; white-space: nowrap;"}})
     socio = tables.Column(verbose_name='Sócio', attrs={"td": {"style": "min-width: 160px; max-width: 240px; white-space: nowrap;"}})
-    descricao = tables.Column(verbose_name='Descrição')
+    descricao = tables.Column(verbose_name='Descrição', attrs={"td": {"style": "min-width: 220px; max-width: 400px; white-space: normal;"}})
     grupo = tables.Column(verbose_name='Grupo', attrs={"td": {"style": "min-width: 200px; max-width: 340px; white-space: nowrap;"}})
     valor_total = tables.Column(verbose_name='Valor Total (R$)', attrs={"td": {"style": "min-width: 120px; max-width: 180px; white-space: nowrap; text-align: right;"}})
     taxa_rateio = tables.Column(verbose_name='Taxa de Rateio (%)')
@@ -25,10 +25,10 @@ class DespesaSocioTable(tables.Table):
         template_code='''
         {% if record.id %}
         {% with empresa_id=record.socio.empresa.id|default:request.resolver_match.kwargs.empresa_id %}
-        <a href="{% url 'medicos:despesas_socio_form_edit' empresa_id=empresa_id pk=record.id %}" class="btn btn-sm btn-primary me-1">
+        <a href="{% url 'medicos:despesas_socio_form_edit' empresa_id=empresa_id pk=record.id %}?socio={{ socio_id }}{% if competencia %}&competencia={{ competencia }}{% endif %}" class="btn btn-sm btn-primary me-1">
             <i class="fas fa-edit"></i> Editar
         </a>
-        <a href="{% url 'medicos:despesas_socio_confirm_delete' empresa_id=empresa_id pk=record.id %}" class="btn btn-sm btn-danger">
+        <a href="{% url 'medicos:despesas_socio_confirm_delete' empresa_id=empresa_id pk=record.id %}?socio={{ socio_id }}{% if competencia %}&competencia={{ competencia }}{% endif %}" class="btn btn-sm btn-danger">
             <i class="fas fa-trash-alt"></i> Excluir
         </a>
         {% endwith %}

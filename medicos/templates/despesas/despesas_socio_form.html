@@ -7,12 +7,9 @@
         <div class="card-body">
           <h5 class="fw-bold text-primary mb-4">Nova Despesa de Sócio</h5>
           <form method="post" autocomplete="off">
-            {% if request.GET.socio %}
-              <input type="hidden" name="socio" value="{{ request.GET.socio }}">
-            {% endif %}
-            {% if request.GET.competencia %}
-              <input type="hidden" name="competencia" value="{{ request.GET.competencia }}">
-            {% endif %}
+            {# Sempre prioriza POST, depois GET, para manter o filtro correto após erro de validação #}
+            <input type="hidden" name="socio" value="{% if request.POST.socio %}{{ request.POST.socio }}{% elif request.GET.socio %}{{ request.GET.socio }}{% elif socio_id %}{{ socio_id }}{% else %}{% endif %}">
+            <input type="hidden" name="competencia" value="{% if request.POST.competencia %}{{ request.POST.competencia }}{% elif request.GET.competencia %}{{ request.GET.competencia }}{% elif competencia %}{{ competencia }}{% else %}{% endif %}">
             {% csrf_token %}
             <div class="row g-3">
               <!-- Sócio é definido pelo filtro da lista, não aparece mais no formulário -->
@@ -43,6 +40,7 @@
               <a href="{{ cancel_url }}" class="btn btn-secondary">
                 <i class="fas fa-times me-1"></i>Cancelar
               </a>
+            </div>
             </div>
           </form>
         </div>
