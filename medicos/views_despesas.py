@@ -237,36 +237,30 @@ class ListaDespesasSocioView(View):
                             valor_apropriado=valor_apropriado
                         )
                         despesas_rateadas.append(fake)
-            # Junta despesas individuais e rateadas
-            despesas = list(despesas_individuais)
-            # Converter objetos fake para dicionários padronizados
-            despesas_rateadas_dicts = []
+            # Junta despesas individuais e rateadas, ambos como dicionários padronizados
+            despesas = []
             for fake in despesas_rateadas:
-                despesas_rateadas_dicts.append({
+                despesas.append({
+                    'data': getattr(fake, 'data', None),
                     'socio': fake.socio,
                     'descricao': getattr(fake.item_despesa, 'descricao', '-'),
                     'grupo': getattr(getattr(fake.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
                     'valor_total': fake.valor_total,
                     'taxa_rateio': fake.taxa_rateio,
                     'valor_apropriado': fake.valor_apropriado,
-                    'id': None,
+                    'id': getattr(fake, 'id', None),
                 })
-            # Para objetos reais, também padronizar para dicionário
-            despesas_dicts = []
-            for d in despesas:
-                despesas_dicts.append({
+            for d in despesas_individuais:
+                despesas.append({
+                    'data': getattr(d, 'data', None),
                     'socio': d.socio,
                     'descricao': getattr(d.item_despesa, 'descricao', '-'),
                     'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
                     'valor_total': getattr(d, 'valor', 0),
                     'taxa_rateio': '-',
                     'valor_apropriado': getattr(d, 'valor', 0),
-                    'id': d.id,
+                    'id': d.id
                 })
-            despesas = despesas_dicts + despesas_rateadas_dicts
-            # Garante que a lista passada para a Table é uma lista de dicionários
-            if not all(isinstance(d, dict) for d in despesas):
-                despesas = [d if isinstance(d, dict) else d.__dict__ for d in despesas]
             total_despesas = sum([d.get('valor_apropriado', 0) or 0 for d in despesas])
         else:
             # Se não filtrar por sócio, mostra todas as despesas individuais
@@ -283,6 +277,7 @@ class ListaDespesasSocioView(View):
             despesas = []
             for d in despesas_qs:
                 despesas.append({
+                    'data': getattr(d, 'data', None),
                     'socio': d.socio,
                     'descricao': getattr(d.item_despesa, 'descricao', '-'),
                     'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),

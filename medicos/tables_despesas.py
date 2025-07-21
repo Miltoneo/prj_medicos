@@ -9,21 +9,29 @@ from medicos.models.despesas import DespesaSocio, DespesaRateada
 # Tabela para lista de despesas de sócio
 
 class DespesaSocioTable(tables.Table):
+    data = tables.DateColumn(verbose_name='Data', format='d/m/Y', attrs={"td": {"style": "min-width: 110px; max-width: 120px; white-space: nowrap;"}})
     socio = tables.Column(verbose_name='Sócio', attrs={"td": {"style": "min-width: 160px; max-width: 240px; white-space: nowrap;"}})
     descricao = tables.Column(verbose_name='Descrição')
-    grupo = tables.Column(verbose_name='Grupo')
-    valor_total = tables.Column(verbose_name='Valor Total (R$)')
+    grupo = tables.Column(verbose_name='Grupo', attrs={"td": {"style": "min-width: 200px; max-width: 340px; white-space: nowrap;"}})
+    valor_total = tables.Column(verbose_name='Valor Total (R$)', attrs={"td": {"style": "min-width: 120px; max-width: 180px; white-space: nowrap; text-align: right;"}})
     taxa_rateio = tables.Column(verbose_name='Taxa de Rateio (%)')
     valor_apropriado = tables.Column(verbose_name='Valor Apropriado (R$)')
+
+    class Meta:
+        template_name = 'django_tables2/bootstrap5.html'
+        fields = ('data', 'socio', 'descricao', 'grupo', 'valor_total', 'taxa_rateio', 'valor_apropriado', 'acoes')
+        sequence = ('data', 'socio', 'descricao', 'grupo', 'valor_total', 'taxa_rateio', 'valor_apropriado', 'acoes')
     acoes = tables.TemplateColumn(
         template_code='''
         {% if record.id %}
-        <a href="{% url 'medicos:despesas_socio_form_edit' empresa_id=record.socio.empresa.id pk=record.id %}" class="btn btn-sm btn-primary me-1">
+        {% with empresa_id=record.socio.empresa.id|default:request.resolver_match.kwargs.empresa_id %}
+        <a href="{% url 'medicos:despesas_socio_form_edit' empresa_id=empresa_id pk=record.id %}" class="btn btn-sm btn-primary me-1">
             <i class="fas fa-edit"></i> Editar
         </a>
-        <a href="{% url 'medicos:despesas_socio_confirm_delete' empresa_id=record.socio.empresa.id pk=record.id %}" class="btn btn-sm btn-danger">
+        <a href="{% url 'medicos:despesas_socio_confirm_delete' empresa_id=empresa_id pk=record.id %}" class="btn btn-sm btn-danger">
             <i class="fas fa-trash-alt"></i> Excluir
         </a>
+        {% endwith %}
         {% endif %}
         ''',
         verbose_name='Ações',
