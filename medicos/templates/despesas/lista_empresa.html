@@ -26,7 +26,44 @@
               </form>
               <div class="d-flex flex-row gap-2 mt-2 mt-md-0">
                 <a href="{% url 'medicos:nova_despesa_empresa' empresa_id=request.session.empresa_id %}{% if competencia %}?competencia={{ competencia }}{% endif %}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Nova Despesa</a>
-                <a href="#" class="btn btn-outline-secondary">Copiar do mês anterior</a>
+                <a href="#" id="btn-copiar-mes-anterior" class="btn btn-outline-secondary">Copiar do mês anterior</a>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnCopiar = document.getElementById('btn-copiar-mes-anterior');
+    if (btnCopiar) {
+        btnCopiar.addEventListener('click', function(e) {
+            e.preventDefault();
+            btnCopiar.classList.add('disabled');
+            btnCopiar.innerText = 'Copiando...';
+            // Obtém o valor do campo competencia (YYYY-MM)
+            const competencia = document.getElementById('competencia').value;
+            fetch(`{% url 'medicos:copiar_despesas_mes_anterior' empresa_id=request.session.empresa_id %}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'competencia=' + encodeURIComponent(competencia)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Erro ao copiar despesas.');
+                }
+            })
+            .catch(() => alert('Erro ao copiar despesas.'))
+            .finally(() => {
+                btnCopiar.classList.remove('disabled');
+                btnCopiar.innerText = 'Copiar do mês anterior';
+            });
+        });
+    }
+});
+</script>
               </div>
             </div>
           </div>

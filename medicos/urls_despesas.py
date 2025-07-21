@@ -12,4 +12,7 @@ path('despesas_socio/<int:empresa_id>/', views_despesas.ListaDespesasSocioView.a
 path('despesas_socio/<int:empresa_id>/novo/', views_despesas.DespesaSocioCreateView.as_view(), name='despesas_socio_form'),
 path('despesas_socio/<int:empresa_id>/<int:pk>/editar/', views_despesas.DespesaSocioUpdateView.as_view(), name='despesas_socio_form_edit'),
 path('despesas_socio/<int:empresa_id>/<int:pk>/excluir/', views_despesas.DespesaSocioDeleteView.as_view(), name='despesas_socio_confirm_delete'),
+
+    # Rota para copiar despesas do mês anterior
+    path('copiar_despesas_mes_anterior/<int:empresa_id>/', views_despesas.copiar_despesas_mes_anterior, name='copiar_despesas_mes_anterior'),
 ]

@@ -1,3 +1,99 @@
+from django.http import JsonResponse
+from datetime import datetime, timedelta
+# View para copiar despesas do mês anterior para o mês atual
+from .models.despesas import DespesaRateada, DespesaSocio, ItemDespesa
+from django.db import transaction
+
+def copiar_despesas_mes_anterior(request, empresa_id):
+    """
+    Copia todas as despesas do mês anterior para o mês atual para a empresa informada.
+    O contexto temporal é obtido de request.session['mes_ano'] (formato MM/YYYY).
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'message': 'Usuário não autenticado.'}, status=403)
+
+    # Prioriza parametro competencia (POST ou GET), depois session['mes_ano']
+    mes_ano = request.POST.get('competencia') or request.GET.get('competencia') or request.session.get('mes_ano')
+    if not mes_ano:
+        return JsonResponse({'success': False, 'message': 'Contexto temporal não definido.'}, status=400)
+    # Aceita tanto MM/YYYY quanto YYYY-MM
+    mes_atual = None
+    ano = None
+    mes = None
+    formatos = ['%m/%Y', '%Y-%m']
+    for fmt in formatos:
+        try:
+            mes_atual = datetime.strptime(mes_ano, fmt)
+            ano = mes_atual.year
+            mes = mes_atual.month
+            break
+        except Exception:
+            continue
+    if not mes_atual:
+        return JsonResponse({'success': False, 'message': f'Formato de mês/ano inválido: {mes_ano}. Use MM/YYYY ou YYYY-MM.'}, status=400)
+
+    # O mês de competência selecionado é o destino
+    destino_ano = ano
+    destino_mes = mes
+    destino_primeiro_dia = datetime(destino_ano, destino_mes, 1)
+    # O mês anterior ao de competência é a origem
+    if destino_mes == 1:
+        origem_ano = destino_ano - 1
+        origem_mes = 12
+    else:
+        origem_ano = destino_ano
+        origem_mes = destino_mes - 1
+    origem_primeiro_dia = datetime(origem_ano, origem_mes, 1)
+
+    # Debug: log origem e destino
+    print(f"[COPIA DESPESAS] Origem: {origem_mes:02d}/{origem_ano}, Destino: {destino_mes:02d}/{destino_ano}")
+
+    with transaction.atomic():
+        # Apaga todas as despesas do mês de competência (destino)
+        DespesaRateada.objects.filter(
+            item_despesa__grupo_despesa__empresa_id=empresa_id,
+            data=destino_primeiro_dia
+        ).delete()
+        DespesaSocio.objects.filter(
+            item_despesa__grupo_despesa__empresa_id=empresa_id,
+            data=destino_primeiro_dia
+        ).delete()
+
+        # Copia todas as despesas do mês anterior (origem) para o mês de competência (destino)
+        despesas_rateadas = DespesaRateada.objects.filter(
+            item_despesa__grupo_despesa__empresa_id=empresa_id,
+            data__year=origem_ano,
+            data__month=origem_mes
+        )
+        despesas_socios = DespesaSocio.objects.filter(
+            item_despesa__grupo_despesa__empresa_id=empresa_id,
+            data__year=origem_ano,
+            data__month=origem_mes
+        )
+        print(f"[COPIA DESPESAS] Rateadas encontradas: {despesas_rateadas.count()} | Socios encontradas: {despesas_socios.count()}")
+        total_copiadas = 0
+        for despesa in despesas_rateadas:
+            DespesaRateada.objects.create(
+                item_despesa=despesa.item_despesa,
+                data=destino_primeiro_dia,
+                valor=despesa.valor,
+                possui_rateio=despesa.possui_rateio,
+                created_by=request.user
+            )
+            total_copiadas += 1
+        for despesa in despesas_socios:
+            DespesaSocio.objects.create(
+                item_despesa=despesa.item_despesa,
+                socio=despesa.socio,
+                data=destino_primeiro_dia,
+                valor=despesa.valor,
+                possui_rateio=despesa.possui_rateio,
+                created_by=request.user
+            )
+            total_copiadas += 1
+        print(f"[COPIA DESPESAS] Total copiadas: {total_copiadas}")
+
+    return JsonResponse({'success': True, 'copiadas': total_copiadas, 'message': f'{total_copiadas} despesas copiadas para o mês atual.'})
 # Imports padrão Python
 
 # Imports de terceiros
