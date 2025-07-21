@@ -156,9 +156,17 @@ class ListaDespesasSocioView(View):
         from medicos.models.base import Socio
         from .models.despesas import DespesaSocio, DespesaRateada, ItemDespesaRateioMensal
         competencia = request.GET.get('competencia') or request.session.get('mes_ano')
-        socio_id = request.GET.get('socio')
-        # Sócios ativos para o filtro
         socios = Socio.objects.filter(empresa_id=empresa_id, ativo=True).values_list('id', 'pessoa__name').order_by('pessoa__name')
+        socio_id = request.GET.get('socio')
+        # Se não houver sócio selecionado, filtra pelo primeiro sócio ativo
+        if not socio_id and socios:
+            socio_id = str(socios[0][0])
+            # Redireciona para a mesma URL já filtrando pelo primeiro sócio
+            import urllib.parse
+            params = request.GET.copy()
+            params['socio'] = socio_id
+            url = request.path + '?' + urllib.parse.urlencode(params)
+            return redirect(url)
 
         despesas = []
         total_despesas = 0

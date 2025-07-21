@@ -18,9 +18,8 @@
                     <input type="month" id="competencia" name="competencia" class="form-control form-control-sm mb-2" value="{{ competencia }}" style="max-width: 160px;">
                     <label for="socio" class="form-label mb-0">Sócio:</label>
                     <select id="socio" name="socio" class="form-select form-select-sm">
-                      <option value="">Todos</option>
                       {% for id, nome in socios %}
-                        <option value="{{ id }}" {% if socio_id|stringformat:'s' == id|stringformat:'s' %}selected{% endif %}>{{ nome }}</option>
+                        <option value="{{ id }}" {% if forloop.first and not socio_id %}selected{% elif socio_id|stringformat:'s' == id|stringformat:'s' %}selected{% endif %}>{{ nome }}</option>
                       {% endfor %}
                     </select>
                   </div>
