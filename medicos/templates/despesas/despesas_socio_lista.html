@@ -48,6 +48,28 @@
             </div>
             {% if table.rows %}
               {% render_table table %}
+              <script>
+                // Move a coluna Data para a primeira posição na tabela renderizada
+                document.addEventListener('DOMContentLoaded', function() {
+                  const table = document.querySelector('.table-responsive table');
+                  if (table) {
+                    // Move o th
+                    const ths = table.querySelectorAll('thead tr th');
+                    const dataTh = Array.from(ths).find(th => th.textContent.trim().toLowerCase().includes('data'));
+                    if (dataTh && ths[0] !== dataTh) {
+                      dataTh.parentNode.insertBefore(dataTh, ths[0]);
+                    }
+                    // Move os tds
+                    table.querySelectorAll('tbody tr').forEach(tr => {
+                      const tds = tr.querySelectorAll('td');
+                      const dataTd = Array.from(tds).find((td, idx) => ths[idx].textContent.trim().toLowerCase().includes('data'));
+                      if (dataTd && tds[0] !== dataTd) {
+                        dataTd.parentNode.insertBefore(dataTd, tds[0]);
+                      }
+                    });
+                  }
+                });
+              </script>
             {% else %}
               <div class="text-center text-muted py-4">Nenhuma despesa apropriada encontrada para o mês selecionado.</div>
             {% endif %}

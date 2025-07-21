@@ -214,15 +214,16 @@ class ListaDespesasSocioView(View):
                                 return f"FakeItemDespesa(descricao={self.descricao!r}, grupo_despesa={self.grupo_despesa!r})"
 
                         class FakeDespesa:
-                            def __init__(self, socio, item_despesa, valor_total, taxa_rateio, valor_apropriado):
+                            def __init__(self, socio, item_despesa, valor_total, taxa_rateio, valor_apropriado, data):
                                 self.socio = socio
                                 self.item_despesa = item_despesa
                                 self.valor_total = valor_total
                                 self.taxa_rateio = taxa_rateio
                                 self.valor_apropriado = valor_apropriado
+                                self.data = data
                                 self.id = None  # Não permite editar/excluir
                             def __repr__(self):
-                                return f"FakeDespesa(socio={self.socio!r}, item_despesa={self.item_despesa!r}, valor_total={self.valor_total!r}, taxa_rateio={self.taxa_rateio!r}, valor_apropriado={self.valor_apropriado!r})"
+                                return f"FakeDespesa(socio={self.socio!r}, item_despesa={self.item_despesa!r}, valor_total={self.valor_total!r}, taxa_rateio={self.taxa_rateio!r}, valor_apropriado={self.valor_apropriado!r}, data={self.data!r})"
 
                         socio_obj = Socio.objects.get(id=socio_id)
                         item_desc = getattr(despesa.item_despesa, 'descricao', None) or '-'
@@ -234,7 +235,8 @@ class ListaDespesasSocioView(View):
                             item_despesa=fake_item,
                             valor_total=despesa.valor,
                             taxa_rateio=rateio.percentual_rateio,
-                            valor_apropriado=valor_apropriado
+                            valor_apropriado=valor_apropriado,
+                            data=despesa.data
                         )
                         despesas_rateadas.append(fake)
             # Junta despesas individuais e rateadas, ambos como dicionários padronizados
