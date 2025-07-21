@@ -10,27 +10,28 @@
           <div class="mb-3">
             <label for="id_item_despesa" class="form-label">Item de Despesa</label>
             {{ form.item_despesa }}
-            {% if form.item_despesa.errors %}
-              <div class="text-danger small">{{ form.item_despesa.errors }}</div>
-            {% endif %}
+            {% if form.item_despesa.errors %}<div class="text-danger small">{{ form.item_despesa.errors }}</div>{% endif %}
           </div>
           <div class="mb-3">
             <label for="id_data" class="form-label">Data</label>
-            {{ form.data }}
-            {% if form.data.errors %}
-              <div class="text-danger small">{{ form.data.errors }}</div>
-            {% endif %}
+            <div style="max-width: 180px;">{{ form.data }}</div>
+            {% if form.data.errors %}<div class="text-danger small">{{ form.data.errors }}</div>{% endif %}
           </div>
           <div class="mb-3">
             <label for="id_valor" class="form-label">Valor Total (R$)</label>
-            {{ form.valor }}
-            {% if form.valor.errors %}
-              <div class="text-danger small">{{ form.valor.errors }}</div>
-            {% endif %}
+            <div style="max-width: 180px;">{{ form.valor }}</div>
+            {% if form.valor.errors %}<div class="text-danger small">{{ form.valor.errors }}</div>{% endif %}
           </div>
+          {% if competencia %}
+            <input type="hidden" name="competencia" value="{{ competencia }}">
+          {% elif request.GET.competencia %}
+            <input type="hidden" name="competencia" value="{{ request.GET.competencia }}">
+          {% elif request.POST.competencia %}
+            <input type="hidden" name="competencia" value="{{ request.POST.competencia }}">
+          {% endif %}
           <div class="text-start mt-4">
             <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="{% url 'medicos:lista_despesas_empresa' empresa_id=request.session.empresa_id %}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            <a href="{{ cancel_url|default:'#' }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
           </div>
         </form>
       </div>

@@ -150,11 +150,37 @@ class EditarDespesaEmpresaView(UpdateView):
 
     def get_success_url(self):
         empresa_id = self.object.item_despesa.grupo_despesa.empresa_id
-        return reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        # Prioriza GET, depois POST, igual ao fluxo de sócio
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        params = []
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Garante que competencia do GET seja propagada para o template
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        self.competencia = competencia
+        return kwargs
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Despesa da Empresa'
+        empresa_id = self.object.item_despesa.grupo_despesa.empresa_id
+        competencia = getattr(self, 'competencia', None)
+        if competencia is None:
+            competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        params = []
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        context['cancel_url'] = url
+        context['competencia'] = competencia
         return context
 
 class ExcluirDespesaEmpresaView(DeleteView):
@@ -163,35 +189,68 @@ class ExcluirDespesaEmpresaView(DeleteView):
 
     def get_success_url(self):
         empresa_id = self.object.item_despesa.grupo_despesa.empresa_id
-        return reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        params = []
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Excluir Despesa da Empresa'
+        empresa_id = self.object.item_despesa.grupo_despesa.empresa_id
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        params = []
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        context['cancel_url'] = url
         return context
 
 
 class NovaDespesaEmpresaView(View):
     def get(self, request, empresa_id):
+        competencia = request.GET.get('competencia') or ''
         form = DespesaEmpresaForm()
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        params = []
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
         return render(request, 'despesas/form_empresa.html', {
             'form': form,
             'titulo_pagina': 'Nova Despesa da Empresa',
             'cenario_nome': 'Despesas',
+            'cancel_url': url,
+            'competencia': competencia,
         })
 
     def post(self, request, empresa_id):
+        competencia = request.GET.get('competencia') or request.POST.get('competencia') or ''
         form = DespesaEmpresaForm(request.POST)
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        params = []
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
         if form.is_valid():
             despesa = form.save(commit=False)
-            # associar empresa via item_despesa.grupo_despesa.empresa
             despesa.save()
             messages.success(request, 'Despesa cadastrada com sucesso!')
-            return redirect('medicos:lista_despesas_empresa', empresa_id=empresa_id)
+            return redirect(url)
         return render(request, 'despesas/form_empresa.html', {
             'form': form,
             'titulo_pagina': 'Nova Despesa da Empresa',
             'cenario_nome': 'Despesas',
+            'cancel_url': url,
+            'competencia': competencia,
         })
 
 

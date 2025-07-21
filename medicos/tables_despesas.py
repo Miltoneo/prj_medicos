@@ -82,6 +82,7 @@ class DespesaSocioTable(tables.Table):
 
 # Tabela para lista de despesas da empresa
 class DespesaEmpresaTable(tables.Table):
+    data = tables.DateColumn(verbose_name='Data', accessor='data', format='d/m/Y', attrs={"td": {"style": "min-width: 110px; max-width: 120px; white-space: nowrap;"}})
     descricao = tables.Column(accessor='item_despesa.descricao', verbose_name='Descrição')
     grupo = tables.Column(accessor='item_despesa.grupo_despesa.descricao', verbose_name='Grupo')
     valor = tables.Column(verbose_name='Valor Total', attrs={"td": {"class": "text-end"}})
@@ -99,4 +100,5 @@ class DespesaEmpresaTable(tables.Table):
     class Meta:
         model = DespesaRateada
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('descricao', 'grupo', 'valor')
+        fields = ('data', 'descricao', 'grupo', 'valor', 'acoes')
+        sequence = ('data', 'descricao', 'grupo', 'valor', 'acoes')
