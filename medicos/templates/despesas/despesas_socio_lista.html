@@ -30,7 +30,7 @@
                   <button type="submit" class="btn btn-primary">
                     <i class="fas fa-filter me-1"></i>Filtrar
                   </button>
-                  <a href="{% url 'medicos:despesas_socio_form' empresa_id=request.resolver_match.kwargs.empresa_id %}?socio={{ socio_id }}" class="btn btn-success">
+                  <a href="{% url 'medicos:despesas_socio_form' empresa_id=request.resolver_match.kwargs.empresa_id %}?socio={{ socio_id }}{% if competencia %}&competencia={{ competencia }}{% endif %}" class="btn btn-success">
                     <i class="fas fa-plus me-1"></i>Nova Despesa
                   </a>
                   <a href="#" class="btn btn-outline-secondary disabled">

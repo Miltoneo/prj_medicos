@@ -7,6 +7,12 @@
         <div class="card-body">
           <h5 class="fw-bold text-primary mb-4">Nova Despesa de Sócio</h5>
           <form method="post" autocomplete="off">
+            {% if request.GET.socio %}
+              <input type="hidden" name="socio" value="{{ request.GET.socio }}">
+            {% endif %}
+            {% if request.GET.competencia %}
+              <input type="hidden" name="competencia" value="{{ request.GET.competencia }}">
+            {% endif %}
             {% csrf_token %}
             <div class="row g-3">
               <!-- Sócio é definido pelo filtro da lista, não aparece mais no formulário -->

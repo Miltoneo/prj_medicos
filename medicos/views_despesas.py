@@ -39,12 +39,35 @@ class DespesaSocioCreateView(CreateView):
 
     def get_success_url(self):
         empresa_id = self.kwargs.get('empresa_id')
-        return reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id}) + f'?socio={self.request.GET.get("socio", "")}'
+        # Tenta obter da querystring, senão do POST
+        socio = self.request.GET.get('socio') or self.request.POST.get('socio') or ''
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        params = []
+        if socio:
+            params.append(f'socio={socio}')
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Nova Despesa de Sócio'
-        context['cancel_url'] = self.get_success_url()
+        empresa_id = self.kwargs.get('empresa_id')
+        # Tenta obter da querystring, senão do POST
+        socio = self.request.GET.get('socio') or self.request.POST.get('socio') or ''
+        competencia = self.request.GET.get('competencia') or self.request.POST.get('competencia') or ''
+        url = reverse('medicos:despesas_socio_lista', kwargs={'empresa_id': empresa_id})
+        params = []
+        if socio:
+            params.append(f'socio={socio}')
+        if competencia:
+            params.append(f'competencia={competencia}')
+        if params:
+            url += '?' + '&'.join(params)
+        context['cancel_url'] = url
         return context
 
 class DespesaSocioUpdateView(UpdateView):

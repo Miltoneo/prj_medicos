@@ -10,6 +10,8 @@ class DespesaSocioForm(forms.ModelForm):
         self.fields['item_despesa'].queryset = ItemDespesa.objects.filter(
             grupo_despesa__tipo_rateio=GrupoDespesa.Tipo_t.SEM_RATEIO
         )
+        self.fields['item_despesa'].required = True
+        self.fields['item_despesa'].widget.attrs['required'] = 'required'
     class Meta:
         model = DespesaSocio
         fields = ['item_despesa', 'data', 'valor']
