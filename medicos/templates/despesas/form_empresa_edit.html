@@ -10,7 +10,9 @@
           {% csrf_token %}
           <div class="mb-3">
             <label for="id_item_despesa" class="form-label">Item de Despesa</label>
-            {{ form.item_despesa }}
+            <div style="max-width: 500px; min-width: 300px;">
+              {{ form.item_despesa }}
+            </div>
             {% if form.item_despesa.errors %}<div class="text-danger small">{{ form.item_despesa.errors }}</div>{% endif %}
           </div>
           <div class="mb-3">
@@ -34,6 +36,31 @@
             <button type="submit" class="btn btn-primary">Salvar</button>
             <a href="{{ cancel_url|default:'#' }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
           </div>
+          <hr>
+          <small class="text-muted">O filtro dos itens é feito no ModelForm, conforme instrução auxiliar.</small>
+          <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+          <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+          <style>
+            /* Melhorar contraste do texto dos itens do Select2 */
+            .select2-container--default .select2-results__option {
+              color: #212529;
+              background-color: #fff;
+            }
+            .select2-container--default .select2-selection__rendered {
+              color: #212529;
+            }
+          </style>
+          <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+          <script>
+            $(document).ready(function() {
+              $('#id_item_despesa').select2({
+                placeholder: "Selecione ou digite para filtrar...",
+                allowClear: true,
+                width: '100%',
+                minimumInputLength: 1
+              });
+            });
+          </script>
         </form>
       </div>
     </div>
