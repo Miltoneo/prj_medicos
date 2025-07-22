@@ -15,7 +15,9 @@
               <!-- Sócio é definido pelo filtro da lista, não aparece mais no formulário -->
               <div class="col-12">
                 <label for="id_item_despesa" class="form-label">Item de Despesa</label>
-                {{ form.item_despesa }}
+                <div style="max-width: 500px; min-width: 300px;">
+                  {{ form.item_despesa }}
+                </div>
                 {% if form.item_despesa.errors %}<div class="text-danger small">{{ form.item_despesa.errors }}</div>{% endif %}
               </div>
               <div class="col-12">
@@ -61,7 +63,7 @@
                 $('#id_item_despesa').select2({
                   placeholder: "Selecione ou digite para filtrar...",
                   allowClear: true,
-                  width: 'resolve',
+                  width: '100%',
                   minimumInputLength: 1
                 });
               });
