@@ -15,16 +15,7 @@
             <div class="mb-3">
               <label for="id_item_despesa" class="form-label">Item de Despesa</label>
               {{ form.item_despesa }}
-              <div class="alert alert-secondary mt-2">
-                <strong>Opções disponíveis (debug):</strong>
-                <ul>
-                  {% for opt in form.fields.item_despesa.queryset %}
-                    <li>{{ opt.pk }} - {{ opt }} (empresa: {{ opt.grupo_despesa.empresa }}, tipo_rateio: {{ opt.grupo_despesa.tipo_rateio }})</li>
-                  {% empty %}
-                    <li>Nenhuma opção disponível</li>
-                  {% endfor %}
-                </ul>
-              </div>
+              <!-- Debug removido -->
             </div>
             <div class="mb-3">
               <label for="id_data" class="form-label">Data</label>
@@ -37,8 +28,7 @@
             <button type="submit" class="btn btn-primary w-100">Salvar</button>
           </form>
           <hr>
-          <h6 class="mt-4">Debug Contexto:</h6>
-          <pre>{% debug %}</pre>
+          <!-- Debug removido -->
         </div>
       </div>
     </div>
