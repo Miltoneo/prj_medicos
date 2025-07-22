@@ -1,9 +1,34 @@
+## Dropdowns filtráveis com digitação livre
+
+Sempre que implementar um dropdown para seleção de itens em contexto multi-tenant, utilize widgets que permitam busca dinâmica (AJAX) e digitação direta na caixa de seleção (autocomplete) para filtrar os resultados.
+
+Padrão recomendado:
+- O campo de seleção deve permitir digitação direta (input embutido), servindo tanto para busca quanto para seleção.
+- O campo inicia vazio ou com placeholder orientando a digitação.
+- A cada caractere digitado, o frontend dispara requisição AJAX ao backend, enviando o termo de busca e parâmetros de contexto (ex: empresa_id).
+- O backend retorna apenas os itens que correspondem ao termo digitado e aos filtros de negócio (ex: empresa ativa, tipo_rateio=COM_RATEIO).
+- O dropdown exibe apenas os resultados filtrados, reduzindo a lista conforme o usuário digita.
+- Se permitido (`data-tags: 'true'`), o usuário pode criar um novo valor digitando, além de selecionar itens existentes.
+- O valor final é validado conforme as regras do modelo.
+
+Referências de padrões de usabilidade:
+- Select2: https://select2.org/getting-started/basic-usage
+- Material Design Autocomplete: https://m3.material.io/components/autocomplete/overview
+- Ant Design Select: https://ant.design/components/select/#components-select-demo-search
+- Bootstrap Select: https://developer.snapappointments.com/bootstrap-select/examples/#live-search
+
+Esse padrão garante eficiência, usabilidade, filtragem contextual e respeito às regras de negócio multi-tenant.
 ## 12. Campos de Seleção com Busca/Filtro (Dropdowns)
 - Sempre utilize widgets ou componentes padronizados do Django para campos de seleção com busca/filtro (ex: Select2).
 - Recomenda-se o uso de bibliotecas como `django-select2` ou widgets customizados integrados ao formulário.
 - É proibido implementar filtros de busca em dropdowns via scripts manuais diretamente no template.
 - Motivo: garantir manutenção, compatibilidade, rastreabilidade e reaproveitamento em todo o projeto.
 - Referência: https://django-select2.readthedocs.io/en/latest/
+
+Padrão obrigatório para usabilidade:
+- O campo de seleção deve permitir digitação direta (autocomplete/input embutido), disparando busca dinâmica conforme o usuário digita.
+- O dropdown exibe apenas os resultados filtrados, facilitando a escolha e evitando sobrecarga visual.
+- O valor digitado ou selecionado deve ser validado conforme as regras do modelo.
 
 # Guia de Desenvolvimento – prj_medicos
 

@@ -1,3 +1,17 @@
+## 3. Fluxo assertivo para troubleshooting de dropdowns multi-tenant e filtrados
+
+Sempre que houver problema em dropdowns (ex: lista vazia, lista errada, filtro não aplicado), siga este fluxo:
+
+1. **Confirme a regra de negócio exata** esperada para o filtro (ex: só mostrar itens com rateio, só da empresa ativa, etc). Consulte `.github/documentacao_especifica_instructions.md` e os modelos envolvidos.
+2. **Valide os dados reais**: verifique se existem registros no banco que atendam ao filtro esperado (ex: ItemDespesa vinculado a GrupoDespesa com tipo_rateio=COM_RATEIO e empresa correta).
+3. **Cheque o parâmetro de contexto**: garanta que o parâmetro (ex: empresa_id) está sendo passado corretamente da view para o form/widget.
+4. **Revise o widget**: confira se o queryset do widget está aplicando todos os filtros de negócio necessários.
+5. **Valide o template**: confirme que os assets JS/CSS do widget estão carregados e não há erro de renderização.
+6. **Teste o fluxo completo**: crie/edite um registro real e valide o comportamento na interface.
+7. **Documente a causa e a solução**: cite sempre os arquivos e linhas usados para referência.
+
+Exemplo de troubleshooting assertivo:
+> "Dropdown de ItemDespesa não mostra opções. Validei que empresa_id=1 está correto na view (medicos/views_despesas.py, linha X), existem itens válidos no banco (ItemDespesa.objects.filter(...)), e o filtro do widget está correto (medicos/widgets.py, linha Y). Ajuste realizado para filtrar apenas COM_RATEIO."
 # Copilot Instructions for prj_medicos
 
 

@@ -23,7 +23,6 @@ conta, _ = Conta.objects.get_or_create(name='Conta Teste')
 # Vincule o usuário à conta
 ContaMembership.objects.get_or_create(conta=conta, user=test_user, role='admin', is_active=True)
 
-
 # Crie uma licença para a conta, se não existir
 if not hasattr(conta, 'licenca'):
     hoje = timezone.now().date()

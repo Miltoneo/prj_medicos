@@ -1,27 +1,26 @@
 
+
 from django import forms
-from medicos.models.despesas import DespesaSocio
+from medicos.models.despesas import DespesaSocio, DespesaRateada, ItemDespesa, GrupoDespesa
 
 # Formulário para Despesa de Sócio
 class DespesaSocioForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from medicos.models.despesas import ItemDespesa, GrupoDespesa
         self.fields['item_despesa'].queryset = ItemDespesa.objects.filter(
             grupo_despesa__tipo_rateio=GrupoDespesa.Tipo_t.SEM_RATEIO
         )
         self.fields['item_despesa'].required = True
-        self.fields['item_despesa'].widget.attrs['required'] = 'required'
+        # Não sobrescrever o widget após definir o queryset, mantendo o padrão do ModelForm
+
     class Meta:
         model = DespesaSocio
         fields = ['item_despesa', 'data', 'valor']
         widgets = {
-            'item_despesa': forms.Select(attrs={'class': 'form-select'}),
             'data': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
         }
-from django import forms
-from medicos.models.despesas import DespesaRateada
+
 
 class DespesaEmpresaForm(forms.ModelForm):
     def clean_valor(self):
@@ -30,24 +29,35 @@ class DespesaEmpresaForm(forms.ModelForm):
             from django.core.exceptions import ValidationError
             raise ValidationError('O valor não pode ser negativo.')
         return valor
-    # Removido o filtro manual do queryset para item_despesa, pois o ModelSelect2Widget faz a busca dinâmica
+
     class Meta:
         model = DespesaRateada
         fields = ['item_despesa', 'data', 'valor']
         widgets = {
-            # O widget será setado dinamicamente no __init__
             'data': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
         }
 
     def __init__(self, *args, **kwargs):
+        import sys
         empresa_id = kwargs.pop('empresa_id', None)
+        print(f"[DespesaEmpresaForm] empresa_id recebido: {empresa_id}", file=sys.stderr)
         super().__init__(*args, **kwargs)
-        from medicos.widgets import ItemDespesaSelect2Widget
-        self.fields['item_despesa'].widget = ItemDespesaSelect2Widget(
-            attrs={'data-placeholder': 'Digite para filtrar o item de despesa', 'class': 'form-select'},
-            empresa_id=empresa_id
+        initial_item_id = None
+        if self.instance and self.instance.pk and self.instance.item_despesa_id:
+            initial_item_id = self.instance.item_despesa_id
+            print(f"[DespesaEmpresaForm] item_despesa_id inicial: {initial_item_id}", file=sys.stderr)
+            self.initial['item_despesa'] = initial_item_id
+        else:
+            print(f"[DespesaEmpresaForm] Nenhum item_despesa_id inicial detectado.", file=sys.stderr)
+        queryset = ItemDespesa.objects.filter(
+            grupo_despesa__empresa_id=empresa_id,
+            grupo_despesa__tipo_rateio=GrupoDespesa.Tipo_t.COM_RATEIO
         )
-        # Corrige o valor inicial do campo data para o formato ISO
+        print(f"[DespesaEmpresaForm] itens encontrados: {queryset.count()}", file=sys.stderr)
+        print(f"[DespesaEmpresaForm] IDs dos itens: {[i.id for i in queryset]}", file=sys.stderr)
+        self.fields['item_despesa'].queryset = queryset
+        # Não sobrescrever o widget após definir o queryset, mantendo o padrão do ModelForm
         if self.instance and self.instance.pk and self.instance.data:
+            print(f"[DespesaEmpresaForm] Data inicial: {self.instance.data}", file=sys.stderr)
             self.initial['data'] = self.instance.data.strftime('%Y-%m-%d')

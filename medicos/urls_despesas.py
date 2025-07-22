@@ -1,3 +1,4 @@
+from .views_select2 import ItemDespesaSelect2Ajax
 
 from django.urls import path
 from . import views_despesas
@@ -15,4 +16,6 @@ path('despesas_socio/<int:empresa_id>/<int:pk>/excluir/', views_despesas.Despesa
 
     # Rota para copiar despesas do mês anterior
     path('copiar_despesas_mes_anterior/<int:empresa_id>/', views_despesas.copiar_despesas_mes_anterior, name='copiar_despesas_mes_anterior'),
+    # Endpoint AJAX para dropdown Select2 de ItemDespesa
+path('ajax_item_despesa_select2/<int:empresa_id>/', ItemDespesaSelect2Ajax.as_view(), name='ajax_item_despesa_select2'),
 ]

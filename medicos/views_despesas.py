@@ -303,8 +303,10 @@ class ExcluirDespesaEmpresaView(DeleteView):
 class NovaDespesaEmpresaView(View):
     def get(self, request, empresa_id):
         competencia = request.GET.get('competencia') or ''
-        form = DespesaEmpresaForm(empresa_id=empresa_id)
-        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        from core.context_processors import empresa_context
+        empresa = empresa_context(request)['empresa']
+        form = DespesaEmpresaForm(empresa_id=empresa.id)
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa.id})
         params = []
         if competencia:
             params.append(f'competencia={competencia}')
@@ -320,8 +322,10 @@ class NovaDespesaEmpresaView(View):
 
     def post(self, request, empresa_id):
         competencia = request.GET.get('competencia') or request.POST.get('competencia') or ''
-        form = DespesaEmpresaForm(request.POST, empresa_id=empresa_id)
-        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa_id})
+        from core.context_processors import empresa_context
+        empresa = empresa_context(request)['empresa']
+        form = DespesaEmpresaForm(request.POST, empresa_id=empresa.id)
+        url = reverse('medicos:lista_despesas_empresa', kwargs={'empresa_id': empresa.id})
         params = []
         if competencia:
             params.append(f'competencia={competencia}')

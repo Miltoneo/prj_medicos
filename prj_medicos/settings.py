@@ -1,3 +1,6 @@
+# Desabilita injeção automática de JS/CSS do django-select2 (controle manual no template)
+SELECT2_JS = ''
+SELECT2_CSS = ''
 # LOGGING para debug de despesas
 LOGGING = {
     'version': 1,
@@ -145,7 +148,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
 
 CACHES = {
