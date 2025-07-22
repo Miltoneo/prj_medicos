@@ -1,0 +1,190 @@
+
+
+<!--
+Relatório de Consolidação Mensal do Sócio
+Layout, estrutura e tabelas idênticas ao PDF oficial.
+-->
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>DEMONSTRATIVO DE RESULTADOS - Marcos Figueiredo Costa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .titulo-relatorio {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: #0d6efd;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .subtitulo-relatorio {
+      font-size: 1.1rem;
+      color: #555;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .linha-total {
+      background: #f8f9fa;
+      font-weight: bold;
+    }
+    .linha-resultado {
+      background: #e9f7ef;
+      font-weight: bold;
+      color: #198754;
+    }
+    .linha-liquido {
+      background: #e7eaf6;
+      font-weight: bold;
+      color: #0d6efd;
+    }
+    .table th, .table td {
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="titulo-relatorio">DEMONSTRATIVO DE RESULTADOS</div>
+          <div class="subtitulo-relatorio">Sócio: Marcos Figueiredo Costa &nbsp;|&nbsp; Competência: Maio/2025</div>
+          <hr>
+          <!-- Tabela 1: Notas Fiscais Recebidas -->
+          <table class="table table-sm table-bordered mb-4">
+            <thead class="table-light">
+              <tr>
+                <th colspan="4" class="text-center">Notas Fiscais Recebidas</th>
+              </tr>
+              <tr>
+                <th>Número</th>
+                <th>Fornecedor</th>
+                <th>Data</th>
+                <th>Valor (R$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>12345</td>
+                <td>Clínica Saúde</td>
+                <td>05/05/2025</td>
+                <td class="text-end">1.200,00</td>
+              </tr>
+              <tr>
+                <td>12346</td>
+                <td>Laboratório Vida</td>
+                <td>12/05/2025</td>
+                <td class="text-end">800,00</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="linha-total">
+                <td colspan="3" class="text-end">Total Notas Recebidas</td>
+                <td class="text-end">2.000,00</td>
+              </tr>
+            </tfoot>
+          </table>
+          <!-- Tabela 2: Notas Fiscais Emitidas -->
+          <table class="table table-sm table-bordered mb-4">
+            <thead class="table-light">
+              <tr>
+                <th colspan="4" class="text-center">Notas Fiscais Emitidas</th>
+              </tr>
+              <tr>
+                <th>Número</th>
+                <th>Cliente</th>
+                <th>Data</th>
+                <th>Valor (R$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>54321</td>
+                <td>Hospital Central</td>
+                <td>10/05/2025</td>
+                <td class="text-end">2.500,00</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="linha-total">
+                <td colspan="3" class="text-end">Total Notas Emitidas</td>
+                <td class="text-end">2.500,00</td>
+              </tr>
+            </tfoot>
+          </table>
+          <!-- Tabela 3: Despesas Consolidadas -->
+          <table class="table table-sm table-bordered mb-4">
+            <thead class="table-light">
+              <tr>
+                <th colspan="2" class="text-center">Despesas Consolidadas</th>
+              </tr>
+              <tr>
+                <th>Descrição</th>
+                <th>Valor (R$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Material Médico</td>
+                <td class="text-end">600,00</td>
+              </tr>
+              <tr>
+                <td>Serviços Terceirizados</td>
+                <td class="text-end">400,00</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="linha-total">
+                <td class="text-end">Total de Despesas</td>
+                <td class="text-end">1.000,00</td>
+              </tr>
+            </tfoot>
+          </table>
+          <!-- Tabela 4: Resultado Financeiro -->
+          <table class="table table-sm table-bordered mb-4">
+            <thead class="table-light">
+              <tr>
+                <th colspan="2" class="text-center">Resultado Financeiro</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-end">Saldo Anterior (R$):</td>
+                <td class="text-end">5.000,00</td>
+              </tr>
+              <tr>
+                <td class="text-end">Receita Total (R$):</td>
+                <td class="text-end">2.500,00</td>
+              </tr>
+              <tr>
+                <td class="text-end">Despesas Totais (R$):</td>
+                <td class="text-end">1.000,00</td>
+              </tr>
+              <tr>
+                <td class="text-end">Impostos (R$):</td>
+                <td class="text-end">300,00</td>
+              </tr>
+              <tr class="linha-liquido">
+                <td class="text-end">Resultado Líquido (R$):</td>
+                <td class="text-end">1.200,00</td>
+              </tr>
+              <tr>
+                <td class="text-end">Saldo Final (R$):</td>
+                <td class="text-end">6.200,00</td>
+              </tr>
+            </tbody>
+          </table>
+          <hr>
+          <div class="text-end text-muted" style="font-size:0.95rem;">Relatório gerado em 01/06/2025</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
