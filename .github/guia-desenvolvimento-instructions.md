@@ -1,3 +1,63 @@
+## 13. Padrão de Dropdown Filtrável Multi-tenant (Select2)
+
+Sempre que implementar dropdowns para seleção de itens em contexto multi-tenant (ex: despesas de empresa ou sócio), siga o padrão abaixo:
+
+- O campo deve ser renderizado via ModelForm, já filtrado conforme o contexto de negócio (empresa ativa, rateio, etc).
+- Utilize o widget Select2 para busca dinâmica, filtragem por texto, seleção clara e largura responsiva.
+- Inicialize o Select2 no template:
+  ```js
+  $('#id_item_despesa').select2({
+    placeholder: "Selecione ou digite para filtrar...",
+    allowClear: true,
+    width: '100%',
+    minimumInputLength: 1
+  });
+  ```
+- Garanta contraste e legibilidade dos itens com estilos customizados:
+  ```css
+  .select2-container--default .select2-results__option {
+    color: #212529;
+    background-color: #fff;
+  }
+  .select2-container--default .select2-selection__rendered {
+    color: #212529;
+  }
+  ```
+- Exiba erros de validação logo abaixo do campo.
+- O filtro dos itens deve ser feito no ModelForm, nunca apenas no frontend.
+- Carregue os assets JS/CSS do Select2 e jQuery no template.
+- Exemplo de template:
+  ```django
+  <div style="max-width: 500px; min-width: 300px;">
+    {{ form.item_despesa }}
+  </div>
+  {% if form.item_despesa.errors %}<div class="text-danger small">{{ form.item_despesa.errors }}</div>{% endif %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#id_item_despesa').select2({
+        placeholder: "Selecione ou digite para filtrar...",
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 1
+      });
+    });
+  </script>
+  <style>
+    .select2-container--default .select2-results__option {
+      color: #212529;
+      background-color: #fff;
+    }
+    .select2-container--default .select2-selection__rendered {
+      color: #212529;
+    }
+  </style>
+  ```
+- O template deve ser único para inclusão e edição, recebendo variáveis de contexto como título, texto do botão e url de cancelamento.
+
+Esse padrão garante dropdowns filtrados, acessíveis, responsivos e consistentes com as regras multi-tenant do projeto.
 ## Dropdowns filtráveis com digitação livre
 
 Sempre que implementar um dropdown para seleção de itens em contexto multi-tenant, utilize widgets que permitam busca dinâmica (AJAX) e digitação direta na caixa de seleção (autocomplete) para filtrar os resultados.
