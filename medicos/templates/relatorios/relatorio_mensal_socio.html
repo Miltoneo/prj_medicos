@@ -147,13 +147,13 @@
     </div>
     <div class="col-12">
       <!-- Tabela de Despesa sem Rateio -->
-      <div class="card shadow-sm border-warning mb-4" style="max-width:650px;margin-left:0;">
+      <div class="card shadow-sm border-warning mb-4" style="width:100%;max-width:none;margin-left:0;">
         <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold px-3 py-2">
           <span class="bi bi-people text-warning me-2"></span> Relação de Despesas sem Rateio
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
+            <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
               <caption>Despesas sem rateio</caption>
               <tr><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor</th></tr>
               {% for desp in relatorio.despesas_sem_rateio|dictsort:"data" %}
