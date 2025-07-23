@@ -117,29 +117,32 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
 
     for nf in notas_fiscais_qs:
         nf.calcular_impostos()  # Atualiza campos de impostos no modelo
-        notas_fiscais.append({
-            'id': nf.id,
-            'numero': getattr(nf, 'numero', ''),
-            'tp_aliquota': nf.get_tipo_servico_display(),
-            'tomador': nf.tomador,
-            'valor_bruto': float(nf.val_bruto),
-            'valor_liquido': float(nf.val_liquido),
-            'valor_iss': float(nf.val_ISS),
-            'valor_pis': float(nf.val_PIS),
-            'valor_cofins': float(nf.val_COFINS),
-            'valor_ir': float(nf.val_IR),
-            'valor_csll': float(nf.val_CSLL),
-            'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
-            'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
-            'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
-        })
-        total_notas_bruto += float(nf.val_bruto or 0)
-        total_iss += float(nf.val_ISS or 0)
-        total_pis += float(nf.val_PIS or 0)
-        total_cofins += float(nf.val_COFINS or 0)
-        total_irpj += float(nf.val_IR or 0)
-        total_csll += float(nf.val_CSLL or 0)
-        total_notas_liquido += float(nf.val_liquido or 0)
+        # Buscar o rateio do sócio para esta nota
+        rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+        if rateio:
+            notas_fiscais.append({
+                'id': nf.id,
+                'numero': getattr(nf, 'numero', ''),
+                'tp_aliquota': nf.get_tipo_servico_display(),
+                'tomador': nf.tomador,
+                'valor_bruto': float(rateio.valor_bruto_medico),
+                'valor_liquido': float(rateio.valor_liquido_medico),
+                'valor_iss': float(rateio.valor_iss_medico),
+                'valor_pis': float(rateio.valor_pis_medico),
+                'valor_cofins': float(rateio.valor_cofins_medico),
+                'valor_irpj': float(rateio.valor_ir_medico),
+                'valor_csll': float(rateio.valor_csll_medico),
+                'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
+                'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
+                'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
+            })
+            total_notas_bruto += float(rateio.valor_bruto_medico or 0)
+            total_iss += float(rateio.valor_iss_medico or 0)
+            total_pis += float(rateio.valor_pis_medico or 0)
+            total_cofins += float(rateio.valor_cofins_medico or 0)
+            total_irpj += float(rateio.valor_ir_medico or 0)
+            total_csll += float(rateio.valor_csll_medico or 0)
+            total_notas_liquido += float(rateio.valor_liquido_medico or 0)
 
     total_notas_emitidas_mes = len(notas_fiscais)
 
