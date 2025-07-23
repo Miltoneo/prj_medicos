@@ -103,6 +103,16 @@ def relatorio_mensal_socio(request, empresa_id):
         socio_selecionado = socios.first()
         socio_id = socio_selecionado.id if socio_selecionado else None
     relatorio_obj = montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=socio_id)['relatorio']
+    lista_movimentacoes = getattr(relatorio_obj, 'lista_movimentacoes_financeiras', [])
+    # Garante que cada movimentação tem o campo 'tipo' preenchido
+    for mov in lista_movimentacoes:
+        # Suporte para dict e objeto
+        if isinstance(mov, dict):
+            if 'tipo' not in mov or mov['tipo'] in (None, ''):
+                mov['tipo'] = mov.get('descricao', '-')
+        else:
+            if not hasattr(mov, 'tipo') or mov.tipo in (None, ''):
+                mov.tipo = getattr(mov, 'descricao', '-')
     relatorio = {
         'socios': list(socios),
         'socio_id': socio_id,
@@ -115,7 +125,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'despesa_com_rateio': getattr(relatorio_obj, 'despesa_com_rateio', 0),
         'despesa_sem_rateio': getattr(relatorio_obj, 'despesa_sem_rateio', 0),
         'despesas_total': getattr(relatorio_obj, 'despesas_total', 0),
-        'movimentacoes_financeiras': getattr(relatorio_obj, 'lista_movimentacoes_financeiras', []),
+        'movimentacoes_financeiras': lista_movimentacoes,
         'saldo_movimentacao_financeira': getattr(relatorio_obj, 'saldo_movimentacao_financeira', 0),
         'notas_fiscais': getattr(relatorio_obj, 'lista_notas_fiscais', []),
         'total_notas_emitidas_mes': getattr(relatorio_obj, 'total_notas_emitidas_mes', 0),

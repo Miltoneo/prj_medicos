@@ -68,20 +68,20 @@
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:900px;max-width:none;">
+            <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;max-width:none;">
               <caption>Movimentações financeiras do mês</caption>
               <tr>
-                <th style="min-width:40px;">Id</th>
-                <th style="min-width:90px;">Data</th>
-                <th style="min-width:90px;">Tipo</th>
-                <th style="min-width:160px;">Descrição</th>
-                <th style="min-width:90px;">Valor total</th>
+                <th>Id</th>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Valor total</th>
               </tr>
               {% for mov in relatorio.movimentacoes_financeiras %}
               <tr>
                 <td>{{ mov.id }}</td>
                 <td>{{ mov.data }}</td>
-                <td>{{ mov.tipo }}</td>
+               <td>{% if mov.get_tipo_display %}{{ mov.get_tipo_display }}{% else %}{{ mov.tipo|default:'-' }}{% endif %}</td>
                 <td>{{ mov.descricao }}</td>
                 <td>R$ {{ mov.valor|floatformat:2 }}</td>
               </tr>
