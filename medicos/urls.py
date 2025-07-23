@@ -155,8 +155,11 @@ path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa_cadast
     # =====================
     # Relatórios Views
     # =====================
-    path('relatorio-executivo/', views_relatorios.relatorio_executivo, name='relatorio_executivo'),
-    path('relatorio-executivo/pdf/<int:conta_id>/', views_relatorios.relatorio_executivo_pdf, name='relatorio_executivo_pdf'),
+path('relatorio-executivo/<int:empresa_id>/', views_relatorios.relatorio_executivo, name='relatorio_executivo'),
+    path('relatorio-mensal-empresa/<int:empresa_id>/', views_relatorios.relatorio_mensal_empresa, name='relatorio_mensal_empresa'),
+    path('relatorio-mensal-socio/<int:empresa_id>/', views_relatorios.relatorio_mensal_socio, name='relatorio_mensal_socio'),
+    path('relatorio-issqn/<int:empresa_id>/', views_relatorios.relatorio_issqn, name='relatorio_issqn'),
+    path('relatorio-outros/<int:empresa_id>/', views_relatorios.relatorio_outros, name='relatorio_outros'),
 
     # =====================
     # Autenticação

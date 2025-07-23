@@ -4,7 +4,7 @@
     <button class="btn btn-outline-light d-md-none me-2" id="sidebarToggle"><i class="fas fa-bars"></i></button>
     <a class="navbar-brand" href="/">Medicos</a>
     {% if empresa %}
-      <span class="navbar-text text-warning fw-bold ms-3">{{ empresa.nome_fantasia|default:empresa.name }}</span>
+      <span class="navbar-text text-warning fw-bold ms-3">{{ empresa.nome_fantasia }}</span>
     {% endif %}
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">

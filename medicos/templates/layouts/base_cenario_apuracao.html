@@ -1,0 +1,33 @@
+{% load static %}
+{% load crispy_forms_tags %}
+{% load render_table from django_tables2 %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block bl_script %}{% endblock %}
+    <title>{% block title %}{{ titulo_pagina }}{% endblock %}</title>
+    {% include 'layouts/base_css.html' %}
+  </head>
+  <body>
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags %}<script>alert("{{ message }}")</script>{% endif %}
+      {% endfor %}
+    {% endif %}
+    {% include 'layouts/topbar.html' %}
+    <div class="layout-container">
+      <div class="sidebar">
+        {% include 'layouts/sidebar_cenario_apuracao.html' %}
+      </div>
+      <div class="content mt-5">
+        {% include 'layouts/base_header.html' %}
+        <div class="mb-3">
+          <h4 class="fw-bold text-primary">Título: {{ titulo_pagina }}</h4>
+        </div>
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+    {{ form.media.js }}
+  </body>
+</html>

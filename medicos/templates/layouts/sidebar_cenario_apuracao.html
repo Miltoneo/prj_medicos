@@ -1,0 +1,36 @@
+{# Sidebar para o cenário de apuração mensal #}
+<nav id="sidebar" class="sidebar bg-dark text-light">
+  <div class="sidebar-header p-3">
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-table me-2"></i>Apuração</a>
+    <div class="fw-bold text-uppercase small text-secondary mt-2" style="letter-spacing:1px;">{{ cenario_nome|default:'Apuração' }}</div>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+  </div>
+  <hr class="border-secondary m-0">
+  <ul class="nav flex-column">
+    <li class="nav-item mb-1">
+      <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=empresa_id %}">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+      </a>
+    </li>
+    <li class="nav-item mb-1">
+      <a class="nav-link text-light" href="#">
+        <i class="fas fa-table me-2"></i>Relatório Mensal Empresa
+      </a>
+    </li>
+    <li class="nav-item mb-1">
+      <a class="nav-link text-light" href="#">
+        <i class="fas fa-user-friends me-2"></i>Relatório Mensal Socio
+      </a>
+    </li>
+    <li class="nav-item mb-1">
+      <a class="nav-link text-light" href="#">
+        <i class="fas fa-file-invoice me-2"></i>Apuração de ISSQN
+      </a>
+    </li>
+    <li class="nav-item mb-1">
+      <a class="nav-link text-light" href="#">
+        <i class="fas fa-exchange-alt me-2"></i>Apuração Outros
+      </a>
+    </li>
+  </ul>
+</nav>
