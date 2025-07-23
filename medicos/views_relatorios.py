@@ -1,4 +1,3 @@
-
 """
 Views dos relatórios do sistema Medicos
 Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
@@ -87,7 +86,9 @@ def relatorio_mensal_socio(request, empresa_id):
     Template: relatorios/relatorio_mensal_socio.html
     """
     empresa = Empresa.objects.get(id=empresa_id)
-    mes_ano = request.session.get('mes_ano')
+    # Lê mes_ano do GET, senão session, senão mês atual
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m')
+    request.session['mes_ano'] = mes_ano
     socios = Socio.objects.filter(empresa=empresa, ativo=True).order_by('pessoa__name')
     socio_id_raw = request.GET.get('socio_id')
     socio_selecionado = None
@@ -98,7 +99,6 @@ def relatorio_mensal_socio(request, empresa_id):
             socio_selecionado = socios.filter(id=socio_id).first()
         except (ValueError, TypeError):
             socio_selecionado = None
-            socio_id = None
     if not socio_selecionado:
         socio_selecionado = socios.first()
         socio_id = socio_selecionado.id if socio_selecionado else None
