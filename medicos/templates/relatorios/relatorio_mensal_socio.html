@@ -6,14 +6,14 @@
   <form method="get" class="mb-4" style="max-width:400px;">
     <label for="id_socio" class="form-label fw-bold">Selecione o Sócio:</label>
     <select id="id_socio" name="socio_id" class="form-select select2" style="width:100%;">
-      {% for socio in socios %}
-        <option value="{{ socio.id }}" {% if socio.id == socio_id %}selected{% endif %}>{{ socio.nome }}</option>
+      {% for socio in relatorio.socios %}
+        <option value="{{ socio.id }}" {% if socio.id == relatorio.socio_id %}selected{% endif %}>{{ socio.pessoa.name }}</option>
       {% endfor %}
     </select>
     <button type="submit" class="btn btn-primary mt-2">Filtrar</button>
   </form>
   <div class="titulo-relatorio">DEMONSTRATIVO MENSAL DO SÓCIO</div>
-  <div class="subtitulo-relatorio">Competência: {{ competencia }} &nbsp;|&nbsp; Sócio: {{ socio_nome }}</div>
+  <div class="subtitulo-relatorio">Competência: {{ relatorio.competencia }} &nbsp;|&nbsp; Sócio: {{ relatorio.socio_nome }}</div>
   <div class="mb-3">
     <a href="#" class="btn btn-primary btn-md" role="button"><span class="bi bi-printer"></span> Imprimir demonstrativo</a>
     <a href="#" class="btn btn-primary btn-md disabled" role="button" tabindex="-1" aria-disabled="true"><span class="bi bi-calendar3"></span> Demonstrativo ano</a>
@@ -28,7 +28,7 @@
           <li>Receita bruta recebida = considera data de recebimento da nota</li>
           <li>Adicional de IR trimestre = considera data de emissão da nota para calcular receita bruta trimestre</li>
           <li>Impostos = considera data de emissão da nota</li>
-          <li>Total notas emitidas no mês: <b>R$ {{ total_notas_emitidas_mes|floatformat:2 }}</b></li>
+          <li>Total notas emitidas no mês: <b>R$ {{ relatorio.total_notas_emitidas_mes|floatformat:2 }}</b></li>
         </ul>
       </div>
     </div>
@@ -43,26 +43,24 @@
           <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
               <caption>Resumo financeiro do mês</caption>
-              <tr><th colspan="2">RECEITA BRUTA RECEBIDA* (=)</th><th>R$ {{ receita_bruta_recebida|floatformat:2 }}</th></tr>
-              <tr><td>1</td><td>Faturamento serviços de consultas</td><td>R$ {{ faturamento_consultas|floatformat:2 }}</td></tr>
-              <tr><td>2</td><td>Faturamento serviços de plantão</td><td>R$ {{ faturamento_plantao|floatformat:2 }}</td></tr>
-              <tr><td>3</td><td>Faturamento: vacinação, exames, procedimentos</td><td>R$ {{ faturamento_outros|floatformat:2 }}</td></tr>
-              <tr class="linha-total"><th colspan="2">IMPOSTOS* (-)</th><th>R$ {{ impostos_total|floatformat:2 }}</th></tr>
-              <tr><td>1</td><td>PIS</td><td>R$ {{ imposto_pis|floatformat:2 }}</td></tr>
-              <tr><td>2</td><td>COFINS</td><td>R$ {{ imposto_cofins|floatformat:2 }}</td></tr>
-              <tr><td>3</td><td>IRPJ</td><td>R$ {{ imposto_irpj|floatformat:2 }}</td></tr>
-              <tr><td>4</td><td>Adicional de IR trimestre</td><td>R$ {{ imposto_irpj_adicional|floatformat:2 }}</td></tr>
-              <tr><td>5</td><td>CSLL</td><td>R$ {{ imposto_csll|floatformat:2 }}</td></tr>
-              <tr><td>6</td><td>ISSQN</td><td>R$ {{ imposto_issqn|floatformat:2 }}</td></tr>
-              <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>R$ {{ receita_liquida|floatformat:2 }}</th></tr>
-              <tr class="linha-total"><th colspan="2">DESPESAS (-)</th><th>R$ {{ despesas_total|floatformat:2 }}</th></tr>
-              <tr><td>1</td><td>Despesa de sócio</td><td>R$ {{ despesa_socio|floatformat:2 }}</td></tr>
-              <tr><td>2</td><td>Despesa de folha de pagamento</td><td>R$ {{ despesa_folha|floatformat:2 }}</td></tr>
-              <tr><td>3</td><td>Despesas gerais</td><td>R$ {{ despesa_geral|floatformat:2 }}</td></tr>
-              <tr class="linha-resultado"><th colspan="2">SALDO APURADO (=)</th><th>R$ {{ saldo_apurado|floatformat:2 }}</th></tr>
-              <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th>R$ {{ saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
-              <tr><td>1</td><td>Transferência recebida</td><td>R$ {{ transferencia_recebida|floatformat:2 }}</td></tr>
-              <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>R$ {{ saldo_a_transferir|floatformat:2 }}</th></tr>
+              <tr><th colspan="2">RECEITA BRUTA RECEBIDA* (=)</th><th>R$ {{ relatorio.receita_bruta_recebida|floatformat:2 }}</th></tr>
+              <tr><td>1</td><td>Faturamento serviços de consultas</td><td>R$ {{ relatorio.faturamento_consultas|floatformat:2 }}</td></tr>
+              <tr><td>2</td><td>Faturamento serviços de plantão</td><td>R$ {{ relatorio.faturamento_plantao|floatformat:2 }}</td></tr>
+              <tr><td>3</td><td>Faturamento: vacinação, exames, procedimentos</td><td>R$ {{ relatorio.faturamento_outros|floatformat:2 }}</td></tr>
+              <tr class="linha-total"><th colspan="2">IMPOSTOS* (-)</th><th>R$ {{ relatorio.impostos_total|floatformat:2 }}</th></tr>
+              <tr><td>1</td><td>PIS</td><td>R$ {{ relatorio.imposto_pis|floatformat:2 }}</td></tr>
+              <tr><td>2</td><td>COFINS</td><td>R$ {{ relatorio.imposto_cofins|floatformat:2 }}</td></tr>
+              <tr><td>3</td><td>IRPJ</td><td>R$ {{ relatorio.imposto_irpj|floatformat:2 }}</td></tr>
+              <tr><td>4</td><td>Adicional de IR trimestre</td><td>R$ {{ relatorio.imposto_irpj_adicional|floatformat:2 }}</td></tr>
+              <tr><td>5</td><td>CSLL</td><td>R$ {{ relatorio.imposto_csll|floatformat:2 }}</td></tr>
+              <tr><td>6</td><td>ISSQN</td><td>R$ {{ relatorio.imposto_issqn|floatformat:2 }}</td></tr>
+              <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>R$ {{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
+              <tr class="linha-total"><th colspan="2">DESPESAS (-)</th><th>R$ {{ relatorio.despesas_total|floatformat:2 }}</th></tr>
+              <tr><td>1</td><td>Despesa com rateio</td><td>R$ {{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+              <tr><td>2</td><td>Despesa sem rateio</td><td>R$ {{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
+              <tr class="linha-resultado"><th colspan="2">SALDO APURADO (=)</th><th>R$ {{ relatorio.saldo_apurado|floatformat:2 }}</th></tr>
+              <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th>R$ {{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
+              <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>R$ {{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
             </table>
           </div>
         </div>
@@ -79,72 +77,107 @@
             <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
               <caption>Movimentações financeiras do mês</caption>
               <tr><th>Id</th><th>Data</th><th>Tipo</th><th>Descrição</th><th>Valor total</th></tr>
-              {% for mov in movimentacoes_financeiras %}
+              {% for mov in relatorio.movimentacoes_financeiras %}
               <tr><td>{{ mov.id }}</td><td>{{ mov.data }}</td><td>{{ mov.tipo }}</td><td>{{ mov.descricao }}</td><td>R$ {{ mov.valor|floatformat:2 }}</td></tr>
               {% endfor %}
-              <tr class="linha-total"><th colspan="4">Saldo</th><td>R$ {{ saldo_movimentacao_financeira|floatformat:2 }}</td></tr>
+              <tr class="linha-total"><th colspan="4">Saldo</th><td>R$ {{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</td></tr>
             </table>
           </div>
         </div>
       </div>
-      <!-- Tabela de Despesa de Sócio -->
+      <!-- Tabela de Despesa com Rateio -->
       <div class="card shadow-sm border-info mb-4" style="max-width:650px;margin:auto;">
         <div class="card-header bg-info bg-opacity-10 border-info fw-bold px-3 py-2">
-          <span class="bi bi-person-badge text-info me-2"></span> Relação de Despesas de Sócio
+          <span class="bi bi-person-badge text-info me-2"></span> Relação de Despesas com Rateio
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
-              <caption>Despesas de sócio</caption>
+              <caption>Despesas com rateio</caption>
               <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor</th></tr>
-              {% for desp in despesas_socio %}
+              {% for desp in relatorio.despesas_com_rateio %}
               <tr><td>{{ desp.id }}</td><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>R$ {{ desp.valor|floatformat:2 }}</td></tr>
               {% endfor %}
-              <tr class="linha-total"><th colspan="4">Total</th><td>R$ {{ despesa_socio|floatformat:2 }}</td></tr>
+              <tr class="linha-total"><th colspan="4">Total</th><td>R$ {{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
             </table>
           </div>
         </div>
       </div>
-      <!-- Tabela de Despesa de Folha e Geral -->
-      <div class="card shadow-sm border-warning mb-4" style="max-width:850px;margin:auto;">
+      <!-- Tabela de Despesa sem Rateio -->
+      <div class="card shadow-sm border-warning mb-4" style="max-width:650px;margin:auto;">
         <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold px-3 py-2">
-          <span class="bi bi-people text-warning me-2"></span> Relação de Despesas de Folha e Geral
+          <span class="bi bi-people text-warning me-2"></span> Relação de Despesas sem Rateio
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:800px;">
-              <caption>Despesas de folha e gerais</caption>
-              <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor total</th><th>Rateio %</th><th>Valor sócio</th></tr>
-              {% for desp in despesas_folha_geral %}
-              <tr><td>{{ desp.id }}</td><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>R$ {{ desp.valor_total|floatformat:2 }}</td><td>{{ desp.rateio_percentual }}%</td><td>R$ {{ desp.valor_socio|floatformat:2 }}</td></tr>
+            <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
+              <caption>Despesas sem rateio</caption>
+              <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor</th></tr>
+              {% for desp in relatorio.despesas_sem_rateio %}
+              <tr><td>{{ desp.id }}</td><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>R$ {{ desp.valor|floatformat:2 }}</td></tr>
               {% endfor %}
-              <tr class="linha-total"><th colspan="6">Total</th><td>R$ {{ despesa_folha|floatformat:2 }}</td></tr>
+              <tr class="linha-total"><th colspan="4">Total</th><td>R$ {{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
             </table>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="card shadow-sm border-warning mb-4" style="max-width:950px;margin:auto;">
+  <div class="card shadow-sm border-warning mb-4" style="width:100%;margin:auto;">
     <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold px-3 py-2">
       <span class="bi bi-file-earmark-text text-warning me-2"></span> Notas Fiscais Recebidas no Mês
     </div>
     <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:900px;">
+      <div class="table-responsive" style="width:100%;max-width:none;">
+        <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
           <caption>Notas fiscais recebidas no mês</caption>
           <tr><th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Fornecedor</th><th>Tomador</th><th>Valor bruto</th><th>ISS</th><th>PIS</th><th>COFINS</th><th>IRPJ</th><th>CSLL</th><th>Valor líquido</th></tr>
-          {% for nota in notas_fiscais %}
+          {% for nota in relatorio.notas_fiscais %}
           <tr><td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.fornecedor }}</td><td>{{ nota.tomador }}</td><td>R$ {{ nota.valor_bruto|floatformat:2 }}</td><td>R$ {{ nota.iss|floatformat:2 }}</td><td>R$ {{ nota.pis|floatformat:2 }}</td><td>R$ {{ nota.cofins|floatformat:2 }}</td><td>R$ {{ nota.irpj|floatformat:2 }}</td><td>R$ {{ nota.csll|floatformat:2 }}</td><td>R$ {{ nota.valor_liquido|floatformat:2 }}</td></tr>
           {% endfor %}
-          <tr class="linha-total"><th colspan="7">Totais</th><td>R$ {{ total_notas_bruto|floatformat:2 }}</td><td>R$ {{ total_iss|floatformat:2 }}</td><td>R$ {{ total_pis|floatformat:2 }}</td><td>R$ {{ total_cofins|floatformat:2 }}</td><td>R$ {{ total_irpj|floatformat:2 }}</td><td>R$ {{ total_csll|floatformat:2 }}</td><td>R$ {{ total_notas_liquido|floatformat:2 }}</td></tr>
+          <tr class="linha-total"><th colspan="7">Totais</th><td>R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</td><td>R$ {{ relatorio.total_iss|floatformat:2 }}</td><td>R$ {{ relatorio.total_pis|floatformat:2 }}</td><td>R$ {{ relatorio.total_cofins|floatformat:2 }}</td><td>R$ {{ relatorio.total_irpj|floatformat:2 }}</td><td>R$ {{ relatorio.total_csll|floatformat:2 }}</td><td>R$ {{ relatorio.total_notas_liquido|floatformat:2 }}</td></tr>
         </table>
       </div>
     </div>
   </div>
-  <footer class="text-center text-muted mt-5 mb-2" style="font-size:0.95rem;">Relatório gerado em {{ data_geracao }}</footer>
+  <footer class="text-center text-muted mt-5 mb-2" style="font-size:0.95rem;">Relatório gerado em {{ relatorio.data_geracao }}</footer>
 </div>
 {% endblock %}
 {% block bl_script %}
-<!-- Scripts JS específicos podem ser adicionados aqui -->
+<!-- Select2 assets e inicialização -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('#id_socio').select2({
+      placeholder: "Selecione ou digite para filtrar...",
+      allowClear: true,
+      width: '100%',
+      minimumInputLength: 1
+    });
+  });
+</script>
+<style>
+  .select2-container--default .select2-results__option {
+    color: #212529;
+    background-color: #fff;
+  }
+  .select2-container--default .select2-selection__rendered {
+    color: #212529;
+  }
+  /* Evitar quebra de linha na tabela de notas fiscais */
+  .table-notas-fiscais td, .table-notas-fiscais th {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .table-notas-fiscais th {
+    min-width: 80px;
+  }
+  .table-notas-fiscais th:nth-child(2),
+  .table-notas-fiscais th:nth-child(6),
+  .table-notas-fiscais th:nth-child(7) {
+    min-width: 120px;
+  }
+</style>
 {% endblock %}

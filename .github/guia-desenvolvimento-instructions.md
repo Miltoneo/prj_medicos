@@ -148,7 +148,8 @@ Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, te
 - Fonte: docs/guia_desenvolvimento.md, linhas 51-80
 
 ## 4. Código, Nomenclatura e Formatação
-- Os imports devem estar sempre no topo do arquivo, organizados por grupos: padrão Python, terceiros, depois do próprio projeto.
+- Os imports devem SEMPRE ser inseridos e agrupados no topo do arquivo, organizados por grupos: padrão Python, terceiros, depois do próprio projeto.
+- É proibido adicionar imports dentro de funções ou blocos de código. Sempre siga este padrão para garantir rastreabilidade e manutenção.
 - Funções e classes organizadas por ordem lógica.
 - Funções de view recebem `request` como primeiro argumento.
 - Contexto para templates deve ser passado como dicionário.

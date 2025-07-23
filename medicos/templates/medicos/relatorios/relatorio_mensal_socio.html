@@ -47,9 +47,8 @@
               <tr><td>6</td><td>ISSQN</td><td>R$ {{ imposto_issqn|floatformat:2 }}</td></tr>
               <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>R$ {{ receita_liquida|floatformat:2 }}</th></tr>
               <tr class="linha-total"><th colspan="2">DESPESAS (-)</th><th>R$ {{ despesas_total|floatformat:2 }}</th></tr>
-              <tr><td>1</td><td>Despesa de sócio</td><td>R$ {{ despesa_socio|floatformat:2 }}</td></tr>
-              <tr><td>2</td><td>Despesa de folha de pagamento</td><td>R$ {{ despesa_folha|floatformat:2 }}</td></tr>
-              <tr><td>3</td><td>Despesas gerais</td><td>R$ {{ despesa_geral|floatformat:2 }}</td></tr>
+              <tr><td>1</td><td>Despesa com rateio</td><td>R$ {{ despesa_com_rateio|floatformat:2 }}</td></tr>
+              <tr><td>2</td><td>Despesa sem rateio</td><td>R$ {{ despesa_sem_rateio|floatformat:2 }}</td></tr>
               <tr class="linha-resultado"><th colspan="2">SALDO APURADO (=)</th><th>R$ {{ saldo_apurado|floatformat:2 }}</th></tr>
               <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th>R$ {{ saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
               <tr><td>1</td><td>Transferência recebida</td><td>R$ {{ transferencia_recebida|floatformat:2 }}</td></tr>
@@ -78,38 +77,38 @@
           </div>
         </div>
       </div>
-      <!-- Tabela de Despesa de Sócio -->
+      <!-- Tabela de Despesa com Rateio -->
       <div class="card shadow-sm border-info mb-4" style="max-width:650px;margin:auto;">
         <div class="card-header bg-info bg-opacity-10 border-info fw-bold px-3 py-2">
-          <span class="bi bi-person-badge text-info me-2"></span> Relação de Despesas de Sócio
+          <span class="bi bi-person-badge text-info me-2"></span> Relação de Despesas com Rateio
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
-              <caption>Despesas de sócio</caption>
+              <caption>Despesas com rateio</caption>
               <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor</th></tr>
-              {% for desp in despesas_socio %}
+              {% for desp in despesas_com_rateio %}
               <tr><td>{{ desp.id }}</td><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>R$ {{ desp.valor|floatformat:2 }}</td></tr>
               {% endfor %}
-              <tr class="linha-total"><th colspan="4">Total</th><td>R$ {{ despesa_socio|floatformat:2 }}</td></tr>
+              <tr class="linha-total"><th colspan="4">Total</th><td>R$ {{ despesa_com_rateio|floatformat:2 }}</td></tr>
             </table>
           </div>
         </div>
       </div>
-      <!-- Tabela de Despesa de Folha e Geral -->
-      <div class="card shadow-sm border-warning mb-4" style="max-width:850px;margin:auto;">
+      <!-- Tabela de Despesa sem Rateio -->
+      <div class="card shadow-sm border-warning mb-4" style="max-width:650px;margin:auto;">
         <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold px-3 py-2">
-          <span class="bi bi-people text-warning me-2"></span> Relação de Despesas de Folha e Geral
+          <span class="bi bi-people text-warning me-2"></span> Relação de Despesas sem Rateio
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:800px;">
-              <caption>Despesas de folha e gerais</caption>
-              <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor total</th><th>Rateio %</th><th>Valor sócio</th></tr>
-              {% for desp in despesas_folha_geral %}
-              <tr><td>{{ desp.id }}</td><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>R$ {{ desp.valor_total|floatformat:2 }}</td><td>{{ desp.rateio_percentual }}%</td><td>R$ {{ desp.valor_socio|floatformat:2 }}</td></tr>
+            <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
+              <caption>Despesas sem rateio</caption>
+              <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor</th></tr>
+              {% for desp in despesas_sem_rateio %}
+              <tr><td>{{ desp.id }}</td><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>R$ {{ desp.valor|floatformat:2 }}</td></tr>
               {% endfor %}
-              <tr class="linha-total"><th colspan="6">Total</th><td>R$ {{ despesa_folha|floatformat:2 }}</td></tr>
+              <tr class="linha-total"><th colspan="4">Total</th><td>R$ {{ despesa_sem_rateio|floatformat:2 }}</td></tr>
             </table>
           </div>
         </div>
