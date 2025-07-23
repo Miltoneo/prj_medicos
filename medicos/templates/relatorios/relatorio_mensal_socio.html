@@ -68,11 +68,23 @@
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
+            <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:900px;max-width:none;">
               <caption>Movimentações financeiras do mês</caption>
-              <tr><th>Id</th><th>Data</th><th>Tipo</th><th>Descrição</th><th>Valor total</th></tr>
+              <tr>
+                <th style="min-width:40px;">Id</th>
+                <th style="min-width:90px;">Data</th>
+                <th style="min-width:90px;">Tipo</th>
+                <th style="min-width:160px;">Descrição</th>
+                <th style="min-width:90px;">Valor total</th>
+              </tr>
               {% for mov in relatorio.movimentacoes_financeiras %}
-              <tr><td>{{ mov.id }}</td><td>{{ mov.data }}</td><td>{{ mov.tipo }}</td><td>{{ mov.descricao }}</td><td>R$ {{ mov.valor|floatformat:2 }}</td></tr>
+              <tr>
+                <td>{{ mov.id }}</td>
+                <td>{{ mov.data }}</td>
+                <td>{{ mov.tipo }}</td>
+                <td>{{ mov.descricao }}</td>
+                <td>R$ {{ mov.valor|floatformat:2 }}</td>
+              </tr>
               {% endfor %}
               <tr class="linha-total"><th colspan="4">Saldo</th><td>R$ {{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</td></tr>
             </table>
@@ -83,7 +95,7 @@
   </div>
   <div class="row g-4 mb-4">
     <div class="col-lg-6">
-      <div class="card shadow-sm border-info mb-4" style="max-width:650px;margin:auto;">
+      <div class="card shadow-sm border-info mb-4" style="width:100%;max-width:none;margin:auto;">
         <div class="card-header bg-info bg-opacity-10 border-info fw-bold px-3 py-2">
           <span class="bi bi-person-badge text-info me-2"></span> Relação de Despesas com Rateio
         </div>
@@ -101,7 +113,7 @@
                 <td>R$ {{ desp.valor_total|floatformat:2 }}</td>
                 <td>{{ desp.rateio_percentual|floatformat:2 }}%</td>
                 <td>R$ {{ desp.valor_total|floatformat:2 }}</td>
-                <td>R$ {{ desp.valor|floatformat:2 }}</td>
+                <td>R$ {{ desp.valor_socio|floatformat:2 }}</td>
               </tr>
               {% endfor %}
               <tr class="linha-total"><th colspan="7">Total Sócio</th><td>R$ {{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
