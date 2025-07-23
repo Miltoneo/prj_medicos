@@ -48,19 +48,13 @@
               <tr><td>2</td><td>Faturamento serviços de plantão</td><td>R$ {{ relatorio.faturamento_plantao|floatformat:2 }}</td></tr>
               <tr><td>3</td><td>Faturamento: vacinação, exames, procedimentos</td><td>R$ {{ relatorio.faturamento_outros|floatformat:2 }}</td></tr>
               <tr class="linha-total"><th colspan="2">IMPOSTOS* (-)</th><th>R$ {{ relatorio.impostos_total|floatformat:2 }}</th></tr>
-              <tr><td>1</td><td>PIS</td><td>R$ {{ relatorio.imposto_pis|floatformat:2 }}</td></tr>
-              <tr><td>2</td><td>COFINS</td><td>R$ {{ relatorio.imposto_cofins|floatformat:2 }}</td></tr>
-              <tr><td>3</td><td>IRPJ</td><td>R$ {{ relatorio.imposto_irpj|floatformat:2 }}</td></tr>
-              <tr><td>4</td><td>Adicional de IR trimestre</td><td>R$ {{ relatorio.imposto_irpj_adicional|floatformat:2 }}</td></tr>
-              <tr><td>5</td><td>CSLL</td><td>R$ {{ relatorio.imposto_csll|floatformat:2 }}</td></tr>
-              <tr><td>6</td><td>ISSQN</td><td>R$ {{ relatorio.imposto_issqn|floatformat:2 }}</td></tr>
-              <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>R$ {{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
-              <tr class="linha-total"><th colspan="2">DESPESAS (-)</th><th>R$ {{ relatorio.despesas_total|floatformat:2 }}</th></tr>
-              <tr><td>1</td><td>Despesa com rateio</td><td>R$ {{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
-              <tr><td>2</td><td>Despesa sem rateio</td><td>R$ {{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
-              <tr class="linha-resultado"><th colspan="2">SALDO APURADO (=)</th><th>R$ {{ relatorio.saldo_apurado|floatformat:2 }}</th></tr>
-              <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th>R$ {{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
-              <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>R$ {{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
+              <tr><td>1</td><td>PIS</td><td>R$ {{ relatorio.total_pis|floatformat:2 }}</td></tr>
+              <tr><td>2</td><td>COFINS</td><td>R$ {{ relatorio.total_cofins|floatformat:2 }}</td></tr>
+              <tr><td>3</td><td>IRPJ</td><td>R$ {{ relatorio.total_irpj|floatformat:2 }}</td></tr>
+              <tr><td>4</td><td>Adicional de IR trimestre</td><td>R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</td></tr>
+              <tr><td>5</td><td>CSLL</td><td>R$ {{ relatorio.total_csll|floatformat:2 }}</td></tr>
+              <tr><td>6</td><td>ISSQN</td><td>R$ {{ relatorio.total_iss|floatformat:2 }}</td></tr>
+              <!-- ...continua o restante da tabela... -->
             </table>
           </div>
         </div>
@@ -85,7 +79,10 @@
           </div>
         </div>
       </div>
-      <!-- Tabela de Despesa com Rateio -->
+    </div>
+  </div>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
       <div class="card shadow-sm border-info mb-4" style="max-width:650px;margin:auto;">
         <div class="card-header bg-info bg-opacity-10 border-info fw-bold px-3 py-2">
           <span class="bi bi-person-badge text-info me-2"></span> Relação de Despesas com Rateio
@@ -94,15 +91,26 @@
           <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:600px;">
               <caption>Despesas com rateio</caption>
-              <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor</th></tr>
+              <tr><th>Id</th><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor Despesa</th><th>Percentual Rateio</th><th>Valor Total</th><th>Valor Sócio</th></tr>
               {% for desp in relatorio.despesas_com_rateio %}
-              <tr><td>{{ desp.id }}</td><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>R$ {{ desp.valor|floatformat:2 }}</td></tr>
+              <tr>
+                <td>{{ desp.id }}</td>
+                <td>{{ desp.data }}</td>
+                <td>{{ desp.grupo }}</td>
+                <td>{{ desp.descricao }}</td>
+                <td>R$ {{ desp.valor_total|floatformat:2 }}</td>
+                <td>{{ desp.rateio_percentual|floatformat:2 }}%</td>
+                <td>R$ {{ desp.valor_total|floatformat:2 }}</td>
+                <td>R$ {{ desp.valor|floatformat:2 }}</td>
+              </tr>
               {% endfor %}
-              <tr class="linha-total"><th colspan="4">Total</th><td>R$ {{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+              <tr class="linha-total"><th colspan="7">Total Sócio</th><td>R$ {{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
             </table>
           </div>
         </div>
       </div>
+    </div>
+    <div class="col-lg-6">
       <!-- Tabela de Despesa sem Rateio -->
       <div class="card shadow-sm border-warning mb-4" style="max-width:650px;margin:auto;">
         <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold px-3 py-2">

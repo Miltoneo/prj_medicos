@@ -120,6 +120,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         notas_fiscais.append({
             'id': nf.id,
             'numero': getattr(nf, 'numero', ''),
+            'tp_aliquota': nf.get_tipo_servico_display(),
+            'tomador': nf.tomador,
             'valor_bruto': float(nf.val_bruto),
             'valor_liquido': float(nf.val_liquido),
             'valor_iss': float(nf.val_ISS),
@@ -128,6 +130,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             'valor_ir': float(nf.val_IR),
             'valor_csll': float(nf.val_CSLL),
             'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
+            'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
+            'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
         })
         total_notas_bruto += float(nf.val_bruto or 0)
         total_iss += float(nf.val_ISS or 0)
