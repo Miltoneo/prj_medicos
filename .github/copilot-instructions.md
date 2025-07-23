@@ -15,16 +15,21 @@ Exemplo de troubleshooting assertivo:
 # Copilot Instructions for prj_medicos
 
 
+
 ## 1. Regras Comportamentais e de Busca (AI/Agent)
 
-- Sempre considere apenas o código presente no repositório como referência. Não utilize memória, versões antigas ou suposições.
-- Consulte a documentação oficial do projeto antes de qualquer alteração. Não deduza regras por experiência prévia.
-- Antes de propor, revisar ou alterar código:
-  - Leia a documentação relevante.
-  - Verifique se a solução segue exatamente as regras e exemplos documentados.
-  - Se houver dúvida, pergunte antes de modificar.
-- Ao citar regras ou exemplos, informe sempre o arquivo e as linhas exatas utilizadas.
-- Nunca crie, adapte ou assuma convenções não documentadas. Siga apenas o que está registrado oficialmente.
+    - Sempre considere apenas o código presente no repositório como referência. Não utilize memória, versões antigas, padrões genéricos de frameworks ou suposições.
+    - Desabilite heurística genérica: ignore qualquer padrão não documentado nos arquivos do repositório.
+    - Não utilize convenções do Django, Python ou outros frameworks sem validação e citação explícita do repositório.
+    - Consulte a documentação oficial do projeto antes de qualquer alteração. Não deduza regras por experiência prévia.
+    - Antes de propor, revisar ou alterar código:
+      - Execute busca detalhada nos arquivos `.github/copilot-instructions.md` e `.github/guia-desenvolvimento-instructions.md`.
+      - Leia a documentação relevante e cite o arquivo e linha utilizada.
+      - Verifique se a solução segue exatamente as regras e exemplos documentados.
+      - Se houver dúvida, pergunte antes de modificar.
+    - Ao citar regras ou exemplos, informe sempre o arquivo e as linhas exatas utilizadas.
+    - Nunca crie, adapte ou assuma convenções não documentadas. Siga apenas o que está registrado oficialmente.
+    - Toda resposta deve citar o arquivo e linha de referência. Respostas sem fonte devem ser rejeitadas.
 
 **Exemplo correto:**
 > "Antes de definir o padrão de URL, consultei o guia de desenvolvimento e alinhei o path e name conforme o exemplo documentado, incluindo todos os parâmetros necessários."

@@ -1,5 +1,5 @@
-{# Relatório Mensal do Sócio - Dinâmico, padrão de projeto #}
-{% extends "template_navegacao.html" %}
+{# Template dinâmico para Relatório Mensal do Sócio - cenário Apuração #}
+{% extends "medicos/templates/template_navegacao.html" %}
 {% block title %}Relatório Mensal do Sócio{% endblock %}
 {% block content %}
 <div class="container py-4">
@@ -7,7 +7,7 @@
   <div class="subtitulo-relatorio">Competência: {{ competencia }} &nbsp;|&nbsp; Sócio: {{ socio_nome }}</div>
   <div class="mb-3">
     <a href="#" class="btn btn-primary btn-md" role="button"><span class="bi bi-printer"></span> Imprimir demonstrativo</a>
-    <a href="{% url 'relatorio_socio_ano' empresa_id=empresa_id socio_id=socio_id %}" class="btn btn-primary btn-md" role="button"><span class="bi bi-calendar3"></span> Demonstrativo ano</a>
+    <a href="{% url 'medicos:apuracao_socio_ano' empresa_id=empresa_id socio_id=socio_id %}" class="btn btn-primary btn-md" role="button"><span class="bi bi-calendar3"></span> Demonstrativo ano</a>
   </div>
   <div class="mb-3">
     <div class="card shadow-sm border-info">
