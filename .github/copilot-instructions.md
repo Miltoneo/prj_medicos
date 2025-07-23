@@ -69,7 +69,7 @@ Exemplo de troubleshooting assertivo:
 
 - Django-based SaaS for medical/financial management, multi-tenant (each user linked to one or more `Conta` tenants).
 - Data isolation and business logic enforced at model and middleware level (`medicos/models/`, `medicos/middleware/`).
-- Modularized models: split by domain (`base.py`, `fiscal.py`, `despesas.py`, `financeiro.py`, `auditoria.py`, `relatorios.py`), all imported in `medicos/models.py`.
+- Modularized models: split by domain (`base.py`, `fiscal.py`, `financeiro.py`, `auditoria.py`, `relatorios.py`). O módulo `despesas.py` é utilizado apenas para controle gerencial e rateio, não para cálculo direto de impostos.
 - Main app: `medicos`. Core config: `prj_medicos/settings.py`.
 - Context parameters (e.g., `empresa_id`) are required in all business URLs/views. See `docs/guia_desenvolvimento.md`.
 - Temporal context (`mes/ano`) is always in `request.session['mes_ano']` and must be respected by all business logic and UI.

@@ -1,5 +1,22 @@
 ## 11. Cenário de Apropriação de Despesas – Fluxo e Interfaces
 
+### 12. Apuração de Impostos (ISS, PIS, COFINS, IRPJ, CSLL)
+
+#### Legislação Tributária e Modelos Utilizados
+Segundo a legislação tributária brasileira:
+- **ISSQN:** A base de cálculo é o valor bruto dos serviços prestados, destacado em nota fiscal. Despesas não entram na base, exceto se houver previsão legal municipal específica. Modelos necessários: `NotaFiscal`, `Empresa`, `NotaFiscalRateioMedico`.
+- **PIS/COFINS:** Incidem sobre a receita bruta de serviços, conforme notas fiscais emitidas. Não há dedução de despesas operacionais. Modelos necessários: `NotaFiscal`, `Empresa`, `NotaFiscalRateioMedico`.
+- **IRPJ/CSLL:** Para lucro presumido, a base é um percentual da receita bruta das notas fiscais. Despesas não entram na base, exceto em lucro real. Modelos necessários: `NotaFiscal`, `Empresa`, `NotaFiscalRateioMedico`.
+
+**Conclusão:**
+A apuração dos impostos é feita sobre a receita bruta registrada nas notas fiscais. Os modelos de despesas (`Despesa`, `ItemDespesa`, `GrupoDespesa`) não são usados para cálculo direto dos impostos, mas podem ser relevantes para controle gerencial ou para ISS em casos específicos previstos em lei municipal.
+
+**Fontes:**
+- Lei Complementar 116/2003 (ISSQN)
+- Lei 9.718/1998 (PIS/COFINS)
+- Lei 9.430/1996 e IN RFB 1700/2017 (IRPJ/CSLL)
+- `.github/documentacao_especifica_instructions.md`, seção "ISS"
+
 ### 1. Fluxo Geral
 O cenário de despesas trata da apropriação mensal das despesas da empresa e dos sócios, sempre considerando o mês de competência ativo (`request.session['mes_ano']`). O usuário pode:
 - Incluir, editar e excluir despesas da empresa (com ou sem rateio).

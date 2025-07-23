@@ -1,4 +1,5 @@
 # Exemplo de Interface HTML – Lista de Despesas dos Sócios
+# (Controle gerencial, não utilizado para cálculo direto de impostos)
 
 ```django-html
 {% extends 'layouts/base_cenario_despesas.html' %}

@@ -1,5 +1,7 @@
 ## 13. Padrão de Dropdown Filtrável Multi-tenant (Select2)
 
+**Atenção:** Dropdowns e interfaces de despesas servem para apropriação e controle gerencial. Não utilize despesas como base de cálculo de impostos, exceto para ISS em casos previstos em lei municipal. Para apuração de ISS, PIS, COFINS, IRPJ e CSLL, utilize exclusivamente os dados das notas fiscais conforme documentação tributária.
+
 Sempre que implementar dropdowns para seleção de itens em contexto multi-tenant (ex: despesas de empresa ou sócio), siga o padrão abaixo:
 
 - O campo deve ser renderizado via ModelForm, já filtrado conforme o contexto de negócio (empresa ativa, rateio, etc).
