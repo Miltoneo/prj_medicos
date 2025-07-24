@@ -93,7 +93,7 @@
                       <tr><td>1</td><td>PIS</td><td>{{ relatorio.total_pis|floatformat:2 }}</td></tr>
                       <tr><td>2</td><td>COFINS</td><td>{{ relatorio.total_cofins|floatformat:2 }}</td></tr>
                       <tr><td>3</td><td>IRPJ</td><td>{{ relatorio.total_irpj|floatformat:2 }}</td></tr>
-                      <tr><td>4</td><td>Rateio de adicional de IR mensal</td><td>{{ relatorio.total_irpj_adicional|floatformat:2 }}</td></tr>
+                      <tr><td>4</td><td>Rateio mensal de adicional de IR</td><td>{{ relatorio.total_irpj_adicional|floatformat:2 }}</td></tr>
                       <tr><td>5</td><td>CSLL</td><td>{{ relatorio.total_csll|floatformat:2 }}</td></tr>
                       <tr><td>6</td><td>ISSQN</td><td>{{ relatorio.total_iss|floatformat:2 }}</td></tr>
                       <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
@@ -214,7 +214,15 @@
           {% for nota in relatorio.notas_fiscais %}
           <tr><td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.fornecedor }}</td><td>{{ nota.tomador }}</td><td>{{ nota.valor_bruto|floatformat:2 }}</td><td>{{ nota.iss|floatformat:2 }}</td><td>{{ nota.pis|floatformat:2 }}</td><td>{{ nota.cofins|floatformat:2 }}</td><td>{{ nota.irpj|floatformat:2 }}</td><td>{{ nota.csll|floatformat:2 }}</td><td>{{ nota.valor_liquido|floatformat:2 }}</td></tr>
           {% endfor %}
-          <tr class="linha-total"><th colspan="7">Totais</th><td>{{ relatorio.total_notas_bruto|floatformat:2 }}</td><td>{{ relatorio.total_iss|floatformat:2 }}</td><td>{{ relatorio.total_pis|floatformat:2 }}</td><td>{{ relatorio.total_cofins|floatformat:2 }}</td><td>{{ relatorio.total_irpj|floatformat:2 }}</td><td>{{ relatorio.total_csll|floatformat:2 }}</td><td>{{ relatorio.total_notas_liquido|floatformat:2 }}</td></tr>
+          <tr class="linha-total"><th colspan="7">Totais</th>
+            <td>{{ relatorio.total_nf_valor_bruto|floatformat:2 }}</td>
+            <td>{{ relatorio.total_nf_iss|floatformat:2 }}</td>
+            <td>{{ relatorio.total_nf_pis|floatformat:2 }}</td>
+            <td>{{ relatorio.total_nf_cofins|floatformat:2 }}</td>
+            <td>{{ relatorio.total_nf_irpj|floatformat:2 }}</td>
+            <td>{{ relatorio.total_nf_csll|floatformat:2 }}</td>
+            <td>{{ relatorio.total_nf_valor_liquido|floatformat:2 }}</td>
+          </tr>
         </table>
       </div>
     </div>
@@ -223,10 +231,10 @@
 </div>
 
 <div class="container mt-4 mb-5">
-  <div class="card border-primary shadow-sm mb-3">
+  <div class="card border-primary shadow-sm mb-3" style="max-width: 540px;">
     <div class="card-header bg-primary bg-opacity-10 border-primary fw-bold">
       <i class="fas fa-equals text-primary me-2"></i>
-      Equação do Rateio de Adicional de IR Mensal (com valores reais)
+      Equação do Rateio Mensal de Adicional de IR
     </div>
     <div class="card-body p-3">
       <ul class="mb-2" style="font-size:1.05em;">
@@ -234,9 +242,9 @@
         <li><b>Limite de isenção do adicional de IR:</b> R$ 20.000,00</li>
         <li><b>Excedente sujeito ao adicional:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|floatformat:2 }} - 20.000,00 = {{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }}{% else %}0,00{% endif %}</li>
         <li><b>Alíquota do adicional:</b> 10%</li>
-        <li><b>Valor total do adicional a ser rateado:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }} x 10% = {{ relatorio.valor_adicional_rateio|floatformat:2 }}{% else %}0,00{% endif %}</li>
-        <li><b>Participação do sócio na receita bruta da empresa:</b> {% if relatorio.total_notas_bruto > 0 %}{{ relatorio.receita_bruta_recebida|floatformat:2 }} / {{ relatorio.total_notas_bruto|floatformat:2 }}{% else %}0{% endif %}</li>
-        <li><b>Valor do adicional para o sócio:</b> R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</li>
+        <li><b>Valor total do adicional a ser rateado:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }} x 10% = {{ valor_adicional_rateio|floatformat:2 }}{% else %}0,00{% endif %}</li>
+        <li><b>Participação do sócio na receita bruta da empresa:</b> {% if relatorio.total_notas_bruto > 0 %}{{ receita_bruta_socio|floatformat:2 }} / {{ relatorio.total_notas_bruto|floatformat:2 }} = {{ participacao_socio|floatformat:4 }}{% else %}0{% endif %}</li>
+        <li><b>Valor do adicional para o sócio:</b> R$ {% if relatorio.total_notas_bruto > 0 %}{{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} / {{ relatorio.total_notas_bruto|floatformat:2 }}) = {{ valor_adicional_socio|floatformat:2 }}{% else %}0,00{% endif %}</li>
       </ul>
       <div class="text-muted small">* Os valores reais são calculados conforme os dados do mês selecionado.</div>
     </div>

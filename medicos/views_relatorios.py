@@ -105,7 +105,12 @@ def relatorio_mensal_socio(request, empresa_id):
     if not socio_selecionado:
         socio_selecionado = socios.first()
         socio_id = socio_selecionado.id if socio_selecionado else None
-    relatorio_obj = montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=socio_id)['relatorio']
+    relatorio_dict = montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=socio_id)
+    relatorio_obj = relatorio_dict['relatorio']
+    valor_adicional_rateio = relatorio_dict.get('valor_adicional_rateio', 0)
+    participacao_socio = relatorio_dict.get('participacao_socio', 0)
+    valor_adicional_socio = relatorio_dict.get('valor_adicional_socio', 0)
+    receita_bruta_socio = relatorio_dict.get('receita_bruta_socio', 0)
     lista_movimentacoes = getattr(relatorio_obj, 'lista_movimentacoes_financeiras', [])
     # Garante que cada movimentação tem o campo 'tipo' preenchido
     for mov in lista_movimentacoes:
@@ -145,6 +150,14 @@ def relatorio_mensal_socio(request, empresa_id):
         'impostos_total': getattr(relatorio_obj, 'impostos_total', 0),
         'saldo_apurado': getattr(relatorio_obj, 'saldo_apurado', 0),
         'saldo_a_transferir': getattr(relatorio_obj, 'saldo_a_transferir', 0),
+        # Totais das notas fiscais do sócio para a linha de totais da tabela
+        'total_nf_valor_bruto': getattr(relatorio_obj, 'total_nf_valor_bruto', 0),
+        'total_nf_iss': getattr(relatorio_obj, 'total_nf_iss', 0),
+        'total_nf_pis': getattr(relatorio_obj, 'total_nf_pis', 0),
+        'total_nf_cofins': getattr(relatorio_obj, 'total_nf_cofins', 0),
+        'total_nf_irpj': getattr(relatorio_obj, 'total_nf_irpj', 0),
+        'total_nf_csll': getattr(relatorio_obj, 'total_nf_csll', 0),
+        'total_nf_valor_liquido': getattr(relatorio_obj, 'total_nf_valor_liquido', 0),
         # Dados do sócio e empresa
         'socio_cpf': getattr(socio_selecionado.pessoa, 'cpf', '') if socio_selecionado else '',
         'socio_email': getattr(socio_selecionado.pessoa, 'email', '') if socio_selecionado else '',
@@ -157,6 +170,10 @@ def relatorio_mensal_socio(request, empresa_id):
     context = main(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Relatório Mensal Sócio')
     context['relatorio'] = relatorio
     context['titulo_pagina'] = 'Relatório Mensal do Sócio'
+    context['valor_adicional_rateio'] = valor_adicional_rateio
+    context['participacao_socio'] = participacao_socio
+    context['valor_adicional_socio'] = valor_adicional_socio
+    context['receita_bruta_socio'] = receita_bruta_socio
     return render(request, 'relatorios/relatorio_mensal_socio.html', context)
 
 @login_required

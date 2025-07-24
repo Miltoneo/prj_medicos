@@ -106,6 +106,10 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
     excedente_adicional = max(total_notas_bruto - 20000, 0)
     valor_adicional_rateio = excedente_adicional * 0.10
+    # Participação do sócio na receita bruta da empresa
+    receita_bruta_socio = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_qs)
+    participacao_socio = receita_bruta_socio / total_notas_bruto if total_notas_bruto > 0 else 0
+    valor_adicional_socio = valor_adicional_rateio * participacao_socio if valor_adicional_rateio > 0 else 0
     notas_fiscais = []
     total_iss = 0
     total_pis = 0
@@ -121,26 +125,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         # Buscar o rateio do sócio para esta nota
         rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
         if rateio:
-            aliquotas = getattr(nf, 'aliquotas', None)
-            valor_ir_adicional = 0
-            debug_linha = {
-                'nf_id': nf.id,
-                'nf_numero': getattr(nf, 'numero', ''),
-                'valor_bruto': float(rateio.valor_bruto_medico),
-                'valor_ir_adicional': None,
-                'detalhe': '',
-            }
-            if aliquotas:
-                tipo_servico_map = {
-                    getattr(nf, 'TIPO_SERVICO_CONSULTAS', 'consultas'): 'consultas',
-                    getattr(nf, 'TIPO_SERVICO_OUTROS', 'outros'): 'outros',
-                }
-                tipo_servico = tipo_servico_map.get(getattr(nf, 'tipo_servico', 'consultas'), 'consultas')
-    # (Desfeito: cálculo do adicional de IR mensal para o sócio. Restaurar lógica anterior.)
-                )
-                valor_ir_adicional = float(resultado.get('valor_ir_adicional', 0))
-                debug_linha['valor_ir_adicional'] = valor_ir_adicional
-                debug_linha['detalhe'] = str(resultado)
+            # O cálculo detalhado do adicional de IR para o sócio foi desfeito; manter apenas o necessário para o relatório.
             notas_fiscais.append({
                 'id': nf.id,
                 'numero': getattr(nf, 'numero', ''),
@@ -153,7 +138,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'cofins': float(rateio.valor_cofins_medico),
                 'irpj': float(rateio.valor_ir_medico),
                 'csll': float(rateio.valor_csll_medico),
-                'irpj_adicional': valor_ir_adicional,
                 'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
                 'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
                 'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
@@ -163,12 +147,19 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             total_pis += float(rateio.valor_pis_medico or 0)
             total_cofins += float(rateio.valor_cofins_medico or 0)
             total_irpj += float(rateio.valor_ir_medico or 0)
-            total_irpj_adicional += valor_ir_adicional
-            'total_irpj_adicional': total_irpj_adicional,
             total_notas_liquido += float(rateio.valor_liquido_medico or 0)
-            debug_ir_adicional_espelho.append(debug_linha)
 
-    total_notas_emitidas_mes = len(notas_fiscais)
+
+    # Totais dos campos das notas fiscais do sócio (para o template)
+    total_nf_valor_bruto = sum(float(nf['valor_bruto'] or 0) for nf in notas_fiscais)
+    total_nf_iss = sum(float(nf['iss'] or 0) for nf in notas_fiscais)
+    total_nf_pis = sum(float(nf['pis'] or 0) for nf in notas_fiscais)
+    total_nf_cofins = sum(float(nf['cofins'] or 0) for nf in notas_fiscais)
+    total_nf_irpj = sum(float(nf['irpj'] or 0) for nf in notas_fiscais)
+    total_nf_csll = sum(float(nf['csll'] or 0) for nf in notas_fiscais)
+    total_nf_valor_liquido = sum(float(nf['valor_liquido'] or 0) for nf in notas_fiscais)
+
+    total_notas_emitidas_mes = total_nf_valor_bruto
 
 
     # Receita bruta e líquida do sócio
@@ -210,19 +201,26 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             'despesa_sem_rateio': despesa_sem_rateio,
             'despesa_com_rateio': despesa_com_rateio,
             'despesa_geral': despesa_sem_rateio + despesa_com_rateio,
-            'receita_bruta_recebida': receita_bruta_recebida,
+            'receita_bruta_recebida': receita_bruta_socio,
             'receita_liquida': receita_liquida,
             'impostos_total': impostos_total,
             'total_iss': total_iss,
             'total_pis': total_pis,
             'total_cofins': total_cofins,
             'total_irpj': total_irpj,
-            'total_irpj_adicional': total_irpj_adicional,
+            'total_irpj_adicional': valor_adicional_socio,
             'total_csll': total_csll,
             'total_notas_bruto': total_notas_bruto,
             'total_notas_liquido': total_notas_liquido,
             'total_notas_emitidas_mes': total_notas_emitidas_mes,
             'saldo_apurado': saldo_apurado,
+            'total_nf_valor_bruto': total_nf_valor_bruto,
+            'total_nf_iss': total_nf_iss,
+            'total_nf_pis': total_nf_pis,
+            'total_nf_cofins': total_nf_cofins,
+            'total_nf_irpj': total_nf_irpj,
+            'total_nf_csll': total_nf_csll,
+            'total_nf_valor_liquido': total_nf_valor_liquido,
             'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
             'saldo_a_transferir': saldo_a_transferir,
             'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
@@ -236,6 +234,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # Adicionar valor_adicional_rateio ao dicionário de contexto do template
     contexto = {'relatorio': relatorio_obj}
     contexto['valor_adicional_rateio'] = valor_adicional_rateio
+    contexto['participacao_socio'] = participacao_socio
+    contexto['valor_adicional_socio'] = valor_adicional_socio
+    contexto['receita_bruta_socio'] = receita_bruta_socio
     return contexto
 
 
