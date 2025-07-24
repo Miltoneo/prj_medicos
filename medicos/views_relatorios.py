@@ -22,6 +22,7 @@ from medicos.relatorios.builders import (
 )
 from medicos.relatorios.apuracao_pis import montar_relatorio_pis_persistente
 from medicos.relatorios.apuracao_cofins import montar_relatorio_cofins_persistente
+from medicos.relatorios.apuracao_irpj import montar_relatorio_irpj_persistente
 
 # Helpers
 def main(request, empresa=None, menu_nome=None, cenario_nome=None):
@@ -198,14 +199,32 @@ def relatorio_apuracao(request, empresa_id):
     ]
     totais_cofins = relatorio_cofins.get('totais', {})
 
+    # Montagem do relatório IRPJ
+    relatorio_irpj = montar_relatorio_irpj_persistente(empresa_id, ano)
+    linhas_irpj = [
+        {'descricao': 'Receita consultas', 'valores': [linha.get('receita_consultas', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Receita bruta', 'valores': [linha.get('receita_bruta', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Rendimentos aplicações', 'valores': [linha.get('rendimentos_aplicacoes', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Base cálculo total', 'valores': [linha.get('base_calculo_total', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Adicional', 'valores': [linha.get('adicional', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Retenção aplicação financeira', 'valores': [linha.get('retencao_aplicacao_financeira', 0) for linha in relatorio_irpj['linhas']]},
+        {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj['linhas']]},
+    ]
     context = main(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
+    trimestres = [f'T{n}' for n in range(1, 5)]
     context.update({
         'competencias': competencias,
+        'trimestres': trimestres,
         'linhas_issqn': linhas_issqn,
         'linhas_pis': linhas_pis,
         'totais_pis': totais_pis,
         'linhas_cofins': linhas_cofins,
         'totais_cofins': totais_cofins,
+        'linhas_irpj': linhas_irpj,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)

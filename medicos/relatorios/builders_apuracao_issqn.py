@@ -7,9 +7,9 @@ def calcular_e_salvar_apuracao_issqn(empresa, competencia, aliquota_iss):
         empresa_destinataria=empresa,
         dtEmissao__startswith=competencia  # MM/YYYY
     )
-    base_calculo = sum(n.valor_servico for n in notas)
+    base_calculo = sum(n.val_bruto for n in notas)
     imposto_devido = base_calculo * aliquota_iss / 100
-    imposto_retido_nf = sum(n.valor_iss_retido for n in notas)
+    imposto_retido_nf = sum(n.val_ISS for n in notas)
     imposto_a_pagar = imposto_devido - imposto_retido_nf
     apuracao, created = ApuracaoISSQN.objects.update_or_create(
         empresa=empresa,
