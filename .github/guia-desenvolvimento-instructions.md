@@ -142,12 +142,6 @@ Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, te
 - Utilize context processors para variáveis globais como `empresa`, `conta`, `usuario_atual`.
 - Nunca busque manualmente em `request.session` ou faça queries diretas nas views para obter instâncias globais.
 - O parâmetro `empresa_id` deve ser mantido na URL das views para garantir escopo explícito da empresa.
-- Sempre sobrescreva `get_context_data(self, **kwargs)` em CBVs para adicionar variáveis específicas da página.
-- Defina a variável `titulo_pagina` no contexto para exibição padronizada do título no header.
-- O cabeçalho padrão deve ser incluído via `{% include 'layouts/base_header.html' %}`.
-- É proibido definir títulos manualmente em templates filhos.
-- Nunca inclua blocos de título (ex: <h1>, <h4>, etc.) ou exiba {{ titulo_pagina }} manualmente dentro do conteúdo dos templates filhos. O título deve aparecer apenas no header padrão incluído pelo template base.
-- Fonte: docs/guia_desenvolvimento.md, linhas 51-80
 
 ## 4. Código, Nomenclatura e Formatação
 - Os imports devem SEMPRE ser inseridos e agrupados no topo do arquivo, organizados por grupos: padrão Python, terceiros, depois do próprio projeto.
@@ -166,13 +160,11 @@ Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, te
 - Documente breaking changes quando necessário.
 - Mantenha `requirements.txt` atualizado.
 - Corrija e padronize a formatação antes de finalizar alterações.
-- Fonte: docs/guia_desenvolvimento.md, linhas 82-110
 
 ## 5. Código como Fonte da Verdade
 - O código hardcoded é sempre a referência absoluta para documentação.
 - Nunca gere documentação baseada em versões anteriores ou memória.
 - Toda documentação deve ser regenerada a partir do código atual.
-- Fonte: docs/guia_desenvolvimento.md, linhas 112-120
 
 ## 6. Arquitetura e Modularização
 - Mantenha separação clara entre módulos: `base.py`, `fiscal.py`, `financeiro.py`, `despesas.py`, `auditoria.py`, `relatorios.py`.
@@ -180,7 +172,6 @@ Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, te
 - Preserve hierarquia de relacionamentos e constraints.
 - Não crie dependências circulares entre módulos.
 - Mantenha modelos simples, focados e com responsabilidade única.
-- Fonte: docs/guia_desenvolvimento.md, linhas 122-130
 
 ## 7. Views de Lista: CRUD, Tables, Filtros e Paginação
 - Views de listagem devem implementar CRUD completo usando CBVs do Django.
