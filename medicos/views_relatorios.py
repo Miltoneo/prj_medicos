@@ -21,6 +21,7 @@ from medicos.relatorios.builders import (
     montar_relatorio_outros,
 )
 from medicos.relatorios.apuracao_pis import montar_relatorio_pis_persistente
+from medicos.relatorios.apuracao_cofins import montar_relatorio_cofins_persistente
 
 # Helpers
 def main(request, empresa=None, menu_nome=None, cenario_nome=None):
@@ -173,7 +174,6 @@ def relatorio_apuracao(request, empresa_id):
     ]
 
     # Montagem do relatório PIS
-    # Import padronizado no topo do arquivo
     ano = mes_ano.split('-')[0] if '-' in mes_ano else mes_ano[:4]
     relatorio_pis = montar_relatorio_pis_persistente(empresa_id, ano)
     linhas_pis = [
@@ -186,12 +186,26 @@ def relatorio_apuracao(request, empresa_id):
     ]
     totais_pis = relatorio_pis.get('totais', {})
 
+    # Montagem do relatório COFINS
+    relatorio_cofins = montar_relatorio_cofins_persistente(empresa_id, ano)
+    linhas_cofins = [
+        {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_cofins['linhas']]},
+        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_cofins['linhas']]},
+        {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_cofins['linhas']]},
+        {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_cofins['linhas']]},
+        {'descricao': 'Crédito mês anterior', 'valores': [linha.get('credito_mes_anterior', 0) for linha in relatorio_cofins['linhas']]},
+        {'descricao': 'Crédito mês seguinte', 'valores': [linha.get('credito_mes_seguinte', 0) for linha in relatorio_cofins['linhas']]},
+    ]
+    totais_cofins = relatorio_cofins.get('totais', {})
+
     context = main(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
         'competencias': competencias,
         'linhas_issqn': linhas_issqn,
         'linhas_pis': linhas_pis,
         'totais_pis': totais_pis,
+        'linhas_cofins': linhas_cofins,
+        'totais_cofins': totais_cofins,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)
