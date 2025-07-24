@@ -138,6 +138,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'total_pis': getattr(relatorio_obj, 'total_pis', 0),
         'total_cofins': getattr(relatorio_obj, 'total_cofins', 0),
         'total_irpj': getattr(relatorio_obj, 'total_irpj', 0),
+        'total_irpj_adicional': getattr(relatorio_obj, 'total_irpj_adicional', 0),
         'total_csll': getattr(relatorio_obj, 'total_csll', 0),
         'receita_bruta_recebida': getattr(relatorio_obj, 'receita_bruta_recebida', 0),
         'receita_liquida': getattr(relatorio_obj, 'receita_liquida', 0),
@@ -150,6 +151,8 @@ def relatorio_mensal_socio(request, empresa_id):
         'empresa_nome': empresa.name,
         'empresa_cnpj': empresa.cnpj,
         'empresa_id': empresa.id,
+        # Espelho de cálculo detalhado do IR adicional
+        'debug_ir_adicional': getattr(relatorio_obj, 'debug_ir_adicional', []),
     }
     context = main(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Relatório Mensal Sócio')
     context['relatorio'] = relatorio

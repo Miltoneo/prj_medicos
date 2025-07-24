@@ -22,5 +22,5 @@ class ApuracaoCSLL(models.Model):
         verbose_name = 'Apuração CSLL'
         verbose_name_plural = 'Apurações CSLL'
         indexes = [
-            models.Index(fields=['empresa', 'competencia'], name='medicos_apuracaocsll_empresa_competencia_idx'),
+            models.Index(fields=['empresa', 'competencia'], name='csll_emp_comp_idx'),
         ]

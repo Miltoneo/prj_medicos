@@ -34,6 +34,7 @@ class RelatorioMensalSocio(models.Model):
     total_pis = models.DecimalField(max_digits=15, decimal_places=2)
     total_cofins = models.DecimalField(max_digits=15, decimal_places=2)
     total_irpj = models.DecimalField(max_digits=15, decimal_places=2)
+    total_irpj_adicional = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="IRPJ - Adicional", help_text="Valor total do adicional de IRPJ apurado no mês.")
     total_csll = models.DecimalField(max_digits=15, decimal_places=2)
     total_notas_bruto = models.DecimalField(max_digits=15, decimal_places=2)
     total_notas_liquido = models.DecimalField(max_digits=15, decimal_places=2)
@@ -48,6 +49,7 @@ class RelatorioMensalSocio(models.Model):
     lista_despesas_com_rateio = models.JSONField(default=list)
     lista_notas_fiscais = models.JSONField(default=list)
     lista_movimentacoes_financeiras = models.JSONField(default=list)
+    debug_ir_adicional = models.JSONField(default=list, blank=True, null=True, help_text="Espelho detalhado do cálculo do IR adicional por nota fiscal.")
 
     class Meta:
         unique_together = ('empresa', 'socio', 'competencia')

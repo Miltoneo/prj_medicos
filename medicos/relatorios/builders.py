@@ -87,6 +87,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     despesa_com_rateio = sum(d['valor_socio'] for d in lista_despesas_com_rateio)
 
     # Notas fiscais do sócio no mês
+    # Notas fiscais do sócio no mês (para detalhamento do sócio)
     notas_fiscais_qs = NotaFiscal.objects.filter(
         rateios_medicos__medico=socio_selecionado,
         empresa_destinataria=empresa,
@@ -94,20 +95,53 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         dtEmissao__month=competencia.month
     )
 
+    # Notas fiscais da empresa no mês (para receita bruta total da empresa)
+    notas_empresa_qs = NotaFiscal.objects.filter(
+        empresa_destinataria=empresa,
+        dtEmissao__year=competencia.year,
+        dtEmissao__month=competencia.month
+    )
+
+    total_notas_bruto = sum(float(nf.val_bruto or 0) for nf in notas_empresa_qs)
     notas_fiscais = []
-    total_notas_bruto = 0
     total_iss = 0
     total_pis = 0
     total_cofins = 0
     total_irpj = 0
+    total_irpj_adicional = 0
     total_csll = 0
     total_notas_liquido = 0
 
+    debug_ir_adicional_espelho = []
     for nf in notas_fiscais_qs:
         nf.calcular_impostos()  # Atualiza campos de impostos no modelo
         # Buscar o rateio do sócio para esta nota
         rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
         if rateio:
+            aliquotas = getattr(nf, 'aliquotas', None)
+            valor_ir_adicional = 0
+            debug_linha = {
+                'nf_id': nf.id,
+                'nf_numero': getattr(nf, 'numero', ''),
+                'valor_bruto': float(rateio.valor_bruto_medico),
+                'valor_ir_adicional': None,
+                'detalhe': '',
+            }
+            if aliquotas:
+                tipo_servico_map = {
+                    getattr(nf, 'TIPO_SERVICO_CONSULTAS', 'consultas'): 'consultas',
+                    getattr(nf, 'TIPO_SERVICO_OUTROS', 'outros'): 'outros',
+                }
+                tipo_servico = tipo_servico_map.get(getattr(nf, 'tipo_servico', 'consultas'), 'consultas')
+                resultado = aliquotas.calcular_impostos_com_regime(
+                    valor_bruto=rateio.valor_bruto_medico,
+                    tipo_servico=tipo_servico,
+                    empresa=nf.empresa_destinataria,
+                    data_referencia=nf.dtEmissao
+                )
+                valor_ir_adicional = float(resultado.get('valor_ir_adicional', 0))
+                debug_linha['valor_ir_adicional'] = valor_ir_adicional
+                debug_linha['detalhe'] = str(resultado)
             notas_fiscais.append({
                 'id': nf.id,
                 'numero': getattr(nf, 'numero', ''),
@@ -120,6 +154,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'cofins': float(rateio.valor_cofins_medico),
                 'irpj': float(rateio.valor_ir_medico),
                 'csll': float(rateio.valor_csll_medico),
+                'irpj_adicional': valor_ir_adicional,
                 'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
                 'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
                 'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
@@ -129,8 +164,10 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             total_pis += float(rateio.valor_pis_medico or 0)
             total_cofins += float(rateio.valor_cofins_medico or 0)
             total_irpj += float(rateio.valor_ir_medico or 0)
+            total_irpj_adicional += valor_ir_adicional
             total_csll += float(rateio.valor_csll_medico or 0)
             total_notas_liquido += float(rateio.valor_liquido_medico or 0)
+            debug_ir_adicional_espelho.append(debug_linha)
 
     total_notas_emitidas_mes = len(notas_fiscais)
 
@@ -181,6 +218,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             'total_pis': total_pis,
             'total_cofins': total_cofins,
             'total_irpj': total_irpj,
+            'total_irpj_adicional': total_irpj_adicional,
             'total_csll': total_csll,
             'total_notas_bruto': total_notas_bruto,
             'total_notas_liquido': total_notas_liquido,
@@ -192,6 +230,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             'lista_despesas_com_rateio': lista_despesas_com_rateio,
             'lista_notas_fiscais': notas_fiscais,
             'lista_movimentacoes_financeiras': movimentacoes_financeiras,
+            'debug_ir_adicional': debug_ir_adicional_espelho,
         }
     )
     relatorio_obj.save()  # Garantir persistência explícita
@@ -317,6 +356,7 @@ def montar_relatorio_outros(empresa_id, mes_ano):
             'total_pis': total_pis,
             'total_cofins': total_cofins,
             'total_irpj': total_irpj,
+            'total_irpj_adicional': total_irpj_adicional,
             'total_csll': total_csll,
             'total_notas_bruto': total_notas_bruto,
             'total_notas_liquido': total_notas_liquido,
