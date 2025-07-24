@@ -22,14 +22,10 @@
         <i class="fas fa-user-friends me-2"></i>Relatório Mensal Sócio
       </a>
     </li>
+
     <li class="nav-item mb-1">
-      <a class="nav-link text-light" href="#">
-        <i class="fas fa-file-invoice me-2"></i>Apuração de ISSQN
-      </a>
-    </li>
-    <li class="nav-item mb-1">
-      <a class="nav-link text-light" href="#">
-        <i class="fas fa-exchange-alt me-2"></i>Apuração Outros
+      <a class="nav-link text-light" href="{% url 'medicos:relatorio_apuracao' empresa_id=empresa_id %}">
+        <i class="fas fa-exchange-alt me-2"></i>Apuração ISSQN
       </a>
     </li>
   </ul>

@@ -1,3 +1,11 @@
+## 4. Propagação obrigatória de revisões
+
+Toda revisão ou alteração em código (modelos, views, forms, builders, templates, etc.) deve ser analisada para identificar a necessidade de propagação para todos os arquivos relacionados. Sempre verifique se campos, regras ou lógicas novas/alteradas precisam ser refletidas em outros pontos do sistema (ex: modelo, view, builder, template, filtro, serializer, etc.).
+
+Exemplo:
+> "Campo 'credito_mes_anterior' incluído no modelo ApuracaoPIS. Propagado para builder, view e template conforme documentação."
+
+Fonte: .github/copilot-instructions.md, seção 4
 ## 3. Fluxo assertivo para troubleshooting de dropdowns multi-tenant e filtrados
 
 Sempre que houver problema em dropdowns (ex: lista vazia, lista errada, filtro não aplicado), siga este fluxo:

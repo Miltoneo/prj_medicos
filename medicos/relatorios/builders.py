@@ -213,9 +213,34 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
 def montar_relatorio_issqn(empresa_id, mes_ano):
     """
     Monta os dados do relatório de apuração de ISSQN.
-    Retorna dict padronizado: {'relatorio': ...}
+    Retorna dict padronizado: {'linhas': [...], 'totais': {...}}
+    Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
     """
-    return {'relatorio': {}}
+    from medicos.models.fiscal import NotaFiscal
+    empresa = Empresa.objects.get(id=empresa_id)
+    ano = int(mes_ano[:4])
+    linhas = []
+    total_iss = 0
+    for mes in range(1, 13):
+        notas_mes = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtEmissao__year=ano,
+            dtEmissao__month=mes
+        )
+        valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
+        valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
+        total_iss += valor_iss
+        linhas.append({
+            'competencia': f'{mes:02d}/{ano}',
+            'valor_bruto': valor_bruto,
+            'valor_iss': valor_iss,
+        })
+    return {
+        'linhas': linhas,
+        'totais': {
+            'total_iss': total_iss,
+        }
+    }
 
 
 def montar_relatorio_outros(empresa_id, mes_ano):
