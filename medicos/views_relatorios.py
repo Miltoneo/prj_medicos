@@ -1,3 +1,27 @@
+
+"""
+Views dos relatórios do sistema Medicos
+Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
+"""
+
+# Imports padrão Python
+from datetime import datetime
+
+# Imports de terceiros
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.utils import timezone
+
+# Imports locais
+from medicos.models.base import Empresa, Socio
+from medicos.relatorios.builders import (
+    montar_relatorio_mensal_empresa,
+    montar_relatorio_mensal_socio,
+    montar_relatorio_issqn,
+    montar_relatorio_outros,
+)
+from medicos.relatorios.apuracao_pis import montar_relatorio_pis_persistente
+
 # Helpers
 def main(request, empresa=None, menu_nome=None, cenario_nome=None):
     """
@@ -20,30 +44,6 @@ def main(request, empresa=None, menu_nome=None, cenario_nome=None):
         'user': request.user,
     }
     return context
-"""
-Views dos relatórios do sistema Medicos
-Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
-"""
-
-# Imports padrão Python
-from datetime import datetime
-
-# Imports de terceiros
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.utils import timezone
-
-
-# Imports locais
-from medicos.models.base import Empresa, Socio
-from medicos.relatorios.builders import (
-    montar_relatorio_mensal_empresa,
-    montar_relatorio_mensal_socio,
-    montar_relatorio_issqn,
-    montar_relatorio_outros,
-)
-
-from medicos.relatorios.apuracao_pis import montar_relatorio_pis_persistente
 
 # Views
 @login_required

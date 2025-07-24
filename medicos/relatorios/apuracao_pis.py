@@ -77,13 +77,7 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
         total_base_calculo += base_calculo
         total_retido += imposto_retido_nf
         total_a_pagar += imposto_a_pagar
-    totais = {
-        'total_pis': total_pis,
-        'total_base_calculo': total_base_calculo,
-        'total_retido': total_retido,
-        'total_a_pagar': total_a_pagar,
-    }
     return {
         'linhas': linhas,
-        'totais': totais,
+        'totais': {},
     }
