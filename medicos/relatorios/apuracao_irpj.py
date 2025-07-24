@@ -2,6 +2,7 @@ from medicos.models.relatorios_apuracao_irpj import ApuracaoIRPJ
 from medicos.models.base import Empresa
 from medicos.models.fiscal import Aliquotas
 from medicos.models import NotaFiscal
+from django.db.models import Sum
 from django.db import transaction
 from decimal import Decimal
 
@@ -19,19 +20,19 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
     for num_tri, meses in TRIMESTRES:
         competencia = f"T{num_tri}/{ano}"
         notas = NotaFiscal.objects.filter(
-            empresa=empresa,
+            empresa_destinataria=empresa,
             dtEmissao__year=ano,
             dtEmissao__month__in=meses
         )
-        receita_consultas = notas.filter(tipo_servico='consultas').aggregate(total=models.Sum('valor_bruto'))['total'] or Decimal('0')
-        receita_outros = notas.exclude(tipo_servico='consultas').aggregate(total=models.Sum('valor_bruto'))['total'] or Decimal('0')
+        receita_consultas = notas.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        receita_outros = notas.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_bruta = receita_consultas + receita_outros
         base_calculo = receita_bruta * (aliquota.IRPJ_BASE_CAL/Decimal('100'))
         rendimentos_aplicacoes = Decimal('0')  # Integrar se houver modelo de aplicações
         base_calculo_total = base_calculo + rendimentos_aplicacoes
         imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA_OUTROS/Decimal('100'))
         adicional = base_calculo_total * (aliquota.IRPJ_ADICIONAL/Decimal('100')) if hasattr(aliquota, 'IRPJ_ADICIONAL') else Decimal('0')
-        imposto_retido_nf = notas.aggregate(total=models.Sum('irrf_retido'))['total'] or Decimal('0')
+        imposto_retido_nf = notas.aggregate(total=Sum('val_IR'))['total'] or Decimal('0')
         retencao_aplicacao_financeira = Decimal('0')  # Integrar se houver modelo
         imposto_a_pagar = imposto_devido + adicional - imposto_retido_nf - retencao_aplicacao_financeira
         with transaction.atomic():
