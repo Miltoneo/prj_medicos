@@ -103,6 +103,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     )
 
     total_notas_bruto = sum(float(nf.val_bruto or 0) for nf in notas_empresa_qs)
+    # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
+    excedente_adicional = max(total_notas_bruto - 20000, 0)
+    valor_adicional_rateio = excedente_adicional * 0.10
     notas_fiscais = []
     total_iss = 0
     total_pis = 0
@@ -133,11 +136,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                     getattr(nf, 'TIPO_SERVICO_OUTROS', 'outros'): 'outros',
                 }
                 tipo_servico = tipo_servico_map.get(getattr(nf, 'tipo_servico', 'consultas'), 'consultas')
-                resultado = aliquotas.calcular_impostos_com_regime(
-                    valor_bruto=rateio.valor_bruto_medico,
-                    tipo_servico=tipo_servico,
-                    empresa=nf.empresa_destinataria,
-                    data_referencia=nf.dtEmissao
+    # (Desfeito: cálculo do adicional de IR mensal para o sócio. Restaurar lógica anterior.)
                 )
                 valor_ir_adicional = float(resultado.get('valor_ir_adicional', 0))
                 debug_linha['valor_ir_adicional'] = valor_ir_adicional
@@ -165,7 +164,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             total_cofins += float(rateio.valor_cofins_medico or 0)
             total_irpj += float(rateio.valor_ir_medico or 0)
             total_irpj_adicional += valor_ir_adicional
-            total_csll += float(rateio.valor_csll_medico or 0)
+            'total_irpj_adicional': total_irpj_adicional,
             total_notas_liquido += float(rateio.valor_liquido_medico or 0)
             debug_ir_adicional_espelho.append(debug_linha)
 
@@ -234,7 +233,10 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         }
     )
     relatorio_obj.save()  # Garantir persistência explícita
-    return {'relatorio': relatorio_obj}
+    # Adicionar valor_adicional_rateio ao dicionário de contexto do template
+    contexto = {'relatorio': relatorio_obj}
+    contexto['valor_adicional_rateio'] = valor_adicional_rateio
+    return contexto
 
 
 def montar_relatorio_issqn(empresa_id, mes_ano):
@@ -275,103 +277,6 @@ def montar_relatorio_outros(empresa_id, mes_ano):
     Retorna dict padronizado: {'relatorio': ...}
     """
     return {'relatorio': {}}
-    total_csll = 0
-    total_notas_liquido = 0
-
-    for nf in notas_fiscais_qs:
-        nf.calcular_impostos()  # Atualiza campos de impostos no modelo
-        # Buscar o rateio do sócio para esta nota
-        rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
-        if rateio:
-            notas_fiscais.append({
-                'id': nf.id,
-                'numero': getattr(nf, 'numero', ''),
-                'tp_aliquota': nf.get_tipo_servico_display(),
-                'tomador': nf.tomador,
-                'valor_bruto': float(rateio.valor_bruto_medico),
-                'valor_liquido': float(rateio.valor_liquido_medico),
-                'iss': float(rateio.valor_iss_medico),
-                'pis': float(rateio.valor_pis_medico),
-                'cofins': float(rateio.valor_cofins_medico),
-                'irpj': float(rateio.valor_ir_medico),
-                'csll': float(rateio.valor_csll_medico),
-                'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
-                'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
-                'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
-            })
-            total_notas_bruto += float(rateio.valor_bruto_medico or 0)
-            total_iss += float(rateio.valor_iss_medico or 0)
-            total_pis += float(rateio.valor_pis_medico or 0)
-            total_cofins += float(rateio.valor_cofins_medico or 0)
-            total_irpj += float(rateio.valor_ir_medico or 0)
-            total_csll += float(rateio.valor_csll_medico or 0)
-            total_notas_liquido += float(rateio.valor_liquido_medico or 0)
-
-    total_notas_emitidas_mes = len(notas_fiscais)
-
-
-    # Receita bruta e líquida do sócio
-    receita_bruta_recebida = total_notas_bruto
-    receita_liquida = total_notas_liquido
-
-    # Impostos agregados
-    impostos_total = total_iss + total_pis + total_cofins + total_irpj + total_csll
-
-    despesas_total = despesa_sem_rateio + despesa_com_rateio
-    saldo_apurado = receita_liquida - despesas_total
-    # Cálculo do saldo das movimentações financeiras do sócio no mês
-    movimentacoes_financeiras_qs = Financeiro.objects.filter(
-        socio=socio_selecionado,
-        data_movimentacao__year=competencia.year,
-        data_movimentacao__month=competencia.month
-    )
-    saldo_movimentacao_financeira = float(sum(m.valor for m in movimentacoes_financeiras_qs))
-    movimentacoes_financeiras = [
-        {
-            'id': m.id,
-            'data': m.data_movimentacao.strftime('%d/%m/%Y'),
-            'descricao': str(m.descricao_movimentacao_financeira),
-            'valor': float(m.valor),
-        }
-        for m in movimentacoes_financeiras_qs
-    ]
-    saldo_a_transferir = saldo_apurado + saldo_movimentacao_financeira
-
-    relatorio_obj, _ = RelatorioMensalSocio.objects.update_or_create(
-        empresa=empresa,
-        socio=socio_selecionado,
-        competencia=competencia,
-        defaults={
-            'data_geracao': datetime.now(),
-            'total_despesas_sem_rateio': despesa_sem_rateio,
-            'total_despesas_com_rateio': despesa_com_rateio,
-            'despesas_total': despesas_total,
-            'despesa_sem_rateio': despesa_sem_rateio,
-            'despesa_com_rateio': despesa_com_rateio,
-            'despesa_geral': despesa_sem_rateio + despesa_com_rateio,
-            'receita_bruta_recebida': receita_bruta_recebida,
-            'receita_liquida': receita_liquida,
-            'impostos_total': impostos_total,
-            'total_iss': total_iss,
-            'total_pis': total_pis,
-            'total_cofins': total_cofins,
-            'total_irpj': total_irpj,
-            'total_irpj_adicional': total_irpj_adicional,
-            'total_csll': total_csll,
-            'total_notas_bruto': total_notas_bruto,
-            'total_notas_liquido': total_notas_liquido,
-            'total_notas_emitidas_mes': total_notas_emitidas_mes,
-            'saldo_apurado': saldo_apurado,
-            'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
-            'saldo_a_transferir': saldo_a_transferir,
-            'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
-            'lista_despesas_com_rateio': lista_despesas_com_rateio,
-            'lista_notas_fiscais': notas_fiscais,
-            'lista_movimentacoes_financeiras': movimentacoes_financeiras,
-        }
-    )
-    relatorio_obj.save()  # Garantir persistência explícita
-    return {'relatorio': relatorio_obj}
 
 
 def montar_relatorio_issqn(empresa_id, mes_ano):

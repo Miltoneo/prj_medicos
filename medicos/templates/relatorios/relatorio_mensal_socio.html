@@ -234,7 +234,7 @@
         <li><b>Limite de isenção do adicional de IR:</b> R$ 20.000,00</li>
         <li><b>Excedente sujeito ao adicional:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|floatformat:2 }} - 20.000,00 = {{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }}{% else %}0,00{% endif %}</li>
         <li><b>Alíquota do adicional:</b> 10%</li>
-        <li><b>Valor total do adicional a ser rateado:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }} x 10% = {{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2|add:"*0.10"|floatformat:2 }}{% else %}0,00{% endif %}</li>
+        <li><b>Valor total do adicional a ser rateado:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }} x 10% = {{ relatorio.valor_adicional_rateio|floatformat:2 }}{% else %}0,00{% endif %}</li>
         <li><b>Participação do sócio na receita bruta da empresa:</b> {% if relatorio.total_notas_bruto > 0 %}{{ relatorio.receita_bruta_recebida|floatformat:2 }} / {{ relatorio.total_notas_bruto|floatformat:2 }}{% else %}0{% endif %}</li>
         <li><b>Valor do adicional para o sócio:</b> R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</li>
       </ul>
