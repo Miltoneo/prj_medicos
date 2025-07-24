@@ -1,18 +1,17 @@
 {% extends 'layouts/base_cenario_apuracao.html' %}
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid py-4" style="max-width:100vw;">
   <div class="titulo-relatorio">Apuração de Impostos - Exemplo Estático</div>
   <div class="subtitulo-relatorio">Competência: {{ ano }} &nbsp;|&nbsp; Empresa: {{ empresa.nome }}</div>
 
   <!-- Card PIS -->
   <div class="card shadow-sm border-info mb-4">
     <div class="card-header bg-info bg-opacity-10 border-info">
-      <span class="bi bi-percent text-info me-2"></span> Apuração PIS
+      <span class="bi bi-percent text-info me-2"></span> Apuração PIS - Janeiro a Dezembro
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <caption>Apuração PIS - Janeiro a Dezembro</caption>
           <thead>
             <tr>
               <th>Descrição</th>
@@ -39,12 +38,11 @@
   <!-- Card COFINS -->
   <div class="card shadow-sm border-success mb-4">
     <div class="card-header bg-success bg-opacity-10 border-success">
-      <span class="bi bi-percent text-success me-2"></span> Apuração COFINS
+      <span class="bi bi-percent text-success me-2"></span> Apuração COFINS - Janeiro a Dezembro
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <caption>Apuração COFINS - Janeiro a Dezembro</caption>
           <thead>
             <tr>
               <th>Descrição</th>
@@ -71,12 +69,11 @@
   <!-- Card ISSQN -->
   <div class="card shadow-sm border-warning mb-4">
     <div class="card-header bg-warning bg-opacity-10 border-warning">
-      <span class="bi bi-percent text-warning me-2"></span> Apuração ISSQN
+      <span class="bi bi-percent text-warning me-2"></span> Apuração ISSQN - Janeiro a Dezembro
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <caption>Apuração ISSQN - Janeiro a Dezembro</caption>
           <thead>
             <tr>
               <th>Descrição</th>
@@ -100,66 +97,70 @@
     </div>
   </div>
 
-  <!-- Card IRPJ -->
-  <div class="card shadow-sm border-secondary mb-4">
-    <div class="card-header bg-secondary bg-opacity-10 border-secondary">
-      <span class="bi bi-percent text-secondary me-2"></span> Apuração IRPJ
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <caption>Apuração IRPJ - Trimestres em linha</caption>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              {% for trimestre in trimestres %}
-                <th>{{ trimestre }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for linha in linhas_irpj %}
-            <tr>
-              <td>{{ linha.descricao }}</td>
-              {% for valor in linha.valores %}
-                <td>{{ valor|floatformat:2 }}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+
+  <div class="row">
+    <!-- Card IRPJ -->
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm border-secondary mb-4 h-100">
+        <div class="card-header bg-secondary bg-opacity-10 border-secondary">
+          <span class="bi bi-percent text-secondary me-2"></span> Apuração IRPJ - Trimestres em linha
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  {% for trimestre in trimestres %}
+                    <th>{{ trimestre }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for linha in linhas_irpj %}
+                <tr>
+                  <td>{{ linha.descricao }}</td>
+                  {% for valor in linha.valores %}
+                    <td>{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- Card CSLL -->
-  <div class="card shadow-sm border-primary mb-4">
-    <div class="card-header bg-primary bg-opacity-10 border-primary">
-      <span class="bi bi-percent text-primary me-2"></span> Apuração CSLL
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <caption>Apuração CSLL - Trimestres em linha</caption>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              {% for trimestre in trimestres %}
-                <th>{{ trimestre }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for linha in linhas_csll %}
-            <tr>
-              <td>{{ linha.descricao }}</td>
-              {% for valor in linha.valores %}
-                <td>{{ valor|floatformat:2 }}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <!-- Card CSLL -->
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm border-primary mb-4 h-100">
+        <div class="card-header bg-primary bg-opacity-10 border-primary">
+          <span class="bi bi-percent text-primary me-2"></span> Apuração CSLL - Trimestres em linha
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  {% for trimestre in trimestres %}
+                    <th>{{ trimestre }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for linha in linhas_csll %}
+                <tr>
+                  <td>{{ linha.descricao }}</td>
+                  {% for valor in linha.valores %}
+                    <td>{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
