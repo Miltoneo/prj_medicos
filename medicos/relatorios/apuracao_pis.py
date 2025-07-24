@@ -31,6 +31,8 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
     total_base_calculo = 0
     total_retido = 0
     total_a_pagar = 0
+    VALOR_MINIMO_PAGAMENTO = 10.00  # Fonte: IN RFB nº 1.717/2017, art. 68
+    saldo_acumulado = 0.0
     for mes in range(1, 13):
         competencia = f'{mes:02d}/{ano}'
         notas_mes = NotaFiscal.objects.filter(
@@ -46,10 +48,15 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
         aliquota = float(getattr(aliquota_obj, 'PIS', 0)) if aliquota_obj else 0
         imposto_devido = round(base_calculo * (aliquota / 100), 2)
         imposto_retido_nf = sum(float(nf.val_PIS or 0) for nf in notas_mes if getattr(nf, 'retido', False))
-        # TODO: Consultar regra/documentação para crédito_mes_anterior e crédito_mes_seguinte
-        credito_mes_anterior = 0
+        credito_mes_anterior = saldo_acumulado
         credito_mes_seguinte = 0
         imposto_a_pagar = round(imposto_devido - imposto_retido_nf + credito_mes_anterior - credito_mes_seguinte, 2)
+        if imposto_a_pagar < VALOR_MINIMO_PAGAMENTO:
+            saldo_acumulado = imposto_a_pagar
+            imposto_a_pagar = 0.0
+            credito_mes_seguinte = saldo_acumulado
+        else:
+            saldo_acumulado = 0.0
         obj, _ = ApuracaoPIS.objects.update_or_create(
             empresa=empresa,
             competencia=competencia,
