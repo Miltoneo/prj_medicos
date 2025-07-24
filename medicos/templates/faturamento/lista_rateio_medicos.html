@@ -3,26 +3,41 @@
 {% block title %}Rateio por Médico{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <!-- Título removido, será renderizado pelo template base -->
-  <a href="{% url 'medicos:novo_rateio_medico' nota_id=nota_fiscal.id %}" class="btn btn-success mb-3">Adicionar Médico ao Rateio</a>
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped">
-      <thead>
-        <tr>
-          <th>Nome do Médico</th>
-          <th>Valor Bruto</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in table.rows %}
-          <tr>
-            <td>{{ row.record.medico.pessoa.name }}</td>
-            <td>{{ row.record.valor_bruto_medico }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-user-md me-2"></i>
+          <span class="fw-bold">Rateio por Médico</span>
+        </div>
+        <div class="card-body">
+          <a href="{% url 'medicos:novo_rateio_medico' nota_id=nota_fiscal.id %}" class="btn btn-success mb-3">
+            <i class="fas fa-plus-circle me-1"></i>Adicionar Médico ao Rateio
+          </a>
+          <div class="table-responsive rounded">
+            <table class="table table-bordered table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Nome do Médico</th>
+                  <th>Valor Bruto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in table.rows %}
+                  <tr>
+                    <td>{{ row.record.medico.pessoa.name }}</td>
+                    <td>{{ row.record.valor_bruto_medico }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <a href="{% url 'medicos:lista_notas_rateio' %}" class="btn btn-secondary mt-4">
+            <i class="fas fa-arrow-left me-1"></i>Voltar
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
-  <a href="{% url 'medicos:lista_notas_rateio' %}" class="btn btn-secondary mt-3">Voltar</a>
 </div>
 {% endblock %}
