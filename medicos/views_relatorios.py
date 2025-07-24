@@ -1,3 +1,25 @@
+# Helpers
+def main(request, empresa=None, menu_nome=None, cenario_nome=None):
+    """
+    Monta o contexto base para todas as views de relatório.
+    """
+    # Preparar variáveis de contexto essenciais para o sistema
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
+    if not mes_ano:
+        mes_ano = datetime.now().strftime('%Y-%m')
+    request.session['mes_ano'] = mes_ano
+    request.session['menu_nome'] = menu_nome or 'Relatórios'
+    request.session['user_id'] = request.user.id
+    if empresa is None:
+        raise ValueError("empresa deve ser passado explicitamente como objeto Empresa pela view.")
+    context = {
+        'mes_ano': mes_ano,
+        'menu_nome': menu_nome or 'Relatórios',
+        'empresa': empresa,
+        'empresa_id': empresa.id,
+        'user': request.user,
+    }
+    return context
 """
 Views dos relatórios do sistema Medicos
 Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
@@ -21,28 +43,7 @@ from medicos.relatorios.builders import (
     montar_relatorio_outros,
 )
 
-# Helpers
-def main(request, empresa=None, menu_nome=None, cenario_nome=None):
-    """
-    Monta o contexto base para todas as views de relatório.
-    """
-    # Preparar variáveis de contexto essenciais para o sistema
-    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
-    if not mes_ano:
-        mes_ano = datetime.now().strftime('%Y-%m')
-    request.session['mes_ano'] = mes_ano
-    request.session['menu_nome'] = menu_nome or 'Relatórios'
-    request.session['user_id'] = request.user.id
-    if empresa is None:
-        raise ValueError("empresa deve ser passado explicitamente como objeto Empresa pela view.")
-    context = {
-        'mes_ano': mes_ano,
-        'menu_nome': menu_nome or 'Relatórios',
-        'empresa': empresa,
-        'empresa_id': empresa.id,
-        'user': request.user,
-    }
-    return context
+from medicos.relatorios.apuracao_pis import montar_relatorio_pis_persistente
 
 # Views
 @login_required
@@ -164,30 +165,33 @@ def relatorio_apuracao(request, empresa_id):
     mes_ano = request.session.get('mes_ano')
     competencias = [f'{mes:02d}/{mes_ano[:4]}' for mes in range(1, 13)]
     relatorio_issqn = montar_relatorio_issqn(empresa_id, mes_ano)
-    # Adapta para o padrão do exemplo: base cálculo, imposto devido, imposto retido NF, imposto a pagar
-    # Para este exemplo, imposto retido NF e imposto a pagar são fictícios (devem ser calculados conforme regra de negócio)
     linhas_issqn = [
-        {
-            'descricao': 'Base cálculo',
-            'valores': [linha['valor_bruto'] for linha in relatorio_issqn['linhas']]
-        },
-        {
-            'descricao': 'Imposto devido',
-            'valores': [linha['valor_iss'] for linha in relatorio_issqn['linhas']]
-        },
-        {
-            'descricao': 'Imposto retido NF',
-            'valores': [round(linha['valor_iss']*0.2,2) for linha in relatorio_issqn['linhas']]
-        },
-        {
-            'descricao': 'Imposto a pagar',
-            'valores': [round(linha['valor_iss']*0.8,2) for linha in relatorio_issqn['linhas']]
-        },
+        {'descricao': 'Base cálculo', 'valores': [linha['valor_bruto'] for linha in relatorio_issqn['linhas']]},
+        {'descricao': 'Imposto devido', 'valores': [linha['valor_iss'] for linha in relatorio_issqn['linhas']]},
+        {'descricao': 'Imposto retido NF', 'valores': [round(linha['valor_iss']*0.2,2) for linha in relatorio_issqn['linhas']]},
+        {'descricao': 'Imposto a pagar', 'valores': [round(linha['valor_iss']*0.8,2) for linha in relatorio_issqn['linhas']]},
     ]
+
+    # Montagem do relatório PIS
+    # Import padronizado no topo do arquivo
+    ano = mes_ano.split('-')[0] if '-' in mes_ano else mes_ano[:4]
+    relatorio_pis = montar_relatorio_pis_persistente(empresa_id, ano)
+    linhas_pis = [
+        {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_pis['linhas']]},
+        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_pis['linhas']]},
+        {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_pis['linhas']]},
+        {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_pis['linhas']]},
+        {'descricao': 'Crédito mês anterior', 'valores': [linha.get('credito_mes_anterior', 0) for linha in relatorio_pis['linhas']]},
+        {'descricao': 'Crédito mês seguinte', 'valores': [linha.get('credito_mes_seguinte', 0) for linha in relatorio_pis['linhas']]},
+    ]
+    totais_pis = relatorio_pis.get('totais', {})
+
     context = main(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
         'competencias': competencias,
         'linhas_issqn': linhas_issqn,
+        'linhas_pis': linhas_pis,
+        'totais_pis': totais_pis,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)
