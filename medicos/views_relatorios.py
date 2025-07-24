@@ -158,6 +158,22 @@ def relatorio_mensal_socio(request, empresa_id):
 
 @login_required
 def relatorio_apuracao(request, empresa_id):
+    mes_ano = request.session.get('mes_ano')
+    ano = mes_ano.split('-')[0] if '-' in mes_ano else mes_ano[:4]
+    from medicos.relatorios.apuracao_csll import montar_relatorio_csll_persistente
+    relatorio_csll = montar_relatorio_csll_persistente(empresa_id, ano)
+    linhas_csll = [
+        {'descricao': 'Receita consultas', 'valores': [linha.get('receita_consultas', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Receita bruta', 'valores': [linha.get('receita_bruta', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Rendimentos aplicações', 'valores': [linha.get('rendimentos_aplicacoes', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Base cálculo total', 'valores': [linha.get('base_calculo_total', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Retenção aplicação financeira', 'valores': [linha.get('retencao_aplicacao_financeira', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_csll['linhas']]},
+    ]
     """
     View padronizada para apuração de impostos (ISSQN, PIS, COFINS, etc).
     Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
@@ -225,6 +241,7 @@ def relatorio_apuracao(request, empresa_id):
         'linhas_cofins': linhas_cofins,
         'totais_cofins': totais_cofins,
         'linhas_irpj': linhas_irpj,
+        'linhas_csll': linhas_csll,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)
