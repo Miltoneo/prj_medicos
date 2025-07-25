@@ -1,3 +1,38 @@
+from django.contrib.auth import get_user_model
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
+# ---------------------------------------------
+from django.views.decorators.csrf import csrf_protect
+@csrf_protect
+def resend_activation_view(request):
+    message = error = email = None
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+            if user.is_active:
+                message = 'Esta conta já está ativada. Faça login normalmente.'
+            else:
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                activation_link = f"{settings.SITE_URL}/medicos/auth/activate/{uid}/{token}/"
+                from django.core.mail import send_mail
+                send_mail(
+                    'Ative sua conta',
+                    f'Clique no link para ativar sua conta: {activation_link}',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+                message = 'E-mail de ativação reenviado! Verifique sua caixa de entrada e spam.'
+        except User.DoesNotExist:
+            error = 'E-mail não encontrado. Cadastre-se primeiro.'
+        except Exception as e:
+            error = f'Erro ao enviar e-mail: {e}'
+    return render(request, 'auth/resend_activation.html', {'message': message, 'error': error, 'email': email})
 
 
 # ---------------------------------------------
@@ -267,7 +302,6 @@ def activate_account(request, uidb64, token):
             form = SetPasswordForm(user)
         return render(request, 'auth/set_password.html', {'form': form})
     else:
-        messages.error(request, 'Link de ativação inválido ou expirado.')
         return render(request, 'auth/activation_invalid.html')
 
 # ---------------------------------------------

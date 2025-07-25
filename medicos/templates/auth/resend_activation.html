@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Reenviar E-mail de Ativação{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h2 class="mb-4">Reenviar E-mail de Ativação</h2>
+          <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="id_email_resend" class="form-label fw-semibold">E-mail</label>
+              <input type="email" name="email" class="form-control" id="id_email_resend" required value="{{ email|default:'' }}">
+              {% if error %}<div class="text-danger small">{{ error }}</div>{% endif %}
+            </div>
+            <div class="d-grid mb-2">
+              <button type="submit" class="btn btn-primary">Reenviar E-mail</button>
+            </div>
+          </form>
+          {% if message %}
+            <div class="alert alert-info mt-3">{{ message }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
