@@ -20,7 +20,7 @@
           <div class="row g-2 align-items-end">
             <div class="col-md-2 col-12">
               <label class="form-label small">Mês/Ano de Emissão</label>
-              <input type="month" name="mes_ano_emissao" class="form-control" value="{{ filter.form.mes_ano_emissao.value|default_if_none:'' }}">
+              <input type="month" name="mes_ano_emissao" class="form-control" value="{{ filter.form.mes_ano_emissao.value|default:mes_ano_emissao_default }}">
             </div>
             <div class="col-md-2 col-6">
               <label class="form-label small">Status de Recebimento</label>

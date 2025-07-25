@@ -43,10 +43,17 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         return qs
 
     def get_context_data(self, **kwargs):
+        import datetime
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Recebimento de Notas Fiscais'
         context['cenario_nome'] = 'Financeiro'
         context['menu_nome'] = 'Recebimento de Notas'
+        # Define valor default para mes_ano_emissao se não informado
+        mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
+        if not mes_ano_emissao:
+            now = datetime.date.today()
+            mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
+        context['mes_ano_emissao_default'] = mes_ano_emissao
         return context
 
 @method_decorator(login_required, name='dispatch')

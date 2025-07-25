@@ -161,17 +161,37 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
+        import datetime
         empresa_id = self.request.session.get('empresa_id')
         if not empresa_id:
             return NotaFiscal.objects.none()
-        return NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
+        qs = NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
+        mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
+        if not mes_ano_emissao:
+            now = datetime.date.today()
+            ano = now.year
+            mes = now.month
+            qs = qs.filter(dtEmissao__year=ano, dtEmissao__month=mes)
+        else:
+            try:
+                ano, mes = mes_ano_emissao.split('-')
+                qs = qs.filter(dtEmissao__year=int(ano), dtEmissao__month=int(mes))
+            except Exception:
+                pass
+        return qs
 
     def get_context_data(self, **kwargs):
+        import datetime
         context = super().get_context_data(**kwargs)
+        mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
+        if not mes_ano_emissao:
+            now = datetime.date.today()
+            mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
         context.update({
-            'titulo_pagina': 'Entrada de Notas Fiscais',
+            'titulo_pagina': 'Lista de notas fiscais',
             'menu_nome': 'Notas Fiscais',
-            'mes_ano': self.request.session.get('mes_ano')
+            'mes_ano': self.request.session.get('mes_ano'),
+            'mes_ano_emissao_default': mes_ano_emissao
         })
         context['cenario_nome'] = 'Faturamento'
         # Não injeta empresa manualmente
