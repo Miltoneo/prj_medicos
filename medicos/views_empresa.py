@@ -89,7 +89,7 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
-        context['titulo_pagina'] = 'Empresas'
+        context['titulo_pagina'] = 'Empresas da Conta'
         return context
 
 
