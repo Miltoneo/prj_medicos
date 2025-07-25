@@ -4,7 +4,7 @@ from django.contrib import messages
 from medicos.models.base import CustomUser  # Ajuste conforme o modelo real
 from medicos.models import ContaMembership  # Ajuste conforme o modelo real
 from medicos.forms_user_invite_form import UserInviteForm  # Corrigido: import do arquivo correto
-from medicos.utils import generate_invite_token, send_invite_email  # Crie estes utilitários
+from medicos.utils import send_invite_email  # Crie estes utilitários
 
 class UserInviteView(CreateView):
     model = CustomUser
@@ -33,13 +33,15 @@ class UserInviteView(CreateView):
                 user.is_active = False
                 user.save()
                 messages.success(self.request, f"Convite reenviado para usuário inativo: {email}.")
-                token = generate_invite_token(user)
+                from django.contrib.auth.tokens import default_token_generator
+                token = default_token_generator.make_token(user)
                 convite_reenviado = True
         else:
             user = form.save(commit=False)
             user.is_active = False
             user.save()
-            token = generate_invite_token(user)
+            from django.contrib.auth.tokens import default_token_generator
+            token = default_token_generator.make_token(user)
             convite_reenviado = False
 
         conta_ativa = ContaMembership.objects.filter(user=self.request.user).first()
