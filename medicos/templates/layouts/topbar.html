@@ -8,7 +8,12 @@
     {% endif %}
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}</a> {# # link quebrado #}</li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="fas fa-user"></i>
+            <span class="ms-2 text-info">Conta: {{ conta.name }} | Usuário: {{ user.get_full_name|default:user.username }}</span>
+          </a>
+        </li>
         <li class="nav-item">
           <form method="post" action="{% url 'medicos:logout' %}" style="display:inline;">
             {% csrf_token %}

@@ -32,6 +32,9 @@ Exemplo:
 > "Campo 'credito_mes_anterior' incluído no modelo ApuracaoPIS. Propagado para builder, view e template conforme documentação."
 
 Fonte: .github/copilot-instructions.md, seção 4
+
+### REGRA DE ANÁLISE GLOBAL DE IMPACTO
+Toda revisão ou implementação de código deve ser obrigatoriamente analisada em contexto global do projeto, considerando dependências, integrações e fluxos existentes, para eliminar qualquer possibilidade de efeito colateral em funcionalidades já implementadas e operacionais. A validação deve incluir modelos, views, forms, templates, URLs, context processors e regras de negócio documentadas. Sempre cite a fonte e o trecho utilizado para justificar decisões.
 ## 3. Fluxo assertivo para troubleshooting de dropdowns multi-tenant e filtrados
 
 Sempre que houver problema em dropdowns (ex: lista vazia, lista errada, filtro não aplicado), siga este fluxo:

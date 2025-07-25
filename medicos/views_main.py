@@ -12,11 +12,13 @@ from medicos.contexto import *
 
 @login_required
 def main(request):
-    memberships = ContaMembership.objects.filter(user=request.user, is_active=True)
-    contas_ids = memberships.values_list('conta_id', flat=True)
-    empresas_cadastradas = Empresa.objects.filter(conta_id__in=contas_ids)
+    membership = ContaMembership.objects.filter(user=request.user, is_active=True).first()
+    conta_id = membership.conta_id if membership else None
+    empresas_cadastradas = Empresa.objects.filter(conta_id=conta_id) if conta_id else Empresa.objects.none()
 
-    # cenario_nome agora deve ser passado no contexto, não na sessão
+    # Centraliza definição de conta_id na sessão
+    request.session['conta_id'] = conta_id
+
     contexto = {
         'mes_ano': request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m'),
         'menu_nome': 'Home',

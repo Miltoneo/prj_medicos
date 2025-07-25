@@ -105,6 +105,7 @@ class CustomUser(AbstractUser):
         db_table = 'customUser'
 
     email = models.EmailField('e-mail address', unique=True)
+    invite_token = models.CharField('Token de convite', max_length=64, blank=True, null=True)
     username = models.CharField(
         max_length=150,
         blank=True,

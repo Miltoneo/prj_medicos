@@ -1,7 +1,27 @@
-
 from django.conf import settings
-from medicos.models import Conta, Empresa
+from medicos.models import ContaMembership, Conta, Empresa
 from medicos.middleware.tenant_middleware import get_current_account
+
+def conta_context(request):
+    """
+    DIRETRIZ OBRIGATÓRIA: Contexto de Conta Multi-tenant
+    -----------------------------------------------------
+    - Injeta 'conta_id' no contexto dos templates via context processor, nunca manualmente nas views.
+    - O valor de conta_id é obtido explicitamente da sessão (armazenado como 'conta_id').
+    - Nunca busque manualmente a conta ativa em request.user ou via query nas views.
+    - Toda lógica de obtenção, validação e fallback da conta deve estar centralizada aqui.
+    - Se precisar de outra variável global (ex: empresa, tenant), crie um novo context processor.
+    - Este padrão é obrigatório para garantir isolamento multi-tenant, consistência e evitar bugs recorrentes.
+    """
+    conta_id = request.session.get('conta_id')
+    conta = None
+    if conta_id:
+        from medicos.models import Conta
+        try:
+            conta = Conta.objects.get(id=conta_id)
+        except Conta.DoesNotExist:
+            conta = None
+    return {'conta_id': conta_id, 'conta': conta}
 
 def app_version(request):
     return {"APP_VERSION": settings.APP_VERSION}

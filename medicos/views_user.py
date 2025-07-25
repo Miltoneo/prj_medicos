@@ -1,18 +1,34 @@
 
-# Imports: Django
+
+
+
+# Django imports
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.conf import settings
 
-# Imports: Local
-from .models.base import ContaMembership, Conta
+# Imports locais
+from .models.base import ContaMembership, Conta, CustomUser
 from .forms import CustomUserForm
-from medicos.models.base import Empresa
 from core.context_processors import empresa_context
 
 User = get_user_model()
+
+def activate_user(request, token):
+    # Busca usuário pelo token e ativa
+    user = get_object_or_404(CustomUser, invite_token=token)
+    user.is_active = True
+    user.invite_token = ''
+    user.save()
+    return render(request, 'usuarios/activate_success.html', {'user': user})
 
 # Helpers / Mixins
 class StaffRequiredMixin(UserPassesTestMixin):
@@ -22,7 +38,8 @@ class StaffRequiredMixin(UserPassesTestMixin):
 
     def handle_no_permission(self):
         messages.error(self.request, "Você não tem permissão para esta ação.")
-        return reverse_lazy('medicos:user_list')
+        from django.shortcuts import redirect
+        return redirect('index')  # Redireciona para a home ou página pública
 
 # Views
 
@@ -34,17 +51,17 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Usuários'
-        context['cenario_nome'] = 'Usuários'
+        context['cenario_nome'] = 'Home'
+        context['conta_id'] = self.kwargs.get('conta_id')
         return context
     model = User
-    template_name = "common/user_list.html"
+    template_name = "usuarios/user_list.html"
     context_object_name = "users"
     paginate_by = 20
 
     def get_queryset(self):
-        # Filtra usuários do tenant (conta) atual
-        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
-        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
+        conta_id = self.kwargs.get('conta_id')
+        return User.objects.filter(conta_memberships__conta_id=conta_id).distinct()
 
 
 class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
@@ -52,29 +69,24 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Novo Usuário'
         context['cenario_nome'] = 'Usuários'
+        context['conta_id'] = self.kwargs.get('conta_id')
         return context
     model = User
     form_class = CustomUserForm
-    template_name = "common/user_form.html"
-    success_url = reverse_lazy('medicos:user_list')
+    template_name = "usuarios/user_form.html"
+    success_url = None
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Cria vínculo do novo usuário à mesma conta do usuário logado
-        for membership in ContaMembership.objects.filter(user=self.request.user, is_active=True):
-            ContaMembership.objects.create(
-                conta=membership.conta,
-                user=self.object,
-                role='readonly',
-                is_active=True,
-                created_by=self.request.user
-            )
-        # Envia convite/ativação para o novo usuário
-        from django.contrib.auth.tokens import default_token_generator
-        from django.utils.http import urlsafe_base64_encode
-        from django.utils.encoding import force_bytes
-        from django.core.mail import send_mail
-        from django.conf import settings
+        conta_id = self.kwargs.get('conta_id')
+        conta = Conta.objects.get(id=conta_id)
+        ContaMembership.objects.create(
+            conta=conta,
+            user=self.object,
+            role='readonly',
+            is_active=True,
+            created_by=self.request.user
+        )
         user = self.object
         user.is_active = False
         user.save()
@@ -89,7 +101,9 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
             fail_silently=False,
         )
         messages.success(self.request, "Usuário criado com sucesso! Convite enviado por e-mail.")
-        return response
+        # Redireciona para a lista de usuários da conta
+        from django.urls import reverse
+        return redirect(reverse('medicos:lista_usuarios_conta', kwargs={'conta_id': conta_id}))
 
 
 class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
@@ -97,21 +111,23 @@ class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Usuário'
         context['cenario_nome'] = 'Usuários'
+        context['conta_id'] = self.kwargs.get('conta_id')
         return context
     model = User
     form_class = CustomUserForm
-    template_name = "common/user_form.html"
-    success_url = reverse_lazy('medicos:user_list')
+    template_name = "usuarios/user_form.html"
+    success_url = None
     pk_url_kwarg = "user_id"
 
     def get_queryset(self):
-        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
-        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
+        conta_id = self.kwargs.get('conta_id')
+        return User.objects.filter(conta_memberships__conta_id=conta_id).distinct()
 
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Usuário atualizado com sucesso!")
-        return response
+        from django.urls import reverse
+        return redirect(reverse('medicos:lista_usuarios_conta', kwargs={'conta_id': self.kwargs.get('conta_id')}))
 
 
 class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
@@ -119,19 +135,22 @@ class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Excluir Usuário'
         context['cenario_nome'] = 'Usuários'
+        context['conta_id'] = self.kwargs.get('conta_id')
         return context
     model = User
-    template_name = "common/user_confirm_delete.html"
-    success_url = reverse_lazy('medicos:user_list')
+    template_name = "usuarios/user_confirm_delete.html"
+    success_url = None
     pk_url_kwarg = "user_id"
 
     def get_queryset(self):
-        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
-        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
+        conta_id = self.kwargs.get('conta_id')
+        return User.objects.filter(conta_memberships__conta_id=conta_id).distinct()
 
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, "Usuário removido com sucesso!")
-        return super().delete(request, *args, **kwargs)
+        from django.urls import reverse
+        response = super().delete(request, *args, **kwargs)
+        return redirect(reverse('medicos:lista_usuarios_conta', kwargs={'conta_id': self.kwargs.get('conta_id')}))
 
 
 class UserDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
@@ -139,12 +158,13 @@ class UserDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Detalhes do Usuário'
         context['cenario_nome'] = 'Usuários'
+        context['conta_id'] = self.kwargs.get('conta_id')
         return context
     model = User
-    template_name = "common/user_detail.html"
+    template_name = "usuarios/user_detail.html"
     context_object_name = "user_obj"
     pk_url_kwarg = "user_id"
 
     def get_queryset(self):
-        conta_ids = ContaMembership.objects.filter(user=self.request.user, is_active=True).values_list('conta_id', flat=True)
-        return User.objects.filter(conta_memberships__conta_id__in=conta_ids).distinct()
+        conta_id = self.kwargs.get('conta_id')
+        return User.objects.filter(conta_memberships__conta_id=conta_id).distinct()
