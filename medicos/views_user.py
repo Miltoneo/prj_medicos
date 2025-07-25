@@ -2,12 +2,13 @@
 
 
 
+
 # Django imports
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
@@ -21,6 +22,12 @@ from .forms import CustomUserForm
 from core.context_processors import empresa_context
 
 User = get_user_model()
+
+"""
+Views e helpers para gestão de usuários multi-tenant.
+Organização dos imports conforme padrão do projeto.
+Fonte: .github/copilot-instructions.md, seção 1
+"""
 
 def activate_user(request, token):
     # Busca usuário pelo token e ativa
@@ -48,12 +55,15 @@ def get_empresa_from_request(request):
     return empresa_context(request).get('empresa')
 
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
+    
     def get_context_data(self, **kwargs):
+        conta_id = self.kwargs.get('conta_id')
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Usuários'
         context['cenario_nome'] = 'Home'
-        context['conta_id'] = self.kwargs.get('conta_id')
+        context['conta_id'] = conta_id
         return context
+    
     model = User
     template_name = "usuarios/user_list.html"
     context_object_name = "users"
@@ -66,10 +76,11 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
 
 class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
+        conta_id = self.kwargs.get('conta_id')
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Novo Usuário'
         context['cenario_nome'] = 'Usuários'
-        context['conta_id'] = self.kwargs.get('conta_id')
+        context['conta_id'] = conta_id
         return context
     model = User
     form_class = CustomUserForm
@@ -108,10 +119,11 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
 
 class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
+        conta_id = self.kwargs.get('conta_id')
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Usuário'
         context['cenario_nome'] = 'Usuários'
-        context['conta_id'] = self.kwargs.get('conta_id')
+        context['conta_id'] = conta_id
         return context
     model = User
     form_class = CustomUserForm
@@ -132,10 +144,11 @@ class UserUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
 
 class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
+        conta_id = self.kwargs.get('conta_id')
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Excluir Usuário'
         context['cenario_nome'] = 'Usuários'
-        context['conta_id'] = self.kwargs.get('conta_id')
+        context['conta_id'] = conta_id
         return context
     model = User
     template_name = "usuarios/user_confirm_delete.html"
@@ -155,10 +168,11 @@ class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
 
 class UserDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
+        conta_id = self.kwargs.get('conta_id')
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Detalhes do Usuário'
         context['cenario_nome'] = 'Usuários'
-        context['conta_id'] = self.kwargs.get('conta_id')
+        context['conta_id'] = conta_id
         return context
     model = User
     template_name = "usuarios/user_detail.html"
