@@ -4,6 +4,7 @@
 
 {% block content %}
 <div class="container py-4">
+{# O título será exibido pelo layout base via {{ titulo_pagina }} #}
   <div class="d-flex justify-content-between align-items-center mb-3">
     <!-- Nome da empresa removido, já exibido pelo base_header -->
     <a href="{% url 'financeiro:financeiro_create' request.session.empresa_id %}" class="btn btn-success btn-sm px-3">

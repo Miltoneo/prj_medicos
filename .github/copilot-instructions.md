@@ -1,3 +1,29 @@
+
+
+
+### REGRA OBRIGATÓRIA DE TITULAÇÃO DE PÁGINA
+- O título da página deve ser passado via variável de contexto `titulo_pagina` na view.
+- O template filho deve obrigatoriamente usar `{% extends 'layouts/base_cenario_financeiro.html' %}` (ou outro base conforme o fluxo) e nunca exibir, definir ou duplicar o título em nenhum bloco, elemento ou variável; o base incorpora e exibe o título automaticamente.
+- O título é exibido exclusivamente pelo template base, nunca pelo filho.
+- Toda tela deve seguir este fluxo, sem exceções ou dubiedade.
+- Exemplo correto na view:
+  ```python
+  context['titulo_pagina'] = 'Lançamentos de movimentações financeiras'
+  ```
+- Exemplo correto no template filho:
+  ```django
+  {% extends 'layouts/base_cenario_financeiro.html' %}
+  {% block content %}
+  ...conteúdo...
+  {% endblock %}
+  ```
+- Exemplo de exibição no layout base:
+  ```django
+  <!-- medicos/templates/layouts/base_cenario_financeiro.html -->
+  <h4 class="fw-bold text-primary">Título: {{ titulo_pagina }}</h4>
+  ```
+- Nunca defina `<h1>`, `<h2>`, ou `{{ titulo_pagina }}` no template filho.
+Fonte: medicos/templates/layouts/base_cenario_financeiro.html, linhas 15-25; medicos/views_financeiro_lancamentos.py, método get_context_data.
 ## 4. Propagação obrigatória de revisões
 
 Toda revisão ou alteração em código (modelos, views, forms, builders, templates, etc.) deve ser analisada para identificar a necessidade de propagação para todos os arquivos relacionados. Sempre verifique se campos, regras ou lógicas novas/alteradas precisam ser refletidas em outros pontos do sistema (ex: modelo, view, builder, template, filtro, serializer, etc.).
@@ -25,6 +51,23 @@ Exemplo de troubleshooting assertivo:
 
 
 ## 1. Regras Comportamentais e de Busca (AI/Agent)
+
+### REGRA OBRIGATÓRIA DE TITULAÇÃO DE PÁGINA
+
+REGRA OBRIGATÓRIA DE TITULAÇÃO DE PÁGINA
+- O título da página deve ser passado via variável de contexto `titulo_pagina` na view.
+- O template filho NÃO pode definir título fixo ou duplicado; o layout base (`base_cenario_financeiro.html`) incorpora e exibe o título automaticamente.
+- Toda tela deve seguir este fluxo, sem exceções ou dubiedade.
+- Exemplo correto na view:
+  ```python
+  context['titulo_pagina'] = 'Lançamentos de movimentações financeiras'
+  ```
+- Exemplo de exibição no layout base:
+  ```django
+  <!-- medicos/templates/layouts/base_cenario_financeiro.html -->
+  <h4 class="fw-bold text-primary">Título: {{ titulo_pagina }}</h4>
+  ```
+Fonte: medicos/templates/layouts/base_cenario_financeiro.html, linhas 15-25; medicos/views_financeiro_lancamentos.py, método get_context_data.
 
     - Sempre considere apenas o código presente no repositório como referência. Não utilize memória, versões antigas, padrões genéricos de frameworks ou suposições.
     - Desabilite heurística genérica: ignore qualquer padrão não documentado nos arquivos do repositório.

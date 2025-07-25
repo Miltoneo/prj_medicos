@@ -16,6 +16,16 @@ class FinanceiroListView(SingleTableMixin, FilterView):
     """
     View para listagem de lançamentos financeiros.
     Exibe tabela filtrável e injeta empresa no contexto para o header.
+
+    REGRA OBRIGATÓRIA DE TITULAÇÃO DE PÁGINA:
+    - O título da página deve ser passado via variável de contexto 'titulo_pagina' na view.
+    - O template filho NÃO pode definir título fixo ou duplicado; o layout base exibe o título automaticamente.
+    - Toda tela deve seguir este fluxo, sem exceções ou dubiedade.
+    - Exemplo correto:
+        context['titulo_pagina'] = 'Lançamentos de movimentações financeiras'
+    - Exemplo de exibição no layout:
+        <h4 class="fw-bold text-primary">Título: {{ titulo_pagina }}</h4>
+    Fonte: medicos/templates/layouts/base_cenario_financeiro.html, linhas 15-25; medicos/views_financeiro_lancamentos.py, método get_context_data.
     """
     model = Financeiro
     table_class = FinanceiroTable
@@ -43,7 +53,7 @@ class FinanceiroListView(SingleTableMixin, FilterView):
         - Injete apenas 'titulo_pagina' e 'cenario_nome' para exibição correta no header.
         """
         context = super().get_context_data(**kwargs)
-        context['titulo_pagina'] = 'Lançamentos'
+        context['titulo_pagina'] = 'Lançamentos de movimentações financeiras'
         context['cenario_nome'] = 'Financeiro'
         return context
 
