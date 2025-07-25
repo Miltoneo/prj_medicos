@@ -25,7 +25,9 @@
                 <tr>
                   <th>Email</th>
                   <th>Nome</th>
-                  <th class="text-center" style="width: 220px;">Ações</th>
+                  <th>Ativo</th>
+                  <th>Tipo</th>
+                  <th class="text-center" style="width: 320px;">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -33,9 +35,14 @@
                   <tr>
                     <td>{{ user.email }}</td>
                     <td>{{ user.get_full_name }}</td>
+                    <td>{{ user.is_active|yesno:"Sim,Não" }}</td>
+                    <td>
+                      {% if user.is_superuser %}Superuser{% elif user.is_staff %}Staff{% else %}Usuário{% endif %}
+                    </td>
                     <td class="text-center">
                       <a class="btn btn-sm btn-outline-light me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_detail' user_id=user.id %}"><i class="bi bi-eye"></i> Detalhes</a>
                       <a class="btn btn-sm btn-outline-warning me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_update' user_id=user.id %}"><i class="bi bi-pencil"></i> Editar</a>
+                      <a class="btn btn-sm btn-outline-danger me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_delete' user_id=user.id %}"><i class="bi bi-trash"></i> Excluir</a>
                     </td>
                   </tr>
                 {% empty %}
