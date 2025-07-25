@@ -50,8 +50,11 @@ class UserInviteView(CreateView):
         if not ContaMembership.objects.filter(user=user, conta=conta_ativa.conta).exists():
             ContaMembership.objects.create(user=user, conta=conta_ativa.conta)
 
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
         try:
-            send_invite_email(user.email, token)
+            send_invite_email(user.email, uid, token)
         except Exception as e:
             messages.error(self.request, f'Erro ao enviar e-mail: {str(e)}')
             return self.form_invalid(form)

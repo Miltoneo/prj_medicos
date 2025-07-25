@@ -29,13 +29,6 @@ Organização dos imports conforme padrão do projeto.
 Fonte: .github/copilot-instructions.md, seção 1
 """
 
-def activate_user(request, token):
-    # Busca usuário pelo token e ativa
-    user = get_object_or_404(CustomUser, invite_token=token)
-    user.is_active = True
-    user.invite_token = ''
-    user.save()
-    return render(request, 'usuarios/activate_success.html', {'user': user})
 
 # Helpers / Mixins
 class StaffRequiredMixin(UserPassesTestMixin):
@@ -153,6 +146,9 @@ class UserDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     model = User
     template_name = "usuarios/user_confirm_delete.html"
     success_url = None
+
+    def get_success_url(self):
+        return reverse('medicos:lista_usuarios_conta', kwargs={'conta_id': self.kwargs.get('conta_id')})
     pk_url_kwarg = "user_id"
 
     def get_queryset(self):

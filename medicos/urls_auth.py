@@ -3,7 +3,6 @@
 from django.urls import path
 from . import views_auth
 from django.contrib.auth import views as auth_views
-from medicos.views_user import activate_user
 
 
 app_name = 'auth'
@@ -16,7 +15,6 @@ urlpatterns = [
     path('license-expired/', views_auth.license_expired, name='license_expired'),
     path('register/', views_auth.register_view, name='register'),
     path('activate/<uidb64>/<token>/', views_auth.activate_account, name='activate_account'),
-    path('auth/activate/<str:token>/', activate_user, name='activate_user_auth'),
     path('password-reset/', views_auth.password_reset_view, name='password_reset'),
     path('resend-activation/', views_auth.resend_activation_view, name='resend_activation'),
     path('', views_auth.index, name='index'),

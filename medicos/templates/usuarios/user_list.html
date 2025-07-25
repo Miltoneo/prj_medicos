@@ -42,7 +42,7 @@
                     <td class="text-center">
                       <a class="btn btn-sm btn-outline-light me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_detail' user_id=user.id %}"><i class="bi bi-eye"></i> Detalhes</a>
                       <a class="btn btn-sm btn-outline-warning me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_update' user_id=user.id %}"><i class="bi bi-pencil"></i> Editar</a>
-                      <a class="btn btn-sm btn-outline-danger me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_delete' user_id=user.id %}"><i class="bi bi-trash"></i> Excluir</a>
+                      <a class="btn btn-sm btn-outline-danger me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_delete' conta_id=conta_id user_id=user.id %}"><i class="bi bi-trash"></i> Excluir</a>
                     </td>
                   </tr>
                 {% empty %}

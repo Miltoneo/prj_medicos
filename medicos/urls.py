@@ -91,7 +91,7 @@ urlpatterns = [
     path('lista_usuarios_conta/<int:conta_id>/', views_user.UserListView.as_view(), name='lista_usuarios_conta'),
     path('usuarios/novo/', views_user.UserCreateView.as_view(), name='user_create'),
     path('usuarios/<int:user_id>/editar/', views_user.UserUpdateView.as_view(), name='user_update'),
-    path('usuarios/<int:user_id>/excluir/', views_user.UserDeleteView.as_view(), name='user_delete'),
+path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView.as_view(), name='user_delete'),
     path('usuarios/<int:user_id>/', views_user.UserDetailView.as_view(), name='user_detail'),
     path('usuarios/invite/', views_user_invite.UserInviteView.as_view(), name='user_invite'),
 
