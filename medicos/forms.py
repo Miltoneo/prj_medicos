@@ -171,14 +171,24 @@ class CustomUserCreationForm(UserCreationForm):
         if 'username' in self.fields:
             del self.fields['username']
 
-    def save(self, commit=True):
+    def save(self, commit=True, request=None):
+        print('DEBUG: Entrou no save do CustomUserCreationForm')
+        import logging
+        logger = logging.getLogger('auth.debug')
+        logger.info('Iniciando fluxo de registro de usuário.')
         user = super().save(commit=commit)
+        logger.info(f'Usuário criado: {user.email} (id={user.id})')
         from medicos.models import Conta, ContaMembership, Licenca
+        from django.core.mail import send_mail
+        from django.conf import settings
+        from django.contrib import messages
         # Cria Conta com nome baseado no e-mail do usuário
         conta_nome = f"Conta de {user.email.split('@')[0]}"
         conta = Conta.objects.create(name=conta_nome, created_by=user)
+        logger.info(f'Conta criada: {conta_nome} (id={conta.id})')
         # Cria vínculo admin
         ContaMembership.objects.create(conta=conta, user=user, role='admin', created_by=user)
+        logger.info(f'Vínculo admin criado para usuário {user.email} na conta {conta_nome}')
         # Cria licença básica válida
         from datetime import date, timedelta
         hoje = date.today()
@@ -191,20 +201,29 @@ class CustomUserCreationForm(UserCreationForm):
             limite_usuarios=10,
             created_by=user
         )
+        logger.info(f'Licença criada para conta {conta_nome}')
         # Desativa usuário até confirmação
         user.is_active = False
         user.save()
+        logger.info(f'Usuário {user.email} desativado até confirmação.')
         # Envia e-mail de ativação
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         activation_link = f"{settings.SITE_URL}/medicos/auth/activate/{uid}/{token}/"
-        send_mail(
-            'Ative sua conta',
-            f'Clique no link para ativar sua conta: {activation_link}',
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
+        logger.info(f'Link de ativação gerado: {activation_link}')
+        try:
+            send_mail(
+                'Ative sua conta',
+                f'Clique no link para ativar sua conta: {activation_link}',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            logger.info(f'E-mail de ativação enviado para {user.email} (remetente: {settings.DEFAULT_FROM_EMAIL})')
+        except Exception as e:
+            logger.error(f"Erro ao enviar e-mail de ativação para {user.email}: {e}")
+            if request is not None:
+                messages.error(request, f"Erro ao enviar e-mail de ativação: {e}")
         return user
 
 class EmpresaForm(forms.ModelForm):

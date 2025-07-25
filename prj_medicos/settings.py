@@ -15,6 +15,15 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
         },
+        'auth.debug': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
     },
 }
 """
@@ -200,8 +209,8 @@ EMAIL_USE_TLS   = True
 EMAIL_PORT      = 587
 EMAIL_HOST         = 'smtp.gmail.com'
 EMAIL_HOST_PASSWORD = 'xblz qmog fifx zqzu' # from google app register
-EMAIL_HOST_USER     = 'miltoneo'
-DEFAULT_FROM_EMAIL =  'suporte_tds@gmail.com'
+EMAIL_HOST_USER     = 'miltoneo@gmail.com'
+DEFAULT_FROM_EMAIL =  'miltoneo@gmail.com'
 
 # URL base do sistema para geração de links em e-mails
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
