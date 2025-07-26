@@ -290,8 +290,9 @@ def activate_account(request, uidb64, token):
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
     if user is not None and default_token_generator.check_token(user, token):
+        from medicos.forms_set_password_with_name import SetPasswordWithNameForm
         if request.method == 'POST':
-            form = SetPasswordForm(user, request.POST)
+            form = SetPasswordWithNameForm(user, request.POST)
             if form.is_valid():
                 form.save()
                 user.is_active = True
@@ -299,7 +300,7 @@ def activate_account(request, uidb64, token):
                 messages.success(request, 'Conta ativada com sucesso! Você já pode fazer login.')
                 return redirect('auth:login_tenant')
         else:
-            form = SetPasswordForm(user)
+            form = SetPasswordWithNameForm(user)
         return render(request, 'auth/set_password.html', {'form': form})
     else:
         return render(request, 'auth/activation_invalid.html')
