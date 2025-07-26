@@ -55,8 +55,8 @@
               {% endfor %}
             </div>
             <div class="mb-3 text-start">
-              <label for="id_password" class="form-label fw-semibold">Senha</label>
-              {{ login_form.password }}
+              <label for="id_password_login" class="form-label fw-semibold">Senha</label>
+              <input type="password" name="password" class="form-control" id="id_password_login" required value="">
               {% for error in login_form.password.errors %}
                 <div class="text-danger small">{{ error }}</div>
               {% endfor %}
