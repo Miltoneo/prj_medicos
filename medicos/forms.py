@@ -164,12 +164,16 @@ class EmailAuthenticationForm(AuthenticationForm):
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ('email',)  # só email, remova 'username' se não for usado
+        fields = ('email', 'first_name', 'last_name')  # solicita nome e sobrenome no registro
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if 'username' in self.fields:
             del self.fields['username']
+        self.fields['first_name'].label = 'Nome'
+        self.fields['last_name'].label = 'Sobrenome'
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
 
     def save(self, commit=True, request=None):
         print('DEBUG: Entrou no save do CustomUserCreationForm')

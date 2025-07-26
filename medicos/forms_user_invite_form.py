@@ -9,11 +9,9 @@ class UserInviteForm(forms.ModelForm):
         super().validate_unique()
     class Meta:
         model = CustomUser
-        fields = ['email', 'first_name', 'last_name']
+        fields = ['email']
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def clean_email(self):
@@ -26,11 +24,9 @@ class UserInviteForm(forms.ModelForm):
         return email
 
     def save(self, commit=True):
-        # Se já existe usuário inativo, atualiza dados ao invés de criar novo
+        # Se já existe usuário inativo, apenas retorna o usuário, não altera nome
         if hasattr(self, '_user_existente') and self._user_existente and not self._user_existente.is_active:
             user = self._user_existente
-            user.first_name = self.cleaned_data.get('first_name')
-            user.last_name = self.cleaned_data.get('last_name')
             user.is_active = False
             if commit:
                 user.save()

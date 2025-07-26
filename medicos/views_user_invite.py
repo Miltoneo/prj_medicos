@@ -28,8 +28,6 @@ class UserInviteView(CreateView):
                 return self.form_invalid(form)
             else:
                 user = user_existente
-                user.first_name = form.cleaned_data.get('first_name')
-                user.last_name = form.cleaned_data.get('last_name')
                 user.is_active = False
                 user.save()
                 messages.success(self.request, f"Convite reenviado para usuário inativo: {email}.")
