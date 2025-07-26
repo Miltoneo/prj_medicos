@@ -201,10 +201,20 @@ LOGOUT_REDIRECT_URL = 'medicos:login'
 # DEFAULT_FROM_EMAIL  = 'user1@mail.onkoto.com.br'
 # RECIPIENT_ADDRESS   = ['None']
 
-# ----------------------------------------------#
-#              smtp.gmail.com    (teste only)   #
-# ----------------------------------------------#
+# ----------------------------------------------    #
+# DESENVOLVIMENTO smtp.gmail.com    (teste only)   #
+# ----------------------------------------------    #
 #https://www.geeksforgeeks.org/setup-sending-email-in-django-project/
+# EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_USE_TLS   = True
+# EMAIL_PORT      = 587
+# EMAIL_HOST         = 'smtp.gmail.com'
+# EMAIL_HOST_PASSWORD = 'xblz qmog fifx zqzu' # from google app register
+# EMAIL_HOST_USER     = 'miltoneo@gmail.com'
+# DEFAULT_FROM_EMAIL =  'miltoneo@gmail.com'
+# SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
+
+# PRODUTION SMTP SETTINGS
 EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS   = True
 EMAIL_PORT      = 587
@@ -212,6 +222,4 @@ EMAIL_HOST         = 'smtp.gmail.com'
 EMAIL_HOST_PASSWORD = 'xblz qmog fifx zqzu' # from google app register
 EMAIL_HOST_USER     = 'miltoneo@gmail.com'
 DEFAULT_FROM_EMAIL =  'miltoneo@gmail.com'
-
-# URL base do sistema para geração de links em e-mails
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
