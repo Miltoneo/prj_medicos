@@ -234,6 +234,24 @@ class CustomUserCreationForm(UserCreationForm):
         return user
 
 class EmpresaForm(forms.ModelForm):
+    def clean_cnpj(self):
+        """Valida o CNPJ informado no formulário."""
+        import re
+        from django.core.exceptions import ValidationError
+        cnpj = self.cleaned_data.get('cnpj', '').replace('.', '').replace('/', '').replace('-', '')
+        if not cnpj.isdigit() or len(cnpj) != 14:
+            raise ValidationError('CNPJ deve conter 14 dígitos numéricos.')
+        if cnpj == cnpj[0] * 14:
+            raise ValidationError('CNPJ inválido.')
+        def calc_dv(cnpj, peso):
+            soma = sum(int(a) * b for a, b in zip(cnpj, peso))
+            resto = soma % 11
+            return '0' if resto < 2 else str(11 - resto)
+        dv1 = calc_dv(cnpj[:12], [5,4,3,2,9,8,7,6,5,4,3,2])
+        dv2 = calc_dv(cnpj[:12]+dv1, [6,5,4,3,2,9,8,7,6,5,4,3,2])
+        if cnpj[-2:] != dv1+dv2:
+            raise ValidationError('CNPJ inválido.')
+        return self.cleaned_data['cnpj']
     class Meta:
         model = Empresa
         fields = [

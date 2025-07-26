@@ -283,7 +283,12 @@ class Empresa(models.Model):
     # Dados da empresa
     name = models.CharField(max_length=255, verbose_name="Razão Social")
     nome_fantasia = models.CharField(max_length=255, blank=True, verbose_name="Nome Fantasia")
-    cnpj = models.CharField(max_length=18, unique=True, verbose_name="CNPJ")
+    cnpj = models.CharField(max_length=18, verbose_name="CNPJ")
+    class Meta:
+        db_table = 'empresa'
+        verbose_name = "Empresa/Associação"
+        verbose_name_plural = "Empresas/Associações"
+        unique_together = ('conta', 'cnpj')
     inscricao_estadual = models.CharField(max_length=20, blank=True, verbose_name="Inscrição Estadual")
     inscricao_municipal = models.CharField(max_length=20, blank=True, verbose_name="Inscrição Municipal")
 

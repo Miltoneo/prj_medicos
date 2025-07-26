@@ -10,10 +10,7 @@
     {% endfor %}
   {% endif %}
   <form method="post">{% csrf_token %}
-    <div class="mb-3">
-      <label for="mes_ano" class="form-label fw-bold">Competência:</label>
-      <input type="month" id="mes_ano" name="mes_ano" class="form-control" value="{{ mes_ano|default:'' }}">
-    </div>
+    <!-- Campo de competência removido conforme solicitado -->
     {{ form|crispy }}
     <button type="submit" class="btn btn-primary mt-2">Salvar</button>
   </form>
