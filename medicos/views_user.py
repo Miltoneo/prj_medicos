@@ -39,7 +39,7 @@ class StaffRequiredMixin(UserPassesTestMixin):
     def handle_no_permission(self):
         messages.error(self.request, "Você não tem permissão para esta ação.")
         from django.shortcuts import redirect
-        return redirect('index')  # Redireciona para a home ou página pública
+        return redirect('medicos:index')  # Redireciona para a home ou página pública
 
 # Views
 
