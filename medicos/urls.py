@@ -21,6 +21,7 @@ from . import views_main
 from . import views_relatorios
 from . import views_empresa
 from . import views_faturamento
+from .views_import_xml import NotaFiscalImportXMLView
 from .views_recebimento_notafiscal import NotaFiscalRecebimentoListView, NotaFiscalRecebimentoUpdateView
 from . import views_meio_pagamento
 from . import views_faturamento
@@ -106,6 +107,7 @@ path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView
     # =====================
     path('lista_notas_fiscais/', views_faturamento.NotaFiscalListView.as_view(), name='lista_notas_fiscais'),
     path('criar_nota_fiscal/nova/', views_faturamento.NotaFiscalCreateView.as_view(), name='criar_nota_fiscal'),
+    path('importar_xml_nota_fiscal/', NotaFiscalImportXMLView.as_view(), name='importar_xml_nota_fiscal'),
     path('editar_nota_fiscal/<int:pk>/editar/', views_faturamento.NotaFiscalUpdateView.as_view(), name='editar_nota_fiscal'),
     path('excluir_nota_fiscal/<int:pk>/excluir/', views_faturamento.NotaFiscalDeleteView.as_view(), name='excluir_nota_fiscal'),
     path('cenario_faturamento/', views_cenario.cenario_faturamento, name='cenario_faturamento'),

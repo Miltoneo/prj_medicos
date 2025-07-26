@@ -131,8 +131,9 @@ def empresa_detail(request, empresa_id):
 
 @login_required
 def empresa_update(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
     contexto = main(request, empresa_id=empresa_id)
-    empresa = contexto['empresa']
+    contexto['empresa'] = empresa
     if request.method == 'POST':
         form = EmpresaForm(request.POST, instance=empresa)
         if form.is_valid():
@@ -143,7 +144,6 @@ def empresa_update(request, empresa_id):
     else:
         form = EmpresaForm(instance=empresa)
     contexto['form'] = form
-    contexto['empresa'] = empresa
     if 'cenario_nome' in contexto:
         del contexto['cenario_nome']
     return render(request, 'empresa/empresa_update.html', contexto)
