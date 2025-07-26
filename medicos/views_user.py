@@ -3,11 +3,14 @@
 
 
 
+
 # Django imports
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views import View
+from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth.tokens import default_token_generator
@@ -41,11 +44,35 @@ class StaffRequiredMixin(UserPassesTestMixin):
         from django.shortcuts import redirect
         return redirect('medicos:index')  # Redireciona para a home ou página pública
 
+
 # Views
 
 def get_empresa_from_request(request):
     # Use apenas o context processor para obter a empresa
     return empresa_context(request).get('empresa')
+
+
+
+class PublicUserRegisterView(View):
+    def get(self, request):
+        form = UserCreationForm()
+        return render(request, 'usuarios/public_register.html', {
+            'form': form,
+            'titulo_pagina': 'Cadastro'
+        })
+
+    def post(self, request):
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_staff = True  # Usuário que se registra é staff
+            user.save()
+            messages.success(request, 'Cadastro realizado com sucesso! Você já pode acessar o sistema.')
+            return redirect('medicos:index')
+        return render(request, 'usuarios/public_register.html', {
+            'form': form,
+            'titulo_pagina': 'Cadastro'
+        })
 
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     
@@ -93,6 +120,7 @@ class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
         )
         user = self.object
         user.is_active = False
+        user.is_staff = True  # Garante que usuário registrado é staff
         user.save()
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))

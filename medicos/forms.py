@@ -180,7 +180,10 @@ class CustomUserCreationForm(UserCreationForm):
         import logging
         logger = logging.getLogger('auth.debug')
         logger.info('Iniciando fluxo de registro de usuário.')
-        user = super().save(commit=commit)
+        user = super().save(commit=False)
+        user.is_staff = True  # Garante que todo usuário registrado por este form será staff
+        if commit:
+            user.save()
         logger.info(f'Usuário criado: {user.email} (id={user.id})')
         from medicos.models import Conta, ContaMembership, Licenca
         from django.core.mail import send_mail
