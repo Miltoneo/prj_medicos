@@ -10,7 +10,7 @@ services:
       - ./db:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE     : prd_milenio
+      MYSQL_DATABASE     : db_medicos
       MYSQL_USER         : admin
       MYSQL_PASSWORD     : admin
     ports:
@@ -33,7 +33,7 @@ services:
     environment:
       #SECONDARY_SERVER_HOSTNAME: db 
       SECONDARY_SERVER_HOSTNAME: db #host.docker.internal  
-      SECONDARY_DATABASE_NAME: prd_milenio
+      SECONDARY_DATABASE_NAME: db_medicos
       SECONDARY_DATABASE_USER: admin
       SECONDARY_DATABASE_PASSWORD: admin
       SECONDARY_DATABASE_PORT    : '3306'
