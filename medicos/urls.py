@@ -39,6 +39,7 @@ from .views_aplicacoes_financeiras import (
     AplicacaoFinanceiraUpdateView,
 )
 from django.contrib.auth import views as auth_views
+from .views_auth import tenant_login
 
 
 app_name = 'medicos'
@@ -169,6 +170,7 @@ path('relatorio-issqn/<int:empresa_id>/', views_relatorios.relatorio_apuracao, n
     # Autenticação
     # =====================
     path('logout/', auth_views.LogoutView.as_view(next_page='/medicos/auth/login/'), name='logout'),
+    path('login/', tenant_login, name='login'),  # compatibilidade global para templates padrão Django
     # =====================
     # Aplicações Financeiras (Fluxo Isolado)
     # =====================
