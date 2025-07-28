@@ -1,20 +1,29 @@
+import os
+import sys
+import django
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prj_medicos.settings')
+django.setup()
+
 from medicos.models import CustomUser, Conta, ContaMembership, Licenca
 from django.utils import timezone
 
 # Crie um usuário comum
 test_user, created = CustomUser.objects.get_or_create(
-    username='testuser',
+    username='mileniocontabilidade',
     defaults={
-        'email': 'testuser@example.com',
+        'email': 'teste@mileniocontabilidade.com',
         'is_active': True,
-        'is_staff': False,
+        'is_staff': True,
         'is_superuser': False,
-        'first_name': 'Test',
-        'last_name': 'User',
+        'first_name': 'Milênio',
+        'last_name': 'Contabilidade',
     }
 )
 if created:
-    test_user.set_password('testpassword123')
+    test_user.set_password('milenio123')
     test_user.save()
 
 # Crie uma conta, se não existir
@@ -37,4 +46,4 @@ if not hasattr(conta, 'licenca'):
     )
     print('Licença criada para Conta Teste.')
 
-print('Usuário testuser criado e vinculado à Conta Teste com senha: testpassword123')
+print('Usuário mileniocontabilidade criado e vinculado à Conta Teste com senha: milenio123')
