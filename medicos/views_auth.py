@@ -210,6 +210,7 @@ def register_view(request):
     from .forms import EmailAuthenticationForm
     from django.contrib.auth.forms import PasswordResetForm
     logger = logging.getLogger('auth.debug')
+    show_register = False
     if request.method == 'POST' and request.POST.get('action') == 'register':
         login_form = EmailAuthenticationForm()
         register_form = CustomUserCreationForm(request.POST)
@@ -224,8 +225,10 @@ def register_view(request):
             except Exception as e:
                 logger.error(f"Erro no registro de usuário: {e}", exc_info=True)
                 messages.error(request, f'Erro ao enviar e-mail de ativação: {e}')
+                show_register = True
         else:
             logger.warning(f"Falha de validação no registro: {register_form.errors.as_json()}")
+            show_register = True
     else:
         login_form = EmailAuthenticationForm()
         register_form = CustomUserCreationForm()
@@ -234,6 +237,7 @@ def register_view(request):
         'login_form': login_form,
         'register_form': register_form,
         'password_reset_form': password_reset_form,
+        'show_register': show_register,
     })
 
 # ---------------------------------------------
