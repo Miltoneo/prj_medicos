@@ -25,13 +25,13 @@
   <div class="login-card animate__animated animate__fadeInDown mx-auto" style="max-width: 500px; width: 100%; background: #fff; border-radius: 18px; box-shadow: 0 8px 32px rgba(102,126,234,0.10); overflow: hidden;">
     <div class="login-header" style="background: #fff; color: #333; padding: 2.2rem 2rem 1.2rem 2rem; text-align: center; border-bottom: 1px solid #f0f0f0;">
       <img src="https://cdn-icons-png.flaticon.com/512/3209/3209265.png" alt="Logo" style="width: 56px; height: 56px; margin-bottom: 0.5rem;">
-      <h2 class="mb-1" style="font-weight: 700; letter-spacing: 1px; color: #667eea;">prj_medicos</h2>
+      <h2 class="mb-1" style="font-weight: 700; letter-spacing: 1px; color: #667eea;">Sistema Médicos</h2>
       <p class="mb-0" style="font-size: 1.05rem; color: #888;">Acesso ao sistema</p>
     </div>
     <div class="login-form p-4">
       {% if messages %}
         {% for message in messages %}
-          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          <div class="alert alert-{{ message.tags }}">{{ message|safe }}</div>
         {% endfor %}
       {% endif %}
       <form id="loginForm" method="post" autocomplete="off" {% if show_register %}class="d-none"{% endif %}>
@@ -48,14 +48,28 @@
             </div>
             <div class="mb-3 text-start">
               <label for="id_password_login" class="form-label fw-semibold">Senha</label>
-              <input type="password" name="password" class="form-control" id="id_password_login" required value="">
-              {% for error in login_form.password.errors %}
-                <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
+              <input 
+                type="password" 
+                name="password" 
+                class="form-control" 
+                id="id_password_login" 
+                required 
+                value=""
+                autocomplete="current-password"
+              >
+              {% if login_form.password.errors %}
+                <ul class="mb-0 ps-3">
+                  {% for error in login_form.password.errors %}
+                    <li class="text-danger small">{{ error }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
             </div>
             {% if login_form.non_field_errors %}
               <div class="alert alert-danger mt-2">
-                {{ login_form.non_field_errors }}
+                {% for error in login_form.non_field_errors %}
+                  {{ error|safe }}<br>
+                {% endfor %}
               </div>
             {% endif %}
             <div class="d-grid gap-2 mb-2">
@@ -67,8 +81,6 @@
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 gap-2">
               <div>
                 <a href="#" class="link-secondary small" data-bs-toggle="modal" data-bs-target="#resetModal">Esqueceu a senha?</a>
-                <span class="mx-2">|</span>
-                <a href="{% url 'auth:resend_activation' %}" class="link-secondary small">Reenviar ativação</a>
               </div>
               <div>
                 <span class="text-muted" style="font-size: 0.95rem;">Não tem conta?</span>

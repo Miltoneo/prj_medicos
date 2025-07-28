@@ -125,7 +125,7 @@ def login_view(request):
                     user = register_form.save(request=request)
                     logger.info(f"Novo registro de usuário: {user.email} (id={user.id}) - aguardando ativação.")
                     messages.success(request, 'Cadastro realizado! Verifique seu e-mail para ativar a conta.')
-                    register_form = CustomUserCreationForm()  # Limpa o formulário
+                    register_form = CustomUserCreationForm()  # Limpa o formulário somente em caso de sucesso
                 except Exception as e:
                     logger.error(f"Erro no registro de usuário: {e}", exc_info=True)
                     messages.error(request, f'Erro ao enviar e-mail de ativação: {e}')
@@ -145,31 +145,48 @@ def login_view(request):
 def tenant_login(request):
     from .forms import CustomUserCreationForm
     from django.contrib.auth.forms import PasswordResetForm
+    from django.contrib.auth import get_user_model
     if request.method == 'POST':
         login_form = TenantLoginForm(request.POST)
         if login_form.is_valid():
             email = login_form.cleaned_data['email']
             password = login_form.cleaned_data['password']
+            User = get_user_model()
+            try:
+                user_obj = User.objects.get(email=email)
+            except User.DoesNotExist:
+                user_obj = None
             user = authenticate(request, username=email, password=password)
             if user is not None:
-                login(request, user)
-                memberships = ContaMembership.objects.filter(user=user)
-                if memberships.count() == 1:
-                    conta = memberships.first().conta
-                    if conta.licenca.is_valida():
-                        request.session['conta_ativa_id'] = conta.id
-                        messages.success(request, f'Bem-vindo à {conta.name}!')
-                        return redirect('/medicos/dashboard/')
-                    else:
-                        messages.error(request, f'Licença da conta {conta.name} expirou.')
-                        return redirect('/medicos/auth/license-expired/')
-                elif memberships.count() > 1:
-                    return redirect('/medicos/auth/select-account/')
+                if not user.is_active:
+                    from django.urls import reverse
+                    resend_url = reverse('auth:resend_activation')
+                    login_form.add_error(None, f'Sua conta ainda não foi ativada. <a href="{resend_url}" class="alert-link">Clique aqui para reenviar o e-mail de ativação</a>.')
                 else:
-                    logout(request)
-                    messages.error(request, 'Usuário não possui acesso a nenhuma conta.')
+                    login(request, user)
+                    memberships = ContaMembership.objects.filter(user=user)
+                    if memberships.count() == 1:
+                        conta = memberships.first().conta
+                        if conta.licenca.is_valida():
+                            request.session['conta_ativa_id'] = conta.id
+                            messages.success(request, f'Bem-vindo à {conta.name}!')
+                            return redirect('/medicos/dashboard/')
+                        else:
+                            messages.error(request, f'Licença da conta {conta.name} expirou.')
+                            return redirect('/medicos/auth/license-expired/')
+                    elif memberships.count() > 1:
+                        return redirect('/medicos/auth/select-account/')
+                    else:
+                        logout(request)
+                        messages.error(request, 'Usuário não possui acesso a nenhuma conta.')
             else:
-                messages.error(request, 'Email ou senha inválidos.')
+                # Se usuário existe mas está inativo, mostrar mensagem específica
+                if user_obj and not user_obj.is_active:
+                    from django.urls import reverse
+                    resend_url = reverse('auth:resend_activation')
+                    login_form.add_error(None, f'Sua conta ainda não foi ativada. <a href="{resend_url}" class="alert-link">Clique aqui para reenviar o e-mail de ativação</a>.')
+                else:
+                    messages.error(request, 'Email ou senha inválidos.')
     else:
         login_form = TenantLoginForm()
     register_form = CustomUserCreationForm()
