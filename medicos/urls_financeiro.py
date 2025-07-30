@@ -1,5 +1,5 @@
 from django.urls import path
-from .views_financeiro import (
+from .views_descricao_movimentacao import (
     DescricaoMovimentacaoFinanceiraListView,
     DescricaoMovimentacaoFinanceiraCreateView,
     DescricaoMovimentacaoFinanceiraUpdateView,

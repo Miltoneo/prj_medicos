@@ -12,8 +12,8 @@ def cenario_faturamento(request):
     - Injete também 'titulo_pagina' para exibição do título padrão no header.
     - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
     """
-    empresa_id = request.session.get('empresa_id')
-    empresa = Empresa.objects.filter(id=empresa_id).first() if empresa_id else None
+    from core.context_processors import empresa_context
+    empresa = empresa_context(request).get('empresa')
     request.session['menu_nome'] = 'Faturamento'
     request.session['cenario_nome'] = 'Faturamento'
     request.session['titulo_pagina'] = 'Notas Fiscais'
@@ -29,11 +29,11 @@ def cenario_cadastro(request):
     - Injete também 'titulo_pagina' para exibição do título padrão no header.
     - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
     """
-    empresa_id = request.session.get('empresa_id')
-    empresa = Empresa.objects.filter(id=empresa_id).first() if empresa_id else None
+    from core.context_processors import empresa_context
+    empresa = empresa_context(request).get('empresa')
     request.session['cenario_nome'] = 'Cadastro'
     request.session['titulo_pagina'] = 'Cadastro de Sócios'
     request.session['empresa_nome'] = empresa.name if empresa else ''
-    return redirect('medicos:lista_socios_empresa', empresa_id=empresa_id)
+    return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id if empresa else None)
 
 

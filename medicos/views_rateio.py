@@ -26,7 +26,9 @@ class RateioContextMixin:
 @method_decorator(login_required, name='dispatch')
 class NotaFiscalRateioListView(RateioContextMixin, FilterView):
     def post(self, request, *args, **kwargs):
-        empresa_id = self.request.session.get('empresa_id')
+        # Use apenas o context processor para obter a empresa
+        from core.context_processors import empresa_context
+        empresa = empresa_context(request).get('empresa')
         queryset = self.get_queryset()
         nota_id = self.request.GET.get('nota_id')
         nota_fiscal = None
@@ -41,12 +43,8 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             return self.get(request, *args, **kwargs)
         # Get all active medicos for empresa
         medicos_empresa = []
-        if empresa_id:
-            try:
-                empresa = Empresa.objects.get(id=int(empresa_id))
-                medicos_empresa = Socio.objects.filter(empresa=empresa, ativo=True)
-            except Empresa.DoesNotExist:
-                pass
+        if empresa:
+            medicos_empresa = Socio.objects.filter(empresa=empresa, ativo=True)
         # Save rateio for each medico
         from medicos.models.fiscal import NotaFiscalRateioMedico
         from decimal import Decimal, InvalidOperation

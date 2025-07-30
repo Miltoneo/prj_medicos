@@ -4,7 +4,7 @@ from medicos.models.financeiro import MeioPagamento
 class MeioPagamentoForm(forms.ModelForm):
     class Meta:
         model = MeioPagamento
-        fields = ['codigo', 'nome', 'descricao']
+        fields = ['codigo', 'nome']
 
     def save(self, commit=True, conta=None):
         instance = super().save(commit=False)

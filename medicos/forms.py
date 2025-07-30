@@ -1,3 +1,13 @@
+
+# Corrigir ordem dos imports para garantir que 'forms' esteja definido antes de ser usado
+from django import forms
+from medicos.models.despesas import ItemDespesaRateioMensal
+
+# Formulário para configuração de rateio mensal de item de despesa
+class ItemDespesaRateioMensalForm(forms.ModelForm):
+    class Meta:
+        model = ItemDespesaRateioMensal
+        fields = ['item_despesa', 'socio', 'data_referencia', 'percentual_rateio', 'ativo', 'observacoes']
 from django import forms
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.base import Socio
@@ -44,7 +54,10 @@ class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
 from django import forms
 from .models.base import Socio, Pessoa
 
-class SocioPessoaCompletaForm(forms.Form):
+class SocioPessoaCompletaForm(forms.ModelForm):
+    class Meta:
+        model = Socio
+        fields = ['name', 'cpf', 'rg', 'data_nascimento', 'telefone', 'celular', 'email', 'crm', 'especialidade', 'pessoa_ativo', 'socio_ativo', 'data_entrada', 'data_saida', 'observacoes']
     """
     Formulário único para cadastro de sócio e pessoa.
     """
@@ -151,21 +164,38 @@ class EmailAuthenticationForm(AuthenticationForm):
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ('email',)  # só email, remova 'username' se não for usado
+        fields = ('email', 'first_name', 'last_name')  # solicita nome e sobrenome no registro
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if 'username' in self.fields:
             del self.fields['username']
+        self.fields['first_name'].label = 'Nome'
+        self.fields['last_name'].label = 'Sobrenome'
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
 
-    def save(self, commit=True):
-        user = super().save(commit=commit)
+    def save(self, commit=True, request=None):
+        print('DEBUG: Entrou no save do CustomUserCreationForm')
+        import logging
+        logger = logging.getLogger('auth.debug')
+        logger.info('Iniciando fluxo de registro de usuário.')
+        user = super().save(commit=False)
+        user.is_staff = True  # Garante que todo usuário registrado por este form será staff
+        if commit:
+            user.save()
+        logger.info(f'Usuário criado: {user.email} (id={user.id})')
         from medicos.models import Conta, ContaMembership, Licenca
+        from django.core.mail import send_mail
+        from django.conf import settings
+        from django.contrib import messages
         # Cria Conta com nome baseado no e-mail do usuário
         conta_nome = f"Conta de {user.email.split('@')[0]}"
         conta = Conta.objects.create(name=conta_nome, created_by=user)
+        logger.info(f'Conta criada: {conta_nome} (id={conta.id})')
         # Cria vínculo admin
         ContaMembership.objects.create(conta=conta, user=user, role='admin', created_by=user)
+        logger.info(f'Vínculo admin criado para usuário {user.email} na conta {conta_nome}')
         # Cria licença básica válida
         from datetime import date, timedelta
         hoje = date.today()
@@ -178,23 +208,50 @@ class CustomUserCreationForm(UserCreationForm):
             limite_usuarios=10,
             created_by=user
         )
+        logger.info(f'Licença criada para conta {conta_nome}')
         # Desativa usuário até confirmação
         user.is_active = False
         user.save()
+        logger.info(f'Usuário {user.email} desativado até confirmação.')
         # Envia e-mail de ativação
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         activation_link = f"{settings.SITE_URL}/medicos/auth/activate/{uid}/{token}/"
-        send_mail(
-            'Ative sua conta',
-            f'Clique no link para ativar sua conta: {activation_link}',
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
+        logger.info(f'Link de ativação gerado: {activation_link}')
+        try:
+            send_mail(
+                'Ative sua conta',
+                f'Clique no link para ativar sua conta: {activation_link}',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            logger.info(f'E-mail de ativação enviado para {user.email} (remetente: {settings.DEFAULT_FROM_EMAIL})')
+        except Exception as e:
+            logger.error(f"Erro ao enviar e-mail de ativação para {user.email}: {e}")
+            if request is not None:
+                messages.error(request, f"Erro ao enviar e-mail de ativação: {e}")
         return user
 
 class EmpresaForm(forms.ModelForm):
+    def clean_cnpj(self):
+        """Valida o CNPJ informado no formulário."""
+        import re
+        from django.core.exceptions import ValidationError
+        cnpj = self.cleaned_data.get('cnpj', '').replace('.', '').replace('/', '').replace('-', '')
+        if not cnpj.isdigit() or len(cnpj) != 14:
+            raise ValidationError('CNPJ deve conter 14 dígitos numéricos.')
+        if cnpj == cnpj[0] * 14:
+            raise ValidationError('CNPJ inválido.')
+        def calc_dv(cnpj, peso):
+            soma = sum(int(a) * b for a, b in zip(cnpj, peso))
+            resto = soma % 11
+            return '0' if resto < 2 else str(11 - resto)
+        dv1 = calc_dv(cnpj[:12], [5,4,3,2,9,8,7,6,5,4,3,2])
+        dv2 = calc_dv(cnpj[:12]+dv1, [6,5,4,3,2,9,8,7,6,5,4,3,2])
+        if cnpj[-2:] != dv1+dv2:
+            raise ValidationError('CNPJ inválido.')
+        return self.cleaned_data['cnpj']
     class Meta:
         model = Empresa
         fields = [
@@ -242,9 +299,9 @@ class SocioPessoaForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        # Garante que a conta seja definida
+        # Garante que a empresa seja definida
         if self.empresa:
-            instance.conta = self.empresa.conta
+            instance.empresa = self.empresa
         if commit:
             instance.save()
         return instance
@@ -267,6 +324,7 @@ class AliquotaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.empresa = kwargs.pop('empresa', None)
         super().__init__(*args, **kwargs)
         self.fields['data_vigencia_inicio'].input_formats = ['%Y-%m-%d']
         self.fields['data_vigencia_fim'].input_formats = ['%Y-%m-%d']
@@ -280,7 +338,7 @@ class AliquotaForm(forms.ModelForm):
 class GrupoDespesaForm(forms.ModelForm):
     class Meta:
         model = GrupoDespesa
-        fields = ['codigo', 'descricao']
+        fields = ['codigo', 'descricao', 'tipo_rateio']
         widgets = {
             'descricao': forms.Textarea(attrs={'rows': 2}),
         }
@@ -288,14 +346,30 @@ class GrupoDespesaForm(forms.ModelForm):
 class ItemDespesaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['grupo'].label_from_instance = lambda obj: obj.descricao
+        self.fields['grupo_despesa'].label_from_instance = lambda obj: obj.descricao
+        self.fields['codigo'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Código',
+            'style': 'max-width: 200px;'
+        })
+        self.fields['grupo_despesa'].widget.attrs.update({
+            'class': 'form-select',
+            'style': 'max-width: 300px;'
+        })
+        self.fields['descricao'].widget.attrs.update({
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Descrição detalhada',
+            'style': 'min-width: 400px; max-width: 900px;'
+        })
+
     class Meta:
         model = ItemDespesa
-        fields = ['codigo', 'descricao', 'grupo']
+        fields = ['codigo', 'grupo_despesa', 'descricao']  # 'grupo_despesa' já está acima de 'descricao'
         widgets = {
-            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
-            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'grupo': forms.Select(attrs={'class': 'form-control'}),
+            'codigo': forms.TextInput(),
+            'grupo_despesa': forms.Select(),
+            'descricao': forms.Textarea(),
         }
 
 class DescricaoMovimentacaoFinanceiraForm(forms.ModelForm):
@@ -317,6 +391,21 @@ class DescricaoMovimentacaoFinanceiraForm(forms.ModelForm):
             'descricao', 'codigo_contabil', 'observacoes'
         ]
         widgets = {
-            'descricao': forms.Textarea(attrs={'rows': 3}),
-            'observacoes': forms.Textarea(attrs={'rows': 2}),
+            'descricao': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'style': 'min-width: 400px; max-width: 900px;',
+                'placeholder': 'Descrição detalhada'
+            }),
+            'codigo_contabil': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 200px;',
+                'placeholder': 'Código contábil'
+            }),
+            'observacoes': forms.Textarea(attrs={
+                'rows': 2,
+                'class': 'form-control',
+                'style': 'min-width: 300px; max-width: 600px;',
+                'placeholder': 'Observações'
+            }),
         }

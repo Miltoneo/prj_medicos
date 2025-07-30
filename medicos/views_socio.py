@@ -13,8 +13,9 @@ from django.views.generic.base import ContextMixin
 from django_tables2 import RequestConfig, tables, A
 from django.urls import reverse
 
-from medicos.forms import SocioCPFForm, SocioForm, SocioPessoaCompletaForm, SocioPessoaForm
+from medicos.forms import SocioCPFForm, SocioForm, SocioPessoaCompletaForm
 from medicos.models.base import Empresa, Pessoa, Socio
+from core.context_processors import empresa_context
 from .filters_socio import SocioFilter
 
 
@@ -24,12 +25,16 @@ from .tables_socio_lista import SocioListaTable
 # Mixin para contexto/session
 class SocioContextMixin(ContextMixin):
     menu_nome = 'Cadastro de Sócios'
-    #cenario_nome = 'Cadastro de Sócio'
+    cenario_nome = 'Cadastro de Sócios'
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        # Garante compatibilidade com CreateView, UpdateView, DetailView
+        if not hasattr(self, 'object'):
+            context = super().get_context_data(object=None, **kwargs)
+        else:
+            context = super().get_context_data(**kwargs)
         context['menu_nome'] = self.menu_nome
-        #context['cenario_nome'] = self.cenario_nome
+        context['cenario_nome'] = self.cenario_nome
         context['titulo_pagina'] = getattr(self, 'titulo_pagina', 'Sócios')
         return context
 
@@ -41,7 +46,6 @@ class SocioContextMixin(ContextMixin):
         request.session.update({
             'mes_ano': mes_ano,
             'menu_nome': self.menu_nome,
-            #'cenario_nome': self.cenario_nome,
             'user_id': request.user.id,
         })
         return super().dispatch(request, *args, **kwargs)
@@ -95,65 +99,30 @@ class SocioListView(SocioContextMixin, FilterView):
 @method_decorator(login_required, name='dispatch')
 
 class SocioCreateView(CreateView):
+    def form_valid(self, form):
+        empresa = empresa_context(self.request).get('empresa')
+        if not empresa:
+            form.add_error(None, 'Nenhuma empresa selecionada.')
+            return self.form_invalid(form)
+        self.object = form.save(empresa=empresa)
+        messages.success(self.request, 'Sócio cadastrado com sucesso!')
+        return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id)
     model = Socio
     form_class = SocioPessoaCompletaForm
     template_name = 'empresa/socio_form.html'
     success_url = reverse_lazy('medicos:lista_socios_empresa')
 
     def get_context_data(self, **kwargs):
+        self.object = None
         context = super().get_context_data(**kwargs)
-        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        step = self.request.GET.get('step') or self.request.POST.get('step') or 'cpf'
         context['titulo_pagina'] = 'Cadastro de Sócio'
-        context['step'] = step
-        if step == 'cpf':
-            context['cpf_form'] = SocioCPFForm(self.request.POST or None)
-        else:
-            cpf = self.request.session.get('socio_cpf')
-            pessoa = Pessoa.objects.filter(cpf=cpf).first() if cpf else None
-            initial = {'cpf': cpf} if cpf else {}
-            if pessoa:
-                initial.update({
-                    'name': pessoa.name,
-                    'rg': pessoa.rg,
-                    'data_nascimento': pessoa.data_nascimento,
-                    'telefone': pessoa.telefone,
-                    'celular': pessoa.celular,
-                    'email': pessoa.email,
-                    'crm': pessoa.crm,
-                    'especialidade': pessoa.especialidade,
-                    'pessoa_ativo': pessoa.ativo,
-                })
-            context['form'] = SocioPessoaCompletaForm(self.request.POST or None, initial=initial)
         return context
 
     def get(self, request, *args, **kwargs):
-        context = self.get_context_data()
-        if context.get('step') == 'cpf':
-            return render(request, 'empresa/socio_form_cpf.html', context)
-        return render(request, self.template_name, context)
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        empresa = get_object_or_404(Empresa, id=empresa_id)
-        step = request.GET.get('step') or request.POST.get('step') or 'cpf'
-        context = self.get_context_data()
-        if step == 'cpf':
-            cpf_form = context['cpf_form']
-            if cpf_form.is_valid():
-                cpf = cpf_form.cleaned_data['cpf']
-                request.session['socio_cpf'] = cpf
-                return redirect(f"{request.path}?step=form")
-            context['cpf_form'] = cpf_form
-            return render(request, 'empresa/socio_form_cpf.html', context)
-        form = context['form']
-        if form.is_valid():
-            socio = form.save(empresa=empresa)
-            request.session.pop('socio_cpf', None)
-            messages.success(request, 'Sócio cadastrado com sucesso!')
-            return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id)
-        context['form'] = form
-        return render(request, self.template_name, context)
+        return super().post(request, *args, **kwargs)
 
 
 @method_decorator(login_required, name='dispatch')

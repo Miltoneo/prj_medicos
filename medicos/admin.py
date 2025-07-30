@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin
 
 from .models import *
+from .models.despesas import DespesaRateada, DespesaSocio
 
 # Register your models here.
 
@@ -129,18 +130,18 @@ class NotaFiscalAdmin(admin.ModelAdmin):
 @admin.register(Aliquotas)
 class AliquotasAdmin(admin.ModelAdmin):
     list_display = (
-        'conta', 'ISS', 'PIS', 'COFINS',
+        'empresa', 'ISS', 'PIS', 'COFINS',
         'IRPJ_BASE_CAL', 'IRPJ_ALIQUOTA_OUTROS', 'IRPJ_ALIQUOTA_CONSULTA', 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', 'IRPJ_ADICIONAL',
         'CSLL_BASE_CAL', 'CSLL_ALIQUOTA_OUTROS', 'CSLL_ALIQUOTA_CONSULTA',
         'data_vigencia_inicio', 'data_vigencia_fim', 'ativa'
     )
-    list_filter = ('data_vigencia_inicio', 'data_vigencia_fim', 'conta', 'ativa')
-    search_fields = ('conta__empresa__name', 'observacoes')
+    list_filter = ('data_vigencia_inicio', 'data_vigencia_fim', 'empresa', 'ativa')
+    search_fields = ('empresa__name', 'observacoes')
     ordering = ('-data_vigencia_inicio',)
     
     fieldsets = (
-        ('Conta', {
-            'fields': ('conta',)
+        ('Empresa', {
+            'fields': ('empresa',)
         }),
         ('ISS - Alíquotas por Tipo de Serviço', {
             'fields': ('ISS_CONSULTAS', 'ISS_PLANTAO', 'ISS_OUTROS'),
@@ -166,17 +167,47 @@ class AliquotasAdmin(admin.ModelAdmin):
         )
     get_iss_rates.short_description = 'ISS por Tipo'
 
-@admin.register(Despesa)
-class DespesaAdmin(admin.ModelAdmin):
-    list_display = ('data', 'item', 'empresa', 'socio', 'status')
-    list_filter = ('status', 'empresa', 'socio', 'data')
-    search_fields = ('item__descricao', 'empresa__name', 'socio__pessoa__name')
+
+# Admin para DespesaRateada
+@admin.register(DespesaRateada)
+class DespesaRateadaAdmin(admin.ModelAdmin):
+    list_display = ('data', 'item_despesa', 'empresa')
+    list_filter = ('item_despesa', 'data')
+    search_fields = ('item_despesa__descricao', 'item_despesa__grupo_despesa__empresa__name')
+    ordering = ('-data',)
+
+# Admin para DespesaSocio
+@admin.register(DespesaSocio)
+class DespesaSocioAdmin(admin.ModelAdmin):
+    list_display = ('data', 'item_despesa', 'empresa', 'socio')
+    list_filter = ('item_despesa', 'socio', 'data')
+    search_fields = ('item_despesa__descricao', 'socio__pessoa__name', 'item_despesa__grupo_despesa__empresa__name')
     ordering = ('-data',)
 
 # Desc_movimentacao_financeiro admin removed - replaced by DescricaoMovimentacao
 
 @admin.register(Financeiro)
 class FinanceiroAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        """
+        Força filtro padrão para o mês/ano de competência atual na lista do admin,
+        redirecionando para a URL filtrada apenas na primeira visita (sem loops).
+        """
+        from datetime import date
+        from django.http import HttpResponseRedirect
+        if (
+            not request.GET.get('data_movimentacao__month')
+            and not request.GET.get('data_movimentacao__year')
+            and '_filter_applied' not in request.GET
+        ):
+            today = date.today()
+            params = request.GET.copy()
+            params['data_movimentacao__month'] = str(today.month)
+            params['data_movimentacao__year'] = str(today.year)
+            params['_filter_applied'] = '1'
+            url = request.path + '?' + params.urlencode()
+            return HttpResponseRedirect(url)
+        return super().changelist_view(request, extra_context=extra_context)
     list_display = ('data_movimentacao', 'socio', 'descricao_movimentacao_financeira', 'valor_formatado')
     list_filter = ('socio', 'data_movimentacao')
     search_fields = ('socio__pessoa__name', 'descricao_movimentacao_financeira__nome', 'descricao_movimentacao_financeira__descricao')
@@ -301,28 +332,18 @@ class FinanceiroAdmin(admin.ModelAdmin):
 
 @admin.register(MeioPagamento)
 class MeioPagamentoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'codigo', 'categoria_display', 'taxa_info', 'prazo_compensacao_dias', 'disponivel_display', 'ativo')
-    list_filter = ('ativo', 'tipo_movimentacao', 'data_inicio_vigencia', 'data_fim_vigencia')
-    search_fields = ('nome', 'codigo', 'descricao')
+    list_display = ('nome', 'codigo', 'ativo')
+    list_filter = ('ativo',)
+    search_fields = ('nome', 'codigo')
     ordering = ('nome', 'codigo')
     
     fieldsets = (
         ('💳 MEIOS DE PAGAMENTO', {
             'fields': (),
-            'description': 'Configuração dos meios de pagamento disponíveis para movimentações financeiras. '
-                          'Estes meios controlam taxas, prazos e validações específicas para cada forma de pagamento.'
+            'description': 'Configuração dos meios de pagamento disponíveis para movimentações financeiras.'
         }),
         ('Identificação', {
-            'fields': ('codigo', 'nome', 'descricao')
-        }),
-        ('Configurações Financeiras', {
-            'fields': ('taxa_percentual', 'taxa_fixa', 'valor_minimo', 'valor_maximo')
-        }),
-        ('Prazos e Disponibilidade', {
-            'fields': ('prazo_compensacao_dias', 'horario_limite', 'data_inicio_vigencia', 'data_fim_vigencia')
-        }),
-        ('Configurações de Uso', {
-            'fields': ('tipo_movimentacao', 'exige_documento', 'exige_aprovacao')
+            'fields': ('codigo', 'nome')
         }),
         ('Status e Controle', {
             'fields': ('ativo', 'observacoes')
@@ -330,37 +351,6 @@ class MeioPagamentoAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('created_at', 'updated_at')
-    
-    def categoria_display(self, obj):
-        """Mostra a categoria com base no tipo de movimentação"""
-        if obj.tipo_movimentacao == 'credito':
-            return format_html('<span style="color: green;">📈 Recebimentos</span>')
-        elif obj.tipo_movimentacao == 'debito':
-            return format_html('<span style="color: red;">📉 Pagamentos</span>')
-        else:
-            return format_html('<span style="color: blue;">🔄 Ambos</span>')
-    categoria_display.short_description = 'Tipo'
-    
-    def taxa_info(self, obj):
-        """Mostra informações sobre taxas"""
-        partes = []
-        if obj.taxa_percentual > 0:
-            partes.append(f"{obj.taxa_percentual}%")
-        if obj.taxa_fixa > 0:
-            partes.append(f"R$ {obj.taxa_fixa}")
-        
-        if partes:
-            return " + ".join(partes)
-        return "Sem taxa"
-    taxa_info.short_description = 'Taxas'
-    
-    def disponivel_display(self, obj):
-        """Mostra se está disponível para uso"""
-        if obj.disponivel_para_uso:
-            return format_html('<span style="color: green;">✅ Sim</span>')
-        else:
-            return format_html('<span style="color: red;">❌ Não</span>')
-    disponivel_display.short_description = 'Disponível'
     
     def save_model(self, request, obj, form, change):
         """Automaticamente definir o usuário criador"""

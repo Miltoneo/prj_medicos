@@ -1,0 +1,18 @@
+{% extends 'layouts/base_cenario_cadastro.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+        </div>
+        <div class="card-body">
+            <p class="mb-4">Tem certeza que deseja remover esta configuração de rateio?</p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Remover</button>
+                <a href="{% url 'medicos:cadastro_rateio' %}" class="btn btn-secondary ms-2">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

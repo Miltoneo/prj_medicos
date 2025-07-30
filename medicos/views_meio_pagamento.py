@@ -16,26 +16,20 @@ class MeioPagamentoListView(SingleTableView):
     paginate_by = 10
 
     def get_queryset(self):
-        empresa_id = self.kwargs.get('empresa_id')
-        empresa = get_object_or_404(Empresa, pk=empresa_id)
-        self.empresa_id = empresa_id
-        qs = MeioPagamento.objects.filter(conta=empresa.conta)
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        self.empresa_id = empresa.id if empresa else None
+        qs = MeioPagamento.objects.filter(empresa=empresa) if empresa else MeioPagamento.objects.none()
         nome = self.request.GET.get('nome')
         if nome:
             qs = qs.filter(nome__icontains=nome)
         return qs
 
     def get_context_data(self, **kwargs):
-        """
-        Regra de padronização:
-        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
-        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
-        - Injete também 'titulo_pagina' para exibição do título padrão no header.
-        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
-        """
         context = super().get_context_data(**kwargs)
-        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        context['empresa_id'] = empresa_id
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        context['empresa_id'] = empresa.id if empresa else None
         context['titulo_pagina'] = 'Meios de Pagamento'
         return context
 
@@ -45,25 +39,19 @@ class MeioPagamentoCreateView(CreateView):
     template_name = 'cadastro/criar_meio_pagamento.html'
 
     def get_context_data(self, **kwargs):
-        """
-        Regra de padronização:
-        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
-        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
-        - Injete também 'titulo_pagina' para exibição do título padrão no header.
-        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
-        """
         context = super().get_context_data(**kwargs)
-        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        context['empresa_id'] = empresa_id
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        context['empresa_id'] = empresa.id if empresa else None
         context['titulo_pagina'] = 'Novo Meio de Pagamento'
         return context
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        empresa_id = int(self.kwargs.get('empresa_id'))
-        empresa = get_object_or_404(Empresa, pk=empresa_id)
-        conta = empresa.conta
-        form.instance.conta = conta
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            form.instance.empresa = empresa
         return form
 
     def form_valid(self, form):
@@ -71,23 +59,17 @@ class MeioPagamentoCreateView(CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        empresa = Empresa.objects.filter(conta=self.object.conta).first()
+        empresa = self.object.empresa
         if empresa:
             return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.pk})
         return reverse_lazy('medicos:empresas')
 
 class MeioPagamentoUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
-        """
-        Regra de padronização:
-        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
-        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
-        - Injete também 'titulo_pagina' para exibição do título padrão no header.
-        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
-        """
         context = super().get_context_data(**kwargs)
-        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        context['empresa_id'] = empresa_id
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        context['empresa_id'] = empresa.id if empresa else None
         context['titulo_pagina'] = 'Editar Meio de Pagamento'
         return context
     model = MeioPagamento
@@ -95,35 +77,26 @@ class MeioPagamentoUpdateView(UpdateView):
     template_name = 'cadastro/editar_meio_pagamento.html'
 
     def get_success_url(self):
-        conta = self.object.conta
-        empresa = conta.empresas.first() if conta else None
+        empresa = self.object.empresa
         if empresa:
-            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.id})
+            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.pk})
         else:
             return reverse_lazy('medicos:empresas')
 
 class MeioPagamentoDeleteView(DeleteView):
     def get_context_data(self, **kwargs):
-        """
-        Regra de padronização:
-        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']) ou pelo parâmetro da URL.
-        - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
-        - Injete também 'titulo_pagina' para exibição do título padrão no header.
-        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
-        """
         context = super().get_context_data(**kwargs)
-        empresa_id = self.kwargs.get('empresa_id') or self.request.session.get('empresa_id')
-        context['empresa_id'] = empresa_id
+        from core.context_processors import empresa_context
+        empresa = empresa_context(self.request).get('empresa')
+        context['empresa_id'] = empresa.id if empresa else None
         context['titulo_pagina'] = 'Excluir Meio de Pagamento'
         return context
     model = MeioPagamento
     template_name = 'cadastro/excluir_meio_pagamento.html'
 
     def get_success_url(self):
-        # Tenta obter a primeira empresa vinculada à conta
-        conta = self.object.conta
-        empresa = conta.empresas.first() if conta else None
+        empresa = self.object.empresa
         if empresa:
-            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.id})
+            return reverse_lazy('medicos:lista_meios_pagamento', kwargs={'empresa_id': empresa.pk})
         else:
             return reverse_lazy('medicos:empresas')  # Redireciona para lista geral de empresas

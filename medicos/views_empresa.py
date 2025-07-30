@@ -19,6 +19,7 @@ from .forms import EmpresaForm
 from .filters import EmpresaFilter
 # Logger
 logger = logging.getLogger(__name__)
+from core.context_processors import empresa_context
 
 # Helper para obter ou definir conta_id na sessão
 def get_or_set_conta_id(request):
@@ -39,24 +40,29 @@ def main(request, empresa_id=None):
     empresa_id = empresa_id or request.GET.get('empresa_id') or request.session.get('empresa_id')
     if not empresa_id:
         raise Exception('empresa_id não definido na sessão ou na requisição.')
-    empresa_selecionada = Empresa.objects.get(id=int(empresa_id))
-    request.session['empresa_id'] = empresa_selecionada.id
-    request.session['cenario_nome'] = 'Empresa'
+    # Não busque manualmente a empresa aqui, use apenas o context processor nos templates/views
+    request.session['empresa_id'] = int(empresa_id)
 
-    socios_qs = Socio.objects.filter(empresa=empresa_selecionada)
-    socio_filter = SocioFilter(request.GET, queryset=socios_qs)
-    table = SocioListaTable(socio_filter.qs)
-    RequestConfig(request, paginate={'per_page': 20}).configure(table)
-
+    # O context processor já injeta 'empresa' e 'empresas_cadastradas' no contexto global
+    # Se precisar de empresa para lógica, use empresa_context(request).get('empresa')
+    socios_qs = Socio.objects.none()
+    socio_filter = None
+    table = None
+    if empresa_id:
+        empresa = empresa_context(request).get('empresa')
+        if empresa:
+            socios_qs = Socio.objects.filter(empresa=empresa)
+            socio_filter = SocioFilter(request.GET, queryset=socios_qs)
+            table = SocioListaTable(socio_filter.qs)
+            RequestConfig(request, paginate={'per_page': 20}).configure(table)
     return {
-        'empresa_atual': empresa_selecionada,
-        'empresa': empresa_selecionada,
         'user': request.user,
         'table': table,
         'socio_filter': socio_filter,
         'mes_ano': mes_ano,
         'menu_nome': 'dashboard',
         'titulo_pagina': 'Dashboard',
+        'cenario_nome': 'Empresa',
     }
 
 # Nova view para renderizar o dashboard
@@ -83,11 +89,11 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_filter'] = self.filter
-        context.update(main(self.request))
+        context['titulo_pagina'] = 'Empresas da Conta'
         return context
 
 
-@staff_member_required
+@login_required
 def empresa_create(request):
     membership = ContaMembership.objects.filter(user=request.user, is_active=True).first()
     conta_id = membership.conta_id if membership else None
@@ -106,10 +112,11 @@ def empresa_create(request):
             return redirect('medicos:empresa_create')
     else:
         form = EmpresaForm()
-    contexto = main(request)
-    contexto['form'] = form
-    if 'cenario_nome' in contexto:
-        del contexto['cenario_nome']
+    contexto = {
+        'form': form,
+        'titulo_pagina': 'Nova Empresa',
+        'menu_nome': 'empresas',
+    }
     return render(request, 'empresa/empresa_create.html', contexto)
 
 
@@ -122,10 +129,11 @@ def empresa_detail(request, empresa_id):
     return render(request, 'empresa/empresa_detail.html', contexto)
 
 
-@staff_member_required
+@login_required
 def empresa_update(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
     contexto = main(request, empresa_id=empresa_id)
-    empresa = contexto['empresa']
+    contexto['empresa'] = empresa
     if request.method == 'POST':
         form = EmpresaForm(request.POST, instance=empresa)
         if form.is_valid():
@@ -136,14 +144,12 @@ def empresa_update(request, empresa_id):
     else:
         form = EmpresaForm(instance=empresa)
     contexto['form'] = form
-    contexto['empresa'] = empresa
     if 'cenario_nome' in contexto:
         del contexto['cenario_nome']
     return render(request, 'empresa/empresa_update.html', contexto)
 
 
 @login_required
-@staff_member_required
 def empresa_delete(request, empresa_id):
     contexto = main(request, empresa_id=empresa_id)
     empresa = contexto['empresa']

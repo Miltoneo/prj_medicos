@@ -1,4 +1,4 @@
-{% extends 'layouts/base_cenario_1.html' %}
+{% extends 'layouts/base_cenario_home.html' %}
 {% load crispy_forms_tags %}
 {% block title %}Editar Empresa{% endblock %}
 {% block content %}
@@ -10,10 +10,6 @@
     {% endfor %}
   {% endif %}
   <form method="post">{% csrf_token %}
-    <div class="mb-3">
-      <label for="mes_ano" class="form-label fw-bold">Competência:</label>
-      <input type="month" id="mes_ano" name="mes_ano" class="form-control" value="{{ mes_ano|default:'' }}">
-    </div>
     {{ form|crispy }}
     <button type="submit" class="btn btn-primary mt-2">Salvar</button>
   </form>

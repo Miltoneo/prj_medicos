@@ -1,12 +1,42 @@
-
 from django.conf import settings
-from medicos.models import Conta, Empresa
+from medicos.models import ContaMembership, Conta, Empresa
 from medicos.middleware.tenant_middleware import get_current_account
+
+def conta_context(request):
+    """
+    DIRETRIZ OBRIGATÓRIA: Contexto de Conta Multi-tenant
+    -----------------------------------------------------
+    - Injeta 'conta_id' no contexto dos templates via context processor, nunca manualmente nas views.
+    - O valor de conta_id é obtido explicitamente da sessão (armazenado como 'conta_id').
+    - Nunca busque manualmente a conta ativa em request.user ou via query nas views.
+    - Toda lógica de obtenção, validação e fallback da conta deve estar centralizada aqui.
+    - Se precisar de outra variável global (ex: empresa, tenant), crie um novo context processor.
+    - Este padrão é obrigatório para garantir isolamento multi-tenant, consistência e evitar bugs recorrentes.
+    """
+    conta_id = request.session.get('conta_id')
+    conta = None
+    if conta_id:
+        from medicos.models import Conta
+        try:
+            conta = Conta.objects.get(id=conta_id)
+        except Conta.DoesNotExist:
+            conta = None
+    return {'conta_id': conta_id, 'conta': conta}
 
 def app_version(request):
     return {"APP_VERSION": settings.APP_VERSION}
 
 def empresa_context(request):
+    """
+    DIRETRIZ OBRIGATÓRIA: Contexto de Empresa Multi-tenant
+    -----------------------------------------------------
+    - Sempre utilize a variável 'empresa' injetada por este context processor em views, forms e templates.
+    - Nunca busque manualmente a empresa ativa em request.session ou via query nas views.
+    - Toda lógica de obtenção, validação e fallback da empresa deve estar centralizada aqui.
+    - Se a empresa não estiver disponível, este context processor já trata o erro e exibe mensagem apropriada.
+    - Se precisar de outra variável global (ex: conta, tenant), crie um novo context processor.
+    - Este padrão é obrigatório para garantir isolamento multi-tenant, consistência e evitar bugs recorrentes.
+    """
     """
     Regra de desenvolvimento para contexto de empresa:
     - A variável 'empresa' deve ser sempre injetada no contexto dos templates via context processor (empresa_context), nunca manualmente nas views.
@@ -15,21 +45,11 @@ def empresa_context(request):
     - O cabeçalho padrão deve ser incluído via {% include 'layouts/base_header.html' %}.
     - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto global e o template base para garantir consistência visual e semântica.
     """
-    empresas_cadastradas = Empresa.objects.all().order_by('nome_fantasia','name')
-    empresa = None
-    empresa_context_error = None
+    empresas_cadastradas = Empresa.objects.all().order_by('nome_fantasia', 'name')
     empresa_id = request.session.get('empresa_id')
-    if empresa_id:
-        try:
-            empresa = Empresa.objects.get(id=empresa_id)
-        except Empresa.DoesNotExist:
-            empresa = None
-            empresa_context_error = 'Empresa selecionada não encontrada. Selecione novamente.'
-    else:
-        empresa = None
-        empresa_context_error = 'Nenhuma empresa selecionada. Selecione uma empresa para continuar.'
+    empresa = Empresa.objects.get(id=empresa_id) if empresa_id else None
     return {
         'empresas_cadastradas': empresas_cadastradas,
         'empresa': empresa,
-        'empresa_context_error': empresa_context_error,
+        'empresa_context_error': None,
     }

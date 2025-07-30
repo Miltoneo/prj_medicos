@@ -12,7 +12,7 @@ class FinanceiroForm(forms.ModelForm):
 
     class Meta:
         model = Financeiro
-        exclude = ['conta', 'criado_por', 'created_by']
+        exclude = ['conta', 'criado_por', 'created_by', 'nota_fiscal']
         widgets = {
             'data_movimentacao': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
         }

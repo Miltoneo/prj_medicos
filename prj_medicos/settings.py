@@ -1,3 +1,31 @@
+# Desabilita injeção automática de JS/CSS do django-select2 (controle manual no template)
+SELECT2_JS = ''
+SELECT2_CSS = ''
+# LOGGING para debug de despesas
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'despesas.debug': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+        'auth.debug': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
 """
 Django settings for prj_medicos project.
 ...
@@ -79,6 +107,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.empresa_context',
+                'core.context_processors.conta_context',
             ],
         },
     },
@@ -129,7 +158,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
 
 CACHES = {
@@ -172,17 +201,25 @@ LOGOUT_REDIRECT_URL = 'medicos:login'
 # DEFAULT_FROM_EMAIL  = 'user1@mail.onkoto.com.br'
 # RECIPIENT_ADDRESS   = ['None']
 
-# ----------------------------------------------#
-#              smtp.gmail.com    (teste only)   #
-# ----------------------------------------------#
+# ----------------------------------------------    #
+# DESENVOLVIMENTO smtp.gmail.com    (teste only)   #
+# ----------------------------------------------    #
 #https://www.geeksforgeeks.org/setup-sending-email-in-django-project/
 EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS   = True
 EMAIL_PORT      = 587
 EMAIL_HOST         = 'smtp.gmail.com'
 EMAIL_HOST_PASSWORD = 'xblz qmog fifx zqzu' # from google app register
-EMAIL_HOST_USER     = 'miltoneo'
-DEFAULT_FROM_EMAIL =  'suporte_tds@gmail.com'
-
-# URL base do sistema para geração de links em e-mails
+EMAIL_HOST_USER     = 'miltoneo@gmail.com'
+DEFAULT_FROM_EMAIL =  'miltoneo@gmail.com'
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
+
+# PRODUTION SMTP SETTINGS
+# EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_USE_TLS   = False
+# EMAIL_PORT      = 25
+# EMAIL_HOST      = 'localhost'
+# EMAIL_HOST_USER = ''
+# EMAIL_HOST_PASSWORD = ''
+# DEFAULT_FROM_EMAIL = 'user1@onkoto.com.br'
+# SITE_URL = os.environ.get('SITE_URL', 'https://www.onkoto.com.br')

@@ -2,66 +2,76 @@
 {% load render_table from django_tables2 %}
 {% block title %}Notas Fiscais Rateadas por Médico{% endblock %}
 {% block content %}
-<div class="container py-4">
-  {% if empresa %}
-    <div class="mb-3">
-      <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
-    </div>
-  {% else %}
-    <div class="mb-3">
-      <span class="fw-bold text-danger">Empresa não selecionada</span>
-    </div>
-  {% endif %}
-
-  <form method="get" class="mb-3">
-    <div class="row g-2 align-items-end">
-      {% for field in filter.form.visible_fields %}
-        <div class="col-auto">
-          <label for="id_{{ field.name }}" class="form-label mb-0">{{ field.label }}</label>
-          {{ field }}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-users me-2"></i>
+          <span class="fw-bold">Notas Fiscais Rateadas por Médico</span>
         </div>
-      {% endfor %}
-      <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              {% for field in filter.form.visible_fields %}
+                <div class="col-auto">
+                  <label for="id_{{ field.name }}" class="form-label mb-0">{{ field.label }}</label>
+                  {{ field }}
+                </div>
+              {% endfor %}
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
+              </div>
+            </div>
+          </form>
+          {% if table.rows %}
+            <div class="mb-3 rounded shadow-sm p-3 bg-light">
+              <h5 class="fw-bold mb-2 text-dark"><i class="fas fa-calculator me-1"></i>Totalização</h5>
+              <table class="table table-bordered w-auto mb-0 bg-white">
+                <thead class="table-light">
+                  <tr>
+                    <th>Total de notas rateadas</th>
+                    <th>Total Valor Bruto</th>
+                    <th>Total Valor Líquido</th>
+                    <th>Total ISS</th>
+                    <th>Total PIS</th>
+                    <th>Total COFINS</th>
+                    <th>Total IR</th>
+                    <th>Total CSLL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="text-dark">{{ table.data|length }}</td>
+                    <td class="text-dark">R$ {{ total_bruto|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_liquido|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_iss|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_pis|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_cofins|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_ir|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_csll|floatformat:2 }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-file-invoice-dollar me-1"></i>Notas fiscais rateadas</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </form>
-
-  {% if table.rows %}
-    <div class="mb-3 rounded shadow-sm p-3" style="background-color:#f8f9fa;">
-      <h5 class="fw-bold mb-2 text-dark">Totalização</h5>
-      <table class="table table-bordered w-auto mb-0" style="background-color:#fff;">
-        <thead style="background-color:#e3eafc;">
-          <tr>
-            <th style="background-color:#e3eafc; color:#212529;">Total de notas rateadas</th>
-            <th style="background-color:#e3eafc; color:#212529;">Total Valor Bruto</th>
-            <th style="background-color:#e3eafc; color:#212529;">Total Valor Líquido</th>
-            <th style="background-color:#e3eafc; color:#212529;">Total ISS</th>
-            <th style="background-color:#e3eafc; color:#212529;">Total PIS</th>
-            <th style="background-color:#e3eafc; color:#212529;">Total COFINS</th>
-            <th style="background-color:#e3eafc; color:#212529;">Total IR</th>
-            <th style="background-color:#e3eafc; color:#212529;">Total CSLL</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="text-dark">{{ table.data|length }}</td>
-            <td class="text-dark">R$ {{ total_bruto|floatformat:2 }}</td>
-            <td class="text-dark">R$ {{ total_liquido|floatformat:2 }}</td>
-            <td class="text-dark">R$ {{ total_iss|floatformat:2 }}</td>
-            <td class="text-dark">R$ {{ total_pis|floatformat:2 }}</td>
-            <td class="text-dark">R$ {{ total_cofins|floatformat:2 }}</td>
-            <td class="text-dark">R$ {{ total_ir|floatformat:2 }}</td>
-            <td class="text-dark">R$ {{ total_csll|floatformat:2 }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  {% endif %}
-  <h5 class="fw-bold mt-4 mb-2">Notas fiscais rateadas</h5>
-  <div class="table-responsive rounded shadow-sm p-3" style="background-color:#f8f9fa;">
-    <div style="background-color:#fff; border-radius:4px; padding:4px;">
-      {% render_table table %}
     </div>
   </div>
 </div>

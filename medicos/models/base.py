@@ -105,6 +105,7 @@ class CustomUser(AbstractUser):
         db_table = 'customUser'
 
     email = models.EmailField('e-mail address', unique=True)
+    invite_token = models.CharField('Token de convite', max_length=64, blank=True, null=True)
     username = models.CharField(
         max_length=150,
         blank=True,
@@ -282,7 +283,12 @@ class Empresa(models.Model):
     # Dados da empresa
     name = models.CharField(max_length=255, verbose_name="Razão Social")
     nome_fantasia = models.CharField(max_length=255, blank=True, verbose_name="Nome Fantasia")
-    cnpj = models.CharField(max_length=18, unique=True, verbose_name="CNPJ")
+    cnpj = models.CharField(max_length=18, verbose_name="CNPJ")
+    class Meta:
+        db_table = 'empresa'
+        verbose_name = "Empresa/Associação"
+        verbose_name_plural = "Empresas/Associações"
+        unique_together = ('conta', 'cnpj')
     inscricao_estadual = models.CharField(max_length=20, blank=True, verbose_name="Inscrição Estadual")
     inscricao_municipal = models.CharField(max_length=20, blank=True, verbose_name="Inscrição Municipal")
 
@@ -550,11 +556,15 @@ class Socio(models.Model):
         db_table = 'socio'
         verbose_name = "Sócio/Médico"
         verbose_name_plural = "Sócios/Médicos"
-        unique_together = ('conta', 'pessoa')
+        unique_together = ('conta', 'pessoa', 'empresa')
+        indexes = [
+            models.Index(fields=['conta', 'empresa', 'pessoa']),
+            models.Index(fields=['ativo']),
+        ]
 
-    conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='socios', null=False)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
-    pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE)
+    conta = models.ForeignKey(Conta, on_delete=models.PROTECT, related_name='socios', null=False)
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)
+    pessoa = models.ForeignKey(Pessoa, on_delete=models.PROTECT)
 
     # Status e controle
     ativo = models.BooleanField(default=True, verbose_name="Ativo")

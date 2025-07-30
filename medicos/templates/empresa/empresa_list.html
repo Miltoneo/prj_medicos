@@ -1,21 +1,37 @@
 {% extends 'layouts/base_cenario_home.html' %}
 {% load render_table from django_tables2 %}
-{% block title %}Empresas{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <h2>Empresas da Conta</h2>
-  <form method="get" class="mb-3">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-6">
-        {{ empresa_filter.form.name.label_tag }}
-        {{ empresa_filter.form.name }}
-      </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+<style>
+  body { background-color: #181c24 !important; }
+  .form-control, .form-select { background: #232a36; color: #e3f2fd; border: 1px solid #283a5c; }
+  .form-label, h2 { color: #e3f2fd; }
+</style>
+<div class="container pt-3 pb-4">
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-8 col-md-10 col-12">
+      <div class="card shadow border-0 mb-4" style="border-radius: 18px; background: #232a36; border: 1px solid #283a5c;">
+        <div class="card-body">
+          {# O título é exibido pelo header base conforme padrão do projeto #}
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-6">
+                <label class="form-label">{{ empresa_filter.form.name.label }}</label>
+                {{ empresa_filter.form.name }}
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+              </div>
+            </div>
+          </form>
+          <a href="{% url 'medicos:empresa_create' %}" class="btn btn-success mb-3">Nova Empresa</a>
+          <div class="table-responsive d-flex justify-content-center">
+            <div style="width: 100%; max-width: 700px;">
+              {% render_table table %}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </form>
-  <a href="{% url 'medicos:empresa_create' %}" class="btn btn-success mb-3">Nova Empresa</a>
-  {% render_table table %}
+  </div>
 </div>
 {% endblock %}

@@ -15,15 +15,24 @@ Inclua apenas o necessário para evitar conflitos e facilitar manutenção.
 {% load i18n %}
 {% load adsense_tags %}
 
-<!-- Carregue CSS customizados via static para facilitar manutenção e cache -->
-<link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
-<link rel="stylesheet" href="{% static 'css/topbar.css' %}">
-<link rel="stylesheet" href="{% static 'css/content.css' %}">
 
-{{ form.media.css }}
 
-<!-- Apenas Bootstrap 5 e jQuery -->
+
+
+
+
+<!-- Ordem correta dos scripts: jQuery, Select2, idioma pt-BR, django-select2 -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+<script src="{% static 'admin/js/vendor/select2/i18n/pt-BR.js' %}"></script>
+<script src="{% static 'django_select2/django_select2.js' %}"></script>
+<script>
+  $(function() {
+    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) {
+      $('.django-select2').djangoSelect2();
+    }
+  });
+</script>
 
 <style>
 :root {

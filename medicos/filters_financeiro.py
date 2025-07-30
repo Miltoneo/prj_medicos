@@ -18,6 +18,7 @@ class FinanceiroFilter(django_filters.FilterSet):
         widget=forms.TextInput(attrs={'type': 'month'})
     )
 
+
     def filter_by_month(self, queryset, name, value):
         if value:
             year, month = value.split('-')
@@ -27,4 +28,4 @@ class FinanceiroFilter(django_filters.FilterSet):
 
     class Meta:
         model = Financeiro
-        fields = ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao']
+        fields = ['socio', 'descricao_movimentacao_financeira', 'nota_fiscal', 'data_movimentacao']

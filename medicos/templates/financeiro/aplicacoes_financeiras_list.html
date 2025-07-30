@@ -1,0 +1,58 @@
+{% extends 'layouts/base_cenario_financeiro.html' %}
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-12 col-lg-11 col-xl-10" style="max-width: 1400px;">
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+          {# Título removido: agora é exibido exclusivamente pelo header base conforme padrão do projeto #}
+          <div class="mb-2">
+            <div class="d-flex flex-wrap align-items-end justify-content-between">
+              <form method="get" class="row g-2 align-items-end flex-grow-1">
+                <div class="col-auto">
+                  <label for="id_ano" class="form-label mb-0">Ano</label>
+                  <select id="id_ano" name="ano" class="form-select ms-2">
+                    {% for a in anos %}
+                      <option value="{{ a|add:0 }}" {% if a == ano %}selected{% endif %}>{{ a|add:0 }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-auto">
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
+                  <a href="{% url 'medicos:aplicacoes_financeiras' empresa_id=empresa_id %}" class="btn btn-outline-secondary ms-2">Limpar</a>
+                </div>
+              </form>
+              <a href="{% url 'medicos:aplicacao_financeira_add' empresa_id=empresa_id %}" class="btn btn-success ms-2"><i class="fas fa-plus me-1"></i>Novo Lançamento</a>
+            </div>
+          </div>
+          <div class="table-responsive rounded-3 border">
+            {% load django_tables2 %}
+            {% render_table table %}
+          </div>
+          {% if is_paginated %}
+          <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+              {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?ano={{ ano }}&page={{ page_obj.previous_page_number }}">Anterior</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+              {% endif %}
+              {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                  <a class="page-link" href="?ano={{ ano }}&page={{ num }}">{{ num }}</a>
+                </li>
+              {% endfor %}
+              {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?ano={{ ano }}&page={{ page_obj.next_page_number }}">Próxima</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

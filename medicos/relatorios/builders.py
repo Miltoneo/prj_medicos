@@ -1,0 +1,321 @@
+# Imports necessários
+from medicos.models.base import Empresa, Socio
+from medicos.models.despesas import DespesaSocio, DespesaRateada
+from medicos.models.fiscal import NotaFiscal
+from medicos.models.financeiro import Financeiro
+from medicos.models.relatorios import RelatorioMensalSocio
+from datetime import datetime
+
+
+
+
+def montar_relatorio_mensal_empresa(empresa_id, mes_ano):
+    """
+    Monta os dados do relatório mensal da empresa.
+    Retorna dict padronizado: {'relatorio': ...}
+    Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
+    """
+    empresa = Empresa.objects.get(id=empresa_id)
+    competencia = datetime.strptime(mes_ano, "%Y-%m")
+
+    # TODO: Implementar lógica do relatório mensal da empresa conforme regras de negócio
+    return {'relatorio': {}}
+
+
+def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
+    """
+    Monta os dados do relatório mensal dos sócios.
+    Retorna dict padronizado: {'relatorio': ...}
+    """
+    empresa = Empresa.objects.get(id=empresa_id)
+    competencia = datetime.strptime(mes_ano, "%Y-%m")
+
+    socios = list(Socio.objects.filter(empresa=empresa, ativo=True).order_by('pessoa__name'))
+    socio_selecionado = None
+    if socio_id:
+        socio_selecionado = next((s for s in socios if s.id == int(socio_id)), None)
+    if not socio_selecionado and socios:
+        socio_selecionado = socios[0]
+
+    # Despesas sem rateio
+    despesas_sem_rateio = DespesaSocio.objects.filter(
+        socio=socio_selecionado,
+        item_despesa__grupo_despesa__empresa=empresa,
+        data__year=competencia.year,
+        data__month=competencia.month
+    ).select_related('item_despesa__grupo_despesa')
+
+    lista_despesas_sem_rateio = []
+    for despesa in despesas_sem_rateio:
+        lista_despesas_sem_rateio.append({
+            'id': despesa.id,
+            'data': despesa.data.strftime('%d/%m/%Y'),
+            'grupo': despesa.item_despesa.grupo_despesa.descricao,
+            'descricao': despesa.item_despesa.descricao,
+            'valor': float(despesa.valor),
+        })
+
+    # Despesas com rateio
+    despesas_com_rateio = DespesaRateada.objects.filter(
+        item_despesa__grupo_despesa__empresa=empresa,
+        data__year=competencia.year,
+        data__month=competencia.month
+    ).select_related('item_despesa__grupo_despesa')
+
+    lista_despesas_com_rateio = []
+    for despesa in despesas_com_rateio:
+        rateio = None
+        for config in despesa.obter_configuracao_rateio():
+            if config.socio_id == socio_selecionado.id:
+                rateio = config
+                break
+        from decimal import Decimal
+        percentual = Decimal(rateio.percentual_rateio) if rateio else Decimal('0')
+        valor_socio = despesa.valor * (percentual / Decimal('100')) if rateio else Decimal('0')
+        lista_despesas_com_rateio.append({
+            'id': despesa.id,
+            'data': despesa.data.strftime('%d/%m/%Y'),
+            'grupo': despesa.item_despesa.grupo_despesa.descricao,
+            'descricao': despesa.item_despesa.descricao,
+            'valor_total': float(despesa.valor),
+            'rateio_percentual': float(percentual),
+            'valor_socio': float(valor_socio),
+        })
+
+    # Totais padronizados: despesa_sem_rateio e despesa_com_rateio
+    despesa_sem_rateio = sum(d['valor'] for d in lista_despesas_sem_rateio)
+    despesa_com_rateio = sum(d['valor_socio'] for d in lista_despesas_com_rateio)
+
+    # Notas fiscais do sócio no mês
+    # Notas fiscais do sócio no mês (para detalhamento do sócio)
+    notas_fiscais_qs = NotaFiscal.objects.filter(
+        rateios_medicos__medico=socio_selecionado,
+        empresa_destinataria=empresa,
+        dtEmissao__year=competencia.year,
+        dtEmissao__month=competencia.month
+    )
+
+    # Notas fiscais da empresa no mês (para receita bruta total da empresa)
+    notas_empresa_qs = NotaFiscal.objects.filter(
+        empresa_destinataria=empresa,
+        dtEmissao__year=competencia.year,
+        dtEmissao__month=competencia.month
+    )
+
+    total_notas_bruto = sum(float(nf.val_bruto or 0) for nf in notas_empresa_qs)
+    # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
+    excedente_adicional = max(total_notas_bruto - 20000, 0)
+    valor_adicional_rateio = excedente_adicional * 0.10
+    # Participação do sócio na receita bruta da empresa
+    receita_bruta_socio = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_qs)
+    participacao_socio = receita_bruta_socio / total_notas_bruto if total_notas_bruto > 0 else 0
+    valor_adicional_socio = valor_adicional_rateio * participacao_socio if valor_adicional_rateio > 0 else 0
+    notas_fiscais = []
+    total_iss = 0
+    total_pis = 0
+    total_cofins = 0
+    total_irpj = 0
+    total_irpj_adicional = 0
+    total_csll = 0
+    total_notas_liquido = 0
+
+    debug_ir_adicional_espelho = []
+    for nf in notas_fiscais_qs:
+        nf.calcular_impostos()  # Atualiza campos de impostos no modelo
+        # Buscar o rateio do sócio para esta nota
+        rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+        if rateio:
+            # O cálculo detalhado do adicional de IR para o sócio foi desfeito; manter apenas o necessário para o relatório.
+            notas_fiscais.append({
+                'id': nf.id,
+                'numero': getattr(nf, 'numero', ''),
+                'tp_aliquota': nf.get_tipo_servico_display(),
+                'tomador': nf.tomador,
+                'valor_bruto': float(rateio.valor_bruto_medico),
+                'valor_liquido': float(rateio.valor_liquido_medico),
+                'iss': float(rateio.valor_iss_medico),
+                'pis': float(rateio.valor_pis_medico),
+                'cofins': float(rateio.valor_cofins_medico),
+                'irpj': float(rateio.valor_ir_medico),
+                'csll': float(rateio.valor_csll_medico),
+                'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
+                'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
+                'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
+            })
+            total_notas_bruto += float(rateio.valor_bruto_medico or 0)
+            total_iss += float(rateio.valor_iss_medico or 0)
+            total_pis += float(rateio.valor_pis_medico or 0)
+            total_cofins += float(rateio.valor_cofins_medico or 0)
+            total_irpj += float(rateio.valor_ir_medico or 0)
+            total_notas_liquido += float(rateio.valor_liquido_medico or 0)
+
+
+    # Totais dos campos das notas fiscais do sócio (para o template)
+    total_nf_valor_bruto = sum(float(nf['valor_bruto'] or 0) for nf in notas_fiscais)
+    total_nf_iss = sum(float(nf['iss'] or 0) for nf in notas_fiscais)
+    total_nf_pis = sum(float(nf['pis'] or 0) for nf in notas_fiscais)
+    total_nf_cofins = sum(float(nf['cofins'] or 0) for nf in notas_fiscais)
+    total_nf_irpj = sum(float(nf['irpj'] or 0) for nf in notas_fiscais)
+    total_nf_csll = sum(float(nf['csll'] or 0) for nf in notas_fiscais)
+    total_nf_valor_liquido = sum(float(nf['valor_liquido'] or 0) for nf in notas_fiscais)
+
+    total_notas_emitidas_mes = total_nf_valor_bruto
+
+
+    # Receita bruta e líquida do sócio
+    receita_bruta_recebida = total_notas_bruto
+    receita_liquida = total_notas_liquido
+
+    # Impostos agregados
+    impostos_total = total_iss + total_pis + total_cofins + total_irpj + total_csll
+
+    despesas_total = despesa_sem_rateio + despesa_com_rateio
+    saldo_apurado = receita_liquida - despesas_total
+    # Cálculo do saldo das movimentações financeiras do sócio no mês
+    movimentacoes_financeiras_qs = Financeiro.objects.filter(
+        socio=socio_selecionado,
+        data_movimentacao__year=competencia.year,
+        data_movimentacao__month=competencia.month
+    )
+    saldo_movimentacao_financeira = float(sum(m.valor for m in movimentacoes_financeiras_qs))
+    movimentacoes_financeiras = [
+        {
+            'id': m.id,
+            'data': m.data_movimentacao.strftime('%d/%m/%Y'),
+            'descricao': str(m.descricao_movimentacao_financeira),
+            'valor': float(m.valor),
+        }
+        for m in movimentacoes_financeiras_qs
+    ]
+    saldo_a_transferir = saldo_apurado + saldo_movimentacao_financeira
+
+    relatorio_obj, _ = RelatorioMensalSocio.objects.update_or_create(
+        empresa=empresa,
+        socio=socio_selecionado,
+        competencia=competencia,
+        defaults={
+            'data_geracao': datetime.now(),
+            'total_despesas_sem_rateio': despesa_sem_rateio,
+            'total_despesas_com_rateio': despesa_com_rateio,
+            'despesas_total': despesas_total,
+            'despesa_sem_rateio': despesa_sem_rateio,
+            'despesa_com_rateio': despesa_com_rateio,
+            'despesa_geral': despesa_sem_rateio + despesa_com_rateio,
+            'receita_bruta_recebida': receita_bruta_socio,
+            'receita_liquida': receita_liquida,
+            'impostos_total': impostos_total,
+            'total_iss': total_iss,
+            'total_pis': total_pis,
+            'total_cofins': total_cofins,
+            'total_irpj': total_irpj,
+            'total_irpj_adicional': valor_adicional_socio,
+            'total_csll': total_csll,
+            'total_notas_bruto': total_notas_bruto,
+            'total_notas_liquido': total_notas_liquido,
+            'total_notas_emitidas_mes': total_notas_emitidas_mes,
+            'saldo_apurado': saldo_apurado,
+            'total_nf_valor_bruto': total_nf_valor_bruto,
+            'total_nf_iss': total_nf_iss,
+            'total_nf_pis': total_nf_pis,
+            'total_nf_cofins': total_nf_cofins,
+            'total_nf_irpj': total_nf_irpj,
+            'total_nf_csll': total_nf_csll,
+            'total_nf_valor_liquido': total_nf_valor_liquido,
+            'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
+            'saldo_a_transferir': saldo_a_transferir,
+            'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
+            'lista_despesas_com_rateio': lista_despesas_com_rateio,
+            'lista_notas_fiscais': notas_fiscais,
+            'lista_movimentacoes_financeiras': movimentacoes_financeiras,
+            'debug_ir_adicional': debug_ir_adicional_espelho,
+        }
+    )
+    relatorio_obj.save()  # Garantir persistência explícita
+    # Adicionar valor_adicional_rateio ao dicionário de contexto do template
+    contexto = {'relatorio': relatorio_obj}
+    contexto['valor_adicional_rateio'] = valor_adicional_rateio
+    contexto['participacao_socio'] = participacao_socio
+    contexto['valor_adicional_socio'] = valor_adicional_socio
+    contexto['receita_bruta_socio'] = receita_bruta_socio
+    return contexto
+
+
+def montar_relatorio_issqn(empresa_id, mes_ano):
+    """
+    Monta os dados do relatório de apuração de ISSQN.
+    Retorna dict padronizado: {'linhas': [...], 'totais': {...}}
+    Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
+    """
+    empresa = Empresa.objects.get(id=empresa_id)
+    ano = int(mes_ano[:4])
+    linhas = []
+    total_iss = 0
+    for mes in range(1, 13):
+        notas_mes = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtEmissao__year=ano,
+            dtEmissao__month=mes
+        )
+        valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
+        valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
+        total_iss += valor_iss
+        linhas.append({
+            'competencia': f'{mes:02d}/{ano}',
+            'valor_bruto': valor_bruto,
+            'valor_iss': valor_iss,
+        })
+    return {
+        'linhas': linhas,
+        'totais': {
+            'total_iss': total_iss,
+        }
+    }
+
+
+def montar_relatorio_outros(empresa_id, mes_ano):
+    """
+    Monta os dados de outros relatórios de apuração.
+    Retorna dict padronizado: {'relatorio': ...}
+    """
+    return {'relatorio': {}}
+
+
+def montar_relatorio_issqn(empresa_id, mes_ano):
+    """
+    Monta os dados do relatório de apuração de ISSQN.
+    Retorna dict padronizado: {'linhas': [...], 'totais': {...}}
+    Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
+    """
+    from medicos.models.fiscal import NotaFiscal
+    empresa = Empresa.objects.get(id=empresa_id)
+    ano = int(mes_ano[:4])
+    linhas = []
+    total_iss = 0
+    for mes in range(1, 13):
+        notas_mes = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtEmissao__year=ano,
+            dtEmissao__month=mes
+        )
+        valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
+        valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
+        total_iss += valor_iss
+        linhas.append({
+            'competencia': f'{mes:02d}/{ano}',
+            'valor_bruto': valor_bruto,
+            'valor_iss': valor_iss,
+        })
+    return {
+        'linhas': linhas,
+        'totais': {
+            'total_iss': total_iss,
+        }
+    }
+
+
+def montar_relatorio_outros(empresa_id, mes_ano):
+    """
+    Monta os dados de outros relatórios de apuração.
+    Retorna dict padronizado: {'relatorio': ...}
+    """
+    return {'relatorio': {}}

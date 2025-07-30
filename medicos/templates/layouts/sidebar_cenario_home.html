@@ -2,10 +2,19 @@
 <nav id="sidebar" class="sidebar bg-dark text-light">
   <div class="sidebar-header p-3">
     <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2"></i>Medicos</a>
+    <div class="fw-bold text-uppercase small text-secondary mt-2" style="letter-spacing:1px;">{{ cenario_nome|default:'Home' }}</div>
     <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
   </div>
   <hr class="border-secondary m-0">
   <ul class="nav flex-column">
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:home' %}"><i class="fas fa-home me-2"></i>Home</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_empresas' %}"><i class="fas fa-building me-2"></i>Gestão de Empresas</a></li>
+    <li class="nav-item">
+      {% if conta_id %}
+        <a class="nav-link text-light" href="{% url 'medicos:lista_usuarios_conta' conta_id=conta_id %}"><i class="fas fa-list me-2"></i>Lista de Usuários</a>
+      {% else %}
+        <a class="nav-link text-secondary disabled" tabindex="-1" aria-disabled="true" href="#"><i class="fas fa-list me-2"></i>Lista de Usuários</a>
+      {% endif %}
+    </li>
   </ul>
 </nav>

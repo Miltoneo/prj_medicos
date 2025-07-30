@@ -2,6 +2,11 @@ from django import forms
 from medicos.models.fiscal import NotaFiscal
 
 class NotaFiscalForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in ['meio_pagamento', 'dtRecebimento', 'status_recebimento']:
+            if field in self.fields:
+                self.fields[field].widget.attrs.update({'class': 'form-control'})
     def clean(self):
         cleaned_data = super().clean()
         numero = cleaned_data.get('numero')

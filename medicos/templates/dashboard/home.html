@@ -5,65 +5,60 @@
 {% block title %}Dashboard - Empresas Cadastradas{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <style>
-    .dashboard-card {
-      background: #f8f9fa;
-      border-radius: 14px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      padding: 2.5rem 2rem;
-      min-width: 320px;
-      max-width: 100%;
-      margin-bottom: 2rem;
-      font-size: 1.15rem;
-    }
-    .dashboard-card .card-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-  </style>
-  <form method="get" class="mb-3">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-6">
-        {{ empresa_filter.form.name.label_tag }}
-        {{ empresa_filter.form.name }}
+<style>
+  body { background-color: #181c24 !important; }
+</style>
+<div class="container pt-3 pb-4">
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-8 col-md-10 col-12">
+      <!-- Tema Escuro Azul -->
+      <div class="card shadow-sm border-0 mb-4" style="border-radius: 18px; background: #232a36; border: 1px solid #283a5c;">
+        <div class="card-body d-flex align-items-center py-4 px-3">
+          <i class="fas fa-handshake fa-lg me-3" style="color: #42a5f5; opacity: 0.85;"></i>
+          <div>
+            <h5 class="mb-1" style="font-weight: 500; color: #e3f2fd;">Bem-vindo ao Painel de Empresas</h5>
+            <p class="mb-0" style="font-size: 1.08rem; color: #b0bec5;">Gerencie suas empresas de forma simples e rápida. Selecione uma empresa para começar.</p>
+          </div>
+        </div>
       </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+      <!-- Exemplo de tabela (harmonizada com tema escuro azul) -->
+      <div class="card shadow border-0" style="border-radius: 16px; background: #232a36; border: 1px solid #283a5c;">
+        <div class="card-body p-0 py-4">
+          <div class="table-responsive d-flex justify-content-center">
+            <table class="table table-striped align-middle mb-0" style="font-size: 1.05rem; max-width: 700px; margin: 0 auto; background: #232a36; color: #e3f2fd;">
+              <thead style="background-color: #22304a; color: #42a5f5;">
+                <tr>
+                  <th>Razão Social</th>
+                  <th>CNPJ</th>
+                  <th>Regime Tributário</th>
+                  <th class="text-center">Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for empresa in empresas_cadastradas %}
+                <tr {% if empresa.id == empresa_id_atual %}style="background-color: #22304a;"{% endif %}>
+                  <td class="fw-semibold">{{ empresa.name }}</td>
+                  <td><span class="text-monospace">{{ empresa.cnpj }}</span></td>
+                  <td>{{ empresa.regime_tributario }}</td>
+                  <td class="text-center">
+                    {% if empresa.id != empresa_id_atual %}
+                      <a href="{% url 'medicos:startempresa' empresa_id=empresa.id %}" class="btn btn-outline-primary btn-sm px-3" style="border-color: #42a5f5; color: #42a5f5;">Selecionar</a>
+                    {% else %}
+                      <span class="badge px-3 py-2" style="background-color: #1976d2; color: #fff;">Selecionada</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted">Nenhuma empresa encontrada.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-  </form>
-  <div class="dashboard-card">
-    <div class="card-title">Empresas Cadastradas</div>
-    <table class="table table-striped table-hover mb-0">
-    <thead>
-      <tr>
-        <th>Razão Social</th>
-        <th>CNPJ</th>
-        <th>Regime Tributário</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for empresa in empresas_cadastradas %}
-      <tr {% if empresa.id == empresa_id_atual %}class="table-success"{% endif %}>
-        <td>{{ empresa.name }}</td>
-        <td>{{ empresa.cnpj }}</td>
-        <td>{{ empresa.regime_tributario }}</td>
-        <td>
-          {% if empresa.id != empresa_id_atual %}
-          <a href="{% url 'medicos:startempresa' empresa_id=empresa.id %}" class="btn btn-sm btn-primary">Selecionar</a>
-          {% else %}
-          <span class="badge bg-success">Selecionada</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="4">Nenhuma empresa encontrada.</td></tr>
-      {% endfor %}
-    </tbody>
-    </table>
   </div>
 </div>
 {% endblock %}

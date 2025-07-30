@@ -1,0 +1,4 @@
+<div class="d-flex justify-content-center gap-1">
+  <a href="{% url 'medicos:editar_despesa_empresa' empresa_id=record.item_despesa.grupo_despesa.empresa_id pk=record.id %}{% if competencia %}?competencia={{ competencia }}{% endif %}" class="btn btn-sm btn-warning">Editar</a>
+  <a href="{% url 'medicos:excluir_despesa_empresa' empresa_id=record.item_despesa.grupo_despesa.empresa_id pk=record.id %}{% if competencia %}?competencia={{ competencia }}{% endif %}" class="btn btn-sm btn-danger">Excluir</a>
+</div>

@@ -4,7 +4,9 @@ from .fiscal import *
 from .despesas import *
 from .financeiro import *
 from .auditoria import *
+
 from .relatorios import *
+from .relatorios_apuracao_csll import *
 
 # Definir __all__ para controlar as importações
 __all__ = [
@@ -15,10 +17,12 @@ __all__ = [
     # Modelos Fiscais
     'Aliquotas', 'NotaFiscal',
     # Modelos de Despesas
-    'Despesa',
     
     # Modelos Financeiros
     'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',
+
+    # Modelos de Apuração
+    'ApuracaoCSLL',
     
     # Modelos de Auditoria
     'LogAuditoriaFinanceiro', 'ConfiguracaoSistemaManual', 'registrar_auditoria',

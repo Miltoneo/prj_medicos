@@ -7,21 +7,39 @@ from .views_rateio import (
 )
 from .views_rateio_medico import NotaFiscalRateioMedicoListView
 from .views_financeiro_lancamentos import FinanceiroListView
-from django.urls import path
-# ...existing code...
+from django.urls import path, include
+from .views_cadastro_rateio import (
+    CadastroRateioView,
+    CadastroRateioCreateView,
+    CadastroRateioUpdateView,
+    CadastroRateioDeleteView,
+    cadastro_rateio_list,
+)
+from . import views_user_invite
 from . import views_user
 from . import views_main
 from . import views_relatorios
 from . import views_empresa
 from . import views_faturamento
+from .views_import_xml import NotaFiscalImportXMLView
+from .views_recebimento_notafiscal import NotaFiscalRecebimentoListView, NotaFiscalRecebimentoUpdateView
 from . import views_meio_pagamento
 from . import views_faturamento
 # from . import views_home_cenario  # Removido: arquivo não existe
 # from . import views_dashboard_empresa  # Removido: arquivo não existe
 from . import views_socio
 from . import views_aliquota
-from . import views_despesa
+from . import views_despesa_cadastro
+from . import views_despesas
+from . import urls_despesas
+
+from .views_aplicacoes_financeiras import (
+    AplicacaoFinanceiraListView,
+    AplicacaoFinanceiraCreateView,
+    AplicacaoFinanceiraUpdateView,
+)
 from django.contrib.auth import views as auth_views
+from .views_auth import tenant_login
 
 
 app_name = 'medicos'
@@ -30,6 +48,13 @@ app_name = 'medicos'
 # Rateio Views
 # =====================
 urlpatterns = [
+    # =====================
+    # Configuração de Rateio Views
+    # =====================
+    path('cadastro/rateio/', cadastro_rateio_list, name='cadastro_rateio'),
+    path('cadastro/rateio/novo/', CadastroRateioCreateView.as_view(), name='cadastro_rateio_create'),
+    path('cadastro/rateio/<int:pk>/editar/', CadastroRateioUpdateView.as_view(), name='cadastro_rateio_update'),
+    path('cadastro/rateio/<int:pk>/remover/', CadastroRateioDeleteView.as_view(), name='cadastro_rateio_delete'),
     # Rateio por Médico
     path('lista_rateio_medicos/<int:nota_id>/', NotaFiscalRateioMedicoListView.as_view(), name='lista_rateio_medicos'),
     path('novo_rateio_medico/<int:nota_id>/', NotaFiscalRateioMedicoCreateView.as_view(), name='novo_rateio_medico'),
@@ -39,14 +64,17 @@ urlpatterns = [
     path('lista_notas_rateio/', NotaFiscalRateioListView.as_view(), name='lista_notas_rateio'),
     path('lista_notas_rateio_medicos/', NotaFiscalRateioMedicoListView.as_view(), name='lista_notas_rateio_medicos'),
 
+
     # =====================
     # Financeiro Views
     # =====================
     path('financeiro/lancamentos/', FinanceiroListView.as_view(), name='financeiro_lancamentos'),
 
+
     # =====================
     # Empresa Views
     # =====================
+    path('lista_empresas/', views_empresa.EmpresaListView.as_view(), name='lista_empresas'),
     path('startempresa/<int:empresa_id>/', views_empresa.dashboard_empresa, name='startempresa'),
     path('empresa_create/nova/', views_empresa.empresa_create, name='empresa_create'),
     path('empresa_detail/<int:empresa_id>/detalhe/', views_empresa.empresa_detail, name='empresa_detail'),
@@ -62,11 +90,12 @@ urlpatterns = [
     # =====================
     # Usuário Views
     # =====================
-    path('usuarios/', views_user.UserListView.as_view(), name='user_list'),
+    path('lista_usuarios_conta/<int:conta_id>/', views_user.UserListView.as_view(), name='lista_usuarios_conta'),
     path('usuarios/novo/', views_user.UserCreateView.as_view(), name='user_create'),
     path('usuarios/<int:user_id>/editar/', views_user.UserUpdateView.as_view(), name='user_update'),
-    path('usuarios/<int:user_id>/excluir/', views_user.UserDeleteView.as_view(), name='user_delete'),
+path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView.as_view(), name='user_delete'),
     path('usuarios/<int:user_id>/', views_user.UserDetailView.as_view(), name='user_detail'),
+    path('usuarios/invite/', views_user_invite.UserInviteView.as_view(), name='user_invite'),
 
     # =====================
     # Sócio Views (Empresa)
@@ -79,9 +108,14 @@ urlpatterns = [
     # =====================
     path('lista_notas_fiscais/', views_faturamento.NotaFiscalListView.as_view(), name='lista_notas_fiscais'),
     path('criar_nota_fiscal/nova/', views_faturamento.NotaFiscalCreateView.as_view(), name='criar_nota_fiscal'),
+    path('importar_xml_nota_fiscal/', NotaFiscalImportXMLView.as_view(), name='importar_xml_nota_fiscal'),
     path('editar_nota_fiscal/<int:pk>/editar/', views_faturamento.NotaFiscalUpdateView.as_view(), name='editar_nota_fiscal'),
     path('excluir_nota_fiscal/<int:pk>/excluir/', views_faturamento.NotaFiscalDeleteView.as_view(), name='excluir_nota_fiscal'),
     path('cenario_faturamento/', views_cenario.cenario_faturamento, name='cenario_faturamento'),
+
+    # Recebimento de Notas Fiscais (Fluxo Isolado do Financeiro)
+    path('recebimento-notas/', NotaFiscalRecebimentoListView.as_view(), name='recebimento_notas_fiscais'),
+    path('recebimento-notas/<int:pk>/editar/', NotaFiscalRecebimentoUpdateView.as_view(), name='editar_recebimento_nota_fiscal'),
 
     # =====================
     # Meios de Pagamento Views
@@ -94,19 +128,26 @@ urlpatterns = [
     # =====================
     # Despesa Views
     # =====================
-    path('lista_grupos_despesa/<int:empresa_id>/grupos-despesa/', views_despesa.lista_grupos_despesa, name='lista_grupos_despesa'),
-    path('grupo_despesa_edit/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa.grupo_despesa_edit, name='grupo_despesa_edit'),
-    path('item_despesa_create/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/novo/', views_despesa.item_despesa_create, name='item_despesa_create'),
-    path('lista_itens_despesa/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/', views_despesa.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
-    path('item_despesa_edit/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/editar/', views_despesa.item_despesa_edit, name='item_despesa_edit'),
-    path('item_despesa_delete/<int:empresa_id>/grupos-despesa/<int:grupo_id>/itens/<int:item_id>/excluir/', views_despesa.item_despesa_delete, name='item_despesa_delete'),
-    path('grupo_despesa_delete/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa.grupo_despesa_delete, name='grupo_despesa_delete'),
+
+    # Cenário Despesas
+    path('despesas/', include('medicos.urls_despesas')),
+
+# Grupos de Despesa
+path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa_cadastro.lista_grupos_despesa, name='lista_grupos_despesa'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa_cadastro.grupo_despesa_edit, name='grupo_despesa_edit'),
+path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa_cadastro.grupo_despesa_delete, name='grupo_despesa_delete'),
+
+# Itens de Despesa (padronizado)
+path('lista_itens_despesa/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
+path('item_despesa_create/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaCreateView.as_view(), name='item_despesa_create'),
+path('item_despesa_edit/<int:empresa_id>/<int:item_id>/', views_despesa_cadastro.ItemDespesaUpdateView.as_view(), name='item_despesa_edit'),
+path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa_cadastro.ItemDespesaDeleteView.as_view(), name='item_despesa_delete'),
 
     # =====================
     # Aliquota Views
     # =====================
-    path('lista_aliquotas/<int:empresa_id>/aliquotas/', views_aliquota.ListaAliquotasView.as_view(), name='lista_aliquotas'),
-    path('aliquota_edit/<int:empresa_id>/aliquotas/<int:aliquota_id>/editar/', views_aliquota.aliquota_edit, name='aliquota_edit'),
+    path('aliquotas/<int:empresa_id>/', views_aliquota.ListaAliquotasView.as_view(), name='lista_aliquotas'),
+    path('aliquotas/<int:empresa_id>/<int:aliquota_id>/editar/', views_aliquota.aliquota_edit, name='aliquota_edit'),
 
     # =====================
     # Cadastro e Cenário Views
@@ -119,11 +160,21 @@ urlpatterns = [
     # =====================
     # Relatórios Views
     # =====================
-    path('relatorio-executivo/', views_relatorios.relatorio_executivo, name='relatorio_executivo'),
-    path('relatorio-executivo/pdf/<int:conta_id>/', views_relatorios.relatorio_executivo_pdf, name='relatorio_executivo_pdf'),
+path('relatorio-executivo/<int:empresa_id>/', views_relatorios.relatorio_executivo, name='relatorio_executivo'),
+    path('relatorio-mensal-empresa/<int:empresa_id>/', views_relatorios.relatorio_mensal_empresa, name='relatorio_mensal_empresa'),
+    path('relatorio-mensal-socio/<int:empresa_id>/', views_relatorios.relatorio_mensal_socio, name='relatorio_mensal_socio'),
+path('relatorio-issqn/<int:empresa_id>/', views_relatorios.relatorio_apuracao, name='relatorio_apuracao'),
+    path('relatorio-outros/<int:empresa_id>/', views_relatorios.relatorio_outros, name='relatorio_outros'),
 
     # =====================
     # Autenticação
     # =====================
     path('logout/', auth_views.LogoutView.as_view(next_page='/medicos/auth/login/'), name='logout'),
+    path('login/', tenant_login, name='login'),  # compatibilidade global para templates padrão Django
+    # =====================
+    # Aplicações Financeiras (Fluxo Isolado)
+    # =====================
+path('aplicacoes_financeiras/<int:empresa_id>/', AplicacaoFinanceiraListView.as_view(), name='aplicacoes_financeiras'),
+path('aplicacao_financeira_add/<int:empresa_id>/', AplicacaoFinanceiraCreateView.as_view(), name='aplicacao_financeira_add'),
+path('aplicacoes_financeiras_edit/<int:empresa_id>/<int:pk>/', AplicacaoFinanceiraUpdateView.as_view(), name='aplicacoes_financeiras_edit'),
 ]

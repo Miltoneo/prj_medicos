@@ -12,15 +12,17 @@ from medicos.contexto import *
 
 @login_required
 def main(request):
-    memberships = ContaMembership.objects.filter(user=request.user, is_active=True)
-    contas_ids = memberships.values_list('conta_id', flat=True)
-    empresas_cadastradas = Empresa.objects.filter(conta_id__in=contas_ids)
+    membership = ContaMembership.objects.filter(user=request.user, is_active=True).first()
+    conta = membership.conta if membership else None
+    empresas_cadastradas = Empresa.objects.filter(conta=conta) if conta else Empresa.objects.none()
 
-    request.session['cenario_nome'] = 'Home'
+    # Centraliza definição de conta_id na sessão
+    request.session['conta_id'] = conta.id if conta else None
+
     contexto = {
         'mes_ano': request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m'),
         'menu_nome': 'Home',
-        'titulo_pagina': 'Dashboard Principal',
+        'titulo_pagina': 'Dashboard conta: ' + str(conta.id)
     }
 
     return render(request, 'dashboard/home.html', {
@@ -54,6 +56,7 @@ class DashboardEmpresaListView(LoginRequiredMixin, ListView):
         if self.get_queryset().exists():
             empresa = self.get_queryset().first()
         context.update(main(self.request, empresa=empresa, menu_nome='Dashboard', cenario_nome='Dashboard'))
+        context['cenario_nome'] = 'Dashboard'
         
         context['empresa_id_atual'] = self.request.session.get('empresa_id')
         return context

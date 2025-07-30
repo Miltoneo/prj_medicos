@@ -1,0 +1,16 @@
+{% extends 'layouts/base_cenario_home.html' %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow border-0">
+        <div class="card-body text-center">
+          <h3 class="text-success mb-4"><i class="bi bi-check-circle me-2"></i>Conta ativada com sucesso!</h3>
+          <p class="mb-3">O usuário <strong>{{ user.get_full_name|default:user.email }}</strong> foi ativado e já pode acessar o sistema.</p>
+          <a href="/medicos/" class="btn btn-primary">Ir para o sistema</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -9,7 +9,10 @@
       Selecione uma empresa para visualizar as notas fiscais.
     </div>
   {% else %}
-    <div class="d-flex justify-content-end align-items-center mb-3">
+    <div class="d-flex justify-content-end align-items-center mb-3 gap-2">
+      <a href="{% url 'medicos:importar_xml_nota_fiscal' %}" class="btn btn-primary btn-sm px-3">
+        <i class="bi bi-upload me-1"></i> Importar XML
+      </a>
       <a href="{% url 'medicos:criar_nota_fiscal' %}" class="btn btn-success btn-sm px-3">
         <i class="bi bi-plus-circle me-1"></i> Nova Nota Fiscal
       </a>
@@ -18,13 +21,27 @@
       <div class="card-body">
         <form method="get" class="mb-3">
           <div class="row g-2 align-items-end">
-            {% for field in filter.form.visible_fields %}
-              <div class="col-md-3 col-6">
-                <label class="form-label small">{{ field.label }}</label>
-                {{ field }}
-              </div>
-            {% endfor %}
             <div class="col-md-2 col-12">
+              <label class="form-label small">Mês/Ano de Emissão</label>
+              <input type="month" name="mes_ano_emissao" class="form-control" value="{{ filter.form.mes_ano_emissao.value|default:mes_ano_emissao_default }}">
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label small">Status de Recebimento</label>
+              {{ filter.form.status_recebimento }}
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label small">Número</label>
+              {{ filter.form.numero }}
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label small">Tomador do Serviço</label>
+              {{ filter.form.tomador }}
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label small">CNPJ do Tomador</label>
+              {{ filter.form.cnpj_tomador }}
+            </div>
+            <div class="col-md-1 col-12">
               <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
             </div>
           </div>

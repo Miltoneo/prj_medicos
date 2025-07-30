@@ -12,12 +12,20 @@ from core.context_processors import empresa_context
 from medicos.models.base import Empresa
 
 
-
-
 class FinanceiroListView(SingleTableMixin, FilterView):
     """
     View para listagem de lançamentos financeiros.
     Exibe tabela filtrável e injeta empresa no contexto para o header.
+
+    REGRA OBRIGATÓRIA DE TITULAÇÃO DE PÁGINA:
+    - O título da página deve ser passado via variável de contexto 'titulo_pagina' na view.
+    - O template filho NÃO pode definir título fixo ou duplicado; o layout base exibe o título automaticamente.
+    - Toda tela deve seguir este fluxo, sem exceções ou dubiedade.
+    - Exemplo correto:
+        context['titulo_pagina'] = 'Lançamentos de movimentações financeiras'
+    - Exemplo de exibição no layout:
+        <h4 class="fw-bold text-primary">Título: {{ titulo_pagina }}</h4>
+    Fonte: medicos/templates/layouts/base_cenario_financeiro.html, linhas 15-25; medicos/views_financeiro_lancamentos.py, método get_context_data.
     """
     model = Financeiro
     table_class = FinanceiroTable
@@ -25,25 +33,28 @@ class FinanceiroListView(SingleTableMixin, FilterView):
     template_name = 'financeiro/lista_lancamentos_financeiros.html'
     paginate_by = 25
 
+    def get_filterset(self, filterset_class):
+        """
+        Só aplica o filtro padrão de mês/ano se não houver nenhum filtro na query string.
+        """
+        import datetime
+        data = self.request.GET.copy()
+        # Se não há nenhum filtro na query string, aplica o mês atual
+        if not data and not self.request.GET.urlencode():
+            today = datetime.date.today()
+            data['data_movimentacao_mes'] = today.strftime('%Y-%m')
+        return filterset_class(data, queryset=self.get_queryset(), request=self.request)
+
     def get_context_data(self, **kwargs):
         """
         Regra de padronização:
-        - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']).
+        - NÃO injete manualmente a variável 'empresa' no contexto. Ela já estará disponível via context processor.
         - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
-        - Injete também 'titulo_pagina' para exibição do título padrão no header.
-        - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+        - Injete apenas 'titulo_pagina' e 'cenario_nome' para exibição correta no header.
         """
         context = super().get_context_data(**kwargs)
-        empresa_id = self.request.session.get('empresa_id')
-        if empresa_id:
-            try:
-                context['empresa'] = Empresa.objects.get(id=int(empresa_id))
-            except Empresa.DoesNotExist:
-                context['empresa'] = None
-        else:
-            context['empresa'] = None
-        # O nome da empresa será exibido automaticamente pelo base_header.html
-        context['titulo_pagina'] = 'Lançamentos'
+        context['titulo_pagina'] = 'Lançamentos de movimentações financeiras'
+        context['cenario_nome'] = 'Financeiro'
         return context
 
 
@@ -59,11 +70,15 @@ class FinanceiroCreateView(CreateView):
     def get_success_url(self):
         return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
+
+
     def form_valid(self, form):
         instance = form.save(commit=False)
-        empresa_ctx = empresa_context(self.request)
-        # Garante que conta sempre existe
-        instance.conta = empresa_ctx['conta_atual']
+        empresa = empresa_context(self.request).get('empresa')
+        if not empresa:
+            form.add_error(None, 'Nenhuma empresa selecionada.')
+            return self.form_invalid(form)
+        instance.empresa = empresa
         instance.save()
         return super().form_valid(form)
 
