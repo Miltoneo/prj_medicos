@@ -3,23 +3,36 @@ from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from django.urls import reverse
 
 class NotaFiscalRateioTable(tables.Table):
-    numero = tables.Column(verbose_name="Nº NF")
-    empresa_destinataria = tables.Column(verbose_name="Empresa")
-    tomador = tables.Column(verbose_name="Tomador")
-    val_bruto = tables.Column(verbose_name="Valor Bruto (R$)")
-    val_liquido = tables.Column(verbose_name="Valor Líquido (R$)")
-    dtEmissao = tables.DateColumn(verbose_name="Emissão")
-    rateio = tables.TemplateColumn(
+    numero = tables.Column(verbose_name="Número", orderable=True)
+    dtEmissao = tables.DateColumn(verbose_name="Data Emissão", orderable=True, format="d/m/Y")
+    tomador = tables.Column(verbose_name="Tomador", orderable=True)
+    cnpj_tomador = tables.Column(verbose_name="CNPJ do Tomador", orderable=True)
+    val_bruto = tables.Column(verbose_name="Valor Bruto (R$)", orderable=True)
+    selecionar = tables.TemplateColumn(
         template_code='''
-        <a href="{% url 'medicos:lista_rateio_medicos' nota_id=record.id %}" class="btn btn-sm btn-primary">Ratear</a>
+        <form method="get" style="display:inline;">
+          {% for key, value in request.GET.items %}
+            {% if key != 'nota_id' %}
+              <input type="hidden" name="{{ key }}" value="{{ value }}" />
+            {% endif %}
+          {% endfor %}
+          <input type="hidden" name="nota_id" value="{{ record.id }}" />
+          <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fas fa-hand-pointer"></i> Selecionar</button>
+        </form>
         ''',
-        verbose_name="Rateio",
+        verbose_name="Ações",
         orderable=False
     )
+    
     class Meta:
         model = NotaFiscal
         template_name = "django_tables2/bootstrap5.html"
-        fields = ("numero", "empresa_destinataria", "tomador", "val_bruto", "val_liquido", "dtEmissao")
+        fields = ("numero", "dtEmissao", "tomador", "cnpj_tomador", "val_bruto")
+        order_by = ("-dtEmissao",)  # Ordenação padrão por data de emissão (mais recente primeiro)
+        
+    def render_val_bruto(self, value):
+        """Formatação personalizada para valor bruto"""
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 class RateioMedicoTable(tables.Table):
     medico = tables.Column(verbose_name="Médico")
