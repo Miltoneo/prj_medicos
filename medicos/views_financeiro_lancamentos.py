@@ -33,6 +33,16 @@ class FinanceiroListView(SingleTableMixin, FilterView):
     template_name = 'financeiro/lista_lancamentos_financeiros.html'
     paginate_by = 25
 
+    def get_queryset(self):
+        """
+        Filtra movimentações financeiras apenas da empresa selecionada.
+        """
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            # Filtra através do campo socio que pertence à empresa
+            return Financeiro.objects.filter(socio__empresa=empresa).order_by('-data_movimentacao')
+        return Financeiro.objects.none()
+
     def get_filterset(self, filterset_class):
         """
         Só aplica o filtro padrão de mês/ano se não houver nenhum filtro na query string.
@@ -70,7 +80,12 @@ class FinanceiroCreateView(CreateView):
     def get_success_url(self):
         return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
-
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            kwargs['empresa'] = empresa
+        return kwargs
 
     def form_valid(self, form):
         instance = form.save(commit=False)
@@ -78,7 +93,8 @@ class FinanceiroCreateView(CreateView):
         if not empresa:
             form.add_error(None, 'Nenhuma empresa selecionada.')
             return self.form_invalid(form)
-        instance.empresa = empresa
+        # O campo empresa não existe no modelo Financeiro
+        # A relação com a empresa é feita através do campo socio
         instance.save()
         return super().form_valid(form)
 
@@ -94,6 +110,12 @@ class FinanceiroUpdateView(UpdateView):
     def get_success_url(self):
         return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            kwargs['empresa'] = empresa
+        return kwargs
 
 class FinanceiroDeleteView(DeleteView):
     """
