@@ -3,6 +3,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
+from decimal import Decimal
 from .base import SaaSBaseModel, Empresa, Socio
 
 from django.utils.translation import gettext_lazy as _
@@ -367,12 +368,14 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             ativo=True
         )
         
-        # Verificar se os percentuais somam 100%
-        total_percentual = sum(r.percentual_rateio or 0 for r in rateios)
+        # Verificar se os percentuais somam 100% usando Decimal para precisão
+        total_percentual = sum(
+            Decimal(str(r.percentual_rateio or 0)) for r in rateios
+        )
         
         return {
-            'valido': abs(total_percentual - 100) < 0.01,
-            'total_percentual': total_percentual,
+            'valido': abs(total_percentual - Decimal('100')) < Decimal('0.01'),
+            'total_percentual': float(total_percentual),  # Converte para float para compatibilidade
             'total_rateios': rateios.count(),
             'rateios': list(rateios)
         }
@@ -394,8 +397,9 @@ class ItemDespesaRateioMensal(AuditoriaModel):
         if not medicos_lista:
             raise ValidationError("Lista de médicos não pode estar vazia")
         
-        # Calcular percentual igual para todos
-        percentual_por_medico = 100 / len(medicos_lista)
+        # Calcular percentual igual para todos usando Decimal
+        num_medicos = len(medicos_lista)
+        percentual_por_medico = (Decimal('100') / Decimal(str(num_medicos))).quantize(Decimal('0.01'))
         
         # Limpar rateios existentes para este item/mês
         cls.objects.filter(
@@ -432,8 +436,8 @@ class ItemDespesaRateioMensal(AuditoriaModel):
             list: Lista dos rateios criados
         """
         # Validar que o total dos percentuais seja exatamente 100%
-        total_percentual = sum(config['percentual'] for config in rateios_config)
-        if abs(total_percentual - 100) > 0.01:
+        total_percentual = sum(Decimal(str(config['percentual'])) for config in rateios_config)
+        if abs(total_percentual - Decimal('100')) > Decimal('0.01'):
             raise ValidationError(f'Total dos percentuais ({total_percentual}%) deve ser exatamente 100%')
         
         # Limpar rateios existentes

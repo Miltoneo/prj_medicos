@@ -2,6 +2,7 @@
 
 
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -13,6 +14,33 @@ from django_tables2.views import SingleTableMixin
 from medicos.models.despesas import ItemDespesaRateioMensal, ItemDespesa, GrupoDespesa, Socio
 from medicos.forms import ItemDespesaRateioMensalForm
 from medicos.filters_rateio_medico import ItemDespesaRateioMensalFilter
+
+
+def converter_percentual_seguro(valor_str):
+    """
+    Converte string de percentual para Decimal com exatamente 2 casas decimais
+    
+    Args:
+        valor_str: String com o valor do percentual
+        
+    Returns:
+        Decimal: Valor convertido com 2 casas decimais ou None se inválido
+    """
+    if not valor_str or valor_str.strip() == '':
+        return None
+    
+    try:
+        # Substitui vírgula por ponto para aceitar formato brasileiro
+        valor_limpo = str(valor_str).strip().replace(',', '.')
+        
+        # Converte para Decimal diretamente, garantindo precisão
+        decimal_valor = Decimal(valor_limpo)
+        
+        # Arredonda para exatamente 2 casas decimais
+        return decimal_valor.quantize(Decimal('0.01'))
+        
+    except (InvalidOperation, ValueError, TypeError):
+        return None
 
 
 def cadastro_rateio_list(request):
@@ -64,8 +92,10 @@ def cadastro_rateio_list(request):
         # Só processa rateio se o item permitir
         if permite_rateio:
             if request.method == 'POST':
-                # Validação do total do rateio
-                total_percentual_post = 0
+                # Validação do total do rateio usando Decimal para precisão
+                total_percentual_post = Decimal('0.00')
+                valores_validos = {}  # Para armazenar valores convertidos
+                
                 for socio in socios_empresa:
                     r_id = None
                     val = None
@@ -74,17 +104,21 @@ def cadastro_rateio_list(request):
                     if rateio_existente:
                         r_id = rateio_existente.id
                         val = request.POST.get(f'percentual_{r_id}')
+                        chave = f'percentual_{r_id}'
                     else:
                         val = request.POST.get(f'percentual_socio_{socio.id}')
+                        chave = f'percentual_socio_{socio.id}'
+                    
                     if val is not None and val != '':
-                        try:
-                            val_num = float(str(val).replace(',', '.'))
-                        except Exception:
-                            val_num = 0
-                        total_percentual_post += val_num
+                        val_decimal = converter_percentual_seguro(val)
+                        if val_decimal is not None:
+                            valores_validos[chave] = val_decimal
+                            total_percentual_post += val_decimal
+                
                 # Permite pequena margem de erro de ponto flutuante (0.01)
-                if abs(total_percentual_post - 100.0) > 0.01:
-                    messages.error(request, 'O total do rateio deve ser exatamente 100%. Corrija os percentuais antes de salvar.')
+                cem_percent = Decimal('100.00')
+                if abs(total_percentual_post - cem_percent) > Decimal('0.01'):
+                    messages.error(request, f'O total do rateio deve ser exatamente 100%. Total atual: {total_percentual_post:.2f}%. Corrija os percentuais antes de salvar.')
                     # Monta rateios para reexibir na tela com os valores do POST
                     rateios = []
                     for socio in socios_empresa:
@@ -94,12 +128,9 @@ def cadastro_rateio_list(request):
                             val = request.POST.get(f'percentual_{r_id}')
                         else:
                             val = request.POST.get(f'percentual_socio_{socio.id}')
-                        percentual = None
-                        if val is not None and val != '':
-                            try:
-                                percentual = float(str(val).replace(',', '.'))
-                            except Exception:
-                                percentual = None
+                        
+                        percentual = converter_percentual_seguro(val)
+                        
                         fake = ItemDespesaRateioMensal(
                             item_despesa_id=selected_item_id,
                             socio=socio,
@@ -108,8 +139,11 @@ def cadastro_rateio_list(request):
                             data_referencia=mes_competencia_date,
                             ativo=True
                         )
+                        # Adiciona ID fictício para rateios existentes
+                        if rateio_existente:
+                            fake.id = rateio_existente.id
                         rateios.append(fake)
-                    total_percentual = total_percentual_post
+                    total_percentual = float(total_percentual_post)
                     context = {
                         'default_mes': default_mes,
                         'mes_competencia': mes_competencia[:7] if mes_competencia else '',
@@ -126,35 +160,26 @@ def cadastro_rateio_list(request):
                         'permite_rateio': permite_rateio,
                     }
                     return render(request, 'cadastro/rateio_list.html', context)
-                # Se passou na validação, salva normalmente
+                # Se passou na validação, salva normalmente usando valores já validados
                 rateios_qs = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia_date)
                 rateios_dict = {r.socio_id: r for r in rateios_qs}
+                
                 for socio in socios_empresa:
                     # Atualiza existentes
                     r = rateios_dict.get(socio.id)
                     if r:
-                        val = request.POST.get(f'percentual_{r.id}')
-                        if val is not None:
-                            val_num = str(val).replace(',', '.')
-                            try:
-                                val_num = float(val_num)
-                            except Exception:
-                                val_num = 0
-                            r.percentual_rateio = val_num
+                        chave = f'percentual_{r.id}'
+                        if chave in valores_validos:
+                            r.percentual_rateio = valores_validos[chave]
                             r.save()
                     else:
                         # Cria novos
-                        val = request.POST.get(f'percentual_socio_{socio.id}')
-                        if val is not None and val != '':
-                            val_num = str(val).replace(',', '.')
-                            try:
-                                val_num = float(val_num)
-                            except Exception:
-                                val_num = 0
+                        chave = f'percentual_socio_{socio.id}'
+                        if chave in valores_validos:
                             ItemDespesaRateioMensal.objects.create(
                                 item_despesa_id=selected_item_id,
                                 socio=socio,
-                                percentual_rateio=val_num,
+                                percentual_rateio=valores_validos[chave],
                                 data_referencia=mes_competencia_date
                             )
                 # Após salvar, redireciona para GET com filtros (PRG pattern)
@@ -180,7 +205,12 @@ def cadastro_rateio_list(request):
                         ativo=True
                     )
                     rateios.append(fake)
-            total_percentual = sum([float(r.percentual_rateio) for r in rateios if r.percentual_rateio])
+            # Calcula total percentual usando Decimal para precisão
+            total_percentual = sum([
+                Decimal(str(r.percentual_rateio)) for r in rateios 
+                if r.percentual_rateio is not None
+            ], Decimal('0.00'))
+            total_percentual = float(total_percentual)  # Converte para float apenas para exibição
         else:
             # Item não permite rateio, não processa POST nem busca rateios
             pass
