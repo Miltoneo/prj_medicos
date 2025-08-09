@@ -111,14 +111,29 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         if 'nota_id' in filter_params:
             filter_params.pop('nota_id')
         self.filter = self.filterset_class(filter_params, queryset=qs)
-        # Não aplica ordenação fixa para permitir ordenação dinâmica via django-tables2
-        return self.filter.qs
+        # Aplica ordenação padrão por data de emissão descendente se não houver ordenação específica
+        filtered_qs = self.filter.qs
+        if 'sort' not in self.request.GET:
+            filtered_qs = filtered_qs.order_by('-dtEmissao')
+        return filtered_qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         queryset = self.get_queryset()
         table = self.table_class(queryset)
-        RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
+        
+        # Configurar tabela com parâmetros específicos incluindo ordenação padrão
+        request_config = RequestConfig(
+            self.request, 
+            paginate={'per_page': self.paginate_by}
+        )
+        
+        # Se não há parâmetro de ordenação na URL, usar ordenação padrão da tabela
+        if 'sort' not in self.request.GET:
+            # Force a ordenação padrão por data de emissão descendente
+            table.order_by = '-dtEmissao'
+            
+        request_config.configure(table)
         nota_id = self.request.GET.get('nota_id')
         context['filter'] = getattr(self, 'filter', None)
         nota_fiscal = None
