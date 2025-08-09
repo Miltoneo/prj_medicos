@@ -24,14 +24,22 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         if not empresa_id:
             return NotaFiscal.objects.none()
         qs = NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
-        # Filtro por mês/ano de emissão
+        
+        # Filtro por mês/ano de emissão - aplica mês atual como padrão se não especificado
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
+        if not mes_ano_emissao:
+            # Se não há filtro na query string, aplica o mês atual
+            import datetime
+            now = datetime.date.today()
+            mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
+        
         if mes_ano_emissao:
             try:
                 ano, mes = mes_ano_emissao.split('-')
                 qs = qs.filter(dtEmissao__year=int(ano), dtEmissao__month=int(mes))
             except Exception:
                 pass
+        
         # Filtro por mês/ano de recebimento
         mes_ano_recebimento = self.request.GET.get('mes_ano_recebimento')
         if mes_ano_recebimento:
@@ -48,12 +56,18 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         context['titulo_pagina'] = 'Recebimento de Notas Fiscais'
         context['cenario_nome'] = 'Financeiro'
         context['menu_nome'] = 'Recebimento de Notas'
+        
         # Define valor default para mes_ano_emissao se não informado
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
         if not mes_ano_emissao:
             now = datetime.date.today()
             mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
         context['mes_ano_emissao_default'] = mes_ano_emissao
+        
+        # Define valor default para mes_ano_recebimento (mantém valor do GET se existir)
+        mes_ano_recebimento = self.request.GET.get('mes_ano_recebimento', '')
+        context['mes_ano_recebimento_default'] = mes_ano_recebimento
+        
         return context
 
 @method_decorator(login_required, name='dispatch')
