@@ -321,7 +321,7 @@ class Aliquotas(models.Model):
     )
 
     IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL = models.DecimalField(
-        max_digits=10, decimal_places=2, null=False, default=20000.00,
+        max_digits=10, decimal_places=2, null=False,
         verbose_name="IRPJ - Valor Base para Adicional (R$)",
         help_text="Valor base a partir do qual incide o adicional de IRPJ. Usado para cálculo do adicional conforme legislação."
     )

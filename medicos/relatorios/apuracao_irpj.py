@@ -40,7 +40,14 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
         retencao_aplicacao_financeira = aplicacoes.aggregate(total=Sum('ir_cobrado'))['total'] or Decimal('0')
         base_calculo_total = base_calculo + rendimentos_aplicacoes
         imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA_OUTROS/Decimal('100'))
-        adicional = base_calculo_total * (aliquota.IRPJ_ADICIONAL/Decimal('100')) if hasattr(aliquota, 'IRPJ_ADICIONAL') else Decimal('0')
+        
+        # CORREÇÃO: Adicional só incide sobre o excesso do valor base configurado
+        adicional = Decimal('0')
+        if hasattr(aliquota, 'IRPJ_ADICIONAL') and hasattr(aliquota, 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL'):
+            if base_calculo_total > aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL:
+                excesso = base_calculo_total - aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
+                adicional = excesso * (aliquota.IRPJ_ADICIONAL/Decimal('100'))
+        
         imposto_retido_nf = notas.aggregate(total=Sum('val_IR'))['total'] or Decimal('0')
         # já atribuído acima
         imposto_a_pagar = imposto_devido + adicional - imposto_retido_nf - retencao_aplicacao_financeira

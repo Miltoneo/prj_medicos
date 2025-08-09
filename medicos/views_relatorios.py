@@ -14,6 +14,7 @@ from django.utils import timezone
 
 # Imports locais
 from medicos.models.base import Empresa, Socio
+from medicos.models.fiscal import Aliquotas
 from medicos.relatorios.builders import (
     montar_relatorio_mensal_empresa,
     montar_relatorio_mensal_socio,
@@ -174,6 +175,26 @@ def relatorio_mensal_socio(request, empresa_id):
     context['participacao_socio'] = participacao_socio
     context['valor_adicional_socio'] = valor_adicional_socio
     context['receita_bruta_socio'] = receita_bruta_socio
+    
+    # Buscar alíquota da empresa para exibir valores corretos no template
+    try:
+        aliquota = Aliquotas.objects.filter(empresa=empresa).first()
+        if aliquota:
+            context['valor_base_adicional'] = aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
+            context['aliquota_adicional'] = aliquota.IRPJ_ADICIONAL
+            # Calcular excedente para o template
+            total_bruto = relatorio.get('total_notas_bruto', 0)
+            excedente = max(total_bruto - float(aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL), 0)
+            context['excedente_adicional'] = excedente
+        else:
+            context['valor_base_adicional'] = 0
+            context['aliquota_adicional'] = 0
+            context['excedente_adicional'] = 0
+    except:
+        context['valor_base_adicional'] = 0
+        context['aliquota_adicional'] = 0
+        context['excedente_adicional'] = 0
+        
     return render(request, 'relatorios/relatorio_mensal_socio.html', context)
 
 @login_required

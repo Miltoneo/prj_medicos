@@ -1,7 +1,7 @@
 # Imports necessários
 from medicos.models.base import Empresa, Socio
 from medicos.models.despesas import DespesaSocio, DespesaRateada
-from medicos.models.fiscal import NotaFiscal
+from medicos.models.fiscal import NotaFiscal, Aliquotas
 from medicos.models.financeiro import Financeiro
 from medicos.models.relatorios import RelatorioMensalSocio
 from datetime import datetime
@@ -103,9 +103,25 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     )
 
     total_notas_bruto = sum(float(nf.val_bruto or 0) for nf in notas_empresa_qs)
+    
+    # Buscar a alíquota da empresa para obter o valor base correto
+    try:
+        aliquota = Aliquotas.objects.filter(empresa=empresa).first()
+        if aliquota and hasattr(aliquota, 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL'):
+            valor_base_adicional = float(aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL)
+            aliquota_adicional = float(aliquota.IRPJ_ADICIONAL) / 100
+        else:
+            # Se não encontrar alíquota, não calcula adicional
+            valor_base_adicional = total_notas_bruto + 1  # Força adicional = 0
+            aliquota_adicional = 0
+    except:
+        # Em caso de erro, não calcula adicional
+        valor_base_adicional = total_notas_bruto + 1  # Força adicional = 0
+        aliquota_adicional = 0
+    
     # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
-    excedente_adicional = max(total_notas_bruto - 20000, 0)
-    valor_adicional_rateio = excedente_adicional * 0.10
+    excedente_adicional = max(total_notas_bruto - valor_base_adicional, 0)
+    valor_adicional_rateio = excedente_adicional * aliquota_adicional
     # Participação do sócio na receita bruta da empresa
     receita_bruta_socio = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_qs)
     participacao_socio = receita_bruta_socio / total_notas_bruto if total_notas_bruto > 0 else 0

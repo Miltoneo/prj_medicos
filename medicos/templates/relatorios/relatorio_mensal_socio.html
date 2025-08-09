@@ -64,8 +64,8 @@
                       <li class="small text-muted">
                         <b>Como é calculado o rateio de adicional de IR mensal?</b><br>
                         1. Soma-se a receita bruta de todos os sócios no mês.<br>
-                        2. Se a soma ultrapassar o limite de isenção do adicional de IR (ex: R$ 20.000,00/mês), calcula-se o excedente.<br>
-                        3. Aplica-se a alíquota do adicional (ex: 10%) sobre o excedente.<br>
+                        2. Se a soma ultrapassar o limite de isenção do adicional de IR (R$ {{ valor_base_adicional|floatformat:2 }}/mês), calcula-se o excedente.<br>
+                        3. Aplica-se a alíquota do adicional ({{ aliquota_adicional }}%) sobre o excedente.<br>
                         4. O valor do adicional é rateado entre os sócios proporcionalmente à participação de cada um na receita do mês.<br>
                         Exemplo: Se o sócio teve 60% da receita, recebe 60% do adicional.<br>
                       </li>
@@ -239,10 +239,10 @@
     <div class="card-body p-3">
       <ul class="mb-2" style="font-size:1.05em;">
         <li><b>Receita bruta total da empresa no mês:</b> R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</li>
-        <li><b>Limite de isenção do adicional de IR:</b> R$ 20.000,00</li>
-        <li><b>Excedente sujeito ao adicional:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|floatformat:2 }} - 20.000,00 = {{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }}{% else %}0,00{% endif %}</li>
-        <li><b>Alíquota do adicional:</b> 10%</li>
-        <li><b>Valor total do adicional a ser rateado:</b> R$ {% if relatorio.total_notas_bruto > 20000 %}{{ relatorio.total_notas_bruto|add:"-20000"|floatformat:2 }} x 10% = {{ valor_adicional_rateio|floatformat:2 }}{% else %}0,00{% endif %}</li>
+        <li><b>Limite de isenção do adicional de IR:</b> R$ {{ valor_base_adicional|floatformat:2 }}</li>
+        <li><b>Excedente sujeito ao adicional:</b> R$ {{ excedente_adicional|floatformat:2 }}</li>
+        <li><b>Alíquota do adicional:</b> {{ aliquota_adicional }}%</li>
+        <li><b>Valor total do adicional a ser rateado:</b> R$ {{ valor_adicional_rateio|floatformat:2 }}</li>
         <li><b>Participação do sócio na receita bruta da empresa:</b> {% if relatorio.total_notas_bruto > 0 %}{{ receita_bruta_socio|floatformat:2 }} / {{ relatorio.total_notas_bruto|floatformat:2 }} = {{ participacao_socio|floatformat:4 }}{% else %}0{% endif %}</li>
         <li><b>Valor do adicional para o sócio:</b> R$ {% if relatorio.total_notas_bruto > 0 %}{{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} / {{ relatorio.total_notas_bruto|floatformat:2 }}) = {{ valor_adicional_socio|floatformat:2 }}{% else %}0,00{% endif %}</li>
       </ul>
