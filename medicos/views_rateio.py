@@ -7,6 +7,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django_tables2 import RequestConfig
 from django_filters.views import FilterView
+from datetime import date
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.base import Empresa, Socio
 from .tables_rateio import NotaFiscalRateioTable
@@ -104,12 +105,20 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         qs = NotaFiscal.objects.all()
         if empresa_id:
             qs = qs.filter(empresa_destinataria_id=empresa_id)
+        
         # Aplica o filtro de busca
         filter_params = self.request.GET.copy()
         if 'page' in filter_params:
             filter_params.pop('page')
         if 'nota_id' in filter_params:
             filter_params.pop('nota_id')
+            
+        # Se não há filtros específicos, aplicar filtro do mês corrente por padrão
+        if not filter_params:
+            from datetime import date
+            mes_corrente = date.today().strftime('%Y-%m')
+            filter_params['mes_emissao'] = mes_corrente
+            
         self.filter = self.filterset_class(filter_params, queryset=qs)
         # Aplica ordenação padrão por data de emissão descendente se não houver ordenação específica
         filtered_qs = self.filter.qs
@@ -170,6 +179,7 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             'medicos_rateio': medicos_rateio,
             'titulo_pagina': 'Rateio de Notas Fiscais',
             'total_percentual_rateado': total_percentual_rateado,
+            'mes_corrente': date.today().strftime('%Y-%m'),  # Para valor padrão do filtro
         })
         return context
 
