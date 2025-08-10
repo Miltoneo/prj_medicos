@@ -302,22 +302,22 @@ class Aliquotas(models.Model):
     )
     
     # === IMPOSTO DE RENDA PESSOA JURÍDICA ===
-    IRPJ_BASE_CAL = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=32.00,
-        verbose_name="IRPJ - Base de Cálculo (%)",
-        help_text="Percentual da receita bruta para base de cálculo do IRPJ (32% para serviços médicos, conforme Lei 9.249/1995, art. 15, §1º, III, 'a')"
+    IRPJ_ALIQUOTA = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=15.00,
+        verbose_name="IRPJ - Alíquota (%)",
+        help_text="Alíquota normal do IRPJ (15% sobre a base de cálculo presumida, conforme Lei 9.249/1995, art. 3º)"
     )
     
-    IRPJ_ALIQUOTA_OUTROS = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=15.00,
-        verbose_name="IRPJ - Alíquota Outros (%)",
-        help_text="Alíquota normal do IRPJ para outros serviços (15% sobre a base de cálculo presumida, conforme Lei 9.249/1995, art. 3º)"
+    IRPJ_PRESUNCAO_OUTROS = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=32.00,
+        verbose_name="IRPJ - Presunção Outros Serviços (%)",
+        help_text="Percentual da receita bruta presumido como lucro para outros serviços (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a')"
     )
 
-    IRPJ_ALIQUOTA_CONSULTA = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=0,
-        verbose_name="IRPJ - Alíquota Consulta (%)",
-        help_text="Alíquota adicional do IRPJ para consultas. Não prevista na legislação federal padrão para serviços médicos."
+    IRPJ_PRESUNCAO_CONSULTA = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=32.00,
+        verbose_name="IRPJ - Presunção Consultas (%)",
+        help_text="Percentual da receita bruta presumido como lucro para consultas médicas (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a')"
     )
 
     IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL = models.DecimalField(
@@ -387,9 +387,9 @@ class Aliquotas(models.Model):
             ('ISS', self.ISS, 0, 20),
             ('PIS', self.PIS, 0, 10),
             ('COFINS', self.COFINS, 0, 10),
-            ('IRPJ_BASE_CAL', self.IRPJ_BASE_CAL, 0, 100),
-            ('IRPJ_ALIQUOTA_OUTROS', self.IRPJ_ALIQUOTA_OUTROS, 0, 50),
-            ('IRPJ_ALIQUOTA_CONSULTA', self.IRPJ_ALIQUOTA_CONSULTA, 0, 50),
+            ('IRPJ_ALIQUOTA', self.IRPJ_ALIQUOTA, 0, 50),
+            ('IRPJ_PRESUNCAO_OUTROS', self.IRPJ_PRESUNCAO_OUTROS, 0, 100),
+            ('IRPJ_PRESUNCAO_CONSULTA', self.IRPJ_PRESUNCAO_CONSULTA, 0, 100),
             ('CSLL_BASE_CAL', self.CSLL_BASE_CAL, 0, 100),
             ('CSLL_ALIQUOTA_OUTROS', self.CSLL_ALIQUOTA_OUTROS, 0, 50),
             ('CSLL_ALIQUOTA_CONSULTA', self.CSLL_ALIQUOTA_CONSULTA, 0, 50),
@@ -481,11 +481,11 @@ class Aliquotas(models.Model):
         valor_cofins = valor_bruto * (self.COFINS / 100)
         
         # Base de cálculo para IR e CSLL
-        base_calculo_ir = valor_bruto * (self.IRPJ_BASE_CAL / 100)
+        base_calculo_ir = valor_bruto * (self.IRPJ_PRESUNCAO_OUTROS / 100)
         base_calculo_csll = valor_bruto * (self.CSLL_BASE_CAL / 100)
         
         # IRPJ
-        valor_ir_normal = base_calculo_ir * (self.IRPJ_ALIQUOTA_OUTROS / 100)
+        valor_ir_normal = base_calculo_ir * (self.IRPJ_ALIQUOTA / 100)
         valor_ir_adicional = 0
         if base_calculo_ir > self.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL:
             excesso = base_calculo_ir - self.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL

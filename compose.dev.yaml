@@ -34,7 +34,7 @@ services:
             python manage.py runserver 0.0.0.0:8000"
     restart: unless-stopped
     environment:
-      SECONDARY_DATABASE_HOST: db  
+      SECONDARY_DATABASE_HOST: onkoto.com.br
       SECONDARY_DATABASE_NAME: db_medicos
       SECONDARY_DATABASE_USER: admin
       SECONDARY_DATABASE_PASSWORD: admin

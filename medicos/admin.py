@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import *
 from .models.despesas import DespesaRateada, DespesaSocio
+from .models.relatorios_apuracao_irpj_mensal import ApuracaoIRPJMensal
 
 # Register your models here.
 
@@ -131,7 +132,7 @@ class NotaFiscalAdmin(admin.ModelAdmin):
 class AliquotasAdmin(admin.ModelAdmin):
     list_display = (
         'empresa', 'ISS', 'PIS', 'COFINS',
-        'IRPJ_BASE_CAL', 'IRPJ_ALIQUOTA_OUTROS', 'IRPJ_ALIQUOTA_CONSULTA', 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', 'IRPJ_ADICIONAL',
+        'IRPJ_ALIQUOTA', 'IRPJ_PRESUNCAO_OUTROS', 'IRPJ_PRESUNCAO_CONSULTA', 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', 'IRPJ_ADICIONAL',
         'CSLL_BASE_CAL', 'CSLL_ALIQUOTA_OUTROS', 'CSLL_ALIQUOTA_CONSULTA',
         'data_vigencia_inicio', 'data_vigencia_fim', 'ativa'
     )
@@ -374,3 +375,62 @@ class CustomUserAdmin(UserAdmin):
     ordering = ('email',)
     fieldsets = UserAdmin.fieldsets
     add_fieldsets = UserAdmin.add_fieldsets
+
+@admin.register(ApuracaoIRPJMensal)
+class ApuracaoIRPJMensalAdmin(admin.ModelAdmin):
+    """
+    Admin para Apuração IRPJ Mensal - Pagamento por Estimativa
+    Conforme Lei 9.430/1996, Art. 2º
+    """
+    list_display = (
+        'empresa', 'competencia', 'receita_bruta', 'base_calculo_total',
+        'imposto_devido', 'adicional', 'imposto_a_pagar_formatado', 'data_calculo'
+    )
+    list_filter = ('empresa', 'competencia', 'data_calculo')
+    search_fields = ('empresa__name', 'competencia')
+    ordering = ('-competencia', 'empresa__name')
+    readonly_fields = ('data_calculo',)
+    
+    fieldsets = (
+        ('📊 APURAÇÃO IRPJ MENSAL', {
+            'fields': (),
+            'description': 'Pagamento mensal por estimativa conforme Lei 9.430/1996, Art. 2º. '
+                          'A apuração definitiva permanece trimestral.'
+        }),
+        ('Identificação', {
+            'fields': ('empresa', 'competencia')
+        }),
+        ('Receitas do Mês', {
+            'fields': ('receita_consultas', 'receita_outros', 'receita_bruta')
+        }),
+        ('Base de Cálculo', {
+            'fields': ('base_calculo', 'rendimentos_aplicacoes', 'base_calculo_total')
+        }),
+        ('Impostos Calculados', {
+            'fields': ('imposto_devido', 'adicional')
+        }),
+        ('Retenções e Créditos', {
+            'fields': ('imposto_retido_nf', 'retencao_aplicacao_financeira')
+        }),
+        ('Resultado', {
+            'fields': ('imposto_a_pagar', 'data_calculo')
+        })
+    )
+    
+    def imposto_a_pagar_formatado(self, obj):
+        """Formatar imposto a pagar com cores"""
+        valor = obj.imposto_a_pagar
+        if valor > 0:
+            return format_html('<span style="color:red; font-weight:bold;">R$ {:,.2f}</span>', valor)
+        elif valor < 0:
+            return format_html('<span style="color:green; font-weight:bold;">R$ {:,.2f} (Crédito)</span>', abs(valor))
+        else:
+            return format_html('<span style="color:gray;">R$ 0,00</span>')
+    imposto_a_pagar_formatado.short_description = 'Imposto a Pagar'
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Data de cálculo sempre readonly"""
+        readonly = list(self.readonly_fields)
+        if obj:  # Editando registro existente
+            readonly.extend(['empresa', 'competencia'])
+        return readonly

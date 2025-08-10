@@ -337,7 +337,7 @@ class AliquotaForm(forms.ModelForm):
         model = Aliquotas
         fields = [
             'ISS', 'PIS', 'COFINS',
-            'IRPJ_BASE_CAL', 'IRPJ_ALIQUOTA_OUTROS', 'IRPJ_ALIQUOTA_CONSULTA',
+            'IRPJ_ALIQUOTA', 'IRPJ_PRESUNCAO_OUTROS', 'IRPJ_PRESUNCAO_CONSULTA',
             'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', 'IRPJ_ADICIONAL',
             'CSLL_BASE_CAL', 'CSLL_ALIQUOTA_OUTROS', 'CSLL_ALIQUOTA_CONSULTA',
             'ativa', 'data_vigencia_inicio', 'data_vigencia_fim',

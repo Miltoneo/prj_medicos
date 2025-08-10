@@ -41,8 +41,8 @@ class NotaFiscalCreateView(CreateView):
                 'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0) if aliquota_vigente else 0,
                 'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0) if aliquota_vigente else 0,
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0) if aliquota_vigente else 0,
-                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_BASE_CAL', 0) if aliquota_vigente else 0,
-                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA_OUTROS', 0) if aliquota_vigente else 0,
+                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0) if aliquota_vigente else 0,
+                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0) if aliquota_vigente else 0,
                 'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0) if aliquota_vigente else 0,
                 'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0) if aliquota_vigente else 0,
                 'campos_topo': [
@@ -63,8 +63,8 @@ class NotaFiscalCreateView(CreateView):
                         'aliquota_ISS': getattr(aliquota_para_data, 'ISS', 0),
                         'aliquota_PIS': getattr(aliquota_para_data, 'PIS', 0),
                         'aliquota_COFINS': getattr(aliquota_para_data, 'COFINS', 0),
-                        'aliquota_IR_BASE': getattr(aliquota_para_data, 'IRPJ_BASE_CAL', 0),
-                        'aliquota_IR': getattr(aliquota_para_data, 'IRPJ_ALIQUOTA_OUTROS', 0),
+                        'aliquota_IR_BASE': getattr(aliquota_para_data, 'IRPJ_ALIQUOTA', 0),
+                        'aliquota_IR': getattr(aliquota_para_data, 'IRPJ_PRESUNCAO_OUTROS', 0),
                         'aliquota_CSLL_BASE': getattr(aliquota_para_data, 'CSLL_BASE_CAL', 0),
                         'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_ALIQUOTA_OUTROS', 0),
                     })
@@ -125,8 +125,8 @@ class NotaFiscalUpdateView(UpdateView):
                 'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0),
                 'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0),
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0),
-                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_BASE_CAL', 0),
-                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA_OUTROS', 0),
+                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0),
+                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0),
                 'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0),
                 'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0),
             })

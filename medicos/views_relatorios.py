@@ -24,6 +24,7 @@ from medicos.relatorios.builders import (
 from medicos.relatorios.apuracao_pis import montar_relatorio_pis_persistente
 from medicos.relatorios.apuracao_cofins import montar_relatorio_cofins_persistente
 from medicos.relatorios.apuracao_irpj import montar_relatorio_irpj_persistente
+from medicos.relatorios.apuracao_irpj_mensal import montar_relatorio_irpj_mensal_persistente
 
 # Helpers
 def main(request, empresa=None, menu_nome=None, cenario_nome=None):
@@ -256,6 +257,22 @@ def relatorio_apuracao(request, empresa_id):
     ]
     totais_cofins = relatorio_cofins.get('totais', {})
 
+    # Montagem do relatório IRPJ Mensal
+    relatorio_irpj_mensal = montar_relatorio_irpj_mensal_persistente(empresa_id, ano)
+    linhas_irpj_mensal = [
+        {'descricao': 'Receita consultas', 'valores': [linha.get('receita_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Receita bruta', 'valores': [linha.get('receita_bruta', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Rendimentos aplicações', 'valores': [linha.get('rendimentos_aplicacoes', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Base cálculo total', 'valores': [linha.get('base_calculo_total', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Adicional', 'valores': [linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Retenção aplicação financeira', 'valores': [linha.get('retencao_aplicacao_financeira', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    ]
+
     # Montagem do relatório IRPJ
     relatorio_irpj = montar_relatorio_irpj_persistente(empresa_id, ano)
     linhas_irpj = [
@@ -281,6 +298,7 @@ def relatorio_apuracao(request, empresa_id):
         'totais_pis': totais_pis,
         'linhas_cofins': linhas_cofins,
         'totais_cofins': totais_cofins,
+        'linhas_irpj_mensal': linhas_irpj_mensal,
         'linhas_irpj': linhas_irpj,
         'linhas_csll': linhas_csll,
         'titulo_pagina': 'Apuração de Impostos',

@@ -1,0 +1,152 @@
+"""
+Apuração IRPJ Mensal - Pagamento por Estimativa
+Fonte: Lei 9.430/1996, Art. 2º - Pagamento mensal por estimativa
+
+Este módulo implementa o cálculo do IRPJ mensal conforme Art. 2º da Lei 9.430/1996,
+que permite às pessoas jurídicas optarem pelo pagamento mensal do imposto sobre
+base de cálculo estimada.
+
+A apuração definitiva continua sendo trimestral (Art. 1º), mas o pagamento mensal
+por estimativa facilita o fluxo de caixa e planejamento tributário.
+"""
+
+from medicos.models.relatorios_apuracao_irpj_mensal import ApuracaoIRPJMensal
+from medicos.models.base import Empresa
+from medicos.models.fiscal import Aliquotas
+from medicos.models import NotaFiscal
+from django.db.models import Sum
+from django.db import transaction
+from decimal import Decimal
+from datetime import datetime
+
+MESES = [
+    (1, 'Janeiro'),
+    (2, 'Fevereiro'),
+    (3, 'Março'),
+    (4, 'Abril'),
+    (5, 'Maio'),
+    (6, 'Junho'),
+    (7, 'Julho'),
+    (8, 'Agosto'),
+    (9, 'Setembro'),
+    (10, 'Outubro'),
+    (11, 'Novembro'),
+    (12, 'Dezembro'),
+]
+
+def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
+    """
+    Monta relatório IRPJ mensal por estimativa conforme Lei 9.430/1996, Art. 2º.
+    
+    Parâmetros:
+    - empresa_id: ID da empresa para cálculo
+    - ano: Ano da apuração (string ou int)
+    
+    Retorna:
+    - Dictionary com 'linhas' contendo os cálculos mensais
+    """
+    empresa = Empresa.objects.get(id=empresa_id)
+    aliquota = Aliquotas.obter_aliquota_vigente(empresa)
+    resultados = []
+    
+    for num_mes, nome_mes in MESES:
+        competencia = f"{num_mes:02d}/{ano}"
+        
+        # Buscar notas fiscais do mês
+        notas = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtEmissao__year=ano,
+            dtEmissao__month=num_mes
+        )
+        
+        # Receitas por tipo de serviço
+        receita_consultas = notas.filter(
+            tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        
+        receita_outros = notas.exclude(
+            tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        
+        receita_bruta = receita_consultas + receita_outros
+        
+        # Base de cálculo mensal conforme Art. 2º da Lei 9.430/1996
+        # Aplica percentual sobre receita bruta mensal
+        # Calcular base de cálculo (32% da receita bruta para serviços médicos)
+        base_calculo = receita_bruta * (aliquota.IRPJ_PRESUNCAO_OUTROS / Decimal('100'))
+        
+        # Buscar rendimentos e IR de aplicações financeiras do mês
+        from medicos.models.financeiro import AplicacaoFinanceira
+        aplicacoes = AplicacaoFinanceira.objects.filter(
+            empresa=empresa,
+            data_referencia__year=ano,
+            data_referencia__month=num_mes
+        )
+        
+        rendimentos_aplicacoes = aplicacoes.aggregate(
+            total=Sum('saldo')
+        )['total'] or Decimal('0')
+        
+        retencao_aplicacao_financeira = aplicacoes.aggregate(
+            total=Sum('ir_cobrado')
+        )['total'] or Decimal('0')
+        
+        base_calculo_total = base_calculo + rendimentos_aplicacoes
+        
+        # Imposto devido mensal (15% sobre base de cálculo)
+        imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA / Decimal('100'))
+        
+        # Adicional mensal (10% sobre excesso do limite mensal)
+        # Conforme Art. 2º, § 2º: parcela que exceder R$ 20.000,00/mês
+        adicional = Decimal('0')
+        if hasattr(aliquota, 'IRPJ_ADICIONAL') and hasattr(aliquota, 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL'):
+            limite_mensal = aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
+            if base_calculo_total > limite_mensal:
+                excesso = base_calculo_total - limite_mensal
+                adicional = excesso * (aliquota.IRPJ_ADICIONAL / Decimal('100'))
+        
+        # Impostos retidos nas notas fiscais
+        imposto_retido_nf = notas.aggregate(
+            total=Sum('val_IR')
+        )['total'] or Decimal('0')
+        
+        # Imposto a pagar no mês
+        imposto_a_pagar = imposto_devido + adicional - imposto_retido_nf - retencao_aplicacao_financeira
+        
+        # Salvar no banco para persistência
+        with transaction.atomic():
+            obj, _ = ApuracaoIRPJMensal.objects.update_or_create(
+                empresa=empresa,
+                competencia=competencia,
+                defaults={
+                    'receita_consultas': receita_consultas,
+                    'receita_outros': receita_outros,
+                    'receita_bruta': receita_bruta,
+                    'base_calculo': base_calculo,
+                    'rendimentos_aplicacoes': rendimentos_aplicacoes,
+                    'base_calculo_total': base_calculo_total,
+                    'imposto_devido': imposto_devido,
+                    'adicional': adicional,
+                    'imposto_retido_nf': imposto_retido_nf,
+                    'retencao_aplicacao_financeira': retencao_aplicacao_financeira,
+                    'imposto_a_pagar': imposto_a_pagar,
+                }
+            )
+        
+        # Adicionar ao resultado
+        resultados.append({
+            'competencia': competencia,
+            'receita_consultas': receita_consultas,
+            'receita_outros': receita_outros,
+            'receita_bruta': receita_bruta,
+            'base_calculo': base_calculo,
+            'rendimentos_aplicacoes': rendimentos_aplicacoes,
+            'base_calculo_total': base_calculo_total,
+            'imposto_devido': imposto_devido,
+            'adicional': adicional,
+            'imposto_retido_nf': imposto_retido_nf,
+            'retencao_aplicacao_financeira': retencao_aplicacao_financeira,
+            'imposto_a_pagar': imposto_a_pagar,
+        })
+    
+    return {'linhas': resultados}

@@ -27,7 +27,8 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
         receita_consultas = notas.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_outros = notas.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_bruta = receita_consultas + receita_outros
-        base_calculo = receita_bruta * (aliquota.IRPJ_BASE_CAL/Decimal('100'))
+        # Calcular base de cálculo (32% da receita bruta para serviços médicos)
+        base_calculo = receita_bruta * (aliquota.IRPJ_PRESUNCAO_OUTROS/Decimal('100'))
         # Buscar rendimentos e IR de aplicações financeiras do trimestre
         from medicos.models.financeiro import AplicacaoFinanceira
         # Considera aplicações com data_referencia no trimestre e empresa
@@ -39,7 +40,7 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
         rendimentos_aplicacoes = aplicacoes.aggregate(total=Sum('saldo'))['total'] or Decimal('0')
         retencao_aplicacao_financeira = aplicacoes.aggregate(total=Sum('ir_cobrado'))['total'] or Decimal('0')
         base_calculo_total = base_calculo + rendimentos_aplicacoes
-        imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA_OUTROS/Decimal('100'))
+        imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA/Decimal('100'))
         
         # CORREÇÃO: Adicional só incide sobre o excesso do valor base configurado
         adicional = Decimal('0')

@@ -36,7 +36,7 @@ class AliquotasTable(tables.Table):
         template_name = "django_tables2/bootstrap5.html"
         fields = (
             "data_vigencia_inicio", "data_vigencia_fim", "ativa",
-            "ISS", "PIS", "COFINS", "IRPJ_BASE_CAL", "IRPJ_ALIQUOTA_OUTROS", "IRPJ_ALIQUOTA_CONSULTA",
+            "ISS", "PIS", "COFINS", "IRPJ_ALIQUOTA", "IRPJ_PRESUNCAO_OUTROS", "IRPJ_PRESUNCAO_CONSULTA",
             "IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL", "IRPJ_ADICIONAL", "CSLL_BASE_CAL", "CSLL_ALIQUOTA_OUTROS",
             "CSLL_ALIQUOTA_CONSULTA", "observacoes"
         )

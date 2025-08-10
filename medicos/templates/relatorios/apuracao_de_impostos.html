@@ -98,6 +98,43 @@
   </div>
 
 
+  <!-- Card IRPJ Mensal - NOVO -->
+  <div class="card shadow-sm border-danger mb-4">
+    <div class="card-header bg-danger bg-opacity-10 border-danger">
+      <span class="bi bi-calendar3 text-danger me-2"></span> Apuração IRPJ Mensal - Janeiro a Dezembro (Estimativa)
+      <small class="text-muted ms-2">Conforme Lei 9.430/1996, Art. 2º</small>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              {% for competencia in competencias %}
+                <th>{{ competencia|slice:":2" }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for linha in linhas_irpj_mensal %}
+            <tr>
+              <td>{{ linha.descricao }}</td>
+              {% for valor in linha.valores %}
+                <td>{{ valor|floatformat:2 }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-danger bg-opacity-5 text-muted small">
+      <i class="fas fa-info-circle me-1"></i>
+      <strong>Nota:</strong> Pagamento mensal por estimativa. A apuração definitiva é trimestral conforme tabela abaixo.
+      O limite mensal para adicional é o valor configurado na tabela de alíquotas.
+    </div>
+  </div>
+
   <div class="row">
     <!-- Card IRPJ -->
     <div class="col-12 col-md-6">
