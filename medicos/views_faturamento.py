@@ -182,16 +182,55 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
 
     def get_context_data(self, **kwargs):
         import datetime
+        from django.db.models import Sum
         context = super().get_context_data(**kwargs)
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
         if not mes_ano_emissao:
             now = datetime.date.today()
             mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
+        
+        # Calcular totalizações usando o queryset filtrado do filterset
+        # Isso garante que os totais reflitam exatamente os registros exibidos na tabela
+        # EXCLUINDO notas fiscais canceladas da totalização
+        if hasattr(self, 'filterset') and self.filterset is not None:
+            queryset_filtrado = self.filterset.qs.exclude(status_recebimento='cancelado')
+        else:
+            queryset_filtrado = self.get_queryset().exclude(status_recebimento='cancelado')
+            
+        totais = queryset_filtrado.aggregate(
+            total_bruto=Sum('val_bruto'),
+            total_iss=Sum('val_ISS'),
+            total_pis=Sum('val_PIS'),
+            total_cofins=Sum('val_COFINS'),
+            total_ir=Sum('val_IR'),
+            total_csll=Sum('val_CSLL'),
+            total_liquido=Sum('val_liquido')
+        )
+        
+        # Contar notas canceladas para informação adicional
+        if hasattr(self, 'filterset') and self.filterset is not None:
+            queryset_base = self.filterset.qs
+        else:
+            queryset_base = self.get_queryset()
+            
+        total_notas = queryset_base.count()
+        notas_canceladas = queryset_base.filter(status_recebimento='cancelado').count()
+        notas_validas = total_notas - notas_canceladas
+        
+        # Garantir que valores None sejam convertidos para 0
+        for key, value in totais.items():
+            if value is None:
+                totais[key] = 0
+        
         context.update({
             'titulo_pagina': 'Lista de notas fiscais',
             'menu_nome': 'Notas Fiscais',
             'mes_ano': self.request.session.get('mes_ano'),
-            'mes_ano_emissao_default': mes_ano_emissao
+            'mes_ano_emissao_default': mes_ano_emissao,
+            'totais': totais,
+            'total_notas': total_notas,
+            'notas_canceladas': notas_canceladas,
+            'notas_validas': notas_validas
         })
         context['cenario_nome'] = 'Faturamento'
         # Não injeta empresa manualmente
