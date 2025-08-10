@@ -48,12 +48,18 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
         base_calculo_total = base_calculo + rendimentos_aplicacoes
         imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA/Decimal('100'))
         
-        # CORREÇÃO: Adicional só incide sobre o excesso do valor base configurado
+        # CORREÇÃO: Adicional trimestral conforme Lei 9.249/1995, Art. 3º, §1º
+        # Adicional de 10% sobre parcela do LUCRO PRESUMIDO que exceder R$ 60.000,00/trimestre
+        # IMPORTANTE: Adicional incide apenas sobre lucro presumido, NÃO sobre rendimentos de aplicações
         adicional = Decimal('0')
-        if hasattr(aliquota, 'IRPJ_ADICIONAL') and hasattr(aliquota, 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL'):
-            if base_calculo_total > aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL:
-                excesso = base_calculo_total - aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
-                adicional = excesso * (aliquota.IRPJ_ADICIONAL/Decimal('100'))
+        limite_trimestral_legal = Decimal('60000.00')  # R$ 60.000,00/trimestre (3 × R$ 20.000,00/mês)
+        
+        # Usar apenas a base de cálculo (lucro presumido), excluindo rendimentos de aplicações
+        lucro_presumido_trimestral = base_calculo  # Apenas 32% da receita bruta, sem aplicações
+        
+        if lucro_presumido_trimestral > limite_trimestral_legal:
+            excesso_lucro_presumido = lucro_presumido_trimestral - limite_trimestral_legal
+            adicional = excesso_lucro_presumido * (Decimal('10.00') / Decimal('100'))  # 10% fixo por lei
         
         imposto_retido_nf = notas.aggregate(total=Sum('val_IR'))['total'] or Decimal('0')
         # já atribuído acima

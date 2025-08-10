@@ -25,12 +25,22 @@ class NotaFiscalRateioMedicoListView(FilterView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
+        # Filtrar pela empresa ativa da sessão
+        empresa_id = self.request.session.get('empresa_id')
+        if not empresa_id:
+            return NotaFiscalRateioMedico.objects.none()
+        
         if self.nota_fiscal:
+            # Se há uma nota específica, filtrar apenas por ela (já está implicitamente filtrada por empresa)
             qs = NotaFiscalRateioMedico.objects.filter(nota_fiscal=self.nota_fiscal)
         else:
-            qs = NotaFiscalRateioMedico.objects.all()
+            # Filtrar rateios de notas fiscais da empresa ativa
+            qs = NotaFiscalRateioMedico.objects.filter(
+                nota_fiscal__empresa_destinataria__id=int(empresa_id)
+            )
+        
         filter_params = self.request.GET.copy()
-        self.filter = self.filterset_class(filter_params, queryset=qs)
+        self.filter = self.filterset_class(filter_params, queryset=qs, request=self.request)
         return self.filter.qs
 
     def get_context_data(self, **kwargs):
@@ -41,18 +51,32 @@ class NotaFiscalRateioMedicoListView(FilterView):
         - Injete apenas 'titulo_pagina' para exibição correta no header.
         """
         context = super().get_context_data(**kwargs)
-        table = self.table_class(self.get_queryset())
-        context['table'] = table
-        context['filter'] = getattr(self, 'filter', None)
+        
+        # Verificar se há empresa selecionada
+        empresa_id = self.request.session.get('empresa_id')
+        if not empresa_id:
+            context['erro_empresa'] = 'Nenhuma empresa selecionada. Selecione uma empresa para visualizar os rateios.'
+            context['total_bruto'] = 0
+            context['total_liquido'] = 0
+            context['total_iss'] = 0
+            context['total_pis'] = 0
+            context['total_cofins'] = 0
+            context['total_ir'] = 0
+            context['total_csll'] = 0
+        else:
+            table = self.table_class(self.get_queryset())
+            context['table'] = table
+            context['filter'] = getattr(self, 'filter', None)
+            if self.nota_fiscal:
+                context['nota_fiscal'] = self.nota_fiscal
+            qs = self.get_queryset()
+            context['total_bruto'] = sum(getattr(obj, 'valor_bruto_medico', 0) or 0 for obj in qs)
+            context['total_liquido'] = sum(getattr(obj, 'valor_liquido_medico', 0) or 0 for obj in qs)
+            context['total_iss'] = sum(getattr(obj, 'valor_iss_medico', 0) or 0 for obj in qs)
+            context['total_pis'] = sum(getattr(obj, 'valor_pis_medico', 0) or 0 for obj in qs)
+            context['total_cofins'] = sum(getattr(obj, 'valor_cofins_medico', 0) or 0 for obj in qs)
+            context['total_ir'] = sum(getattr(obj, 'valor_ir_medico', 0) or 0 for obj in qs)
+            context['total_csll'] = sum(getattr(obj, 'valor_csll_medico', 0) or 0 for obj in qs)
+        
         context['titulo_pagina'] = 'Notas Fiscais Rateadas por Médico'
-        if self.nota_fiscal:
-            context['nota_fiscal'] = self.nota_fiscal
-        qs = self.get_queryset()
-        context['total_bruto'] = sum(getattr(obj, 'valor_bruto_medico', 0) or 0 for obj in qs)
-        context['total_liquido'] = sum(getattr(obj, 'valor_liquido_medico', 0) or 0 for obj in qs)
-        context['total_iss'] = sum(getattr(obj, 'valor_iss_medico', 0) or 0 for obj in qs)
-        context['total_pis'] = sum(getattr(obj, 'valor_pis_medico', 0) or 0 for obj in qs)
-        context['total_cofins'] = sum(getattr(obj, 'valor_cofins_medico', 0) or 0 for obj in qs)
-        context['total_ir'] = sum(getattr(obj, 'valor_ir_medico', 0) or 0 for obj in qs)
-        context['total_csll'] = sum(getattr(obj, 'valor_csll_medico', 0) or 0 for obj in qs)
         return context

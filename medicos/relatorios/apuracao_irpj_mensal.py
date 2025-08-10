@@ -100,14 +100,18 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
         # Imposto devido mensal (15% sobre base de cálculo)
         imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA / Decimal('100'))
         
-        # Adicional mensal (10% sobre excesso do limite mensal)
-        # Conforme Art. 2º, § 2º: parcela que exceder R$ 20.000,00/mês
+        # CORREÇÃO: Adicional mensal conforme Lei 9.249/1995, Art. 3º, §1º
+        # Adicional de 10% sobre parcela do LUCRO PRESUMIDO que exceder R$ 20.000,00/mês
+        # IMPORTANTE: Adicional incide apenas sobre lucro presumido, NÃO sobre rendimentos de aplicações
         adicional = Decimal('0')
-        if hasattr(aliquota, 'IRPJ_ADICIONAL') and hasattr(aliquota, 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL'):
-            limite_mensal = aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
-            if base_calculo_total > limite_mensal:
-                excesso = base_calculo_total - limite_mensal
-                adicional = excesso * (aliquota.IRPJ_ADICIONAL / Decimal('100'))
+        limite_mensal_legal = Decimal('20000.00')  # R$ 20.000,00/mês (Lei 9.249/1995)
+        
+        # Usar apenas a base de cálculo (lucro presumido), excluindo rendimentos de aplicações
+        lucro_presumido_mensal = base_calculo  # Apenas 32% da receita bruta, sem aplicações
+        
+        if lucro_presumido_mensal > limite_mensal_legal:
+            excesso_lucro_presumido = lucro_presumido_mensal - limite_mensal_legal
+            adicional = excesso_lucro_presumido * (Decimal('10.00') / Decimal('100'))  # 10% fixo por lei
         
         # Impostos retidos nas notas fiscais
         imposto_retido_nf = notas.aggregate(

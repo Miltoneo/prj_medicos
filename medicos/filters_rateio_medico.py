@@ -19,7 +19,7 @@ class ItemDespesaRateioMensalFilter(django_filters.FilterSet):
 
 
 class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
-    medico = django_filters.ModelChoiceFilter(queryset=Socio.objects.filter(ativo=True), label="Médico")
+    medico = django_filters.ModelChoiceFilter(queryset=Socio.objects.none(), label="Médico")  # Será definido dinamicamente
     nota_fiscal = django_filters.CharFilter(field_name='nota_fiscal__numero', lookup_expr='icontains', label="Nota Fiscal")
     competencia = django_filters.CharFilter(
         label='Competência',
@@ -30,6 +30,29 @@ class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
             'value': datetime.date.today().strftime('%Y-%m')
         })
     )
+
+    def __init__(self, data=None, queryset=None, *, request=None, prefix=None):
+        super().__init__(data, queryset, request=request, prefix=prefix)
+        
+        # Filtrar médicos pela empresa ativa da sessão
+        if request and hasattr(request, 'session'):
+            empresa_id = request.session.get('empresa_id')
+            if empresa_id:
+                # Filtrar sócios/médicos pela empresa ativa
+                from medicos.models.base import Empresa
+                try:
+                    empresa = Empresa.objects.get(id=int(empresa_id))
+                    self.filters['medico'].queryset = Socio.objects.filter(
+                        ativo=True,
+                        empresa=empresa,
+                        pessoa__isnull=False  # Garantir que há pessoa associada
+                    ).select_related('pessoa').order_by('pessoa__name')
+                except Empresa.DoesNotExist:
+                    self.filters['medico'].queryset = Socio.objects.none()
+            else:
+                self.filters['medico'].queryset = Socio.objects.none()
+        else:
+            self.filters['medico'].queryset = Socio.objects.none()
 
     def filter_competencia(self, queryset, name, value):
         # value esperado: 'YYYY-MM'
