@@ -27,8 +27,14 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
         receita_consultas = notas.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_outros = notas.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_bruta = receita_consultas + receita_outros
-        # Calcular base de cálculo (32% da receita bruta para serviços médicos)
-        base_calculo = receita_bruta * (aliquota.IRPJ_PRESUNCAO_OUTROS/Decimal('100'))
+        
+        # CORREÇÃO: Calcular base de cálculo aplicando presunções específicas por tipo de serviço
+        # Base de cálculo para consultas (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a')
+        base_calculo_consultas = receita_consultas * (aliquota.IRPJ_PRESUNCAO_CONSULTA/Decimal('100'))
+        # Base de cálculo para outros serviços (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a')
+        base_calculo_outros = receita_outros * (aliquota.IRPJ_PRESUNCAO_OUTROS/Decimal('100'))
+        # Base de cálculo total da receita bruta
+        base_calculo = base_calculo_consultas + base_calculo_outros
         # Buscar rendimentos e IR de aplicações financeiras do trimestre
         from medicos.models.financeiro import AplicacaoFinanceira
         # Considera aplicações com data_referencia no trimestre e empresa

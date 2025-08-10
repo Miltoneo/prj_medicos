@@ -70,10 +70,14 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
         
         receita_bruta = receita_consultas + receita_outros
         
-        # Base de cálculo mensal conforme Art. 2º da Lei 9.430/1996
-        # Aplica percentual sobre receita bruta mensal
-        # Calcular base de cálculo (32% da receita bruta para serviços médicos)
-        base_calculo = receita_bruta * (aliquota.IRPJ_PRESUNCAO_OUTROS / Decimal('100'))
+        # CORREÇÃO: Base de cálculo mensal conforme Art. 2º da Lei 9.430/1996
+        # Aplica percentuais específicos de presunção por tipo de serviço
+        # Base de cálculo para consultas (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a')
+        base_calculo_consultas = receita_consultas * (aliquota.IRPJ_PRESUNCAO_CONSULTA / Decimal('100'))
+        # Base de cálculo para outros serviços (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a') 
+        base_calculo_outros = receita_outros * (aliquota.IRPJ_PRESUNCAO_OUTROS / Decimal('100'))
+        # Base de cálculo total da receita bruta
+        base_calculo = base_calculo_consultas + base_calculo_outros
         
         # Buscar rendimentos e IR de aplicações financeiras do mês
         from medicos.models.financeiro import AplicacaoFinanceira
