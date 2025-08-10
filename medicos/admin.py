@@ -133,7 +133,7 @@ class AliquotasAdmin(admin.ModelAdmin):
     list_display = (
         'empresa', 'ISS', 'PIS', 'COFINS',
         'IRPJ_ALIQUOTA', 'IRPJ_PRESUNCAO_OUTROS', 'IRPJ_PRESUNCAO_CONSULTA', 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL', 'IRPJ_ADICIONAL',
-        'CSLL_BASE_CAL', 'CSLL_ALIQUOTA_OUTROS', 'CSLL_ALIQUOTA_CONSULTA',
+        'CSLL_ALIQUOTA', 'CSLL_PRESUNCAO_OUTROS', 'CSLL_PRESUNCAO_CONSULTA',
         'data_vigencia_inicio', 'data_vigencia_fim', 'ativa'
     )
     list_filter = ('data_vigencia_inicio', 'data_vigencia_fim', 'empresa', 'ativa')

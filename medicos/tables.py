@@ -37,8 +37,8 @@ class AliquotasTable(tables.Table):
         fields = (
             "data_vigencia_inicio", "data_vigencia_fim", "ativa",
             "ISS", "PIS", "COFINS", "IRPJ_ALIQUOTA", "IRPJ_PRESUNCAO_OUTROS", "IRPJ_PRESUNCAO_CONSULTA",
-            "IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL", "IRPJ_ADICIONAL", "CSLL_BASE_CAL", "CSLL_ALIQUOTA_OUTROS",
-            "CSLL_ALIQUOTA_CONSULTA", "observacoes"
+            "IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL", "IRPJ_ADICIONAL", "CSLL_ALIQUOTA", "CSLL_PRESUNCAO_OUTROS",
+            "CSLL_PRESUNCAO_CONSULTA", "observacoes"
         )
         order_by = "-data_vigencia_inicio"
 

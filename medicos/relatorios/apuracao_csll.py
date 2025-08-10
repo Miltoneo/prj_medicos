@@ -27,7 +27,7 @@ def montar_relatorio_csll_persistente(empresa_id, ano):
         receita_consultas = notas.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_outros = notas.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_bruta = receita_consultas + receita_outros
-        base_calculo = receita_bruta * (aliquota.CSLL_BASE_CAL/Decimal('100'))
+        base_calculo = receita_bruta * (aliquota.CSLL_PRESUNCAO_OUTROS/Decimal('100'))
         # Buscar rendimentos e IR de aplicações financeiras do trimestre
         from medicos.models.financeiro import AplicacaoFinanceira
         aplicacoes = AplicacaoFinanceira.objects.filter(
@@ -38,7 +38,7 @@ def montar_relatorio_csll_persistente(empresa_id, ano):
         rendimentos_aplicacoes = aplicacoes.aggregate(total=Sum('saldo'))['total'] or Decimal('0')
         retencao_aplicacao_financeira = aplicacoes.aggregate(total=Sum('ir_cobrado'))['total'] or Decimal('0')
         base_calculo_total = base_calculo + rendimentos_aplicacoes
-        imposto_devido = base_calculo_total * (aliquota.CSLL_ALIQUOTA_OUTROS/Decimal('100'))
+        imposto_devido = base_calculo_total * (aliquota.CSLL_ALIQUOTA/Decimal('100'))
         imposto_retido_nf = notas.aggregate(total=Sum('val_CSLL'))['total'] or Decimal('0')
         imposto_a_pagar = imposto_devido - imposto_retido_nf - retencao_aplicacao_financeira
         with transaction.atomic():

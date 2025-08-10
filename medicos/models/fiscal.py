@@ -331,22 +331,22 @@ class Aliquotas(models.Model):
         help_text="Percentual adicional de IRPJ aplicado sobre o valor que exceder a base definida."
     )
 
-    CSLL_BASE_CAL = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=32.00,
-        verbose_name="CSLL - Base de Cálculo (%)",
-        help_text="Percentual da receita bruta para base de cálculo da CSLL (32% para serviços médicos, conforme Lei 9.249/1995, art. 20)"
-    )
-    
-    CSLL_ALIQUOTA_OUTROS = models.DecimalField(
+    CSLL_ALIQUOTA = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=9.00,
-        verbose_name="CSLL - Alíquota Outros (%)",
-        help_text="Alíquota normal da CSLL para outros serviços (9% sobre a base de cálculo presumida, conforme Lei 7.689/1988, art. 3º, com redação da Lei 13.169/2015)"
+        verbose_name="CSLL - Alíquota (%)",
+        help_text="Alíquota da CSLL (9% sobre a base de cálculo presumida, conforme Lei 7.689/1988, art. 3º, com redação da Lei 13.169/2015)"
     )
     
-    CSLL_ALIQUOTA_CONSULTA = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=15.00,
-        verbose_name="CSLL - Alíquota Consulta (%)",
-        help_text="Alíquota adicional da CSLL para consultas. Não prevista na legislação federal padrão para serviços médicos."
+    CSLL_PRESUNCAO_OUTROS = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=32.00,
+        verbose_name="CSLL - Presunção Outros Serviços (%)",
+        help_text="Percentual da receita bruta presumido como lucro para outros serviços (32% para serviços médicos, conforme Lei 9.249/1995, art. 20)"
+    )
+    
+    CSLL_PRESUNCAO_CONSULTA = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=32.00,
+        verbose_name="CSLL - Presunção Consultas (%)",
+        help_text="Percentual da receita bruta presumido como lucro para consultas médicas (32% para serviços médicos, conforme Lei 9.249/1995, art. 20)"
     )
     
     # === CONTROLE E AUDITORIA ===
@@ -390,9 +390,9 @@ class Aliquotas(models.Model):
             ('IRPJ_ALIQUOTA', self.IRPJ_ALIQUOTA, 0, 50),
             ('IRPJ_PRESUNCAO_OUTROS', self.IRPJ_PRESUNCAO_OUTROS, 0, 100),
             ('IRPJ_PRESUNCAO_CONSULTA', self.IRPJ_PRESUNCAO_CONSULTA, 0, 100),
-            ('CSLL_BASE_CAL', self.CSLL_BASE_CAL, 0, 100),
-            ('CSLL_ALIQUOTA_OUTROS', self.CSLL_ALIQUOTA_OUTROS, 0, 50),
-            ('CSLL_ALIQUOTA_CONSULTA', self.CSLL_ALIQUOTA_CONSULTA, 0, 50),
+            ('CSLL_ALIQUOTA', self.CSLL_ALIQUOTA, 0, 50),
+            ('CSLL_PRESUNCAO_OUTROS', self.CSLL_PRESUNCAO_OUTROS, 0, 100),
+            ('CSLL_PRESUNCAO_CONSULTA', self.CSLL_PRESUNCAO_CONSULTA, 0, 100),
         ]
         for nome, valor, minimo, maximo in campos_percentuais:
             if valor < minimo or valor > maximo:
@@ -482,7 +482,7 @@ class Aliquotas(models.Model):
         
         # Base de cálculo para IR e CSLL
         base_calculo_ir = valor_bruto * (self.IRPJ_PRESUNCAO_OUTROS / 100)
-        base_calculo_csll = valor_bruto * (self.CSLL_BASE_CAL / 100)
+        base_calculo_csll = valor_bruto * (self.CSLL_PRESUNCAO_OUTROS / 100)
         
         # IRPJ
         valor_ir_normal = base_calculo_ir * (self.IRPJ_ALIQUOTA / 100)
@@ -494,7 +494,7 @@ class Aliquotas(models.Model):
         valor_ir_total = valor_ir_normal + valor_ir_adicional
         
         # CSLL
-        valor_csll = base_calculo_csll * (self.CSLL_ALIQUOTA_OUTROS / 100)
+        valor_csll = base_calculo_csll * (self.CSLL_ALIQUOTA / 100)
         
         # Valor líquido
         total_impostos = valor_iss + valor_pis + valor_cofins + valor_ir_total + valor_csll

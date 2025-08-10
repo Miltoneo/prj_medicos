@@ -43,8 +43,8 @@ class NotaFiscalCreateView(CreateView):
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0) if aliquota_vigente else 0,
                 'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0) if aliquota_vigente else 0,
                 'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0) if aliquota_vigente else 0,
-                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0) if aliquota_vigente else 0,
-                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0) if aliquota_vigente else 0,
+                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_PRESUNCAO_OUTROS', 0) if aliquota_vigente else 0,
+                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA', 0) if aliquota_vigente else 0,
                 'campos_topo': [
                     'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
                 ],
@@ -65,8 +65,8 @@ class NotaFiscalCreateView(CreateView):
                         'aliquota_COFINS': getattr(aliquota_para_data, 'COFINS', 0),
                         'aliquota_IR_BASE': getattr(aliquota_para_data, 'IRPJ_ALIQUOTA', 0),
                         'aliquota_IR': getattr(aliquota_para_data, 'IRPJ_PRESUNCAO_OUTROS', 0),
-                        'aliquota_CSLL_BASE': getattr(aliquota_para_data, 'CSLL_BASE_CAL', 0),
-                        'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_ALIQUOTA_OUTROS', 0),
+                        'aliquota_CSLL_BASE': getattr(aliquota_para_data, 'CSLL_PRESUNCAO_OUTROS', 0),
+                        'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_ALIQUOTA', 0),
                     })
         else:
             context.update({
@@ -127,8 +127,8 @@ class NotaFiscalUpdateView(UpdateView):
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0),
                 'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0),
                 'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0),
-                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0),
-                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0),
+                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_PRESUNCAO_OUTROS', 0),
+                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA', 0),
             })
         context.update({
             'campos_topo': [
