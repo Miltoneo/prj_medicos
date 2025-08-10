@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from medicos.models.base import Socio, Empresa, ContaMembership
-from .tables_socio_lista import SocioListaTable
+from .tables_socio_lista import SocioListaTable, SocioListaDashboardTable
 from .filters_socio import SocioFilter
 from django_tables2 import RequestConfig
 from datetime import datetime
@@ -53,7 +53,7 @@ def main(request, empresa_id=None):
         if empresa:
             socios_qs = Socio.objects.filter(empresa=empresa)
             socio_filter = SocioFilter(request.GET, queryset=socios_qs)
-            table = SocioListaTable(socio_filter.qs)
+            table = SocioListaDashboardTable(socio_filter.qs)
             RequestConfig(request, paginate={'per_page': 20}).configure(table)
     return {
         'user': request.user,
