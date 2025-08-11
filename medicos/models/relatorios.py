@@ -40,6 +40,15 @@ class RelatorioMensalSocio(models.Model):
     total_notas_liquido = models.DecimalField(max_digits=15, decimal_places=2)
     total_notas_emitidas_mes = models.PositiveIntegerField()
 
+    # Totais das notas fiscais do sócio (para linha de totais da tabela)
+    total_nf_valor_bruto = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_iss = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_pis = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_cofins = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_irpj = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_csll = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_valor_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
     saldo_apurado = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_movimentacao_financeira = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_a_transferir = models.DecimalField(max_digits=15, decimal_places=2)

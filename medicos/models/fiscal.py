@@ -303,19 +303,19 @@ class Aliquotas(models.Model):
     
     # === IMPOSTO DE RENDA PESSOA JURÍDICA ===
     IRPJ_ALIQUOTA = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=15.00,
+        max_digits=5, decimal_places=2, null=False, default=0,
         verbose_name="IRPJ - Alíquota (%)",
         help_text="Alíquota normal do IRPJ (15% sobre a base de cálculo presumida, conforme Lei 9.249/1995, art. 3º)"
     )
     
     IRPJ_PRESUNCAO_OUTROS = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=32.00,
+        max_digits=5, decimal_places=2, null=False, default=0,
         verbose_name="IRPJ - Presunção Outros Serviços (%)",
         help_text="Percentual da receita bruta presumido como lucro para outros serviços (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a')"
     )
 
     IRPJ_PRESUNCAO_CONSULTA = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=32.00,
+        max_digits=5, decimal_places=2, null=False, default=0,
         verbose_name="IRPJ - Presunção Consultas (%)",
         help_text="Percentual da receita bruta presumido como lucro para consultas médicas (32% conforme Lei 9.249/1995, art. 15, §1º, III, 'a')"
     )
@@ -326,25 +326,25 @@ class Aliquotas(models.Model):
         help_text="Valor base a partir do qual incide o adicional de IRPJ. Usado para cálculo do adicional conforme legislação."
     )
     IRPJ_ADICIONAL = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=10.00,
+        max_digits=5, decimal_places=2, null=False, default=0,
         verbose_name="IRPJ - Adicional (%)",
         help_text="Percentual adicional de IRPJ aplicado sobre o valor que exceder a base definida."
     )
 
     CSLL_ALIQUOTA = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=9.00,
+        max_digits=5, decimal_places=2, null=False, default=0,
         verbose_name="CSLL - Alíquota (%)",
         help_text="Alíquota da CSLL (9% sobre a base de cálculo presumida, conforme Lei 7.689/1988, art. 3º, com redação da Lei 13.169/2015)"
     )
     
     CSLL_PRESUNCAO_OUTROS = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=32.00,
+        max_digits=5, decimal_places=2, null=False, default=0,
         verbose_name="CSLL - Presunção Outros Serviços (%)",
         help_text="Percentual da receita bruta presumido como lucro para outros serviços (32% para serviços médicos, conforme Lei 9.249/1995, art. 20)"
     )
     
     CSLL_PRESUNCAO_CONSULTA = models.DecimalField(
-        max_digits=5, decimal_places=2, null=False, default=32.00,
+        max_digits=5, decimal_places=2, null=False, default=0,
         verbose_name="CSLL - Presunção Consultas (%)",
         help_text="Percentual da receita bruta presumido como lucro para consultas médicas (32% para serviços médicos, conforme Lei 9.249/1995, art. 20)"
     )

@@ -78,6 +78,16 @@ class NotaFiscalRecebimentoUpdateView(UpdateView):
     template_name = 'financeiro/editar_recebimento_nota_fiscal.html'
     success_url = reverse_lazy('medicos:recebimento_notas_fiscais')
 
+    def get_object(self):
+        """Garantir que temos acesso ao objeto antes de instanciar o formulário"""
+        obj = super().get_object()
+        return obj
+
+    def get_form_kwargs(self):
+        """Garantir que a instância está disponível para o formulário"""
+        kwargs = super().get_form_kwargs()
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Recebimento de Nota Fiscal'

@@ -1,5 +1,6 @@
 from django import forms
 from medicos.models.fiscal import NotaFiscal
+from medicos.models.financeiro import MeioPagamento
 
 class NotaFiscalForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -7,6 +8,19 @@ class NotaFiscalForm(forms.ModelForm):
         for field in ['meio_pagamento', 'dtRecebimento', 'status_recebimento']:
             if field in self.fields:
                 self.fields[field].widget.attrs.update({'class': 'form-control'})
+        
+        if 'meio_pagamento' in self.fields:
+            self.fields['meio_pagamento'].required = False
+            
+            # Filtrar meio de pagamento pela empresa da nota fiscal
+            if self.instance and self.instance.empresa_destinataria:
+                self.fields['meio_pagamento'].queryset = MeioPagamento.objects.filter(
+                    empresa=self.instance.empresa_destinataria,
+                    ativo=True
+                ).order_by('nome')
+            else:
+                # Se não há instância ou empresa, não exibe nenhum meio de pagamento
+                self.fields['meio_pagamento'].queryset = MeioPagamento.objects.none()
     def clean(self):
         cleaned_data = super().clean()
         numero = cleaned_data.get('numero')
@@ -47,10 +61,3 @@ class NotaFiscalForm(forms.ModelForm):
             'dtEmissao': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'dtRecebimento': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'meio_pagamento' in self.fields:
-            self.fields['meio_pagamento'].required = False
-        # Os campos de impostos e valor líquido voltam a ser editáveis pelo usuário
-        # Os campos de impostos e valor líquido voltam a ser editáveis pelo usuário

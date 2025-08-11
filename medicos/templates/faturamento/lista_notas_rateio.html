@@ -26,7 +26,9 @@
               <div class="row g-2 align-items-end">
                 <!-- Campo de mês de emissão em primeira posição -->
                 <div class="col-auto">
-                  <label for="id_mes_emissao" class="form-label mb-0">Mês de Emissão</label>
+                  <label for="id_mes_emissao" class="form-label mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>Mês de Emissão
+                  </label>
                   {{ filter.form.mes_emissao }}
                 </div>
                 <!-- Demais campos -->
@@ -39,9 +41,24 @@
                   {% endif %}
                 {% endfor %}
                 <div class="col-auto">
-                  <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
+                  <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-1"></i>Filtrar
+                  </button>
+                </div>
+                <div class="col-auto">
+                  <a href="{% url 'medicos:lista_notas_rateio' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Limpar
+                  </a>
                 </div>
               </div>
+              {% if filter.form.mes_emissao.value %}
+                <div class="mt-2">
+                  <small class="text-muted">
+                    <i class="fas fa-filter me-1"></i>
+                    Exibindo notas de: <strong>{{ filter.form.mes_emissao.value }}</strong>
+                  </small>
+                </div>
+              {% endif %}
             </form>
           {% endif %}
           <div class="table-responsive rounded">
@@ -159,6 +176,20 @@ document.addEventListener('DOMContentLoaded', function() {
       // Submete o formulário automaticamente quando o mês é alterado
       this.closest('form').submit();
     });
+    
+    // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
+    const hasFilterParams = urlParams.has('mes_emissao') || urlParams.has('numero') || urlParams.has('tomador') || urlParams.has('cnpj_tomador');
+    if (!hasFilterParams && !mesEmissaoField.value) {
+      // Define o mês atual se não há valor
+      const today = new Date();
+      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+      mesEmissaoField.value = currentMonth;
+      
+      // Submete automaticamente para aplicar o filtro do mês atual
+      setTimeout(() => {
+        mesEmissaoField.closest('form').submit();
+      }, 100);
+    }
   }
 });
 </script>

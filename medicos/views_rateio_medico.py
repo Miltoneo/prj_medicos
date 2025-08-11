@@ -40,6 +40,16 @@ class NotaFiscalRateioMedicoListView(FilterView):
             )
         
         filter_params = self.request.GET.copy()
+        # Remove parâmetros que não são de filtro
+        if 'page' in filter_params:
+            filter_params.pop('page')
+            
+        # Se não há filtros específicos, aplicar filtro do mês corrente por padrão
+        if not filter_params:
+            from datetime import date
+            mes_corrente = date.today().strftime('%Y-%m')
+            filter_params['competencia'] = mes_corrente
+            
         self.filter = self.filterset_class(filter_params, queryset=qs, request=self.request)
         return self.filter.qs
 

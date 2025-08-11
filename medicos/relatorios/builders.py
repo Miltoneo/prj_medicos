@@ -102,7 +102,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         dtEmissao__month=competencia.month
     )
 
-    total_notas_bruto = sum(float(nf.val_bruto or 0) for nf in notas_empresa_qs)
+    total_notas_bruto_empresa = sum(float(nf.val_bruto or 0) for nf in notas_empresa_qs)
     
     # Buscar a alíquota da empresa para obter o valor base correto
     try:
@@ -112,28 +112,34 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             aliquota_adicional = float(aliquota.IRPJ_ADICIONAL) / 100
         else:
             # Se não encontrar alíquota, não calcula adicional
-            valor_base_adicional = total_notas_bruto + 1  # Força adicional = 0
+            valor_base_adicional = total_notas_bruto_empresa + 1  # Força adicional = 0
             aliquota_adicional = 0
     except:
         # Em caso de erro, não calcula adicional
-        valor_base_adicional = total_notas_bruto + 1  # Força adicional = 0
+        valor_base_adicional = total_notas_bruto_empresa + 1  # Força adicional = 0
         aliquota_adicional = 0
     
     # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
-    excedente_adicional = max(total_notas_bruto - valor_base_adicional, 0)
+    excedente_adicional = max(total_notas_bruto_empresa - valor_base_adicional, 0)
     valor_adicional_rateio = excedente_adicional * aliquota_adicional
     # Participação do sócio na receita bruta da empresa
     receita_bruta_socio = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_qs)
-    participacao_socio = receita_bruta_socio / total_notas_bruto if total_notas_bruto > 0 else 0
+    participacao_socio = receita_bruta_socio / total_notas_bruto_empresa if total_notas_bruto_empresa > 0 else 0
     valor_adicional_socio = valor_adicional_rateio * participacao_socio if valor_adicional_rateio > 0 else 0
+    
+    # Processar notas fiscais do sócio para exibição
     notas_fiscais = []
-    total_iss = 0
-    total_pis = 0
-    total_cofins = 0
-    total_irpj = 0
-    total_irpj_adicional = 0
-    total_csll = 0
-    total_notas_liquido = 0
+    total_iss_socio = 0
+    total_pis_socio = 0
+    total_cofins_socio = 0
+    total_irpj_socio = 0
+    total_csll_socio = 0
+    total_notas_liquido_socio = 0
+    
+    # Separar faturamento por tipo de serviço
+    faturamento_consultas = 0
+    faturamento_plantao = 0  
+    faturamento_outros = 0
 
     debug_ir_adicional_espelho = []
     for nf in notas_fiscais_qs:
@@ -141,13 +147,23 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         # Buscar o rateio do sócio para esta nota
         rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
         if rateio:
+            valor_bruto_rateio = float(rateio.valor_bruto_medico)
+            
+            # Classificar por tipo de serviço
+            if nf.tipo_servico == NotaFiscal.TIPO_SERVICO_CONSULTAS:
+                faturamento_consultas += valor_bruto_rateio
+            elif 'plantão' in nf.descricao_servicos.lower() or 'plantao' in nf.descricao_servicos.lower():
+                faturamento_plantao += valor_bruto_rateio
+            else:
+                faturamento_outros += valor_bruto_rateio
+            
             # O cálculo detalhado do adicional de IR para o sócio foi desfeito; manter apenas o necessário para o relatório.
             notas_fiscais.append({
                 'id': nf.id,
                 'numero': getattr(nf, 'numero', ''),
                 'tp_aliquota': nf.get_tipo_servico_display(),
                 'tomador': nf.tomador,
-                'valor_bruto': float(rateio.valor_bruto_medico),
+                'valor_bruto': valor_bruto_rateio,
                 'valor_liquido': float(rateio.valor_liquido_medico),
                 'iss': float(rateio.valor_iss_medico),
                 'pis': float(rateio.valor_pis_medico),
@@ -158,12 +174,13 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
                 'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
             })
-            total_notas_bruto += float(rateio.valor_bruto_medico or 0)
-            total_iss += float(rateio.valor_iss_medico or 0)
-            total_pis += float(rateio.valor_pis_medico or 0)
-            total_cofins += float(rateio.valor_cofins_medico or 0)
-            total_irpj += float(rateio.valor_ir_medico or 0)
-            total_notas_liquido += float(rateio.valor_liquido_medico or 0)
+            # Acumular totais do sócio
+            total_iss_socio += float(rateio.valor_iss_medico or 0)
+            total_pis_socio += float(rateio.valor_pis_medico or 0)
+            total_cofins_socio += float(rateio.valor_cofins_medico or 0)
+            total_irpj_socio += float(rateio.valor_ir_medico or 0)
+            total_csll_socio += float(rateio.valor_csll_medico or 0)
+            total_notas_liquido_socio += float(rateio.valor_liquido_medico or 0)
 
 
     # Totais dos campos das notas fiscais do sócio (para o template)
@@ -177,13 +194,12 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
 
     total_notas_emitidas_mes = total_nf_valor_bruto
 
-
     # Receita bruta e líquida do sócio
-    receita_bruta_recebida = total_notas_bruto
-    receita_liquida = total_notas_liquido
+    receita_bruta_recebida = receita_bruta_socio
+    receita_liquida = total_notas_liquido_socio
 
-    # Impostos agregados
-    impostos_total = total_iss + total_pis + total_cofins + total_irpj + total_csll
+    # Impostos agregados do sócio
+    impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio
 
     despesas_total = despesa_sem_rateio + despesa_com_rateio
     saldo_apurado = receita_liquida - despesas_total
@@ -220,15 +236,26 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             'receita_bruta_recebida': receita_bruta_socio,
             'receita_liquida': receita_liquida,
             'impostos_total': impostos_total,
-            'total_iss': total_iss,
-            'total_pis': total_pis,
-            'total_cofins': total_cofins,
-            'total_irpj': total_irpj,
+            'total_iss': total_iss_socio,
+            'total_pis': total_pis_socio,
+            'total_cofins': total_cofins_socio,
+            'total_irpj': total_irpj_socio,
             'total_irpj_adicional': valor_adicional_socio,
-            'total_csll': total_csll,
-            'total_notas_bruto': total_notas_bruto,
-            'total_notas_liquido': total_notas_liquido,
+            'total_csll': total_csll_socio,
+            'total_notas_bruto': receita_bruta_socio,
+            'total_notas_liquido': total_notas_liquido_socio,
             'total_notas_emitidas_mes': total_notas_emitidas_mes,
+            # Totais das notas fiscais do sócio (para linha de totais da tabela)
+            'total_nf_valor_bruto': total_nf_valor_bruto,
+            'total_nf_iss': total_nf_iss,
+            'total_nf_pis': total_nf_pis,
+            'total_nf_cofins': total_nf_cofins,
+            'total_nf_irpj': total_nf_irpj,
+            'total_nf_csll': total_nf_csll,
+            'total_nf_valor_liquido': total_nf_valor_liquido,
+            'faturamento_consultas': faturamento_consultas,
+            'faturamento_plantao': faturamento_plantao,
+            'faturamento_outros': faturamento_outros,
             'saldo_apurado': saldo_apurado,
             'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
             'saldo_a_transferir': saldo_a_transferir,
