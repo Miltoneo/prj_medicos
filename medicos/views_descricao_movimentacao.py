@@ -97,7 +97,7 @@ class DescricaoMovimentacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
         descricao.created_by = self.request.user
         descricao.save()
         messages.success(self.request, 'Descrição cadastrada com sucesso!')
-        return redirect('financeiro:lista_descricoes_movimentacao', empresa_id=empresa.id)
+        return redirect('medicos:lista_descricoes_movimentacao', empresa_id=empresa.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -125,7 +125,7 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
         descricao.empresa = empresa
         descricao.save()
         messages.success(self.request, 'Descrição atualizada com sucesso!')
-        return redirect('financeiro:lista_descricoes_movimentacao', empresa_id=empresa.id)
+        return redirect('medicos:lista_descricoes_movimentacao', empresa_id=empresa.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -139,7 +139,7 @@ class DescricaoMovimentacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         empresa_id = self.object.empresa.id
-        return reverse_lazy('financeiro:lista_descricoes_movimentacao', kwargs={'empresa_id': empresa_id})
+        return reverse_lazy('medicos:lista_descricoes_movimentacao', kwargs={'empresa_id': empresa_id})
 
 class DescricaoMovimentacaoFinanceiraDeleteView(LoginRequiredMixin, DeleteView):
     model = DescricaoMovimentacaoFinanceira
@@ -157,4 +157,4 @@ class DescricaoMovimentacaoFinanceiraDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_success_url(self):
         empresa_id = self.object.empresa.id
-        return reverse_lazy('financeiro:lista_descricoes_movimentacao', kwargs={'empresa_id': empresa_id})
+        return reverse_lazy('medicos:lista_descricoes_movimentacao', kwargs={'empresa_id': empresa_id})

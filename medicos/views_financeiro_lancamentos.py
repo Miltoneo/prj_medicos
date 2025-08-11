@@ -78,7 +78,7 @@ class FinanceiroCreateView(CreateView):
     template_name = 'financeiro/form_movimentacao.html'
 
     def get_success_url(self):
-        return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        return reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -108,7 +108,7 @@ class FinanceiroUpdateView(UpdateView):
     template_name = 'financeiro/form_movimentacao.html'
 
     def get_success_url(self):
-        return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        return reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -125,7 +125,7 @@ class FinanceiroDeleteView(DeleteView):
     template_name = 'financeiro/confirm_delete.html'
 
     def get_success_url(self):
-        return reverse_lazy('financeiro:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        return reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

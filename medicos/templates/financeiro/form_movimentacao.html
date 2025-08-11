@@ -78,7 +78,7 @@
         {{ form.hidden_fields }}
         <div class="d-flex gap-2 mt-3">
           <button type="submit" class="btn btn-success">Salvar</button>
-          <a href="{% url 'financeiro:lancamentos' request.session.empresa_id %}" class="btn btn-secondary">Cancelar</a>
+          <a href="{% url 'medicos:lancamentos' request.session.empresa_id %}" class="btn btn-secondary">Cancelar</a>
         </div>
       </form>
     </div>

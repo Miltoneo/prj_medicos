@@ -6,7 +6,13 @@ from .views_rateio import (
     NotaFiscalRateioMedicoDeleteView,
 )
 from .views_rateio_medico import NotaFiscalRateioMedicoListView
-from .views_financeiro_lancamentos import FinanceiroListView
+from .views_financeiro_lancamentos import FinanceiroListView, FinanceiroCreateView, FinanceiroUpdateView, FinanceiroDeleteView
+from .views_descricao_movimentacao import (
+    DescricaoMovimentacaoFinanceiraListView,
+    DescricaoMovimentacaoFinanceiraCreateView,
+    DescricaoMovimentacaoFinanceiraUpdateView,
+    DescricaoMovimentacaoFinanceiraDeleteView,
+)
 from django.urls import path, include
 from .views_cadastro_rateio import (
     CadastroRateioView,
@@ -69,6 +75,18 @@ urlpatterns = [
     # Financeiro Views
     # =====================
     path('financeiro/lancamentos/', FinanceiroListView.as_view(), name='financeiro_lancamentos'),
+    
+    # Descrições de Movimentação Financeira
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/', DescricaoMovimentacaoFinanceiraListView.as_view(), name='lista_descricoes_movimentacao'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/novo/', DescricaoMovimentacaoFinanceiraCreateView.as_view(), name='descricao_movimentacao_create'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/<int:pk>/editar/', DescricaoMovimentacaoFinanceiraUpdateView.as_view(), name='descricao_movimentacao_edit'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/<int:pk>/excluir/', DescricaoMovimentacaoFinanceiraDeleteView.as_view(), name='descricao_movimentacao_delete'),
+    
+    # Lançamentos Financeiros CRUD
+    path('empresas/<int:empresa_id>/lancamentos/novo/', FinanceiroCreateView.as_view(), name='financeiro_create'),
+    path('empresas/<int:empresa_id>/lancamentos/<int:pk>/editar/', FinanceiroUpdateView.as_view(), name='financeiro_edit'),
+    path('empresas/<int:empresa_id>/lancamentos/<int:pk>/excluir/', FinanceiroDeleteView.as_view(), name='financeiro_delete'),
+    path('empresas/<int:empresa_id>/lancamentos/', FinanceiroListView.as_view(), name='lancamentos'),
 
 
     # =====================

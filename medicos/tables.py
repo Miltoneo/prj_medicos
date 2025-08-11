@@ -70,8 +70,8 @@ class DescricaoMovimentacaoFinanceiraTable(tables.Table):
     observacoes = tables.Column(verbose_name='Observações')
     actions = tables.TemplateColumn(
         template_code='''
-        <a href="{% url 'financeiro:descricao_movimentacao_edit' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-primary">Editar</a>
-        <a href="{% url 'financeiro:descricao_movimentacao_delete' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-danger">Excluir</a>
+        <a href="{% url 'medicos:descricao_movimentacao_edit' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-primary">Editar</a>
+        <a href="{% url 'medicos:descricao_movimentacao_delete' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-danger">Excluir</a>
         ''',
         verbose_name='Ações', orderable=False
     )

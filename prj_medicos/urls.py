@@ -13,6 +13,5 @@ urlpatterns = [
     path('medicos/auth/', include(('medicos.urls_auth', 'auth'), namespace='auth')),
     path('admin/', admin.site.urls), 
     path("select2/", include("django_select2.urls")), 
-    path('financeiro/', include('medicos.urls_financeiro', namespace='financeiro')),
 
 ]
