@@ -216,11 +216,12 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # receita_bruta_recebida deve considerar o valor total bruto de todas as notas recebidas pelo sócio no mês
     # (valor total das notas fiscais, não apenas a parte rateada)
     receita_bruta_recebida = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_qs)
-    
-    receita_liquida = total_notas_liquido_socio
 
-    # Impostos agregados do sócio
-    impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio
+    # Impostos agregados do sócio (incluindo o rateio mensal de adicional de IR)
+    impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio + valor_adicional_socio
+    
+    # Receita líquida = Receita bruta recebida - Impostos totais
+    receita_liquida = receita_bruta_recebida - impostos_total
 
     despesas_total = despesa_sem_rateio + despesa_com_rateio
     saldo_apurado = receita_liquida - despesas_total

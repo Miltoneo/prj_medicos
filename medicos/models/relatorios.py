@@ -49,6 +49,11 @@ class RelatorioMensalSocio(models.Model):
     total_nf_csll = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_nf_valor_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
+    # Faturamento por tipo de serviço
+    faturamento_consultas = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Faturamento Consultas", help_text="Valor total do faturamento de consultas.")
+    faturamento_plantao = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Faturamento Plantão", help_text="Valor total do faturamento de plantões.")
+    faturamento_outros = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Faturamento Outros", help_text="Valor total do faturamento de outros serviços.")
+
     saldo_apurado = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_movimentacao_financeira = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_a_transferir = models.DecimalField(max_digits=15, decimal_places=2)
