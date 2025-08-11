@@ -163,14 +163,15 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
         if rateio:
             valor_bruto_rateio = float(rateio.valor_bruto_medico)
+            valor_bruto_total_nf = float(nf.val_bruto or 0)
             
-            # Classificar por tipo de serviço
+            # Classificar por tipo de serviço (usando valor bruto total da nota fiscal)
             if nf.tipo_servico == NotaFiscal.TIPO_SERVICO_CONSULTAS:
-                faturamento_consultas += valor_bruto_rateio
+                faturamento_consultas += valor_bruto_total_nf
             elif 'plantão' in nf.descricao_servicos.lower() or 'plantao' in nf.descricao_servicos.lower():
-                faturamento_plantao += valor_bruto_rateio
+                faturamento_plantao += valor_bruto_total_nf
             else:
-                faturamento_outros += valor_bruto_rateio
+                faturamento_outros += valor_bruto_total_nf
             
             # O cálculo detalhado do adicional de IR para o sócio foi desfeito; manter apenas o necessário para o relatório.
             notas_fiscais.append({
@@ -178,7 +179,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'numero': getattr(nf, 'numero', ''),
                 'tp_aliquota': nf.get_tipo_servico_display(),
                 'tomador': nf.tomador,
-                'valor_bruto': valor_bruto_rateio,
+                'valor_bruto': valor_bruto_total_nf,  # Valor bruto total da nota fiscal
                 'valor_liquido': float(rateio.valor_liquido_medico),
                 'iss': float(rateio.valor_iss_medico),
                 'pis': float(rateio.valor_pis_medico),
@@ -212,8 +213,10 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     total_notas_emitidas_mes = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_emissao_qs)
 
     # Receita bruta e líquida do sócio
-    # receita_bruta_recebida deve considerar as notas recebidas no mês
+    # receita_bruta_recebida deve considerar o valor total bruto de todas as notas recebidas pelo sócio no mês
+    # (valor total das notas fiscais, não apenas a parte rateada)
     receita_bruta_recebida = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_qs)
+    
     receita_liquida = total_notas_liquido_socio
 
     # Impostos agregados do sócio
@@ -251,7 +254,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             'despesa_sem_rateio': despesa_sem_rateio,
             'despesa_com_rateio': despesa_com_rateio,
             'despesa_geral': despesa_sem_rateio + despesa_com_rateio,
-            'receita_bruta_recebida': receita_bruta_socio,
+            'receita_bruta_recebida': receita_bruta_recebida,
             'receita_liquida': receita_liquida,
             'impostos_total': impostos_total,
             'total_iss': total_iss_socio,
