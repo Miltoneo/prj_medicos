@@ -185,15 +185,20 @@ def relatorio_mensal_socio(request, empresa_id):
             context['aliquota_adicional'] = aliquota.IRPJ_ADICIONAL
             # Calcular excedente para o template
             total_bruto = relatorio.get('total_notas_bruto', 0)
-            excedente = max(total_bruto - float(aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL), 0)
+            # Calcular base de cálculo do IR conforme modelo Aliquotas
+            base_calculo_ir = total_bruto * (float(aliquota.IRPJ_PRESUNCAO_OUTROS) / 100)
+            context['base_calculo_ir'] = base_calculo_ir
+            excedente = max(base_calculo_ir - float(aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL), 0)
             context['excedente_adicional'] = excedente
         else:
             context['valor_base_adicional'] = 0
             context['aliquota_adicional'] = 0
+            context['base_calculo_ir'] = 0
             context['excedente_adicional'] = 0
     except:
         context['valor_base_adicional'] = 0
         context['aliquota_adicional'] = 0
+        context['base_calculo_ir'] = 0
         context['excedente_adicional'] = 0
         
     return render(request, 'relatorios/relatorio_mensal_socio.html', context)

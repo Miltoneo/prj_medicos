@@ -49,6 +49,7 @@
                       <li>Receita bruta recebida = considera data de recebimento da nota</li>
                       <li>Impostos = considera data de emissão da nota</li>
                       <li>Total notas emitidas no mês: <b>R$ {{ relatorio.total_notas_emitidas_mes|floatformat:2 }}</b> (considera data de emissão da nota)</li>
+                      <li>Total notas recebidas no mês (sócio): <b>R$ {{ relatorio.receita_bruta_recebida|floatformat:2 }}</b> (considera data de recebimento da nota)</li>
                     </ul>
                   </div>
                 </div>
@@ -239,6 +240,7 @@
     <div class="card-body p-3">
       <ul class="mb-2" style="font-size:1.05em;">
         <li><b>Receita bruta total da empresa no mês:</b> R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</li>
+        <li><b>Base de cálculo do IR:</b> R$ {{ base_calculo_ir|floatformat:2 }}</li>
         <li><b>Limite de isenção do adicional de IR:</b> R$ {{ valor_base_adicional|floatformat:2 }}</li>
         <li><b>Excedente sujeito ao adicional:</b> R$ {{ excedente_adicional|floatformat:2 }}</li>
         <li><b>Alíquota do adicional:</b> {{ aliquota_adicional }}%</li>

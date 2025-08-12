@@ -129,7 +129,20 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         aliquota_adicional = 0
     
     # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
-    excedente_adicional = max(total_notas_bruto_empresa - valor_base_adicional, 0)
+    # A base de cálculo do IR é a receita bruta * percentual de presunção
+    try:
+        aliquota = Aliquotas.objects.filter(empresa=empresa).first()
+        if aliquota:
+            percentual_presuncao = float(aliquota.IRPJ_PRESUNCAO_OUTROS) / 100
+            base_calculo_ir = total_notas_bruto_empresa * percentual_presuncao
+            excedente_adicional = max(base_calculo_ir - valor_base_adicional, 0)
+        else:
+            base_calculo_ir = 0
+            excedente_adicional = 0
+    except:
+        base_calculo_ir = 0
+        excedente_adicional = 0
+    
     valor_adicional_rateio = excedente_adicional * aliquota_adicional
     # Participação do sócio na receita bruta da empresa (para cálculo de adicional de IR)
     # Usar notas por data de emissão conforme documentação - deve somar apenas a parte do sócio
