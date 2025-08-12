@@ -1,7 +1,7 @@
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from .forms_import_xml import NotaFiscalImportXMLForm
 from medicos.models.fiscal import NotaFiscal
 from core.context_processors import empresa_context
@@ -13,7 +13,20 @@ from django.contrib.auth.decorators import login_required
 class NotaFiscalImportXMLView(View):
     template_name = 'faturamento/importar_xml_nota_fiscal.html'
     form_class = NotaFiscalImportXMLForm
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def get_success_url(self):
+        # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
+        params = []
+        
+        # Preserva todos os parâmetros GET que vieram da tela de lista
+        for key, value in self.request.GET.items():
+            if value:
+                params.append(f'{key}={value}')
+        
+        url = reverse('medicos:lista_notas_fiscais')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
@@ -24,7 +37,7 @@ class NotaFiscalImportXMLView(View):
         empresa = empresa_context(request).get('empresa')
         if not empresa:
             messages.error(request, 'Nenhuma empresa selecionada.')
-            return redirect(self.success_url)
+            return redirect(self.get_success_url())
         if form.is_valid():
             files = request.FILES.getlist('xml_file')
             total_importadas = 0
@@ -128,5 +141,5 @@ class NotaFiscalImportXMLView(View):
                 messages.success(request, f'{total_importadas} nota(s) fiscal(is) importada(s) com sucesso!')
             if total_erros:
                 messages.warning(request, f'{total_erros} arquivo(s) não pôde/puderam ser importado(s).')
-            return redirect(self.success_url)
+            return redirect(self.get_success_url())
         return render(request, self.template_name, {'form': form, 'titulo_pagina': 'Importar XML de Nota Fiscal'})

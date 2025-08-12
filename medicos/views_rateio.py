@@ -42,6 +42,13 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             nota_fiscal = queryset.first()
         if not nota_fiscal:
             return self.get(request, *args, **kwargs)
+        
+        # Verificar se a nota fiscal não está cancelada antes de salvar rateio
+        if nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            messages.error(request, 'Não é possível salvar rateio para nota fiscal cancelada.')
+            return self.get(request, *args, **kwargs)
+            
         # Get all active medicos for empresa
         medicos_empresa = []
         if empresa:
@@ -105,6 +112,9 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         qs = NotaFiscal.objects.all()
         if empresa_id:
             qs = qs.filter(empresa_destinataria_id=empresa_id)
+        
+        # Filtrar notas com status cancelado - não exibir no rateio
+        qs = qs.exclude(status_recebimento='cancelado')
         
         # Aplica o filtro de busca
         filter_params = self.request.GET.copy()
@@ -193,6 +203,12 @@ class NotaFiscalRateioMedicoListView(RateioContextMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível acessar rateio de nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -219,6 +235,12 @@ class NotaFiscalRateioMedicoCreateView(RateioContextMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível criar rateio para nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -247,6 +269,12 @@ class NotaFiscalRateioMedicoUpdateView(RateioContextMixin, UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível editar rateio de nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         self.rateio = get_object_or_404(NotaFiscalRateioMedico, id=self.kwargs['rateio_id'], nota_fiscal=self.nota_fiscal)
         return super().dispatch(request, *args, **kwargs)
 
@@ -269,6 +297,12 @@ class NotaFiscalRateioMedicoDeleteView(RateioContextMixin, DeleteView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível excluir rateio de nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         self.rateio = get_object_or_404(NotaFiscalRateioMedico, id=self.kwargs['rateio_id'], nota_fiscal=self.nota_fiscal)
         return super().dispatch(request, *args, **kwargs)
 

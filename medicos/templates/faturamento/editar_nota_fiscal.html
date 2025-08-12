@@ -69,7 +69,7 @@
             </div>
             <div class="mt-4 d-flex justify-content-end gap-2">
               <button type="submit" class="btn btn-success px-4">Salvar</button>
-              <a href="{% url 'medicos:lista_notas_fiscais' %}" class="btn btn-secondary px-4">Cancelar</a>
+              <a href="{% url 'medicos:lista_notas_fiscais' %}?{{ request.GET.urlencode }}" class="btn btn-secondary px-4">Cancelar</a>
             </div>
           </form>
         </div>

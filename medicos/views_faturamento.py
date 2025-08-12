@@ -25,7 +25,20 @@ class NotaFiscalCreateView(CreateView):
     model = NotaFiscal
     form_class = NotaFiscalForm
     template_name = 'faturamento/criar_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def get_success_url(self):
+        # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
+        params = []
+        
+        # Preserva todos os parâmetros GET que vieram da tela de lista
+        for key, value in self.request.GET.items():
+            if value:
+                params.append(f'{key}={value}')
+        
+        url = reverse('medicos:lista_notas_fiscais')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
 
     def get_context_data(self, **kwargs):
@@ -106,7 +119,20 @@ class NotaFiscalUpdateView(UpdateView):
     model = NotaFiscal
     form_class = NotaFiscalForm
     template_name = 'faturamento/editar_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def get_success_url(self):
+        # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
+        params = []
+        
+        # Preserva todos os parâmetros GET que vieram da tela de lista
+        for key, value in self.request.GET.items():
+            if value:
+                params.append(f'{key}={value}')
+        
+        url = reverse('medicos:lista_notas_fiscais')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -143,7 +169,21 @@ class NotaFiscalUpdateView(UpdateView):
 class NotaFiscalDeleteView(DeleteView):
     model = NotaFiscal
     template_name = 'faturamento/excluir_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def get_success_url(self):
+        # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
+        params = []
+        
+        # Preserva todos os parâmetros GET que vieram da tela de lista
+        for key, value in self.request.GET.items():
+            if value:
+                params.append(f'{key}={value}')
+        
+        url = reverse('medicos:lista_notas_fiscais')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Não injeta empresa manualmente
@@ -230,7 +270,10 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
             'totais': totais,
             'total_notas': total_notas,
             'notas_canceladas': notas_canceladas,
-            'notas_validas': notas_validas
+            'notas_validas': notas_validas,
+            # Variáveis de filtro para a tabela (seguindo padrão das despesas)
+            'mes_ano_emissao': self.request.GET.get('mes_ano_emissao'),
+            'status_recebimento': self.request.GET.get('status_recebimento')
         })
         context['cenario_nome'] = 'Faturamento'
         # Não injeta empresa manualmente

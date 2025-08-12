@@ -38,6 +38,9 @@ class NotaFiscalRateioMedicoListView(FilterView):
             qs = NotaFiscalRateioMedico.objects.filter(
                 nota_fiscal__empresa_destinataria__id=int(empresa_id)
             )
+            
+        # Filtrar rateios de notas com status cancelado - não exibir no rateio
+        qs = qs.exclude(nota_fiscal__status_recebimento='cancelado')
         
         filter_params = self.request.GET.copy()
         # Remove parâmetros que não são de filtro
