@@ -21,3 +21,4 @@ class NotaFiscalRateioMedicoTable(tables.Table):
         model = NotaFiscalRateioMedico
         template_name = 'django_tables2/bootstrap.html'
         fields = ('medico', 'nota_fiscal', 'tomador', 'data_emissao', 'data_recebimento', 'percentual_participacao', 'valor_bruto_medico', 'valor_liquido_medico', 'valor_iss_medico', 'valor_pis_medico', 'valor_cofins_medico', 'valor_ir_medico', 'valor_csll_medico')
+        order_by = ['medico__pessoa__name']  # Ordenação alfabética por nome do médico

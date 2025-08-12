@@ -1461,7 +1461,7 @@ class NotaFiscalRateioMedico(models.Model):
             models.Index(fields=['nota_fiscal', 'medico']),
             models.Index(fields=['medico', 'percentual_participacao']),
         ]
-        ordering = ['nota_fiscal', 'medico']
+        ordering = ['medico__pessoa__name', 'nota_fiscal']  # Ordenação alfabética por nome do médico
 
     nota_fiscal = models.ForeignKey(
         'NotaFiscal',

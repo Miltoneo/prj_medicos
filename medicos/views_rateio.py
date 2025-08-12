@@ -182,7 +182,10 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             nota_fiscal = NotaFiscal.objects.get(id=nota_fiscal.id)
         medicos_empresa = []
         if nota_fiscal and nota_fiscal.empresa_destinataria:
-            medicos_empresa = list(Socio.objects.filter(empresa=nota_fiscal.empresa_destinataria, ativo=True).select_related('pessoa'))
+            medicos_empresa = list(Socio.objects.filter(
+                empresa=nota_fiscal.empresa_destinataria, 
+                ativo=True
+            ).select_related('pessoa').order_by('pessoa__name'))  # Ordenação alfabética por nome
         medicos_rateio = []
         rateios_map = {}
         total_percentual_rateado = None
