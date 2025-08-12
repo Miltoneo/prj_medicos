@@ -98,7 +98,22 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             else:
                 NotaFiscalRateioMedico.objects.filter(nota_fiscal=nota_fiscal, medico=medico).delete()
         nota_fiscal.rateios_medicos.exclude(medico__in=medicos_empresa).delete()
-        return redirect(f"{request.path}?nota_id={nota_fiscal.id}")
+        
+        # Preservar TODOS os filtros originais ao retornar após salvar rateio
+        params = []
+        for key, value in self.request.GET.items():
+            if value and key != 'nota_id':  # Mantém todos os filtros exceto nota_id (será adicionado depois)
+                params.append(f'{key}={value}')
+        
+        # Adiciona a nota_id atual
+        params.append(f'nota_id={nota_fiscal.id}')
+        
+        # Constrói URL com todos os filtros preservados
+        url = request.path
+        if params:
+            url += '?' + '&'.join(params)
+        
+        return redirect(url)
     model = NotaFiscal
     template_name = 'faturamento/lista_notas_rateio.html'
     context_object_name = 'table'
