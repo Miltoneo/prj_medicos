@@ -13,13 +13,21 @@ class NotaFiscalForm(forms.ModelForm):
             self.fields['meio_pagamento'].required = False
             
             # Filtrar meio de pagamento pela empresa da nota fiscal
-            if self.instance and self.instance.empresa_destinataria:
+            empresa = None
+            if self.instance and self.instance.pk:
+                # Para instância existente, tentar acessar empresa_destinataria
+                empresa = getattr(self.instance, 'empresa_destinataria', None)
+            elif hasattr(self, 'empresa_sessao') and self.empresa_sessao:
+                # Para nova instância, usar empresa da sessão
+                empresa = self.empresa_sessao
+                
+            if empresa:
                 self.fields['meio_pagamento'].queryset = MeioPagamento.objects.filter(
-                    empresa=self.instance.empresa_destinataria,
+                    empresa=empresa,
                     ativo=True
                 ).order_by('nome')
             else:
-                # Se não há instância ou empresa, não exibe nenhum meio de pagamento
+                # Se não há empresa definida, não exibe nenhum meio de pagamento por enquanto
                 self.fields['meio_pagamento'].queryset = MeioPagamento.objects.none()
     def clean(self):
         cleaned_data = super().clean()

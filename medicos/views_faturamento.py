@@ -94,7 +94,12 @@ class NotaFiscalCreateView(CreateView):
         return context
 
     def get_form(self, form_class=None):
-        return super().get_form(form_class)
+        form = super().get_form(form_class)
+        # Passar empresa para o formulário para filtrar meio de pagamento
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            form.empresa_sessao = empresa
+        return form
 
     def form_valid(self, form):
         empresa = empresa_context(self.request).get('empresa')
@@ -138,7 +143,7 @@ class NotaFiscalUpdateView(UpdateView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Nota Fiscal'
         context['cenario_nome'] = 'Faturamento'
-        empresa = context.get('empresa')  # Usar empresa do context processor
+        empresa = empresa_context(self.request).get('empresa')  # Usar empresa do context processor
         aliquota_vigente = None
         dt_emissao = self.object.dtEmissao if hasattr(self.object, 'dtEmissao') else None
         if empresa:
@@ -156,6 +161,17 @@ class NotaFiscalUpdateView(UpdateView):
                 'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_PRESUNCAO_OUTROS', 0),
                 'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA', 0),
             })
+        else:
+            # Definir alíquotas zeradas se não houver alíquota vigente
+            context.update({
+                'aliquota_ISS': 0,
+                'aliquota_PIS': 0,
+                'aliquota_COFINS': 0,
+                'aliquota_IR_BASE': 0,
+                'aliquota_IR': 0,
+                'aliquota_CSLL_BASE': 0,
+                'aliquota_CSLL': 0,
+            })
         context.update({
             'campos_topo': [
                 'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
@@ -165,6 +181,14 @@ class NotaFiscalUpdateView(UpdateView):
             ]
         })
         return context
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Passar empresa para o formulário para filtrar meio de pagamento
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            form.empresa_sessao = empresa
+        return form
 
 class NotaFiscalDeleteView(DeleteView):
     model = NotaFiscal
