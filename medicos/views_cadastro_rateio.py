@@ -68,7 +68,7 @@ def cadastro_rateio_list(request):
     mes_competencia_date = mes_competencia_date.replace(day=1)
     # Exibir apenas itens de grupos com tipo_rateio=COM_RATEIO
     grupos_com_rateio = GrupoDespesa.objects.filter(tipo_rateio=GrupoDespesa.Tipo_t.COM_RATEIO)
-    itens_despesa = ItemDespesa.objects.filter(grupo_despesa__in=grupos_com_rateio)
+    itens_despesa = ItemDespesa.objects.filter(grupo_despesa__in=grupos_com_rateio).order_by('descricao')
     # Itens de despesa com rateio para o mês selecionado
     itens_com_rateio_ids = ItemDespesaRateioMensal.objects.filter(data_referencia=mes_competencia).values_list('item_despesa_id', flat=True).distinct()
     itens_com_rateio_ids = list(itens_com_rateio_ids)
@@ -86,7 +86,7 @@ def cadastro_rateio_list(request):
             empresa = None
             permite_rateio = False
         if empresa:
-            socios_empresa = Socio.objects.filter(empresa=empresa, ativo=True)
+            socios_empresa = Socio.objects.filter(empresa=empresa, ativo=True).select_related('pessoa').order_by('pessoa__name')
         else:
             socios_empresa = Socio.objects.none()
         # Só processa rateio se o item permitir
