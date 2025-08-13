@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </label>
                 <select id="id_status_recebimento" name="status_recebimento" class="form-select">
                   <option value="">Todos</option>
-                  <option value="PENDENTE" {% if request.GET.status_recebimento == 'PENDENTE' %}selected{% endif %}>Pendente</option>
-                  <option value="RECEBIDO" {% if request.GET.status_recebimento == 'RECEBIDO' %}selected{% endif %}>Recebido</option>
+                  <option value="pendente" {% if request.GET.status_recebimento == 'pendente' %}selected{% endif %}>Pendente</option>
+                  <option value="recebido" {% if request.GET.status_recebimento == 'recebido' %}selected{% endif %}>Recebido</option>
                 </select>
               </div>
               

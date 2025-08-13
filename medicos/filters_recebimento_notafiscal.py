@@ -6,7 +6,7 @@ class NotaFiscalRecebimentoFilter(django_filters.FilterSet):
     dtEmissao = django_filters.DateFilter(label='Data de Emissão')
     dtRecebimento = django_filters.DateFilter(label='Data de Recebimento')
     status_recebimento = django_filters.ChoiceFilter(
-        choices=[('PENDENTE', 'Pendente'), ('RECEBIDO', 'Recebido')],
+        choices=[('pendente', 'Pendente'), ('recebido', 'Recebido')],
         label='Status de Recebimento'
     )
 
