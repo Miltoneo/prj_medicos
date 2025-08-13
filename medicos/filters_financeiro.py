@@ -47,4 +47,4 @@ class FinanceiroFilter(django_filters.FilterSet):
 
     class Meta:
         model = Financeiro
-        fields = ['socio', 'descricao_movimentacao_financeira', 'nota_fiscal', 'data_movimentacao']
+        fields = ['socio', 'descricao_movimentacao_financeira', 'nota_fiscal']
