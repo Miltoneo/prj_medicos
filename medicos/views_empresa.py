@@ -82,7 +82,7 @@ class EmpresaListView(LoginRequiredMixin, SingleTableView):
         conta_id = get_or_set_conta_id(self.request)
         qs = Empresa.objects.none()
         if conta_id:
-            qs = Empresa.objects.filter(conta_id=conta_id)
+            qs = Empresa.objects.filter(conta_id=conta_id).order_by('name')
         self.filter = EmpresaFilter(self.request.GET, queryset=qs)
         return self.filter.qs
 

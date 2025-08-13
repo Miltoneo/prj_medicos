@@ -1,31 +1,54 @@
 {% extends 'layouts/base_cenario_home.html' %}
 {% load render_table from django_tables2 %}
+
 {% block content %}
-<style>
-  body { background-color: #181c24 !important; }
-  .form-control, .form-select { background: #232a36; color: #e3f2fd; border: 1px solid #283a5c; }
-  .form-label, h2 { color: #e3f2fd; }
-</style>
-<div class="container pt-3 pb-4">
-  <div class="row justify-content-center mb-4">
-    <div class="col-lg-8 col-md-10 col-12">
-      <div class="card shadow border-0 mb-4" style="border-radius: 18px; background: #232a36; border: 1px solid #283a5c;">
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-building me-2"></i>
+          <span class="fw-bold">Empresas da Conta</span>
+        </div>
         <div class="card-body">
-          {# O título é exibido pelo header base conforme padrão do projeto #}
-          <form method="get" class="mb-3">
-            <div class="row g-2 align-items-end">
-              <div class="col-md-6">
-                <label class="form-label">{{ empresa_filter.form.name.label }}</label>
-                {{ empresa_filter.form.name }}
+          <!-- Botão de Nova Empresa -->
+          <div class="mb-3">
+            <a href="{% url 'medicos:empresa_create' %}" class="btn btn-success">
+              <i class="fas fa-plus me-1"></i>Nova Empresa
+            </a>
+          </div>
+
+          <!-- Formulário de Filtro -->
+          {% if empresa_filter %}
+            <form method="get" class="mb-3">
+              <div class="row g-2 align-items-end">
+                {% for field in empresa_filter.form.visible_fields %}
+                  <div class="col-auto">
+                    <label for="id_{{ field.name }}" class="form-label mb-0">
+                      <i class="fas fa-filter me-1"></i>{{ field.label }}
+                    </label>
+                    {{ field }}
+                  </div>
+                {% endfor %}
+                
+                <div class="col-auto">
+                  <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-1"></i>Filtrar
+                  </button>
+                </div>
+                <div class="col-auto">
+                  <a href="{% url 'medicos:lista_empresas' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Limpar
+                  </a>
+                </div>
               </div>
-              <div class="col-md-2">
-                <button type="submit" class="btn btn-outline-primary">Filtrar</button>
-              </div>
-            </div>
-          </form>
-          <a href="{% url 'medicos:empresa_create' %}" class="btn btn-success mb-3">Nova Empresa</a>
-          <div class="table-responsive d-flex justify-content-center">
-            <div style="width: 100%; max-width: 700px;">
+            </form>
+          {% endif %}
+
+          <!-- Tabela de Empresas -->
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-table me-1"></i>Empresas Cadastradas</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
               {% render_table table %}
             </div>
           </div>

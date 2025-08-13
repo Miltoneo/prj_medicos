@@ -61,12 +61,34 @@
               </div>
             </div>
 
-            <!-- Seção de Sócios -->
+            <!-- Seção de Resumo de Sócios -->
             <div class="col-lg-6">
               <div class="rounded shadow-sm p-3 bg-light">
                 <h5 class="fw-bold mb-3 text-dark">
-                  <i class="fas fa-users me-1"></i>Lista de Sócios
+                  <i class="fas fa-users me-1"></i>Resumo de Sócios
                 </h5>
+                <div class="bg-white rounded-2 p-3">
+                  {% if table.rows %}
+                    <div class="text-center">
+                      <div class="display-6 fw-bold text-primary">{{ table.rows|length }}</div>
+                      <small class="text-muted">Sócios cadastrados</small>
+                    </div>
+                  {% else %}
+                    <div class="text-center text-muted">
+                      <i class="fas fa-users fa-2x mb-2"></i>
+                      <div>Nenhum sócio cadastrado</div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtro de Sócios -->
+          {% if table.rows %}
+            <div class="mb-3">
+              <h5 class="fw-bold mb-3"><i class="fas fa-filter me-1"></i>Filtrar Sócios</h5>
+              <div class="rounded shadow-sm p-3 bg-light">
                 <div class="bg-white rounded-2 p-3">
                   <form method="get" class="mb-3">
                     <div class="row g-2 align-items-end">
@@ -92,18 +114,16 @@
                     </div>
                   </form>
                   
-                  {% if table.rows %}
-                    <div class="mb-3">
-                      <small class="text-muted">
-                        <i class="fas fa-users me-1"></i>
-                        Total de sócios: <strong>{{ table.rows|length }}</strong>
-                      </small>
-                    </div>
-                  {% endif %}
+                  <div class="mb-0">
+                    <small class="text-muted">
+                      <i class="fas fa-users me-1"></i>
+                      Total de sócios encontrados: <strong>{{ table.rows|length }}</strong>
+                    </small>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          {% endif %}
 
           <!-- Tabela de Sócios -->
           {% if table.rows %}

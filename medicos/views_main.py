@@ -14,7 +14,7 @@ from medicos.contexto import *
 def main(request):
     membership = ContaMembership.objects.filter(user=request.user, is_active=True).first()
     conta = membership.conta if membership else None
-    empresas_cadastradas = Empresa.objects.filter(conta=conta) if conta else Empresa.objects.none()
+    empresas_cadastradas = Empresa.objects.filter(conta=conta).order_by('name') if conta else Empresa.objects.none()
 
     # Centraliza definição de conta_id na sessão
     request.session['conta_id'] = conta.id if conta else None
@@ -27,6 +27,7 @@ def main(request):
 
     return render(request, 'dashboard/home.html', {
         'empresas_cadastradas': empresas_cadastradas,
+        'empresa_id_atual': request.session.get('empresa_id'),
         'user': request.user,
         **contexto,
     })

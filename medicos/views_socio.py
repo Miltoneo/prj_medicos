@@ -65,7 +65,7 @@ class SocioListView(SocioContextMixin, FilterView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Socio.objects.filter(empresa=self.empresa)
+        return Socio.objects.filter(empresa=self.empresa).order_by('pessoa__name')
 
     def get_table_data(self):
         queryset = self.get_queryset()

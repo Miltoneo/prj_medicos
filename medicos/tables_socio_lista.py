@@ -25,6 +25,7 @@ class SocioListaTable(tables.Table):
         model = Socio
         template_name = "django_tables2/bootstrap5.html"
         fields = ("nome", "cpf", "data_entrada", "data_saida", "ativo", "acoes")
+        order_by = ("nome",)  # Ordenação padrão por nome
 
 
 class SocioListaDashboardTable(tables.Table):
@@ -41,3 +42,4 @@ class SocioListaDashboardTable(tables.Table):
         model = Socio
         template_name = "django_tables2/bootstrap5.html"
         fields = ("nome", "cpf", "data_entrada", "data_saida", "ativo")
+        order_by = ("nome",)  # Ordenação padrão por nome
