@@ -1,6 +1,6 @@
 
 import logging
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.financeiro import Financeiro, DescricaoMovimentacaoFinanceira
@@ -35,7 +35,67 @@ def criar_ou_atualizar_lancamentos_financeiros(sender, instance, created, **kwar
         logger.warning(f"Removendo lançamentos financeiros para NotaFiscal id={instance.id}")
         Financeiro.objects.filter(nota_fiscal=instance).delete()
 
-@receiver(post_delete, sender=NotaFiscal)
+@receiver(pre_delete, sender=NotaFiscal)
 def remover_lancamentos_financeiros(sender, instance, **kwargs):
-    logger.warning(f"Removendo lançamentos financeiros (delete) para NotaFiscal id={instance.id}")
-    Financeiro.objects.filter(nota_fiscal=instance).delete()
+    """
+    Signal disparado ANTES de uma NotaFiscal ser excluída.
+    Remove automaticamente todas as movimentações financeiras associadas.
+    
+    Usamos pre_delete para garantir que a referência nota_fiscal ainda existe
+    quando buscarmos as movimentações para removê-las.
+    """
+    logger.info(f"=== SIGNAL PRE_DELETE DISPARADO ===")
+    logger.info(f"Preparando exclusão da Nota Fiscal: {instance.numero} (ID: {instance.id})")
+    
+    # Buscar movimentações ANTES da exclusão (referência ainda existe)
+    movimentacoes = Financeiro.objects.filter(nota_fiscal=instance)
+    count_movimentacoes = movimentacoes.count()
+    
+    if count_movimentacoes > 0:
+        logger.info(f"Removendo {count_movimentacoes} movimentação(ões) financeira(s)")
+        
+        # Listar as movimentações que serão removidas para auditoria
+        for mov in movimentacoes:
+            logger.info(f"  - Movimentação ID: {mov.id}, Sócio: {mov.socio.pessoa.name}, Valor: R$ {mov.valor}")
+        
+        # Remover as movimentações COMPLETAMENTE da tabela
+        movimentacoes.delete()
+        logger.info(f"✅ {count_movimentacoes} movimentação(ões) removida(s) COMPLETAMENTE da tabela")
+    else:
+        logger.info("ℹ️  Nenhuma movimentação financeira associada para remover")
+    
+    logger.info(f"=== PROPAGAÇÃO DE EXCLUSÃO CONCLUÍDA ===")
+
+
+def limpar_movimentacoes_orfas():
+    """
+    Função utilitária para limpar movimentações financeiras órfãs 
+    (que perderam a referência da nota fiscal após exclusões anteriores).
+    
+    Esta função deve ser executada manualmente para corrigir dados históricos.
+    """
+    logger.info("=== INICIANDO LIMPEZA DE MOVIMENTAÇÕES ÓRFÃS ===")
+    
+    # Buscar movimentações que eram de notas fiscais mas perderam a referência
+    movimentacoes_orfas = Financeiro.objects.filter(
+        nota_fiscal__isnull=True,
+        descricao_movimentacao_financeira__descricao='Credito de Nota Fiscal'
+    )
+    
+    count_orfas = movimentacoes_orfas.count()
+    
+    if count_orfas > 0:
+        logger.info(f"Encontradas {count_orfas} movimentação(ões) órfã(s) para limpeza")
+        
+        # Listar as movimentações órfãs que serão removidas
+        for mov in movimentacoes_orfas:
+            logger.info(f"  - Movimentação órfã ID: {mov.id}, Sócio: {mov.socio.pessoa.name}, Valor: R$ {mov.valor}, Data: {mov.data_movimentacao}")
+        
+        # Remover as movimentações órfãs
+        movimentacoes_orfas.delete()
+        logger.info(f"✅ {count_orfas} movimentação(ões) órfã(s) removida(s) com sucesso")
+    else:
+        logger.info("ℹ️  Nenhuma movimentação órfã encontrada")
+    
+    logger.info("=== LIMPEZA DE MOVIMENTAÇÕES ÓRFÃS CONCLUÍDA ===")
+    return count_orfas

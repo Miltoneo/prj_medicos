@@ -194,6 +194,31 @@ class NotaFiscalDeleteView(DeleteView):
     model = NotaFiscal
     template_name = 'faturamento/excluir_nota_fiscal.html'
 
+    def delete(self, request, *args, **kwargs):
+        """
+        Override do método delete para adicionar logging e verificações antes da exclusão
+        """
+        import logging
+        logger = logging.getLogger('medicos.views_faturamento')
+        
+        self.object = self.get_object()
+        
+        # Log das movimentações financeiras antes da exclusão
+        movimentacoes_count = self.object.lancamentos_financeiros.count()
+        rateios_count = self.object.rateios_medicos.count()
+        
+        logger.info(f"Excluindo Nota Fiscal {self.object.numero} (ID: {self.object.id})")
+        logger.info(f"Movimentações financeiras associadas: {movimentacoes_count}")
+        logger.info(f"Rateios associados: {rateios_count}")
+        
+        # Executa a exclusão (signals serão disparados automaticamente)
+        result = super().delete(request, *args, **kwargs)
+        
+        logger.info(f"Nota Fiscal {self.object.numero} excluída com sucesso")
+        logger.info("Signals post_delete foram disparados automaticamente para limpeza")
+        
+        return result
+
     def get_success_url(self):
         # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
         params = []
