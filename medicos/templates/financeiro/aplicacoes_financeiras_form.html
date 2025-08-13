@@ -39,7 +39,7 @@
           </div>
           <div class="text-start mt-4">
             <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="{% url 'medicos:aplicacoes_financeiras' empresa_id=empresa_id|default:form.instance.empresa_id %}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            <a href="{% url 'medicos:aplicacoes_financeiras' empresa_id=empresa_id|default:form.instance.empresa_id %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
           </div>
         </form>
       </div>

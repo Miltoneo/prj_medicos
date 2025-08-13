@@ -1,33 +1,102 @@
 {% extends 'layouts/base_cenario_financeiro.html' %}
+{% load django_tables2 %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit do formulário de filtro quando o ano for alterado
+  const anoField = document.getElementById('id_ano');
+  if (anoField) {
+    anoField.addEventListener('change', function() {
+      // Submete o formulário automaticamente quando o ano é alterado
+      this.closest('form').submit();
+    });
+    
+    // Se a página foi carregada sem parâmetros de filtro, garantir que o ano atual esteja selecionado
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilterParams = urlParams.has('ano');
+    
+    if (!hasFilterParams && !anoField.value) {
+      // Define o ano atual se não há valor
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      anoField.value = currentYear;
+      
+      // Submete automaticamente para aplicar o filtro do ano atual
+      setTimeout(() => {
+        anoField.closest('form').submit();
+      }, 100);
+    }
+  }
+});
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid px-0">
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-12 col-lg-11 col-xl-10" style="max-width: 1400px;">
-      <div class="card shadow-sm border-0 mt-4">
-        <div class="card-body">
-          {# Título removido: agora é exibido exclusivamente pelo header base conforme padrão do projeto #}
-          <div class="mb-2">
-            <div class="d-flex flex-wrap align-items-end justify-content-between">
-              <form method="get" class="row g-2 align-items-end flex-grow-1">
-                <div class="col-auto">
-                  <label for="id_ano" class="form-label mb-0">Ano</label>
-                  <select id="id_ano" name="ano" class="form-select ms-2">
-                    {% for a in anos %}
-                      <option value="{{ a|add:0 }}" {% if a == ano %}selected{% endif %}>{{ a|add:0 }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-auto">
-                  <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
-                  <a href="{% url 'medicos:aplicacoes_financeiras' empresa_id=empresa_id %}" class="btn btn-outline-secondary ms-2">Limpar</a>
-                </div>
-              </form>
-              <a href="{% url 'medicos:aplicacao_financeira_add' empresa_id=empresa_id %}" class="btn btn-success ms-2"><i class="fas fa-plus me-1"></i>Novo Lançamento</a>
-            </div>
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-chart-line me-2"></i>
+            <span class="fw-bold">Aplicações Financeiras</span>
           </div>
-          <div class="table-responsive rounded-3 border">
-            {% load django_tables2 %}
-            {% render_table table %}
+          <a href="{% url 'medicos:aplicacao_financeira_add' empresa_id=empresa_id %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm">
+            <i class="fas fa-plus me-1"></i>Novo Lançamento
+          </a>
+        </div>
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <!-- Campo de ano em primeira posição -->
+              <div class="col-auto">
+                <label for="id_ano" class="form-label mb-0">
+                  <i class="fas fa-calendar-alt me-1"></i>Ano
+                </label>
+                <select id="id_ano" name="ano" class="form-select">
+                  {% for a in anos %}
+                    <option value="{{ a|add:0 }}" {% if a == ano %}selected{% endif %}>{{ a|add:0 }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+              </div>
+              <div class="col-auto">
+                <a href="{% url 'medicos:aplicacoes_financeiras' empresa_id=empresa_id %}" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Limpar
+                </a>
+              </div>
+            </div>
+            
+            <!-- Indicador visual do filtro ativo -->
+            {% if ano %}
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-filter me-1"></i>
+                  Exibindo aplicações de: <strong>{{ ano }}</strong>
+                </small>
+              </div>
+            {% endif %}
+          </form>
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-chart-line me-1"></i>Lançamentos de aplicações</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
           </div>
           {% if is_paginated %}
           <nav class="mt-3">

@@ -34,6 +34,12 @@ class AplicacaoFinanceiraListView(LoginRequiredMixin, SingleTableMixin, ListView
             data_referencia__year=ano_int
         ).order_by('-data_referencia')
 
+    def get_table(self, **kwargs):
+        """Passa o contexto da request para a tabela poder acessar os filtros"""
+        table = super().get_table(**kwargs)
+        table.context = {'request': self.request}
+        return table
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         ano_param = self.request.GET.get('ano')
@@ -56,7 +62,26 @@ class AplicacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
     template_name = 'financeiro/aplicacoes_financeiras_form.html'
 
     def get_success_url(self):
-        return reverse_lazy('medicos:aplicacoes_financeiras', kwargs={'empresa_id': self.kwargs.get('empresa_id')})
+        """Redireciona de volta para a listagem mantendo os filtros originais"""
+        from django.http import QueryDict
+        
+        # Captura os parâmetros de filtro da query string atual
+        filtros = self.request.GET.copy()
+        
+        # Remove parâmetros que não são filtros (se houver)
+        parametros_filtro = ['ano']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        # Constrói a URL de retorno com os filtros
+        url_base = reverse_lazy('medicos:aplicacoes_financeiras', kwargs={'empresa_id': self.kwargs.get('empresa_id')})
+        if filtros_limpos:
+            return f"{url_base}?{filtros_limpos.urlencode()}"
+        
+        return url_base
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -64,6 +89,14 @@ class AplicacaoFinanceiraCreateView(LoginRequiredMixin, CreateView):
         context['cenario_nome'] = 'Financeiro'
         context['menu_nome'] = 'aplicacoes_financeiras'
         context['empresa_id'] = self.kwargs.get('empresa_id')
+        
+        # Adiciona informações sobre os filtros para debug/referência
+        filtros_ativos = {}
+        for param in ['ano']:
+            if param in self.request.GET:
+                filtros_ativos[param] = self.request.GET[param]
+        context['filtros_originais'] = filtros_ativos
+        
         return context
 
     def form_valid(self, form):
@@ -91,12 +124,49 @@ class AplicacaoFinanceiraUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'financeiro/aplicacoes_financeiras_form.html'
 
     def get_success_url(self):
+        """Redireciona de volta para a listagem mantendo os filtros originais"""
+        from django.http import QueryDict
+        
+        # Captura os parâmetros de filtro da query string atual
+        filtros = self.request.GET.copy()
+        
+        # Remove parâmetros que não são filtros (se houver)
+        parametros_filtro = ['ano']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        # Determina o empresa_id
         empresa_id = self.kwargs.get('empresa_id')
         if not empresa_id or str(empresa_id).strip() == '':
             empresa_id = getattr(self.object, 'empresa_id', None)
         if not empresa_id:
             raise Exception('empresa_id não encontrado para redirecionamento')
-        return reverse_lazy('medicos:aplicacoes_financeiras', kwargs={'empresa_id': int(empresa_id)})
+        
+        # Constrói a URL de retorno com os filtros
+        url_base = reverse_lazy('medicos:aplicacoes_financeiras', kwargs={'empresa_id': int(empresa_id)})
+        if filtros_limpos:
+            return f"{url_base}?{filtros_limpos.urlencode()}"
+        
+        return url_base
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Editar Aplicação Financeira'
+        context['cenario_nome'] = 'Financeiro'
+        context['menu_nome'] = 'aplicacoes_financeiras'
+        context['empresa_id'] = self.kwargs.get('empresa_id')
+        
+        # Adiciona informações sobre os filtros para debug/referência
+        filtros_ativos = {}
+        for param in ['ano']:
+            if param in self.request.GET:
+                filtros_ativos[param] = self.request.GET[param]
+        context['filtros_originais'] = filtros_ativos
+        
+        return context
 
     def get_queryset(self):
         from medicos.models.base import Empresa

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-coins me-2"></i>
             <span class="fw-bold">Lançamentos de Movimentações Financeiras</span>
           </div>
-          <a href="{% url 'medicos:financeiro_create' request.session.empresa_id %}" class="btn btn-success btn-sm">
+          <a href="{% url 'medicos:financeiro_create' request.session.empresa_id %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm">
             <i class="fas fa-plus-circle me-1"></i> Nova Movimentação
           </a>
         </div>

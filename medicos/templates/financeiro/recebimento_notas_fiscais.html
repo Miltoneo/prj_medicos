@@ -1,44 +1,130 @@
 {% extends 'layouts/base_cenario_financeiro.html' %}
 {% load render_table from django_tables2 %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit do formulário de filtro quando campos forem alterados
+  const formFields = document.querySelectorAll('#id_numero, #id_mes_ano_emissao, #id_mes_ano_recebimento, #id_status_recebimento');
+  formFields.forEach(function(field) {
+    if (field) {
+      field.addEventListener('change', function() {
+        // Submete o formulário automaticamente quando um campo é alterado
+        this.closest('form').submit();
+      });
+    }
+  });
+  
+  // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
+  const mesAnoEmissaoField = document.getElementById('id_mes_ano_emissao');
+  if (mesAnoEmissaoField) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilterParams = urlParams.has('numero') || urlParams.has('mes_ano_emissao') || urlParams.has('mes_ano_recebimento') || urlParams.has('status_recebimento');
+    
+    if (!hasFilterParams && !mesAnoEmissaoField.value) {
+      // Define o mês atual se não há valor
+      const today = new Date();
+      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+      mesAnoEmissaoField.value = currentMonth;
+      
+      // Submete automaticamente para aplicar o filtro do mês atual
+      setTimeout(() => {
+        mesAnoEmissaoField.closest('form').submit();
+      }, 100);
+    }
+  }
+});
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-12 col-md-10 col-lg-8">
-    <div class="card mb-4 shadow-sm border-0">
-      <div class="card-body">
-        <form method="get" class="row g-3 align-items-end">
-          <div class="col-md-3">
-            <label for="id_numero" class="form-label">Número NF</label>
-            <input type="text" id="id_numero" name="numero" class="form-control" value="{{ request.GET.numero }}">
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-file-invoice me-2"></i>
+          <span class="fw-bold">Recebimento de Notas Fiscais</span>
+        </div>
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <!-- Campo de mês/ano de emissão em primeira posição -->
+              <div class="col-auto">
+                <label for="id_mes_ano_emissao" class="form-label mb-0">
+                  <i class="fas fa-calendar-alt me-1"></i>Mês/Ano de Emissão
+                </label>
+                <input type="month" id="id_mes_ano_emissao" name="mes_ano_emissao" class="form-control" value="{{ mes_ano_emissao_default }}">
+              </div>
+              
+              <!-- Número da NF -->
+              <div class="col-auto">
+                <label for="id_numero" class="form-label mb-0">
+                  <i class="fas fa-hashtag me-1"></i>Número NF
+                </label>
+                <input type="text" id="id_numero" name="numero" class="form-control" value="{{ request.GET.numero }}">
+              </div>
+              
+              <!-- Mês/Ano de Recebimento -->
+              <div class="col-auto">
+                <label for="id_mes_ano_recebimento" class="form-label mb-0">
+                  <i class="fas fa-calendar-check me-1"></i>Mês/Ano de Recebimento
+                </label>
+                <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ mes_ano_recebimento_default }}">
+              </div>
+              
+              <!-- Status de Recebimento -->
+              <div class="col-auto">
+                <label for="id_status_recebimento" class="form-label mb-0">
+                  <i class="fas fa-check-circle me-1"></i>Status de Recebimento
+                </label>
+                <select id="id_status_recebimento" name="status_recebimento" class="form-select">
+                  <option value="">Todos</option>
+                  <option value="PENDENTE" {% if request.GET.status_recebimento == 'PENDENTE' %}selected{% endif %}>Pendente</option>
+                  <option value="RECEBIDO" {% if request.GET.status_recebimento == 'RECEBIDO' %}selected{% endif %}>Recebido</option>
+                </select>
+              </div>
+              
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+              </div>
+              <div class="col-auto">
+                <a href="{% url 'medicos:recebimento_notas_fiscais' %}" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Limpar
+                </a>
+              </div>
+            </div>
+            
+            <!-- Indicador visual do filtro ativo -->
+            {% if mes_ano_emissao_default %}
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-filter me-1"></i>
+                  Exibindo notas de: <strong>{{ mes_ano_emissao_default }}</strong>
+                </small>
+              </div>
+            {% endif %}
+          </form>
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-file-invoice-dollar me-1"></i>Notas fiscais</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
           </div>
-          <div class="col-md-3">
-            <label for="id_mes_ano_emissao" class="form-label">Mês/Ano de Emissão</label>
-              <input type="month" id="id_mes_ano_emissao" name="mes_ano_emissao" class="form-control" value="{{ mes_ano_emissao_default }}">
-          </div>
-          <div class="col-md-3">
-            <label for="id_mes_ano_recebimento" class="form-label">Mês/Ano de Recebimento</label>
-            <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ mes_ano_recebimento_default }}">
-          </div>
-          <div class="col-md-3">
-            <label for="id_status_recebimento" class="form-label">Status de Recebimento</label>
-            <select id="id_status_recebimento" name="status_recebimento" class="form-select">
-              <option value="">Todos</option>
-              <option value="PENDENTE" {% if request.GET.status_recebimento == 'PENDENTE' %}selected{% endif %}>Pendente</option>
-              <option value="RECEBIDO" {% if request.GET.status_recebimento == 'RECEBIDO' %}selected{% endif %}>Recebido</option>
-            </select>
-          </div>
-          <div class="col-12 text-end">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filtrar</button>
-            <a href="{% url 'medicos:recebimento_notas_fiscais' %}" class="btn btn-outline-secondary ms-2">Limpar</a>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-<div class="row justify-content-center mt-4">
-  <div class="col-12 col-md-10 col-lg-8">
-    {% render_table table %}
   </div>
 </div>
 {% endblock %}

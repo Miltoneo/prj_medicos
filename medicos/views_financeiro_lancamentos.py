@@ -78,7 +78,26 @@ class FinanceiroCreateView(CreateView):
     template_name = 'financeiro/form_movimentacao.html'
 
     def get_success_url(self):
-        return reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        """Redireciona de volta para a listagem mantendo os filtros originais"""
+        from django.http import QueryDict
+        
+        # Captura os parâmetros de filtro da query string atual
+        filtros = self.request.GET.copy()
+        
+        # Remove parâmetros que não são filtros (se houver)
+        parametros_filtro = ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        # Constrói a URL de retorno com os filtros
+        url_base = reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        if filtros_limpos:
+            return f"{url_base}?{filtros_limpos.urlencode()}"
+        
+        return url_base
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -86,6 +105,24 @@ class FinanceiroCreateView(CreateView):
         if empresa:
             kwargs['empresa'] = empresa
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações sobre os filtros para debug/referência
+        """
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Nova Movimentação Financeira'
+        context['cenario_nome'] = 'Financeiro'
+        
+        # Adiciona informações sobre os filtros para debug/referência
+        filtros_ativos = {}
+        for param in ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']:
+            if param in self.request.GET:
+                filtros_ativos[param] = self.request.GET[param]
+        context['filtros_originais'] = filtros_ativos
+        
+        return context
+
 
     def form_valid(self, form):
         instance = form.save(commit=False)
@@ -108,7 +145,26 @@ class FinanceiroUpdateView(UpdateView):
     template_name = 'financeiro/form_movimentacao.html'
 
     def get_success_url(self):
-        return reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        """Redireciona de volta para a listagem mantendo os filtros originais"""
+        from django.http import QueryDict
+        
+        # Captura os parâmetros de filtro da query string atual
+        filtros = self.request.GET.copy()
+        
+        # Remove parâmetros que não são filtros (se houver)
+        parametros_filtro = ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        # Constrói a URL de retorno com os filtros
+        url_base = reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        if filtros_limpos:
+            return f"{url_base}?{filtros_limpos.urlencode()}"
+        
+        return url_base
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -116,6 +172,23 @@ class FinanceiroUpdateView(UpdateView):
         if empresa:
             kwargs['empresa'] = empresa
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações sobre os filtros para debug/referência
+        """
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Editar Movimentação Financeira'
+        context['cenario_nome'] = 'Financeiro'
+        
+        # Adiciona informações sobre os filtros para debug/referência
+        filtros_ativos = {}
+        for param in ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']:
+            if param in self.request.GET:
+                filtros_ativos[param] = self.request.GET[param]
+        context['filtros_originais'] = filtros_ativos
+        
+        return context
 
 class FinanceiroDeleteView(DeleteView):
     """
@@ -125,9 +198,38 @@ class FinanceiroDeleteView(DeleteView):
     template_name = 'financeiro/confirm_delete.html'
 
     def get_success_url(self):
-        return reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        """Redireciona de volta para a listagem mantendo os filtros originais"""
+        from django.http import QueryDict
+        
+        # Captura os parâmetros de filtro da query string atual
+        filtros = self.request.GET.copy()
+        
+        # Remove parâmetros que não são filtros (se houver)
+        parametros_filtro = ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        # Constrói a URL de retorno com os filtros
+        url_base = reverse_lazy('medicos:lancamentos', kwargs={'empresa_id': self.kwargs['empresa_id']})
+        if filtros_limpos:
+            return f"{url_base}?{filtros_limpos.urlencode()}"
+        
+        return url_base
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa_id'] = self.kwargs['empresa_id']
+        context['titulo_pagina'] = 'Excluir Movimentação Financeira'
+        context['cenario_nome'] = 'Financeiro'
+        
+        # Adiciona informações sobre os filtros para debug/referência
+        filtros_ativos = {}
+        for param in ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']:
+            if param in self.request.GET:
+                filtros_ativos[param] = self.request.GET[param]
+        context['filtros_originais'] = filtros_ativos
+        
         return context

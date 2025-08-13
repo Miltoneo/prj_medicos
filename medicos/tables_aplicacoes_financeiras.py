@@ -16,6 +16,14 @@ class AplicacaoFinanceiraTable(tables.Table):
         from django.urls import reverse
         empresa_id = record.empresa_id if hasattr(record, 'empresa_id') else (record.empresa.id if hasattr(record.empresa, 'id') else None)
         url = reverse('medicos:aplicacoes_financeiras_edit', kwargs={'empresa_id': empresa_id, 'pk': record.pk})
+        # Captura os parâmetros de filtro da requisição atual
+        request = getattr(self, '_request', None)
+        if hasattr(self, 'context') and 'request' in self.context:
+            request = self.context['request']
+        if request and hasattr(request, 'GET'):
+            query_params = request.GET.urlencode()
+            if query_params:
+                url += f'?{query_params}'
         return format_html(
             '<a href="{}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i> Editar</a>', url
         )
