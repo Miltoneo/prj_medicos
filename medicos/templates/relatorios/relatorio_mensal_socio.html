@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-lg-6">
                   <div class="card shadow-sm border-primary">
                     <div class="card-header bg-primary bg-opacity-10 border-primary fw-bold px-3 py-2">
-                      <span class="bi bi-table text-primary me-2"></span> Demonstrativo Mensal
+                      <span class="bi bi-table text-primary me-2"></span> Receitas
                     </div>
                     <div class="card-body p-0">
                       <div class="table-responsive">
@@ -117,24 +117,40 @@ document.addEventListener('DOMContentLoaded', function() {
                           <tr><td>1</td><td>PIS</td><td>{{ relatorio.total_pis|floatformat:2 }}</td></tr>
                           <tr><td>2</td><td>COFINS</td><td>{{ relatorio.total_cofins|floatformat:2 }}</td></tr>
                           <tr><td>3</td><td>IRPJ</td><td>{{ relatorio.total_irpj|floatformat:2 }}</td></tr>
-                          <tr><td>4</td><td>Rateio mensal de adicional de IR</td><td>{{ relatorio.total_irpj_adicional|floatformat:2 }}</td></tr>
-                          <tr><td>5</td><td>CSLL</td><td>{{ relatorio.total_csll|floatformat:2 }}</td></tr>
-                          <tr><td>6</td><td>ISSQN</td><td>{{ relatorio.total_iss|floatformat:2 }}</td></tr>
+                          <tr><td>4</td><td>CSLL</td><td>{{ relatorio.total_csll|floatformat:2 }}</td></tr>
+                          <tr><td>5</td><td>ISSQN</td><td>{{ relatorio.total_iss|floatformat:2 }}</td></tr>
                           <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">DESPESAS (-)</th><th>{{ relatorio.despesas_total|floatformat:2 }}</th></tr>
-                          <tr><td>1</td><td>Despesa com rateio</td><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
-                          <tr><td>2</td><td>Despesa sem rateio</td><td>{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
-                          <tr class="linha-resultado"><th colspan="2">SALDO APURADO (=)</th><th>{{ relatorio.saldo_apurado|floatformat:2 }}</th></tr>
-                          <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th>{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>{{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
                         </table>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="col-lg-6">
-                  <!-- Tabela de Movimentação Financeira -->
-                  <div class="card shadow-sm border-secondary mb-4">
+                  <div class="card shadow-sm border-success">
+                    <div class="card-header bg-success bg-opacity-10 border-success fw-bold px-3 py-2">
+                      <span class="bi bi-calculator text-success me-2"></span> Cálculo do Saldo Financeiro
+                    </div>
+                    <div class="card-body p-0">
+                      <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
+                          <caption>Cálculo do saldo final</caption>
+                          <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (=)</th><th>{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
+                          <tr class="linha-total"><th colspan="2">TOTAL DESPESAS (-)</th><th>{{ relatorio.despesas_total|floatformat:2 }}</th></tr>
+                          <tr><td>1</td><td>Despesa com rateio</td><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+                          <tr><td>2</td><td>Despesa sem rateio</td><td>{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
+                          <tr><th colspan="2">RATEIO MENSAL DO ADICIONAL DE IR (-)</th><th>{{ relatorio.total_irpj_adicional|floatformat:2 }}</th></tr>
+                          <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>{{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Tabela de Movimentação Financeira posicionada abaixo do Demonstrativo -->
+              <div class="row g-4 mb-4">
+                <div class="col-12">
+                  <div class="card shadow-sm border-secondary">
                     <div class="card-header bg-secondary bg-opacity-10 border-secondary fw-bold d-flex align-items-center">
                       <i class="fas fa-exchange-alt text-secondary me-2"></i>
                       <span>Movimentações Financeiras</span>

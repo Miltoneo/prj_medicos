@@ -284,7 +284,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         }
         for m in movimentacoes_financeiras_qs
     ]
-    saldo_a_transferir = saldo_apurado + saldo_movimentacao_financeira
+    # Corrigir o cálculo do saldo_a_transferir conforme fórmula solicitada:
+    # SALDO A TRANSFERIR = SALDO DAS MOVIMENTAÇÕES FINANCEIRAS - TOTAL DESPESAS - RATEIO MENSAL DO ADICIONAL DE IR
+    saldo_a_transferir = saldo_movimentacao_financeira - despesas_total - valor_adicional_socio
 
     relatorio_obj, _ = RelatorioMensalSocio.objects.update_or_create(
         empresa=empresa,
