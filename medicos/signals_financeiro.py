@@ -22,13 +22,13 @@ def criar_ou_atualizar_lancamentos_financeiros(sender, instance, created, **kwar
             descricao='Credito de Nota Fiscal'
         )
         for rateio in instance.rateios_medicos.all():
-            logger.warning(f"Criando lançamento para sócio {rateio.medico_id} valor={rateio.valor_bruto_medico}")
+            logger.warning(f"Criando lançamento para sócio {rateio.medico_id} valor={rateio.valor_liquido_medico}")
             Financeiro.objects.create(
                 nota_fiscal=instance,
                 socio=rateio.medico,
                 descricao_movimentacao_financeira=descricao,
                 data_movimentacao=instance.dtRecebimento or timezone.now().date(),
-                valor=rateio.valor_bruto_medico,
+                valor=rateio.valor_liquido_medico,
                 created_by=getattr(instance, 'updated_by', None)
             )
     else:
