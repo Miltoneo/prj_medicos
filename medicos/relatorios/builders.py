@@ -208,13 +208,13 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             valor_bruto_rateio = float(rateio.valor_bruto_medico)
             valor_bruto_total_nf = float(nf.val_bruto or 0)
             
-            # Classificar por tipo de serviço (usando valor bruto total da nota fiscal)
+            # Classificar por tipo de serviço (usando valor do rateio do sócio específico)
             if nf.tipo_servico == NotaFiscal.TIPO_SERVICO_CONSULTAS:
-                faturamento_consultas += valor_bruto_total_nf
+                faturamento_consultas += valor_bruto_rateio
             elif 'plantão' in nf.descricao_servicos.lower() or 'plantao' in nf.descricao_servicos.lower():
-                faturamento_plantao += valor_bruto_total_nf
+                faturamento_plantao += valor_bruto_rateio
             else:
-                faturamento_outros += valor_bruto_total_nf
+                faturamento_outros += valor_bruto_rateio
             
             # O cálculo detalhado do adicional de IR para o sócio foi desfeito; manter apenas o necessário para o relatório.
             notas_fiscais.append({

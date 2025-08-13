@@ -228,6 +228,10 @@ def relatorio_mensal_socio(request, empresa_id):
         'base_calculo_consultas': getattr(relatorio_obj, 'base_calculo_consultas', 0),
         'base_calculo_outros': getattr(relatorio_obj, 'base_calculo_outros', 0),
         'base_calculo_ir_total': getattr(relatorio_obj, 'base_calculo_ir_total', 0),
+        # Faturamento por tipo de serviço
+        'faturamento_consultas': getattr(relatorio_obj, 'faturamento_consultas', 0),
+        'faturamento_plantao': getattr(relatorio_obj, 'faturamento_plantao', 0),
+        'faturamento_outros': getattr(relatorio_obj, 'faturamento_outros', 0),
         # Debug
         'debug_ir_adicional': getattr(relatorio_obj, 'debug_ir_adicional', []),
     }

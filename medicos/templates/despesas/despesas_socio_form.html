@@ -1,74 +1,107 @@
 {% extends 'layouts/base_cenario_despesas.html' %}
 {% block content %}
-<div class="container-fluid px-0">
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-8 col-lg-7 col-xl-6" style="max-width: 520px;">
-      <div class="card shadow-sm border-0 mt-4">
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-plus-circle me-2"></i>
+          <span class="fw-bold">Nova Despesa de Sócio</span>
+        </div>
         <div class="card-body">
-          <h5 class="fw-bold text-primary mb-4">Nova Despesa de Sócio</h5>
-          <form method="post" autocomplete="off">
-            {# Sempre prioriza POST, depois GET, para manter o filtro correto após erro de validação #}
-            <input type="hidden" name="socio" value="{% if request.POST.socio %}{{ request.POST.socio }}{% elif request.GET.socio %}{{ request.GET.socio }}{% elif socio_id %}{{ socio_id }}{% else %}{% endif %}">
-            <input type="hidden" name="competencia" value="{% if request.POST.competencia %}{{ request.POST.competencia }}{% elif request.GET.competencia %}{{ request.GET.competencia }}{% elif competencia %}{{ competencia }}{% else %}{% endif %}">
-            {% csrf_token %}
-            <div class="row g-3">
-              <!-- Sócio é definido pelo filtro da lista, não aparece mais no formulário -->
-              <div class="col-12">
-                <label for="id_item_despesa" class="form-label">Item de Despesa</label>
-                <div style="max-width: 500px; min-width: 300px;">
-                  {{ form.item_despesa }}
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          
+          <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-7 col-xl-6" style="max-width: 520px;">
+              <div class="rounded shadow-sm p-3 bg-light">
+                <div class="bg-white rounded-2 p-4">
+                  <form method="post" autocomplete="off">
+                    {# Sempre prioriza POST, depois GET, para manter o filtro correto após erro de validação #}
+                    <input type="hidden" name="socio" value="{% if request.POST.socio %}{{ request.POST.socio }}{% elif request.GET.socio %}{{ request.GET.socio }}{% elif socio_id %}{{ socio_id }}{% else %}{% endif %}">
+                    <input type="hidden" name="competencia" value="{% if request.POST.competencia %}{{ request.POST.competencia }}{% elif request.GET.competencia %}{{ request.GET.competencia }}{% elif competencia %}{{ competencia }}{% else %}{% endif %}">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                      <!-- Sócio é definido pelo filtro da lista, não aparece mais no formulário -->
+                      <div class="col-12">
+                        <label for="id_item_despesa" class="form-label mb-0">
+                          <i class="fas fa-list me-1"></i>Item de Despesa
+                        </label>
+                        <div style="max-width: 500px; min-width: 300px;">
+                          {{ form.item_despesa }}
+                        </div>
+                        {% if form.item_despesa.errors %}<div class="text-danger small">{{ form.item_despesa.errors }}</div>{% endif %}
+                      </div>
+                      <div class="col-12">
+                        <label for="id_data" class="form-label mb-0">
+                          <i class="fas fa-calendar-alt me-1"></i>Data
+                        </label>
+                        <div style="max-width: 180px;">
+                          {{ form.data }}
+                        </div>
+                        {% if form.data.errors %}<div class="text-danger small">{{ form.data.errors }}</div>{% endif %}
+                      </div>
+                      <div class="col-12">
+                        <label for="id_valor" class="form-label mb-0">
+                          <i class="fas fa-dollar-sign me-1"></i>Valor (R$)
+                        </label>
+                        <div style="max-width: 180px;">
+                          {{ form.valor }}
+                        </div>
+                        {% if form.valor.errors %}<div class="text-danger small">{{ form.valor.errors }}</div>{% endif %}
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                      <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Salvar
+                      </button>
+                      <a href="{{ cancel_url }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                      </a>
+                    </div>
+                  </form>
                 </div>
-                {% if form.item_despesa.errors %}<div class="text-danger small">{{ form.item_despesa.errors }}</div>{% endif %}
-              </div>
-              <div class="col-12">
-                <label for="id_data" class="form-label">Data</label>
-                <div style="max-width: 180px;">
-                  {{ form.data }}
-                </div>
-                {% if form.data.errors %}<div class="text-danger small">{{ form.data.errors }}</div>{% endif %}
-              </div>
-              <div class="col-12">
-                <label for="id_valor" class="form-label">Valor (R$)</label>
-                <div style="max-width: 180px;">
-                  {{ form.valor }}
-                </div>
-                {% if form.valor.errors %}<div class="text-danger small">{{ form.valor.errors }}</div>{% endif %}
               </div>
             </div>
-            <div class="d-flex justify-content-end gap-2 mt-4">
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save me-1"></i>Salvar
-              </button>
-              <a href="{{ cancel_url }}" class="btn btn-secondary">
-                <i class="fas fa-times me-1"></i>Cancelar
-              </a>
-            </div>
-            <hr>
-            <small class="text-muted">O filtro dos itens é feito no ModelForm, conforme instrução auxiliar.</small>
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-            <style>
-              /* Melhorar contraste do texto dos itens do Select2 */
-              .select2-container--default .select2-results__option {
-                color: #212529;
-                background-color: #fff;
-              }
-              .select2-container--default .select2-selection__rendered {
-                color: #212529;
-              }
-            </style>
-            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-            <script>
-              $(document).ready(function() {
-                $('#id_item_despesa').select2({
-                  placeholder: "Selecione ou digite para filtrar...",
-                  allowClear: true,
-                  width: '100%',
-                  minimumInputLength: 1
-                });
+          </div>
+          
+          <hr class="my-3">
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            O filtro dos itens é feito no ModelForm, conforme instrução auxiliar.
+          </small>
+          
+          <!-- Select2 assets e inicialização -->
+          <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+          <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+          <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+          <script>
+            $(document).ready(function() {
+              $('#id_item_despesa').select2({
+                placeholder: "Selecione ou digite para filtrar...",
+                allowClear: true,
+                width: '100%',
+                minimumInputLength: 1
               });
-            </script>
-          </form>
+            });
+          </script>
+          <style>
+            /* Melhorar contraste do texto dos itens do Select2 */
+            .select2-container--default .select2-results__option {
+              color: #212529;
+              background-color: #fff;
+            }
+            .select2-container--default .select2-selection__rendered {
+              color: #212529;
+            }
+          </style>
         </div>
       </div>
     </div>

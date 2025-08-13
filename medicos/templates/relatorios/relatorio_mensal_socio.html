@@ -110,9 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
                           <caption>Resumo financeiro do mês</caption>
                           <tr><th colspan="2">RECEITA BRUTA RECEBIDA* (=)</th><th>{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th></tr>
-                          <tr><td>1</td><td>Faturamento serviços de consultas</td><td>{{ relatorio.faturamento_consultas|floatformat:2 }}</td></tr>
-                          <tr><td>2</td><td>Faturamento serviços de plantão</td><td>{{ relatorio.faturamento_plantao|floatformat:2 }}</td></tr>
-                          <tr><td>3</td><td>Faturamento: vacinação, exames, procedimentos</td><td>{{ relatorio.faturamento_outros|floatformat:2 }}</td></tr>
+                          <tr><td>1</td><td>serviços de consultas e plantões</td><td>{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
+                          <tr><td>2</td><td>Serviços de vacinação, exames, procedimentos</td><td>{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
                           <tr class="linha-total"><th colspan="2">IMPOSTOS* (-)</th><th>{{ relatorio.impostos_total|floatformat:2 }}</th></tr>
                           <tr><td>1</td><td>PIS</td><td>{{ relatorio.total_pis|floatformat:2 }}</td></tr>
                           <tr><td>2</td><td>COFINS</td><td>{{ relatorio.total_cofins|floatformat:2 }}</td></tr>
