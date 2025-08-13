@@ -1,41 +1,119 @@
 {% extends 'layouts/base_cenario_financeiro.html' %}
+
 {% block content %}
-<div class="card mx-auto mt-4" style="max-width: 540px;">
-  <div class="card-body">
-    <form method="post">
-      {% if form.errors %}
-        <div class="alert alert-danger">
-          <ul class="mb-0">
-            {% for field in form %}
-              {% for error in field.errors %}
-                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-              {% endfor %}
-            {% endfor %}
-            {% for error in form.non_field_errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6" style="max-width: 600px;">
+      <div class="card shadow-sm mb-4 w-100">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-edit me-2"></i>
+          <span class="fw-bold">Editar Recebimento de Nota Fiscal</span>
         </div>
-      {% endif %}
-      {% csrf_token %}
-      <div class="mb-3">
-        <label for="id_meio_pagamento" class="form-label">Meio de Pagamento</label>
-        {{ form.meio_pagamento }}
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          
+          <!-- Informações da Nota Fiscal -->
+          {% if object %}
+            <div class="mb-4 p-3 bg-light rounded">
+              <h6 class="fw-bold mb-2 text-primary">
+                <i class="fas fa-file-invoice me-1"></i>Informações da Nota Fiscal
+              </h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <small class="text-muted">Número:</small><br>
+                  <span class="fw-bold">{{ object.numero }}</span>
+                </div>
+                <div class="col-md-6">
+                  <small class="text-muted">Data Emissão:</small><br>
+                  <span class="fw-bold">{{ object.dtEmissao|date:"d/m/Y" }}</span>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-md-4">
+                  <small class="text-muted">Tomador:</small><br>
+                  <span class="fw-bold">{{ object.tomador }}</span>
+                </div>
+                <div class="col-md-4">
+                  <small class="text-muted">Valor Bruto:</small><br>
+                  <span class="fw-bold text-success">R$ {{ object.val_bruto|floatformat:2 }}</span>
+                </div>
+                <div class="col-md-4">
+                  <small class="text-muted">Valor Líquido:</small><br>
+                  <span class="fw-bold text-primary">R$ {{ object.val_liquido|floatformat:2 }}</span>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <form method="post">
+            {% if form.errors %}
+              <div class="alert alert-danger">
+                <ul class="mb-0">
+                  {% for field in form %}
+                    {% for error in field.errors %}
+                      <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                  {% endfor %}
+                  {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+            {% csrf_token %}
+            
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="id_meio_pagamento" class="form-label mb-1">
+                  <i class="fas fa-credit-card me-1"></i>Meio de Pagamento
+                </label>
+                {{ form.meio_pagamento }}
+                {% if form.meio_pagamento.errors %}
+                  <div class="text-danger small mt-1">{{ form.meio_pagamento.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="col-md-6">
+                <label for="id_dtRecebimento" class="form-label mb-1">
+                  <i class="fas fa-calendar-check me-1"></i>Data de Recebimento
+                </label>
+                {{ form.dtRecebimento }}
+                {% if form.dtRecebimento.errors %}
+                  <div class="text-danger small mt-1">{{ form.dtRecebimento.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="col-md-6">
+                <label for="id_status_recebimento" class="form-label mb-1">
+                  <i class="fas fa-check-circle me-1"></i>Status de Recebimento
+                </label>
+                {{ form.status_recebimento }}
+                {% if form.status_recebimento.errors %}
+                  <div class="text-danger small mt-1">{{ form.status_recebimento.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-1"></i>Salvar Alterações
+              </button>
+              <a href="{% url 'medicos:recebimento_notas_fiscais' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i>Cancelar
+              </a>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="id_dtRecebimento" class="form-label">Data de Recebimento</label>
-        {{ form.dtRecebimento }}
-      </div>
-      <div class="mb-3">
-        <label for="id_status_recebimento" class="form-label">Status de Recebimento</label>
-        {{ form.status_recebimento }}
-      </div>
-      <div class="d-flex justify-content-end gap-2">
-        <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Salvar</button>
-        <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'medicos:recebimento_notas_fiscais' %}?{{ request.GET.urlencode }}'"><i class="fas fa-times me-1"></i>Cancelar</button>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
-
 {% endblock %}
