@@ -240,7 +240,9 @@
     <div class="card-body p-3">
       <ul class="mb-2" style="font-size:1.05em;">
         <li><b>Receita bruta total da empresa no mês:</b> R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</li>
-        <li><b>Base de cálculo do IR:</b> R$ {{ base_calculo_ir|floatformat:2 }}</li>
+        <li><b>Base das notas fiscais recebidas do tipo "consultas médicas":</b> R$ {{ relatorio.base_calculo_consultas|floatformat:2|default:"0,00" }}</li>
+        <li><b>Base das notas fiscais recebidas do tipo "outros serviços":</b> R$ {{ relatorio.base_calculo_outros|floatformat:2|default:"0,00" }}</li>
+        <li><b>Base de cálculo do IR (total):</b> R$ {{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }}</li>
         <li><b>Limite de isenção do adicional de IR:</b> R$ {{ valor_base_adicional|floatformat:2 }}</li>
         <li><b>Excedente sujeito ao adicional:</b> R$ {{ excedente_adicional|floatformat:2 }}</li>
         <li><b>Alíquota do adicional:</b> {{ aliquota_adicional }}%</li>

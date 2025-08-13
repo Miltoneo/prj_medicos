@@ -129,17 +129,47 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         aliquota_adicional = 0
     
     # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
-    # A base de cálculo do IR é a receita bruta * percentual de presunção
+    # A base de cálculo do IR deve considerar tipos de serviços separadamente
+    # Usar notas RECEBIDAS no mês conforme especificação
     try:
         aliquota = Aliquotas.objects.filter(empresa=empresa).first()
         if aliquota:
-            percentual_presuncao = float(aliquota.IRPJ_PRESUNCAO_OUTROS) / 100
-            base_calculo_ir = total_notas_bruto_empresa * percentual_presuncao
+            # Separar notas RECEBIDAS por tipo de serviço para cálculo correto da base
+            total_consultas = 0
+            total_outros = 0
+            
+            # Usar todas as notas recebidas da empresa no mês (não apenas do sócio)
+            notas_recebidas_empresa = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtRecebimento__year=competencia.year,
+                dtRecebimento__month=competencia.month,
+                dtRecebimento__isnull=False
+            )
+            
+            for nf in notas_recebidas_empresa:
+                if nf.tipo_servico == nf.TIPO_SERVICO_CONSULTAS:
+                    total_consultas += float(nf.val_bruto or 0)
+                else:  # TIPO_SERVICO_OUTROS
+                    total_outros += float(nf.val_bruto or 0)
+            
+            # Calcular bases de cálculo separadas
+            base_consultas = total_consultas * (float(aliquota.IRPJ_PRESUNCAO_CONSULTA) / 100)
+            base_outros = total_outros * (float(aliquota.IRPJ_PRESUNCAO_OUTROS) / 100)
+            base_calculo_ir = base_consultas + base_outros
+            
             excedente_adicional = max(base_calculo_ir - valor_base_adicional, 0)
         else:
+            total_consultas = 0
+            total_outros = 0
+            base_consultas = 0
+            base_outros = 0
             base_calculo_ir = 0
             excedente_adicional = 0
-    except:
+    except Exception as e:
+        total_consultas = 0
+        total_outros = 0
+        base_consultas = 0
+        base_outros = 0
         base_calculo_ir = 0
         excedente_adicional = 0
     
@@ -280,6 +310,12 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             'total_notas_bruto': total_notas_bruto_empresa,  # Receita bruta total da empresa
             'total_notas_liquido': total_notas_liquido_socio,
             'total_notas_emitidas_mes': total_notas_emitidas_mes,
+            # Bases de cálculo IRPJ por tipo de serviço
+            'base_consultas_medicas': total_consultas,
+            'base_outros_servicos': total_outros,
+            'base_calculo_consultas': base_consultas,
+            'base_calculo_outros': base_outros,
+            'base_calculo_ir_total': base_calculo_ir,
             # Totais das notas fiscais do sócio (para linha de totais da tabela)
             'total_nf_valor_bruto': total_nf_valor_bruto,
             'total_nf_iss': total_nf_iss,
