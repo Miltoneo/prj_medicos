@@ -91,7 +91,7 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
 
     def get_queryset(self):
         conta_id = self.kwargs.get('conta_id')
-        return User.objects.filter(conta_memberships__conta_id=conta_id).distinct()
+        return User.objects.filter(conta_memberships__conta_id=conta_id).distinct().order_by('first_name', 'last_name', 'email')
 
 
 class UserCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
