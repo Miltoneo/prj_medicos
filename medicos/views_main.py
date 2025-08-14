@@ -18,6 +18,10 @@ def main(request):
 
     # Centraliza definição de conta_id na sessão
     request.session['conta_id'] = conta.id if conta else None
+    
+    # Limpar empresa_id da sessão quando retorna ao cenário Home
+    if 'empresa_id' in request.session:
+        del request.session['empresa_id']
 
     contexto = {
         'mes_ano': request.GET.get('mes_ano') or request.session.get('mes_ano') or datetime.now().strftime('%Y-%m'),

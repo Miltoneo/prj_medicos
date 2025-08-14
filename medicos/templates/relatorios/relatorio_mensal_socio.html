@@ -59,6 +59,12 @@ document.addEventListener('DOMContentLoaded', function() {
           <form method="get" class="mb-3">
             <div class="row g-2 align-items-end">
               <div class="col-auto">
+                <label for="id_mes_ano" class="form-label mb-0">
+                  <i class="fas fa-calendar-alt me-1"></i>Competência (mês/ano)
+                </label>
+                <input type="month" id="id_mes_ano" name="mes_ano" class="form-control" value="{{ relatorio.competencia|default:'' }}">
+              </div>
+              <div class="col-auto">
                 <label for="id_socio" class="form-label mb-0">
                   <i class="fas fa-user-md me-1"></i>Selecione o Sócio
                 </label>
@@ -67,12 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <option value="{{ socio.id }}" {% if socio.id == relatorio.socio_id %}selected{% endif %}>{{ socio.pessoa.name }}</option>
                   {% endfor %}
                 </select>
-              </div>
-              <div class="col-auto">
-                <label for="id_mes_ano" class="form-label mb-0">
-                  <i class="fas fa-calendar-alt me-1"></i>Competência (mês/ano)
-                </label>
-                <input type="month" id="id_mes_ano" name="mes_ano" class="form-control" value="{{ relatorio.competencia|default:'' }}">
               </div>
               <div class="col-auto">
                 <button type="submit" class="btn btn-outline-primary">
@@ -108,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body p-0">
                       <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
-                          <caption>Resumo financeiro do mês</caption>
                           <tr><th colspan="2">RECEITA BRUTA RECEBIDA* (=)</th><th>{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th></tr>
                           <tr><td>1</td><td>serviços de consultas e plantões</td><td>{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
                           <tr><td>2</td><td>Serviços de vacinação, exames, procedimentos</td><td>{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
@@ -132,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body p-0">
                       <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
-                          <caption>Cálculo do saldo final</caption>
                           <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (=)</th><th>{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">TOTAL DESPESAS (-)</th><th>{{ relatorio.despesas_total|floatformat:2 }}</th></tr>
                           <tr><td>1</td><td>Despesa com rateio</td><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
@@ -157,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body p-0">
                       <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped table-hover mb-0 table-movimentacoes-financeiras" style="width:auto;">
-                          <caption>Movimentações financeiras do mês</caption>
                           <tr>
                             <th style="min-width:28px;max-width:32px;width:32px;">Id</th>
                             <th style="min-width:50px;max-width:60px;width:60px;">Data</th>
@@ -192,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
                   <div class="table-responsive rounded shadow-sm p-3 bg-light">
                     <div class="bg-white rounded-2 p-2">
                       <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto table-despesas-com-rateio" style="width:100%;min-width:1200px;max-width:none;">
-                        <caption>Despesas com rateio</caption>
                         <tr>
                           <th style="min-width:110px;">Data</th>
                           <th style="min-width:180px;">Grupo da despesa</th>
@@ -231,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
                   <div class="table-responsive rounded shadow-sm p-3 bg-light">
                     <div class="bg-white rounded-2 p-2">
                       <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-                        <caption>Despesas sem rateio</caption>
                         <tr><th>Data</th><th>Grupo da despesa</th><th>Descrição</th><th>Valor</th></tr>
                         {% for desp in relatorio.despesas_sem_rateio|dictsort:"data" %}
                         <tr><td>{{ desp.data }}</td><td>{{ desp.grupo }}</td><td>{{ desp.descricao }}</td><td>{{ desp.valor|floatformat:2 }}</td></tr>
@@ -253,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
               <div class="table-responsive rounded shadow-sm p-3 bg-light">
                 <div class="bg-white rounded-2 p-2">
                   <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
-                    <caption>Notas fiscais recebidas no mês</caption>
                     <tr><th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Fornecedor</th><th>Tomador</th><th>Valor bruto</th><th>ISS</th><th>PIS</th><th>COFINS</th><th>IRPJ</th><th>CSLL</th><th>Valor líquido</th></tr>
                     {% for nota in relatorio.notas_fiscais %}
                     <tr><td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.fornecedor }}</td><td>{{ nota.tomador }}</td><td>{{ nota.valor_bruto|floatformat:2 }}</td><td>{{ nota.iss|floatformat:2 }}</td><td>{{ nota.pis|floatformat:2 }}</td><td>{{ nota.cofins|floatformat:2 }}</td><td>{{ nota.irpj|floatformat:2 }}</td><td>{{ nota.csll|floatformat:2 }}</td><td>{{ nota.valor_liquido|floatformat:2 }}</td></tr>
