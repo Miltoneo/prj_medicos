@@ -142,6 +142,7 @@ path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView
     path('criar_meio_pagamento/<int:empresa_id>/meios-pagamento/novo/', views_meio_pagamento.MeioPagamentoCreateView.as_view(), name='criar_meio_pagamento'),
     path('editar_meio_pagamento/<int:pk>/editar/', views_meio_pagamento.MeioPagamentoUpdateView.as_view(), name='editar_meio_pagamento'),
     path('excluir_meio_pagamento/<int:pk>/excluir/', views_meio_pagamento.MeioPagamentoDeleteView.as_view(), name='excluir_meio_pagamento'),
+    path('meios_pagamento/<int:empresa_id>/importar/', views_meio_pagamento.importar_meios_pagamento, name='importar_meios_pagamento'),
 
     # =====================
     # Despesa Views
@@ -171,6 +172,8 @@ path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa_cadast
     # =====================
     path('aliquotas/<int:empresa_id>/', views_aliquota.ListaAliquotasView.as_view(), name='lista_aliquotas'),
     path('aliquotas/<int:empresa_id>/<int:aliquota_id>/editar/', views_aliquota.aliquota_edit, name='aliquota_edit'),
+    path('api/empresas-conta/', views_aliquota.api_empresas_conta, name='api_empresas_conta'),
+    path('aliquotas/<int:empresa_id>/importar/', views_aliquota.importar_aliquotas, name='importar_aliquotas'),
 
     # =====================
     # Cadastro e Cenário Views

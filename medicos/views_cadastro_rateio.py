@@ -44,6 +44,19 @@ def converter_percentual_seguro(valor_str):
 
 
 def cadastro_rateio_list(request):
+    # Obter empresa da sessão via context processor
+    empresa_id = request.session.get('empresa_id')
+    if not empresa_id:
+        messages.error(request, 'Nenhuma empresa selecionada. Selecione uma empresa primeiro.')
+        return redirect('medicos:home')
+    
+    from medicos.models.base import Empresa
+    try:
+        empresa_ativa = Empresa.objects.get(id=empresa_id)
+    except Empresa.DoesNotExist:
+        messages.error(request, 'Empresa selecionada não encontrada.')
+        return redirect('medicos:home')
+    
     # Mês padrão
     default_mes = date.today().strftime('%Y-%m')
     # Suporte a GET e POST para manter filtros
@@ -66,17 +79,27 @@ def cadastro_rateio_list(request):
         mes_competencia_date = date.today().replace(day=1)
     # Garante que sempre será o primeiro dia do mês
     mes_competencia_date = mes_competencia_date.replace(day=1)
-    # Exibir apenas itens de grupos com tipo_rateio=COM_RATEIO
-    grupos_com_rateio = GrupoDespesa.objects.filter(tipo_rateio=GrupoDespesa.Tipo_t.COM_RATEIO)
+    # CORREÇÃO: Filtrar grupos, itens e rateios apenas da empresa ativa
+    grupos_com_rateio = GrupoDespesa.objects.filter(
+        empresa=empresa_ativa,
+        tipo_rateio=GrupoDespesa.Tipo_t.COM_RATEIO
+    )
     itens_despesa = ItemDespesa.objects.filter(grupo_despesa__in=grupos_com_rateio).order_by('descricao')
-    # Itens de despesa com rateio para o mês selecionado
-    itens_com_rateio_ids = ItemDespesaRateioMensal.objects.filter(data_referencia=mes_competencia).values_list('item_despesa_id', flat=True).distinct()
+    # CORREÇÃO: Filtrar rateios apenas dos itens da empresa ativa
+    itens_com_rateio_ids = ItemDespesaRateioMensal.objects.filter(
+        data_referencia=mes_competencia,
+        item_despesa__grupo_despesa__empresa=empresa_ativa
+    ).values_list('item_despesa_id', flat=True).distinct()
     itens_com_rateio_ids = list(itens_com_rateio_ids)
     rateios = []
     total_percentual = 0
     if selected_item_id:
         try:
-            item = ItemDespesa.objects.select_related('grupo_despesa').get(id=selected_item_id)
+            # CORREÇÃO: Garantir que o item pertence à empresa ativa
+            item = ItemDespesa.objects.select_related('grupo_despesa').get(
+                id=selected_item_id,
+                grupo_despesa__empresa=empresa_ativa
+            )
             grupo = getattr(item, 'grupo_despesa', None)
             empresa = getattr(grupo, 'empresa', None) if grupo else None
             permite_rateio = True
@@ -252,11 +275,43 @@ class CadastroRateioView(SingleTableMixin, FilterView):
     filterset_class = ItemDespesaRateioMensalFilter
     paginate_by = 20
 
+    def get_queryset(self):
+        # CORREÇÃO: Filtrar queryset apenas da empresa ativa
+        empresa_id = self.request.session.get('empresa_id')
+        if empresa_id:
+            from medicos.models.base import Empresa
+            try:
+                empresa_ativa = Empresa.objects.get(id=empresa_id)
+                return super().get_queryset().filter(
+                    item_despesa__grupo_despesa__empresa=empresa_ativa
+                )
+            except Empresa.DoesNotExist:
+                return super().get_queryset().none()
+        else:
+            return super().get_queryset().none()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = _(u"Configuração de Rateio Mensal")
-        context['itens_despesa'] = ItemDespesa.objects.all()
-        context['socios'] = Socio.objects.all()
+        
+        # Obter empresa da sessão via context processor
+        empresa_id = self.request.session.get('empresa_id')
+        if empresa_id:
+            from medicos.models.base import Empresa
+            try:
+                empresa_ativa = Empresa.objects.get(id=empresa_id)
+                # CORREÇÃO: Filtrar itens_despesa e socios apenas da empresa ativa
+                context['itens_despesa'] = ItemDespesa.objects.filter(
+                    grupo_despesa__empresa=empresa_ativa
+                )
+                context['socios'] = Socio.objects.filter(empresa=empresa_ativa, ativo=True)
+            except Empresa.DoesNotExist:
+                context['itens_despesa'] = ItemDespesa.objects.none()
+                context['socios'] = Socio.objects.none()
+        else:
+            context['itens_despesa'] = ItemDespesa.objects.none()
+            context['socios'] = Socio.objects.none()
+        
         # Adiciona mes_competencia e default_mes ao contexto para compatibilidade com o template
         from datetime import date
         default_mes = date.today().strftime('%Y-%m')
