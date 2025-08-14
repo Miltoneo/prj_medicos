@@ -222,12 +222,12 @@ def relatorio_mensal_socio(request, empresa_id):
         'empresa_nome': empresa.name,
         'empresa_cnpj': empresa.cnpj,
         'empresa_id': empresa.id,
-        # Campos específicos para o cálculo de IRPJ
-        'base_consultas_medicas': getattr(relatorio_obj, 'base_consultas_medicas', 0),
-        'base_outros_servicos': getattr(relatorio_obj, 'base_outros_servicos', 0),
-        'base_calculo_consultas': getattr(relatorio_obj, 'base_calculo_consultas', 0),
-        'base_calculo_outros': getattr(relatorio_obj, 'base_calculo_outros', 0),
-        'base_calculo_ir_total': getattr(relatorio_obj, 'base_calculo_ir_total', 0),
+        # Campos específicos para o cálculo de IRPJ (vindos do contexto do builder)
+        'base_consultas_medicas': relatorio_dict.get('base_consultas_medicas', 0),
+        'base_outros_servicos': relatorio_dict.get('base_outros_servicos', 0),
+        'base_calculo_consultas': relatorio_dict.get('base_calculo_consultas', 0),
+        'base_calculo_outros': relatorio_dict.get('base_calculo_outros', 0),
+        'base_calculo_ir_total': relatorio_dict.get('base_calculo_ir_total', 0),
         # Faturamento por tipo de serviço
         'faturamento_consultas': getattr(relatorio_obj, 'faturamento_consultas', 0),
         'faturamento_plantao': getattr(relatorio_obj, 'faturamento_plantao', 0),

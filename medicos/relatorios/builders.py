@@ -288,56 +288,52 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # SALDO A TRANSFERIR = SALDO DAS MOVIMENTAÇÕES FINANCEIRAS - TOTAL DESPESAS - RATEIO MENSAL DO ADICIONAL DE IR
     saldo_a_transferir = saldo_movimentacao_financeira - despesas_total - valor_adicional_socio
 
+    # Definir dados para salvar no modelo (apenas campos que existem)
+    dados_modelo = {
+        'data_geracao': datetime.now(),
+        'total_despesas_sem_rateio': despesa_sem_rateio,
+        'total_despesas_com_rateio': despesa_com_rateio,
+        'despesas_total': despesas_total,
+        'despesa_sem_rateio': despesa_sem_rateio,
+        'despesa_com_rateio': despesa_com_rateio,
+        'despesa_geral': despesa_sem_rateio + despesa_com_rateio,
+        'receita_bruta_recebida': receita_bruta_recebida,
+        'receita_liquida': receita_liquida,
+        'impostos_total': impostos_total,
+        'total_iss': total_iss_socio,
+        'total_pis': total_pis_socio,
+        'total_cofins': total_cofins_socio,
+        'total_irpj': total_irpj_socio,
+        'total_irpj_adicional': valor_adicional_socio,
+        'total_csll': total_csll_socio,
+        'total_notas_bruto': total_notas_bruto_empresa,
+        'total_notas_liquido': total_notas_liquido_socio,
+        'total_notas_emitidas_mes': total_notas_emitidas_mes,
+        'total_nf_valor_bruto': total_nf_valor_bruto,
+        'total_nf_iss': total_nf_iss,
+        'total_nf_pis': total_nf_pis,
+        'total_nf_cofins': total_nf_cofins,
+        'total_nf_irpj': total_nf_irpj,
+        'total_nf_csll': total_nf_csll,
+        'total_nf_valor_liquido': total_nf_valor_liquido,
+        'faturamento_consultas': faturamento_consultas,
+        'faturamento_plantao': faturamento_plantao,
+        'faturamento_outros': faturamento_outros,
+        'saldo_apurado': saldo_apurado,
+        'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
+        'saldo_a_transferir': saldo_a_transferir,
+        'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
+        'lista_despesas_com_rateio': lista_despesas_com_rateio,
+        'lista_notas_fiscais': notas_fiscais,
+        'lista_movimentacoes_financeiras': movimentacoes_financeiras,
+        'debug_ir_adicional': debug_ir_adicional_espelho,
+    }
+    
     relatorio_obj, _ = RelatorioMensalSocio.objects.update_or_create(
         empresa=empresa,
         socio=socio_selecionado,
         competencia=competencia,
-        defaults={
-            'data_geracao': datetime.now(),
-            'total_despesas_sem_rateio': despesa_sem_rateio,
-            'total_despesas_com_rateio': despesa_com_rateio,
-            'despesas_total': despesas_total,
-            'despesa_sem_rateio': despesa_sem_rateio,
-            'despesa_com_rateio': despesa_com_rateio,
-            'despesa_geral': despesa_sem_rateio + despesa_com_rateio,
-            'receita_bruta_recebida': receita_bruta_recebida,
-            'receita_liquida': receita_liquida,
-            'impostos_total': impostos_total,
-            'total_iss': total_iss_socio,
-            'total_pis': total_pis_socio,
-            'total_cofins': total_cofins_socio,
-            'total_irpj': total_irpj_socio,
-            'total_irpj_adicional': valor_adicional_socio,
-            'total_csll': total_csll_socio,
-            'total_notas_bruto': total_notas_bruto_empresa,  # Receita bruta total da empresa
-            'total_notas_liquido': total_notas_liquido_socio,
-            'total_notas_emitidas_mes': total_notas_emitidas_mes,
-            # Bases de cálculo IRPJ por tipo de serviço
-            'base_consultas_medicas': total_consultas,
-            'base_outros_servicos': total_outros,
-            'base_calculo_consultas': base_consultas,
-            'base_calculo_outros': base_outros,
-            'base_calculo_ir_total': base_calculo_ir,
-            # Totais das notas fiscais do sócio (para linha de totais da tabela)
-            'total_nf_valor_bruto': total_nf_valor_bruto,
-            'total_nf_iss': total_nf_iss,
-            'total_nf_pis': total_nf_pis,
-            'total_nf_cofins': total_nf_cofins,
-            'total_nf_irpj': total_nf_irpj,
-            'total_nf_csll': total_nf_csll,
-            'total_nf_valor_liquido': total_nf_valor_liquido,
-            'faturamento_consultas': faturamento_consultas,
-            'faturamento_plantao': faturamento_plantao,
-            'faturamento_outros': faturamento_outros,
-            'saldo_apurado': saldo_apurado,
-            'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
-            'saldo_a_transferir': saldo_a_transferir,
-            'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
-            'lista_despesas_com_rateio': lista_despesas_com_rateio,
-            'lista_notas_fiscais': notas_fiscais,
-            'lista_movimentacoes_financeiras': movimentacoes_financeiras,
-            'debug_ir_adicional': debug_ir_adicional_espelho,
-        }
+        defaults=dados_modelo
     )
     relatorio_obj.save()  # Garantir persistência explícita
     # Adicionar valor_adicional_rateio ao dicionário de contexto do template
@@ -346,6 +342,14 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     contexto['participacao_socio'] = participacao_socio
     contexto['valor_adicional_socio'] = valor_adicional_socio
     contexto['receita_bruta_socio'] = receita_bruta_socio
+    
+    # Adicionar campos calculados que não estão no modelo
+    contexto['base_consultas_medicas'] = total_consultas
+    contexto['base_outros_servicos'] = total_outros
+    contexto['base_calculo_consultas'] = base_consultas
+    contexto['base_calculo_outros'] = base_outros
+    contexto['base_calculo_ir_total'] = base_calculo_ir
+    
     return contexto
 
 
