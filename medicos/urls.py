@@ -155,6 +155,11 @@ path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa_cadastro.lista_g
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa_cadastro.grupo_despesa_edit, name='grupo_despesa_edit'),
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa_cadastro.grupo_despesa_delete, name='grupo_despesa_delete'),
 
+# APIs para importação de grupos de despesa
+path('api/empresas-conta/', views_despesa_cadastro.api_empresas_conta, name='api_empresas_conta'),
+path('empresas/<int:empresa_id>/grupos-despesa/verificar-dados/', views_despesa_cadastro.verificar_dados_grupos_despesa, name='verificar_dados_grupos_despesa'),
+path('empresas/<int:empresa_id>/grupos-despesa/importar/', views_despesa_cadastro.importar_grupos_despesa, name='importar_grupos_despesa'),
+
 # Itens de Despesa (padronizado)
 path('lista_itens_despesa/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
 path('item_despesa_create/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaCreateView.as_view(), name='item_despesa_create'),

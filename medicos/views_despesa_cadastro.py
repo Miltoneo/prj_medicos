@@ -9,8 +9,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django_tables2 import SingleTableView
 from medicos.models.base import Empresa
-from medicos.models.despesas import GrupoDespesa
-from .models import ItemDespesa
+from medicos.models.despesas import GrupoDespesa, ItemDespesa
 from medicos.forms import GrupoDespesaForm, ItemDespesaForm
 from medicos.filters import GrupoDespesaFilter, ItemDespesaFilter
 from medicos.tables import ItemDespesaTable
@@ -46,10 +45,13 @@ class GrupoDespesaListView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, id=empresa_id)
         sort = self.request.GET.get('sort', 'codigo')
         if sort not in ['codigo', 'descricao', '-codigo', '-descricao']:
             sort = 'codigo'
-        qs = GrupoDespesa.objects.all().order_by(sort, 'descricao')
+        # CORREÇÃO: Filtrar apenas grupos da empresa selecionada
+        qs = GrupoDespesa.objects.filter(empresa=empresa).order_by(sort, 'descricao')
         self.filter = GrupoDespesaFilter(self.request.GET, queryset=qs)
         return self.filter.qs
 
@@ -132,10 +134,12 @@ class ItemDespesaCreateView(CreateView):
     template_name = 'empresa/item_despesa_create.html'
 
 
-    def get_initial(self):
-        initial = super().get_initial()
-        # Não há mais grupo_id na URL, inicialização padrão
-        return initial
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, pk=empresa_id)
+        kwargs['empresa'] = empresa
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -144,7 +148,7 @@ class ItemDespesaCreateView(CreateView):
         context.update({
             'empresa_id': empresa_id,
             'empresa': empresa,
-            'grupos': GrupoDespesa.objects.all(),
+            'grupos': GrupoDespesa.objects.filter(empresa=empresa),
             'grupo': self.get_initial().get('grupo_despesa'),
             'edit_mode': False,
         })
@@ -171,7 +175,17 @@ class ItemDespesaUpdateView(UpdateView):
 
 
     def get_object(self, queryset=None):
-        return get_object_or_404(ItemDespesa, id=self.kwargs.get('item_id'))
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, pk=empresa_id)
+        # CORREÇÃO: Validar que o item pertence a um grupo da empresa selecionada
+        return get_object_or_404(ItemDespesa, id=self.kwargs.get('item_id'), grupo_despesa__empresa=empresa)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, pk=empresa_id)
+        kwargs['empresa'] = empresa
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -202,7 +216,10 @@ class ItemDespesaDeleteView(DeleteView):
 
 
     def get_object(self, queryset=None):
-        return get_object_or_404(ItemDespesa, id=self.kwargs.get('item_id'))
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, pk=empresa_id)
+        # CORREÇÃO: Validar que o item pertence a um grupo da empresa selecionada
+        return get_object_or_404(ItemDespesa, id=self.kwargs.get('item_id'), grupo_despesa__empresa=empresa)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -227,7 +244,10 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
     filterset_class = ItemDespesaFilter
 
     def get_table_data(self):
-        qs = ItemDespesa.objects.all()
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, pk=empresa_id)
+        # CORREÇÃO: Filtrar apenas itens da empresa selecionada
+        qs = ItemDespesa.objects.filter(grupo_despesa__empresa=empresa)
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
         return self.filter.qs
 
@@ -272,7 +292,8 @@ def lista_grupos_despesa(request, empresa_id):
     sort = request.GET.get('sort', 'codigo')
     if sort not in ['codigo', 'descricao', '-codigo', '-descricao']:
         sort = 'codigo'
-    qs = GrupoDespesa.objects.all().order_by(sort, 'descricao')
+    # CORREÇÃO: Filtrar apenas grupos da empresa selecionada
+    qs = GrupoDespesa.objects.filter(empresa=empresa).order_by(sort, 'descricao')
     filtro = GrupoDespesaFilter(request.GET, queryset=qs)
     grupos_list = filtro.qs
     paginator = Paginator(grupos_list, 20)
@@ -292,7 +313,8 @@ def grupo_despesa_edit(request, empresa_id, grupo_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     grupo = None
     if grupo_id != 0:
-        grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
+        # CORREÇÃO: Validar que o grupo pertence à empresa selecionada
+        grupo = get_object_or_404(GrupoDespesa, id=grupo_id, empresa=empresa)
     form = GrupoDespesaForm(request.POST or None, instance=grupo)
     if request.method == 'POST' and form.is_valid():
         grupo = form.save(commit=False)
@@ -320,8 +342,10 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
     filterset_class = ItemDespesaFilter
 
     def get_table_data(self):
-        # Não há mais grupo_id na URL, sempre retorna todos os itens
-        qs = ItemDespesa.objects.all()
+        empresa_id = self.kwargs.get('empresa_id')
+        empresa = get_object_or_404(Empresa, pk=empresa_id)
+        # CORREÇÃO: Filtrar apenas itens da empresa selecionada
+        qs = ItemDespesa.objects.filter(grupo_despesa__empresa=empresa)
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
         return self.filter.qs
 
@@ -338,11 +362,168 @@ class ItemDespesaListView(LoginRequiredMixin, SingleTableView):
 
 
 @login_required
+@login_required
 def grupo_despesa_delete(request, empresa_id, grupo_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    grupo = get_object_or_404(GrupoDespesa, id=grupo_id)
+    # CORREÇÃO: Validar que o grupo pertence à empresa selecionada
+    grupo = get_object_or_404(GrupoDespesa, id=grupo_id, empresa=empresa)
     if request.method == 'POST':
         grupo.delete()
         messages.success(request, 'Grupo de despesa excluído com sucesso!')
         return redirect('medicos:lista_grupos_despesa', empresa_id=empresa_id)
     return render(request, 'empresa/grupo_despesa_confirm_delete.html', {'grupo': grupo, 'empresa_id': empresa_id})
+
+
+# API Views para importação de grupos de despesa
+
+from django.http import JsonResponse
+from django.db import transaction
+import json
+
+@login_required
+def api_empresas_conta(request):
+    """API para listar empresas da conta do usuário"""
+    try:
+        # Buscar empresas da conta do usuário atual
+        conta_id = request.session.get('conta_id')
+        if not conta_id:
+            return JsonResponse({'success': False, 'message': 'Usuário sem conta ativa'})
+        
+        empresas = Empresa.objects.filter(conta_id=conta_id).values(
+            'id', 'name', 'nome_fantasia', 'cnpj'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'empresas': list(empresas)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erro ao buscar empresas: {str(e)}'
+        })
+
+@login_required  
+def verificar_dados_grupos_despesa(request, empresa_id):
+    """API para verificar quantos grupos e itens existem na empresa de origem"""
+    try:
+        empresa_origem = get_object_or_404(Empresa, id=empresa_id)
+        
+        # Verificar se a empresa pertence à mesma conta do usuário
+        conta_id = request.session.get('conta_id')
+        if not conta_id or empresa_origem.conta_id != conta_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Empresa não pertence à sua conta'
+            })
+        
+        # Contar grupos e itens
+        grupos = GrupoDespesa.objects.filter(empresa=empresa_origem)
+        total_grupos = grupos.count()
+        total_itens = sum(grupo.itens_despesa.count() for grupo in grupos)
+        
+        return JsonResponse({
+            'success': True,
+            'total_grupos': total_grupos,
+            'total_itens': total_itens,
+            'empresa_origem_nome': empresa_origem.nome_fantasia or empresa_origem.name
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erro ao verificar dados: {str(e)}'
+        })
+
+@login_required
+def importar_grupos_despesa(request, empresa_id):
+    """Importa grupos de despesa e itens de uma empresa para outra"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método não permitido'})
+    
+    try:
+        data = json.loads(request.body)
+        empresa_origem_id = data.get('empresa_origem_id')
+        
+        if not empresa_origem_id:
+            return JsonResponse({'success': False, 'message': 'ID da empresa de origem é obrigatório'})
+        
+        empresa_destino = get_object_or_404(Empresa, id=empresa_id)
+        empresa_origem = get_object_or_404(Empresa, id=empresa_origem_id)
+        
+        # Verificar se ambas as empresas pertencem à mesma conta do usuário
+        conta_id = request.session.get('conta_id')
+        if (not conta_id or 
+            empresa_destino.conta_id != conta_id or 
+            empresa_origem.conta_id != conta_id):
+            return JsonResponse({
+                'success': False,
+                'message': 'Empresas não pertencem à sua conta'
+            })
+        
+        # Verificar se não está tentando importar da mesma empresa
+        if empresa_origem.id == empresa_destino.id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Não é possível importar da mesma empresa'
+            })
+        
+        grupos_importados = 0
+        itens_importados = 0
+        
+        # Realizar importação dentro de uma transação
+        with transaction.atomic():
+            # Buscar todos os grupos da empresa de origem
+            grupos_origem = GrupoDespesa.objects.filter(empresa=empresa_origem)
+            
+            for grupo_origem in grupos_origem:
+                # Verificar se já existe um grupo com o mesmo código na empresa destino
+                grupo_existente = GrupoDespesa.objects.filter(
+                    empresa=empresa_destino,
+                    codigo=grupo_origem.codigo
+                ).first()
+                
+                if grupo_existente:
+                    # Se existe, usar o grupo existente
+                    grupo_destino = grupo_existente
+                else:
+                    # Se não existe, criar novo grupo
+                    grupo_destino = GrupoDespesa.objects.create(
+                        empresa=empresa_destino,
+                        codigo=grupo_origem.codigo,
+                        descricao=grupo_origem.descricao,
+                        tipo_rateio=grupo_origem.tipo_rateio,
+                        created_by=request.user
+                    )
+                    grupos_importados += 1
+                
+                # Importar itens do grupo
+                itens_origem = grupo_origem.itens_despesa.all()
+                for item_origem in itens_origem:
+                    # Verificar se já existe um item com o mesmo código no grupo destino
+                    item_existente = grupo_destino.itens_despesa.filter(
+                        codigo=item_origem.codigo
+                    ).first()
+                    
+                    if not item_existente:
+                        # Se não existe, criar novo item
+                        ItemDespesa.objects.create(
+                            grupo_despesa=grupo_destino,
+                            codigo=item_origem.codigo,
+                            descricao=item_origem.descricao,
+                            created_by=request.user
+                        )
+                        itens_importados += 1
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Importação realizada com sucesso',
+            'grupos_importados': grupos_importados,
+            'itens_importados': itens_importados
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Erro na importação: {str(e)}'
+        })

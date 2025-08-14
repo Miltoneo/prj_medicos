@@ -47,7 +47,7 @@ class GrupoDespesa(AuditoriaModel):
     
     class Meta:
         db_table = 'despesa_grupo'
-        unique_together = ('codigo',)
+        unique_together = ('empresa', 'codigo')
         verbose_name = "Grupo de Despesa"
         verbose_name_plural = "Grupos de Despesas"
     # ...

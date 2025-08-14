@@ -371,7 +371,15 @@ class GrupoDespesaForm(forms.ModelForm):
 
 class ItemDespesaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        # Capturar empresa do kwargs se fornecida
+        empresa = kwargs.pop('empresa', None)
         super().__init__(*args, **kwargs)
+        
+        # CORREÇÃO: Filtrar grupos de despesa apenas da empresa selecionada
+        if empresa:
+            from medicos.models.despesas import GrupoDespesa
+            self.fields['grupo_despesa'].queryset = GrupoDespesa.objects.filter(empresa=empresa)
+        
         self.fields['grupo_despesa'].label_from_instance = lambda obj: obj.descricao
         self.fields['codigo'].widget.attrs.update({
             'class': 'form-control',
