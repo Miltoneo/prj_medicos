@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="col-12">
       <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
         <div class="card-header bg-primary text-white d-flex align-items-center">
-          <i class="fas fa-user-friends me-2"></i>
+          <i class="fas fa-user-friends me-2 text-light"></i>
           <span class="fw-bold">Relatório Mensal do Sócio</span>
         </div>
         <div class="card-body">
@@ -60,13 +60,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row g-2 align-items-end">
               <div class="col-auto">
                 <label for="id_mes_ano" class="form-label mb-0">
-                  <i class="fas fa-calendar-alt me-1"></i>Competência (mês/ano)
+                  <i class="fas fa-calendar-alt me-1 text-primary"></i>Competência (mês/ano)
                 </label>
                 <input type="month" id="id_mes_ano" name="mes_ano" class="form-control" value="{{ relatorio.competencia|default:'' }}">
               </div>
               <div class="col-auto">
                 <label for="id_socio" class="form-label mb-0">
-                  <i class="fas fa-user-md me-1"></i>Selecione o Sócio
+                  <i class="fas fa-user-md me-1 text-success"></i>Selecione o Sócio
                 </label>
                 <select id="id_socio" name="socio_id" class="form-select select2" style="width:100%;">
                   {% for socio in relatorio.socios %}
@@ -76,12 +76,12 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
               <div class="col-auto">
                 <button type="submit" class="btn btn-outline-primary">
-                  <i class="fas fa-search me-1"></i>Filtrar
+                  <i class="fas fa-search me-1 text-primary"></i>Filtrar
                 </button>
               </div>
               <div class="col-auto">
                 <a href="{% url 'medicos:relatorio_mensal_socio' empresa.id %}" class="btn btn-outline-secondary">
-                  <i class="fas fa-times me-1"></i>Limpar
+                  <i class="fas fa-times me-1 text-secondary"></i>Limpar
                 </a>
               </div>
             </div>
@@ -90,13 +90,13 @@ document.addEventListener('DOMContentLoaded', function() {
             {% if relatorio.competencia %}
               <div class="mt-2">
                 <small class="text-muted">
-                  <i class="fas fa-filter me-1"></i>
+                  <i class="fas fa-filter me-1 text-info"></i>
                   Exibindo relatório de: <strong>{{ relatorio.competencia }}</strong> | Sócio: <strong>{{ relatorio.socio_nome }}</strong>
                 </small>
               </div>
             {% endif %}
           </form>
-          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-file-chart-line me-1"></i>Demonstrativo do Relatório Mensal</h5>
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-file-chart-line me-1 text-warning"></i>Demonstrativo do Relatório Mensal</h5>
           <div class="table-responsive rounded shadow-sm p-3 bg-light">
             <div class="bg-white rounded-2 p-2">
               <div class="row g-4 mb-4">

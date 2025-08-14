@@ -1,20 +1,20 @@
 {# Sidebar para o cenário financeiro #}
 <nav id="sidebar" class="sidebar bg-dark text-light">
   <div class="sidebar-header p-3">
-    <a href="/" class="navbar-brand text-light"><i class="fas fa-coins me-2"></i>Financeiro</a>
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-coins me-2 text-warning"></i>Financeiro</a>
     <div class="fw-bold text-uppercase small text-secondary mt-2" style="letter-spacing:1px;">{{ cenario_nome|default:'Financeiro' }}</div>
-    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars text-light"></i></button>
   </div>
   <hr class="border-secondary m-0">
   <ul class="nav flex-column">
     <li class="nav-item">
       <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}">
-        <i class="fas fa-arrow-left me-2"></i>Voltar
+        <i class="fas fa-arrow-left me-2 text-secondary"></i>Voltar
       </a>
     </li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-list me-2"></i>Lançamentos</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:recebimento_notas_fiscais' %}"><i class="fas fa-file-invoice me-2"></i>Recebimento de Notas Fiscais</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:aplicacoes_financeiras' empresa_id=request.session.empresa_id %}"><i class="fas fa-chart-line me-2"></i>Aplicações Financeiras</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-list me-2 text-info"></i>Lançamentos</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:recebimento_notas_fiscais' %}"><i class="fas fa-file-invoice me-2 text-success"></i>Recebimento de Notas Fiscais</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:aplicacoes_financeiras' empresa_id=request.session.empresa_id %}"><i class="fas fa-chart-line me-2 text-primary"></i>Aplicações Financeiras</a></li>
 
   </ul>
 </nav>
