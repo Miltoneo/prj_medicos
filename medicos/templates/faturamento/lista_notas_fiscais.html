@@ -3,6 +3,37 @@
 
 {% block title %}Notas Fiscais{% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit do formulário de filtro quando o mês/ano de emissão for alterado
+  const mesAnoEmissaoField = document.getElementById('id_mes_ano_emissao');
+  if (mesAnoEmissaoField) {
+    mesAnoEmissaoField.addEventListener('change', function() {
+      // Submete o formulário automaticamente quando o mês/ano de emissão é alterado
+      this.closest('form').submit();
+    });
+    
+    // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilterParams = urlParams.has('mes_ano_emissao') || urlParams.has('status_recebimento') || urlParams.has('numero') || urlParams.has('tomador') || urlParams.has('cnpj_tomador');
+    
+    if (!hasFilterParams && !mesAnoEmissaoField.value) {
+      // Define o mês atual se não há valor
+      const today = new Date();
+      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+      mesAnoEmissaoField.value = currentMonth;
+      
+      // Submete automaticamente para aplicar o filtro do mês atual
+      setTimeout(() => {
+        mesAnoEmissaoField.closest('form').submit();
+      }, 100);
+    }
+  }
+});
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
   <div class="row">
@@ -82,6 +113,16 @@
                 </a>
               </div>
             </div>
+            
+            <!-- Indicador visual do filtro ativo -->
+            {% if filter.form.mes_ano_emissao.value %}
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-filter me-1"></i>
+                  Exibindo notas fiscais de: <strong>{{ filter.form.mes_ano_emissao.value }}</strong>
+                </small>
+              </div>
+            {% endif %}
           </form>
 
           <!-- Totalização -->
