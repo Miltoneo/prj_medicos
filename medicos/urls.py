@@ -20,6 +20,7 @@ from .views_cadastro_rateio import (
     CadastroRateioUpdateView,
     CadastroRateioDeleteView,
     cadastro_rateio_list,
+    copiar_rateio_mes,
 )
 from . import views_user_invite
 from . import views_user
@@ -37,6 +38,7 @@ from . import views_socio
 from . import views_aliquota
 from . import views_despesa_cadastro
 from . import views_despesas
+from . import views_descricao_movimentacao
 from . import urls_despesas
 
 from .views_aplicacoes_financeiras import (
@@ -61,6 +63,7 @@ urlpatterns = [
     path('cadastro/rateio/novo/', CadastroRateioCreateView.as_view(), name='cadastro_rateio_create'),
     path('cadastro/rateio/<int:pk>/editar/', CadastroRateioUpdateView.as_view(), name='cadastro_rateio_update'),
     path('cadastro/rateio/<int:pk>/remover/', CadastroRateioDeleteView.as_view(), name='cadastro_rateio_delete'),
+    path('cadastro/rateio/copiar-mes/', copiar_rateio_mes, name='copiar_rateio_mes'),
     # Rateio por Médico
     path('lista_rateio_medicos/<int:nota_id>/', NotaFiscalRateioMedicoListView.as_view(), name='lista_rateio_medicos'),
     path('novo_rateio_medico/<int:nota_id>/', NotaFiscalRateioMedicoCreateView.as_view(), name='novo_rateio_medico'),
@@ -81,6 +84,7 @@ urlpatterns = [
     path('empresas/<int:empresa_id>/descricoes-movimentacao/novo/', DescricaoMovimentacaoFinanceiraCreateView.as_view(), name='descricao_movimentacao_create'),
     path('empresas/<int:empresa_id>/descricoes-movimentacao/<int:pk>/editar/', DescricaoMovimentacaoFinanceiraUpdateView.as_view(), name='descricao_movimentacao_edit'),
     path('empresas/<int:empresa_id>/descricoes-movimentacao/<int:pk>/excluir/', DescricaoMovimentacaoFinanceiraDeleteView.as_view(), name='descricao_movimentacao_delete'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/importar/', views_descricao_movimentacao.importar_descricoes_movimentacao, name='importar_descricoes_movimentacao'),
     
     # Lançamentos Financeiros CRUD
     path('empresas/<int:empresa_id>/lancamentos/novo/', FinanceiroCreateView.as_view(), name='financeiro_create'),

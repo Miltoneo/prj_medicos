@@ -108,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
                               <th><i class="fas fa-user me-1"></i>Sócio</th>
                               <th><i class="fas fa-percentage me-1"></i>Percentual (%)</th>
                               <th><i class="fas fa-comment me-1"></i>Observações</th>
-                              <th><i class="fas fa-cogs me-1"></i>Ações</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -123,17 +122,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     min="0" max="100" step="0.01" class="form-control text-end">
                               </td>
                               <td>{{ rateio.observacoes }}</td>
-                              <td class="actions">
-                                <button name="edit" value="{{ rateio.id }}" class="btn btn-sm btn-outline-primary me-1">
-                                  <i class="fas fa-edit me-1"></i>Editar
-                                </button>
-                                <button name="delete" value="{{ rateio.id }}" class="btn btn-sm btn-outline-danger">
-                                  <i class="fas fa-trash me-1"></i>Remover
-                                </button>
-                              </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="4" class="text-muted text-center">Nenhum sócio cadastrado para este item.</td></tr>
+                            <tr><td colspan="3" class="text-muted text-center">Nenhum sócio cadastrado para este item.</td></tr>
                             {% endfor %}
                           </tbody>
                         </table>
@@ -153,6 +144,9 @@ document.addEventListener('DOMContentLoaded', function() {
                       <button type="submit" class="btn btn-success">
                         <i class="fas fa-save me-1"></i>Salvar
                       </button>
+                      <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalCopiarRateio">
+                        <i class="fas fa-copy me-1"></i>Copiar Tabela de Rateio para Mês
+                      </button>
                       <a href="{% url 'medicos:cadastro_rateio' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-times me-1"></i>Cancelar
                       </a>
@@ -167,4 +161,193 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+<!-- Modal para Copiar Rateio -->
+<div class="modal fade" id="modalCopiarRateio" tabindex="-1" aria-labelledby="modalCopiarRateioLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCopiarRateioLabel">
+          <i class="fas fa-copy me-2"></i>Copiar Tabela de Rateio para Mês
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-1"></i>
+          <strong>Mês de Origem:</strong> {{ mes_competencia|date:"m/Y" }}
+        </div>
+        
+        <p class="text-muted mb-3">
+          Selecione o mês de destino para copiar todas as configurações de rateio do mês atual.
+          <strong>Atenção:</strong> Esta ação irá sobrescrever todas as configurações existentes no mês de destino.
+        </p>
+        
+        <div class="form-group">
+          <label for="mesDestino" class="form-label">
+            <i class="fas fa-calendar-alt me-1"></i>Mês de Destino:
+          </label>
+          <input type="month" id="mesDestino" class="form-control" required>
+        </div>
+        
+        <div id="errorMessage" class="alert alert-danger" style="display: none;">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          <span id="errorText"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" id="btnConfirmarCopia" class="btn btn-primary" disabled>
+          <i class="fas fa-copy me-1"></i>Copiar Configurações
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="modalConfirmacaoCopia" tabindex="-1" aria-labelledby="modalConfirmacaoCopiaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmacaoCopiaLabel">
+          <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Confirmar Cópia
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="fas fa-warning me-1"></i>
+          <strong>Atenção!</strong> Esta ação irá sobrescrever todas as configurações de rateio existentes.
+        </div>
+        
+        <p>
+          <strong>Confirma a cópia das configurações de rateio?</strong>
+        </p>
+        <ul class="list-unstyled">
+          <li><i class="fas fa-arrow-right me-1 text-success"></i><strong>De:</strong> <span id="mesOrigemTexto">{{ mes_competencia|date:"m/Y" }}</span></li>
+          <li><i class="fas fa-arrow-right me-1 text-primary"></i><strong>Para:</strong> <span id="mesDestinoTexto"></span></li>
+        </ul>
+        
+        <p class="text-muted">
+          <small>Todas as configurações de percentuais de rateio serão copiadas para o mês de destino. As configurações existentes no mês de destino serão substituídas.</small>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" id="btnExecutarCopia" class="btn btn-success">
+          <i class="fas fa-check me-1"></i>Confirmar e Copiar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% csrf_token %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalCopiarRateio');
+    const modalConfirmacao = document.getElementById('modalConfirmacaoCopia');
+    const mesDestinoInput = document.getElementById('mesDestino');
+    const btnConfirmar = document.getElementById('btnConfirmarCopia');
+    const btnExecutar = document.getElementById('btnExecutarCopia');
+    const mesOrigemAtual = '{{ mes_competencia }}';
+    
+    // Habilita botão quando mês é selecionado
+    mesDestinoInput.addEventListener('change', function() {
+        const mesDestino = this.value;
+        if (mesDestino && mesDestino !== mesOrigemAtual.substring(0, 7)) {
+            btnConfirmar.disabled = false;
+            document.getElementById('errorMessage').style.display = 'none';
+        } else {
+            btnConfirmar.disabled = true;
+            if (mesDestino === mesOrigemAtual.substring(0, 7)) {
+                mostrarErro('O mês de destino deve ser diferente do mês de origem');
+            }
+        }
+    });
+
+    // Mostra modal de confirmação
+    btnConfirmar.addEventListener('click', function() {
+        const mesDestino = mesDestinoInput.value;
+        if (mesDestino) {
+            const [ano, mes] = mesDestino.split('-');
+            const mesDestinoFormatado = `${mes}/${ano}`;
+            document.getElementById('mesDestinoTexto').textContent = mesDestinoFormatado;
+            
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+            bsModal.hide();
+            const bsModalConfirmacao = new bootstrap.Modal(modalConfirmacao);
+            bsModalConfirmacao.show();
+        }
+    });
+
+    // Executa a cópia
+    btnExecutar.addEventListener('click', function() {
+        const mesDestino = mesDestinoInput.value;
+        if (mesDestino) {
+            executarCopiaRateio(mesDestino);
+        }
+    });
+
+    function executarCopiaRateio(mesDestino) {
+        btnExecutar.disabled = true;
+        btnExecutar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Copiando...';
+
+        const formData = new FormData();
+        formData.append('mes_origem', mesOrigemAtual);
+        formData.append('mes_destino', mesDestino + '-01');
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "medicos:copiar_rateio_mes" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const bsModalConfirmacao = bootstrap.Modal.getOrCreateInstance(modalConfirmacao);
+                bsModalConfirmacao.hide();
+                
+                // Mostra mensagem de sucesso
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-1"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.row'));
+                
+                // Reset do modal
+                mesDestinoInput.value = '';
+                btnConfirmar.disabled = true;
+                
+            } else {
+                mostrarErro(data.error || 'Erro ao copiar configurações de rateio');
+                btnExecutar.disabled = false;
+                btnExecutar.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar e Copiar';
+            }
+        })
+        .catch(error => {
+            mostrarErro('Erro de conexão ao copiar configurações');
+            btnExecutar.disabled = false;
+            btnExecutar.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar e Copiar';
+        });
+    }
+
+    function mostrarErro(mensagem) {
+        document.getElementById('errorText').textContent = mensagem;
+        document.getElementById('errorMessage').style.display = 'block';
+    }
+});
+</script>
+
 {% endblock %}

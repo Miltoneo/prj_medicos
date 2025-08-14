@@ -363,3 +363,104 @@ class CadastroRateioDeleteView(DeleteView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = "Configuração de Rateio"
         return context
+
+
+def copiar_rateio_mes(request):
+    """
+    View para copiar configurações de rateio de um mês para outro.
+    """
+    if request.method != 'POST':
+        from django.http import JsonResponse
+        return JsonResponse({'success': False, 'error': 'Método não permitido'})
+    
+    try:
+        from django.http import JsonResponse
+        from django.db import transaction
+        from datetime import datetime
+        
+        # Obter empresa da sessão
+        empresa_id = request.session.get('empresa_id')
+        if not empresa_id:
+            return JsonResponse({'success': False, 'error': 'Nenhuma empresa selecionada'})
+        
+        from medicos.models.base import Empresa
+        empresa_ativa = Empresa.objects.get(id=empresa_id)
+        
+        # Parâmetros
+        mes_origem = request.POST.get('mes_origem')
+        mes_destino = request.POST.get('mes_destino')
+        
+        if not mes_origem or not mes_destino:
+            return JsonResponse({'success': False, 'error': 'Mês de origem e destino são obrigatórios'})
+        
+        # Converter strings para dates
+        try:
+            if len(mes_origem) == 7:  # YYYY-MM
+                mes_origem += '-01'
+            if len(mes_destino) == 7:  # YYYY-MM
+                mes_destino += '-01'
+                
+            data_origem = datetime.strptime(mes_origem, '%Y-%m-%d').date()
+            data_destino = datetime.strptime(mes_destino, '%Y-%m-%d').date()
+            
+            # Garantir que seja primeiro dia do mês
+            data_origem = data_origem.replace(day=1)
+            data_destino = data_destino.replace(day=1)
+            
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Formato de data inválido'})
+        
+        # Verificar se as datas são diferentes
+        if data_origem == data_destino:
+            return JsonResponse({'success': False, 'error': 'O mês de origem deve ser diferente do mês de destino'})
+        
+        # Buscar configurações de rateio do mês de origem
+        rateios_origem = ItemDespesaRateioMensal.objects.filter(
+            data_referencia=data_origem,
+            item_despesa__grupo_despesa__empresa=empresa_ativa,
+            ativo=True
+        ).select_related('item_despesa', 'socio')
+        
+        if not rateios_origem.exists():
+            return JsonResponse({'success': False, 'error': 'Nenhuma configuração de rateio encontrada no mês de origem'})
+        
+        # Executar cópia em transação
+        with transaction.atomic():
+            # Remover configurações existentes no mês de destino (sobrescrever)
+            ItemDespesaRateioMensal.objects.filter(
+                data_referencia=data_destino,
+                item_despesa__grupo_despesa__empresa=empresa_ativa
+            ).delete()
+            
+            # Copiar configurações do mês de origem para o destino
+            contador_copiados = 0
+            
+            for rateio_origem in rateios_origem:
+                ItemDespesaRateioMensal.objects.create(
+                    item_despesa=rateio_origem.item_despesa,
+                    socio=rateio_origem.socio,
+                    data_referencia=data_destino,
+                    percentual_rateio=rateio_origem.percentual_rateio,
+                    ativo=rateio_origem.ativo,
+                    observacoes=rateio_origem.observacoes,
+                    # Campos de auditoria serão preenchidos automaticamente
+                )
+                contador_copiados += 1
+        
+        # Preparar mensagem de sucesso
+        mes_origem_formatado = data_origem.strftime('%m/%Y')
+        mes_destino_formatado = data_destino.strftime('%m/%Y')
+        mensagem = f'{contador_copiados} configuração(ões) de rateio copiada(s) de {mes_origem_formatado} para {mes_destino_formatado} com sucesso'
+        
+        return JsonResponse({
+            'success': True,
+            'message': mensagem,
+            'copiados': contador_copiados,
+            'mes_origem': mes_origem_formatado,
+            'mes_destino': mes_destino_formatado
+        })
+        
+    except Empresa.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Empresa não encontrada'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Erro interno: {str(e)}'})
