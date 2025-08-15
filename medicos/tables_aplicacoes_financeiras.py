@@ -10,6 +10,17 @@ class AplicacaoFinanceiraTable(tables.Table):
         if value is None:
             return "-"
         return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    
+    def render_rendimentos(self, value):
+        if value is None:
+            return "-"
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    
+    def render_ir_cobrado(self, value):
+        if value is None:
+            return "-"
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        
     editar = tables.Column(empty_values=(), orderable=False, verbose_name='Editar')
 
     def render_editar(self, record):
@@ -31,5 +42,5 @@ class AplicacaoFinanceiraTable(tables.Table):
     class Meta:
         model = AplicacaoFinanceira
         template_name = "django_tables2/bootstrap4.html"
-        fields = ("data_referencia", "saldo", "ir_cobrado", "descricao", "created_by")
-        sequence = ("data_referencia", "saldo", "ir_cobrado", "descricao", "created_by", "editar")
+        fields = ("data_referencia", "saldo", "rendimentos", "ir_cobrado", "descricao", "created_by")
+        sequence = ("data_referencia", "saldo", "rendimentos", "ir_cobrado", "descricao", "created_by", "editar")

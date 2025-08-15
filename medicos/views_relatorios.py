@@ -6,6 +6,7 @@ Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
 
 # Imports padrão Python
 from datetime import datetime
+from decimal import Decimal
 
 # Imports de terceiros
 from django.contrib.auth.decorators import login_required
@@ -232,9 +233,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'relatorio': relatorio,
         'titulo_pagina': 'Relatório Mensal do Sócio',
         'valor_adicional_rateio': relatorio_dict.get('valor_adicional_rateio', 0),
-        'participacao_socio': relatorio_dict.get('participacao_socio', 0),
         'participacao_socio_percentual': relatorio_dict.get('participacao_socio_percentual', 0),
-        'valor_adicional_socio': relatorio_dict.get('valor_adicional_socio', 0),
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
     })
     
@@ -246,6 +245,8 @@ def relatorio_mensal_socio(request, empresa_id):
     context.update({
         'base_calculo_consultas_ir': relatorio_dict.get('base_calculo_consultas_ir', 0),
         'base_calculo_outros_ir': relatorio_dict.get('base_calculo_outros_ir', 0),
+        'base_consultas_medicas': relatorio_dict.get('base_consultas_medicas', 0),
+        'base_outros_servicos': relatorio_dict.get('base_outros_servicos', 0),
         'valor_base_adicional': relatorio_dict.get('valor_base_adicional', 0),
         'excedente_adicional': relatorio_dict.get('excedente_adicional', 0),
         'aliquota_adicional': relatorio_dict.get('aliquota_adicional', 0),
@@ -340,9 +341,40 @@ def relatorio_apuracao(request, empresa_id):
         {'descricao': 'Base cálculo total', 'valores': [linha.get('base_calculo_total', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_csll['linhas']]},
-        {'descricao': 'Retenção aplicação financeira', 'valores': [linha.get('retencao_aplicacao_financeira', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_csll['linhas']]},
     ]
+
+    # Espelho do Adicional de IR Trimestral
+    espelho_adicional_trimestral = []
+    limite_trimestral = Decimal('60000.00')  # R$ 60.000,00/trimestre
+    aliquota_adicional = Decimal('10.00')  # 10%
+    
+    for linha in relatorio_irpj['linhas']:
+        receita_consultas = linha.get('receita_consultas', 0)
+        receita_outros = linha.get('receita_outros', 0)
+        receita_bruta = linha.get('receita_bruta', 0)
+        
+        # Cálculo das bases com presunções corretas
+        base_calculo_consultas = Decimal(str(receita_consultas)) * Decimal('0.32')  # 32% para consultas
+        base_calculo_outros = Decimal(str(receita_outros)) * Decimal('0.08')  # 8% para outros (não 32%!)
+        base_calculo_total = base_calculo_consultas + base_calculo_outros
+        
+        excedente = max(Decimal('0'), base_calculo_total - limite_trimestral)
+        adicional_devido = excedente * (aliquota_adicional / Decimal('100'))
+        
+        espelho_adicional_trimestral.append({
+            'competencia': linha.get('competencia', ''),
+            'receita_bruta': receita_bruta,
+            'receita_consultas': receita_consultas,
+            'receita_outros': receita_outros,
+            'base_calculo_consultas': base_calculo_consultas,
+            'base_calculo_outros': base_calculo_outros,
+            'base_calculo_total': base_calculo_total,
+            'limite_isencao': limite_trimestral,
+            'excedente': excedente,
+            'aliquota_adicional': aliquota_adicional,
+            'adicional_devido': adicional_devido,
+        })
     
     context = _contexto_base(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
@@ -356,6 +388,7 @@ def relatorio_apuracao(request, empresa_id):
         'linhas_irpj_mensal': linhas_irpj_mensal,
         'linhas_irpj': linhas_irpj,
         'linhas_csll': linhas_csll,
+        'espelho_adicional_trimestral': espelho_adicional_trimestral,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)

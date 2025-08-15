@@ -35,12 +35,11 @@ def montar_relatorio_csll_persistente(empresa_id, ano):
             data_referencia__year=ano,
             data_referencia__month__in=meses
         )
-        rendimentos_aplicacoes = aplicacoes.aggregate(total=Sum('saldo'))['total'] or Decimal('0')
-        retencao_aplicacao_financeira = aplicacoes.aggregate(total=Sum('ir_cobrado'))['total'] or Decimal('0')
+        rendimentos_aplicacoes = aplicacoes.aggregate(total=Sum('rendimentos'))['total'] or Decimal('0')
         base_calculo_total = base_calculo + rendimentos_aplicacoes
         imposto_devido = base_calculo_total * (aliquota.CSLL_ALIQUOTA/Decimal('100'))
         imposto_retido_nf = notas.aggregate(total=Sum('val_CSLL'))['total'] or Decimal('0')
-        imposto_a_pagar = imposto_devido - imposto_retido_nf - retencao_aplicacao_financeira
+        imposto_a_pagar = imposto_devido - imposto_retido_nf
         with transaction.atomic():
             obj, _ = ApuracaoCSLL.objects.update_or_create(
                 empresa=empresa,
@@ -54,7 +53,7 @@ def montar_relatorio_csll_persistente(empresa_id, ano):
                     'base_calculo_total': base_calculo_total,
                     'imposto_devido': imposto_devido,
                     'imposto_retido_nf': imposto_retido_nf,
-                    'retencao_aplicacao_financeira': retencao_aplicacao_financeira,
+                    'retencao_aplicacao_financeira': Decimal('0'),  # Zerado conforme solicitação
                     'imposto_a_pagar': imposto_a_pagar,
                 }
             )
@@ -68,7 +67,7 @@ def montar_relatorio_csll_persistente(empresa_id, ano):
             'base_calculo_total': base_calculo_total,
             'imposto_devido': imposto_devido,
             'imposto_retido_nf': imposto_retido_nf,
-            'retencao_aplicacao_financeira': retencao_aplicacao_financeira,
+            'retencao_aplicacao_financeira': Decimal('0'),  # Zerado conforme solicitação
             'imposto_a_pagar': imposto_a_pagar,
         })
     return {'linhas': resultados}

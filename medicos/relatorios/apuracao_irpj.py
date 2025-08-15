@@ -43,7 +43,7 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
             data_referencia__year=ano,
             data_referencia__month__in=meses
         )
-        rendimentos_aplicacoes = aplicacoes.aggregate(total=Sum('saldo'))['total'] or Decimal('0')
+        rendimentos_aplicacoes = aplicacoes.aggregate(total=Sum('rendimentos'))['total'] or Decimal('0')
         retencao_aplicacao_financeira = aplicacoes.aggregate(total=Sum('ir_cobrado'))['total'] or Decimal('0')
         base_calculo_total = base_calculo + rendimentos_aplicacoes
         imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA/Decimal('100'))

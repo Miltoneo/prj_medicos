@@ -24,6 +24,13 @@
             {% endif %}
           </div>
           <div class="mb-3">
+            <label for="id_rendimentos" class="form-label">Rendimentos no Mês (R$)</label>
+            {{ form.rendimentos }}
+            {% if form.rendimentos.errors %}
+              <div class="text-danger small">{{ form.rendimentos.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
             <label for="id_ir_cobrado" class="form-label">IR Pago no Mês (R$)</label>
             {{ form.ir_cobrado }}
             {% if form.ir_cobrado.errors %}

@@ -88,7 +88,7 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
         )
         
         rendimentos_aplicacoes = aplicacoes.aggregate(
-            total=Sum('saldo')
+            total=Sum('rendimentos')
         )['total'] or Decimal('0')
         
         retencao_aplicacao_financeira = aplicacoes.aggregate(
