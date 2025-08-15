@@ -251,6 +251,15 @@ def relatorio_mensal_socio(request, empresa_id):
     base_calculo_ir = relatorio.get('base_calculo_ir_total', 0)
     context.update(_obter_contexto_aliquotas(empresa, base_calculo_ir))
     
+    # Adicionar campos específicos do espelho de cálculo
+    context.update({
+        'base_calculo_consultas_ir': relatorio_dict.get('base_calculo_consultas_ir', 0),
+        'base_calculo_outros_ir': relatorio_dict.get('base_calculo_outros_ir', 0),
+        'valor_base_adicional': relatorio_dict.get('valor_base_adicional', 0),
+        'excedente_adicional': relatorio_dict.get('excedente_adicional', 0),
+        'aliquota_adicional': relatorio_dict.get('aliquota_adicional', 0),
+    })
+    
     return render(request, 'relatorios/relatorio_mensal_socio.html', context)
 
 @login_required

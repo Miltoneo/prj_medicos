@@ -348,7 +348,12 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     contexto['base_outros_servicos'] = total_outros
     contexto['base_calculo_consultas'] = base_consultas
     contexto['base_calculo_outros'] = base_outros
+    contexto['base_calculo_consultas_ir'] = base_consultas  # Campo para o espelho
+    contexto['base_calculo_outros_ir'] = base_outros  # Campo para o espelho
     contexto['base_calculo_ir_total'] = base_calculo_ir
+    contexto['valor_base_adicional'] = valor_base_adicional
+    contexto['excedente_adicional'] = excedente_adicional
+    contexto['aliquota_adicional'] = aliquota_adicional * 100  # Converter para percentual
     
     return contexto
 
