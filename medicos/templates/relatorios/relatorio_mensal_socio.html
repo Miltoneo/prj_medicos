@@ -336,23 +336,23 @@ document.addEventListener('DOMContentLoaded', function() {
                       </tr>
                       <tr class="table-warning">
                         <td colspan="2" class="text-start">Excedente sujeito ao adicional: ({{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }} - {{ valor_base_adicional|floatformat:2 }})</td>
-                        <td class="text-end text-nowrap">R$ {{ excedente_ir|floatformat:2|default:"0,00" }}</td>
+                        <td class="text-end text-nowrap">R$ {{ excedente_adicional|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr class="table-secondary">
                         <td colspan="2" class="text-start">Alíquota do adicional de IR:</td>
-                        <td class="text-end text-nowrap">{{ aliquota_adicional_ir|floatformat:2 }}%</td>
+                        <td class="text-end text-nowrap">{{ aliquota_adicional|floatformat:2 }}%</td>
                       </tr>
                       <tr class="table-success">
-                        <td colspan="2" class="text-start">Adicional de IR devido pela empresa: {{ excedente_ir|floatformat:2|default:"0,00" }} × {{ aliquota_adicional_ir|floatformat:2 }}%</td>
-                        <td class="text-end text-nowrap">R$ {{ valor_adicional|floatformat:2|default:"0,00" }}</td>
+                        <td colspan="2" class="text-start">Adicional de IR devido pela empresa: {{ excedente_adicional|floatformat:2|default:"0,00" }} × {{ aliquota_adicional|floatformat:2 }}%</td>
+                        <td class="text-end text-nowrap">R$ {{ valor_adicional_rateio|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr class="table-primary">
-                        <td colspan="2" class="text-start">Receita bruta total de notas do sócio:</td>
+                        <td colspan="2" class="text-start">Receita bruta total de notas emitidas do sócio:</td>
                         <td class="text-end text-nowrap">R$ {{ receita_bruta_socio|floatformat:2 }}</td>
                       </tr>
                       <tr class="table-secondary">
                         <td colspan="2" class="text-start">% do sócio na receita bruta da empresa: ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
-                        <td class="text-end text-nowrap">{{ percentual_socio|floatformat:4 }}%</td>
+                        <td class="text-end text-nowrap">{{ participacao_socio_percentual|floatformat:2 }}%</td>
                       </tr>
                       <tr class="table-danger">
                         <td colspan="2" class="text-start">Valor do adicional para o sócio: R$ {{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>

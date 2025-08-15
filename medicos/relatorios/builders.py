@@ -5,6 +5,7 @@ from medicos.models.fiscal import NotaFiscal, Aliquotas
 from medicos.models.financeiro import Financeiro
 from medicos.models.relatorios import RelatorioMensalSocio
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 
 
@@ -69,7 +70,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             if config.socio_id == socio_selecionado.id:
                 rateio = config
                 break
-        from decimal import Decimal
         percentual = Decimal(rateio.percentual_rateio) if rateio else Decimal('0')
         valor_socio = despesa.valor * (percentual / Decimal('100')) if rateio else Decimal('0')
         lista_despesas_com_rateio.append({
@@ -182,6 +182,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         if rateio:
             receita_bruta_socio += float(rateio.valor_bruto_medico)
     
+    # Calcular a participação do sócio na receita bruta da empresa
+    # Usar receita_bruta_socio calculada pelos rateios para o cálculo inicial
     participacao_socio = receita_bruta_socio / total_notas_bruto_empresa if total_notas_bruto_empresa > 0 else 0
     valor_adicional_socio = valor_adicional_rateio * participacao_socio if valor_adicional_rateio > 0 else 0
     
@@ -255,10 +257,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # Somar todas as notas emitidas do sócio no mês (valor total da nota fiscal)
     total_notas_emitidas_mes = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_emissao_qs)
 
-    # Receita bruta e líquida do sócio
-    # receita_bruta_recebida deve considerar o valor total bruto de todas as notas recebidas pelo sócio no mês
-    # (valor total das notas fiscais, não apenas a parte rateada)
-    receita_bruta_recebida = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_qs)
+    # Receita bruta e líquida do sócio - usar apenas a parte do sócio calculada anteriormente
+    receita_bruta_recebida = receita_bruta_socio  # Usar valor correto (parte do sócio)
 
     # Impostos agregados do sócio (incluindo o rateio mensal de adicional de IR)
     impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio + valor_adicional_socio
@@ -339,17 +339,22 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # Adicionar valor_adicional_rateio ao dicionário de contexto do template
     contexto = {'relatorio': relatorio_obj}
     contexto['valor_adicional_rateio'] = valor_adicional_rateio
-    contexto['participacao_socio'] = participacao_socio
-    contexto['valor_adicional_socio'] = valor_adicional_socio
-    contexto['receita_bruta_socio'] = receita_bruta_socio
+    
+    # Percentual garantido (0.00 a 100.00) - garantir que seja exibido corretamente
+    if participacao_socio > 0:
+        percentual = participacao_socio * 100
+    else:
+        percentual = 0.0
+    contexto['participacao_socio_percentual'] = round(percentual, 2) if percentual else 0.0
+    
+    # Campos auxiliares utilizados no template
+    contexto['receita_bruta_socio'] = receita_bruta_socio  # Usar notas emitidas para cálculo de adicional de IR
     
     # Adicionar campos calculados que não estão no modelo
     contexto['base_consultas_medicas'] = total_consultas
     contexto['base_outros_servicos'] = total_outros
-    contexto['base_calculo_consultas'] = base_consultas
-    contexto['base_calculo_outros'] = base_outros
-    contexto['base_calculo_consultas_ir'] = base_consultas  # Campo para o espelho
-    contexto['base_calculo_outros_ir'] = base_outros  # Campo para o espelho
+    contexto['base_calculo_consultas_ir'] = base_consultas
+    contexto['base_calculo_outros_ir'] = base_outros
     contexto['base_calculo_ir_total'] = base_calculo_ir
     contexto['valor_base_adicional'] = valor_base_adicional
     contexto['excedente_adicional'] = excedente_adicional

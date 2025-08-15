@@ -216,15 +216,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'total_nf_irpj': getattr(relatorio_obj, 'total_nf_irpj', 0),
         'total_nf_csll': getattr(relatorio_obj, 'total_nf_csll', 0),
         'total_nf_valor_liquido': getattr(relatorio_obj, 'total_nf_valor_liquido', 0),
-        # Dados do sócio e empresa
-        'socio_cpf': getattr(socio_selecionado.pessoa, 'cpf', '') if socio_selecionado else '',
-        'socio_email': getattr(socio_selecionado.pessoa, 'email', '') if socio_selecionado else '',
-        'empresa_nome': empresa.name,
-        'empresa_cnpj': empresa.cnpj,
-        'empresa_id': empresa.id,
-        # Campos específicos para o cálculo de IRPJ (vindos do contexto do builder)
-        'base_consultas_medicas': relatorio_dict.get('base_consultas_medicas', 0),
-        'base_outros_servicos': relatorio_dict.get('base_outros_servicos', 0),
+        # Campos específicos para o cálculo de IRPJ utilizados no template
         'base_calculo_consultas': relatorio_dict.get('base_calculo_consultas', 0),
         'base_calculo_outros': relatorio_dict.get('base_calculo_outros', 0),
         'base_calculo_ir_total': relatorio_dict.get('base_calculo_ir_total', 0),
@@ -232,8 +224,6 @@ def relatorio_mensal_socio(request, empresa_id):
         'faturamento_consultas': getattr(relatorio_obj, 'faturamento_consultas', 0),
         'faturamento_plantao': getattr(relatorio_obj, 'faturamento_plantao', 0),
         'faturamento_outros': getattr(relatorio_obj, 'faturamento_outros', 0),
-        # Debug
-        'debug_ir_adicional': getattr(relatorio_obj, 'debug_ir_adicional', []),
     }
     
     # Montar contexto final
@@ -243,6 +233,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'titulo_pagina': 'Relatório Mensal do Sócio',
         'valor_adicional_rateio': relatorio_dict.get('valor_adicional_rateio', 0),
         'participacao_socio': relatorio_dict.get('participacao_socio', 0),
+        'participacao_socio_percentual': relatorio_dict.get('participacao_socio_percentual', 0),
         'valor_adicional_socio': relatorio_dict.get('valor_adicional_socio', 0),
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
     })
