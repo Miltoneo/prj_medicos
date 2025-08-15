@@ -279,19 +279,19 @@ document.addEventListener('DOMContentLoaded', function() {
                   <div class="table-responsive">
                     <table class="table table-sm table-bordered table-striped table-hover mb-0" style="min-width:320px;max-width:600px;">
                       <tr>
-                        <td>Receita bruta recebida</td>
+                        <td class="text-start">Receita bruta recebida</td>
                         <td>considera data de recebimento da nota</td>
                       </tr>
                       <tr>
-                        <td>Impostos</td>
+                        <td class="text-start">Impostos</td>
                         <td>considera data de emissão da nota</td>
                       </tr>
                       <tr>
-                        <td>Total notas emitidas no mês</td>
+                        <td class="text-start">Total notas emitidas no mês (sócio)</td>
                         <td><b>R$ {{ relatorio.total_notas_emitidas_mes|floatformat:2 }}</b> (considera data de emissão da nota)</td>
                       </tr>
                       <tr>
-                        <td>Total notas recebidas no mês (sócio)</td>
+                        <td class="text-start">Total notas recebidas no mês (sócio)</td>
                         <td><b>R$ {{ relatorio.receita_bruta_recebida|floatformat:2 }}</b> (considera data de recebimento da nota)</td>
                       </tr>
                     </table>
@@ -309,50 +309,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="card-body p-0">
                   <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped table-hover mb-0" style="max-width: 600px;">
+                    <table class="table table-sm table-bordered table-striped table-hover mb-0" style="max-width: 700px; min-width: 600px;">
+                      <colgroup>
+                        <col style="width: 70%;">
+                        <col style="width: 30%; min-width: 120px;">
+                      </colgroup>
                       <tr class="table-primary">
-                        <td colspan="2">Receita bruta total da empresa no mês:</td>
-                        <td class="text-end">R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</td>
+                        <td colspan="2" class="text-start">Receita bruta total da empresa no mês:</td>
+                        <td class="text-end text-nowrap">R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</td>
                       </tr>
                       <tr>
-                        <td colspan="2">Base das notas fiscais recebidas do tipo "consultas médicas": ({{ relatorio.base_calculo_consultas|floatformat:2|default:"0,00" }} × 32,00%)</td>
-                        <td class="text-end">R$ {{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }}</td>
+                        <td colspan="2" class="text-start">Base das notas fiscais recebidas do tipo "consultas médicas": ({{ relatorio.base_calculo_consultas|floatformat:2|default:"0,00" }} × 32,00%)</td>
+                        <td class="text-end text-nowrap">R$ {{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr>
-                        <td colspan="2">Base das notas fiscais recebidas do tipo "outros serviços": ({{ relatorio.base_calculo_outros|floatformat:2|default:"0,00" }} × 8,00%)</td>
-                        <td class="text-end">R$ {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }}</td>
+                        <td colspan="2" class="text-start">Base das notas fiscais recebidas do tipo "outros serviços": ({{ relatorio.base_calculo_outros|floatformat:2|default:"0,00" }} × 8,00%)</td>
+                        <td class="text-end text-nowrap">R$ {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr class="table-info">
-                        <td colspan="2">Base de cálculo do IR (total): ({{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }} + {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }})</td>
-                        <td class="text-end">R$ {{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }}</td>
+                        <td colspan="2" class="text-start">Base de cálculo do IR (total): ({{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }} + {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }})</td>
+                        <td class="text-end text-nowrap">R$ {{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr class="table-secondary">
-                        <td colspan="2">Limite de isenção do adicional de IR:</td>
-                        <td class="text-end">R$ {{ valor_base_adicional|floatformat:2 }}</td>
+                        <td colspan="2" class="text-start">Limite de isenção do adicional de IR:</td>
+                        <td class="text-end text-nowrap">R$ {{ valor_base_adicional|floatformat:2 }}</td>
                       </tr>
                       <tr class="table-warning">
-                        <td colspan="2">Excedente sujeito ao adicional: ({{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }} - {{ valor_base_adicional|floatformat:2 }})</td>
-                        <td class="text-end">R$ {{ excedente_ir|floatformat:2|default:"0,00" }}</td>
+                        <td colspan="2" class="text-start">Excedente sujeito ao adicional: ({{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }} - {{ valor_base_adicional|floatformat:2 }})</td>
+                        <td class="text-end text-nowrap">R$ {{ excedente_ir|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr class="table-secondary">
-                        <td colspan="2">Alíquota do adicional de IR:</td>
-                        <td class="text-end">{{ aliquota_adicional_ir|floatformat:2 }}%</td>
+                        <td colspan="2" class="text-start">Alíquota do adicional de IR:</td>
+                        <td class="text-end text-nowrap">{{ aliquota_adicional_ir|floatformat:2 }}%</td>
                       </tr>
                       <tr class="table-success">
-                        <td colspan="2">Adicional de IR devido pela empresa: {{ excedente_ir|floatformat:2|default:"0,00" }} × {{ aliquota_adicional_ir|floatformat:2 }}%</td>
-                        <td class="text-end">R$ {{ valor_adicional|floatformat:2|default:"0,00" }}</td>
+                        <td colspan="2" class="text-start">Adicional de IR devido pela empresa: {{ excedente_ir|floatformat:2|default:"0,00" }} × {{ aliquota_adicional_ir|floatformat:2 }}%</td>
+                        <td class="text-end text-nowrap">R$ {{ valor_adicional|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr class="table-primary">
-                        <td colspan="2">Receita bruta total de notas do sócio:</td>
-                        <td class="text-end">R$ {{ receita_bruta_socio|floatformat:2 }}</td>
+                        <td colspan="2" class="text-start">Receita bruta total de notas do sócio:</td>
+                        <td class="text-end text-nowrap">R$ {{ receita_bruta_socio|floatformat:2 }}</td>
                       </tr>
                       <tr class="table-secondary">
-                        <td colspan="2">% do sócio na receita bruta da empresa: ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
-                        <td class="text-end">{{ percentual_socio|floatformat:4 }}%</td>
+                        <td colspan="2" class="text-start">% do sócio na receita bruta da empresa: ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
+                        <td class="text-end text-nowrap">{{ percentual_socio|floatformat:4 }}%</td>
                       </tr>
                       <tr class="table-danger">
-                        <td colspan="2">Valor do adicional para o sócio: R$ {{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
-                        <td class="text-end">R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</td>
+                        <td colspan="2" class="text-start">Valor do adicional para o sócio: R$ {{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
+                        <td class="text-end text-nowrap">R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</td>
                       </tr>
                     </table>
                   </div>
@@ -365,99 +369,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Seção de Informações Complementares -->
-  <div class="container mt-4 mb-5">
-    <div class="row g-3">
-      <div class="col-md-6">
-        <div class="card shadow-sm border-info h-100">
-          <div class="card-header bg-info bg-opacity-10 border-info fw-bold">
-            <span class="bi bi-info-circle-fill text-info me-2"></span>Notas Gerais
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-sm table-bordered table-striped table-hover mb-0" style="min-width:320px;max-width:600px;">
-                <tr>
-                  <td>Receita bruta recebida</td>
-                  <td>considera data de recebimento da nota</td>
-                </tr>
-                <tr>
-                  <td>Impostos</td>
-                  <td>considera data de emissão da nota</td>
-                </tr>
-                <tr>
-                  <td>Total notas emitidas no mês</td>
-                  <td><b>R$ {{ relatorio.total_notas_emitidas_mes|floatformat:2 }}</b> (considera data de emissão da nota)</td>
-                </tr>
-                <tr>
-                  <td>Total notas recebidas no mês (sócio)</td>
-                  <td><b>R$ {{ relatorio.receita_bruta_recebida|floatformat:2 }}</b> (considera data de recebimento da nota)</td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Espelho do Adicional de IR Mensal -->
-    <div class="card border-warning shadow-sm mb-3 mt-4" style="max-width: 600px;">
-      <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold">
-        <i class="fas fa-calculator text-warning me-2"></i>
-        ESPELHO DO ADICIONAL DE IR MENSAL
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-sm table-bordered table-striped table-hover mb-0" style="max-width: 600px;">
-            <tr class="table-primary">
-              <td colspan="2">Receita bruta total da empresa no mês:</td>
-              <td class="text-end">R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</td>
-            </tr>
-            <tr>
-              <td colspan="2">Base das notas fiscais recebidas do tipo "consultas médicas": ({{ relatorio.base_calculo_consultas|floatformat:2|default:"0,00" }} × 32,00%)</td>
-              <td class="text-end">R$ {{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }}</td>
-            </tr>
-            <tr>
-              <td colspan="2">Base das notas fiscais recebidas do tipo "outros serviços": ({{ relatorio.base_calculo_outros|floatformat:2|default:"0,00" }} × 8,00%)</td>
-              <td class="text-end">R$ {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }}</td>
-            </tr>
-            <tr class="table-info">
-              <td colspan="2">Base de cálculo do IR (total): ({{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }} + {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }})</td>
-              <td class="text-end">R$ {{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }}</td>
-            </tr>
-            <tr class="table-secondary">
-              <td colspan="2">Limite de isenção do adicional de IR:</td>
-              <td class="text-end">R$ {{ valor_base_adicional|floatformat:2 }}</td>
-            </tr>
-            <tr class="table-warning">
-              <td colspan="2">Excedente sujeito ao adicional: ({{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }} - {{ valor_base_adicional|floatformat:2 }})</td>
-              <td class="text-end">R$ {{ excedente_adicional|floatformat:2 }}</td>
-            </tr>
-            <tr>
-              <td colspan="2">Alíquota do adicional:</td>
-              <td class="text-end">{{ aliquota_adicional }}%</td>
-            </tr>
-            <tr class="table-success">
-              <td colspan="2">Valor total do adicional a ser rateado: ({{ excedente_adicional|floatformat:2 }} x {{ aliquota_adicional }}%)</td>
-              <td class="text-end">R$ {{ valor_adicional_rateio|floatformat:2 }}</td>
-            </tr>
-            <tr class="table-light">
-              <td colspan="2">Receita do sócio no mês:</td>
-              <td class="text-end">R$ {{ receita_bruta_socio|floatformat:2 }}</td>
-            </tr>
-            <tr>
-              <td colspan="2">Participação do sócio na receita bruta da empresa: ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
-              <td class="text-end">{{ participacao_socio|floatformat:4 }}</td>
-            </tr>
-            <tr class="table-danger">
-              <td colspan="2">Valor do adicional para o sócio: R$ {{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
-              <td class="text-end">R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</td>
-            </tr>
-          </table>
         </div>
       </div>
     </div>
