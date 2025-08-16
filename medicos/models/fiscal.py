@@ -288,6 +288,12 @@ class Aliquotas(models.Model):
         help_text="Alíquota do ISS para prestação de serviços médicos em geral"
     )
     
+    ISS_RETENCAO = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=0,
+        verbose_name="ISS - Retenção (%)",
+        help_text="Percentual de retenção de ISS aplicado pelo tomador de serviços (varia por município)"
+    )
+    
     # === CONTRIBUIÇÕES FEDERAIS ===
     PIS = models.DecimalField(
         max_digits=5, decimal_places=2, null=False, default=0,

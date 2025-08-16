@@ -272,8 +272,8 @@ def relatorio_apuracao(request, empresa_id):
     linhas_issqn = [
         {'descricao': 'Base cálculo', 'valores': [linha['valor_bruto'] for linha in relatorio_issqn['linhas']]},
         {'descricao': 'Imposto devido', 'valores': [linha['valor_iss'] for linha in relatorio_issqn['linhas']]},
-        {'descricao': 'Imposto retido NF', 'valores': [round(linha['valor_iss']*0.2,2) for linha in relatorio_issqn['linhas']]},
-        {'descricao': 'Imposto a pagar', 'valores': [round(linha['valor_iss']*0.8,2) for linha in relatorio_issqn['linhas']]},
+        {'descricao': 'Imposto retido NF', 'valores': [linha['imposto_retido_nf'] for linha in relatorio_issqn['linhas']]},
+        {'descricao': 'Imposto a pagar', 'valores': [linha['valor_iss'] - linha['imposto_retido_nf'] for linha in relatorio_issqn['linhas']]},
     ]
 
     # Relatório PIS
@@ -378,6 +378,7 @@ def relatorio_apuracao(request, empresa_id):
     
     context = _contexto_base(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
+        'ano': ano,
         'competencias': competencias,
         'trimestres': trimestres,
         'linhas_issqn': linhas_issqn,

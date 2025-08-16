@@ -363,38 +363,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     return contexto
 
 
-def montar_relatorio_issqn(empresa_id, mes_ano):
-    """
-    Monta os dados do relatório de apuração de ISSQN.
-    Retorna dict padronizado: {'linhas': [...], 'totais': {...}}
-    Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
-    """
-    empresa = Empresa.objects.get(id=empresa_id)
-    ano = int(mes_ano[:4])
-    linhas = []
-    total_iss = 0
-    for mes in range(1, 13):
-        notas_mes = NotaFiscal.objects.filter(
-            empresa_destinataria=empresa,
-            dtEmissao__year=ano,
-            dtEmissao__month=mes
-        )
-        valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
-        valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
-        total_iss += valor_iss
-        linhas.append({
-            'competencia': f'{mes:02d}/{ano}',
-            'valor_bruto': valor_bruto,
-            'valor_iss': valor_iss,
-        })
-    return {
-        'linhas': linhas,
-        'totais': {
-            'total_iss': total_iss,
-        }
-    }
-
-
 def montar_relatorio_outros(empresa_id, mes_ano):
     """
     Monta os dados de outros relatórios de apuração.
@@ -414,6 +382,7 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
     ano = int(mes_ano[:4])
     linhas = []
     total_iss = 0
+    total_imposto_retido_nf = 0
     for mes in range(1, 13):
         notas_mes = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
@@ -422,16 +391,21 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
         )
         valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
         valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
+        # Seguindo o padrão do COFINS/PIS: totalização real dos impostos retidos nas notas
+        imposto_retido_nf = sum(float(nf.val_ISS or 0) for nf in notas_mes)
         total_iss += valor_iss
+        total_imposto_retido_nf += imposto_retido_nf
         linhas.append({
             'competencia': f'{mes:02d}/{ano}',
             'valor_bruto': valor_bruto,
             'valor_iss': valor_iss,
+            'imposto_retido_nf': imposto_retido_nf,
         })
     return {
         'linhas': linhas,
         'totais': {
             'total_iss': total_iss,
+            'total_imposto_retido_nf': total_imposto_retido_nf,
         }
     }
 

@@ -50,7 +50,7 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
         ).order_by('-data_vigencia_inicio').first()
         aliquota = float(getattr(aliquota_obj, 'PIS', 0)) if aliquota_obj else 0
         imposto_devido = round(base_calculo * (aliquota / 100), 2)
-        imposto_retido_nf = sum(float(nf.val_PIS or 0) for nf in notas_mes if getattr(nf, 'retido', False))
+        imposto_retido_nf = sum(float(nf.val_PIS or 0) for nf in notas_mes)
         credito_mes_anterior = saldo_acumulado
         credito_mes_seguinte = 0
         imposto_a_pagar = round(imposto_devido - imposto_retido_nf + credito_mes_anterior - credito_mes_seguinte, 2)
@@ -89,5 +89,10 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
         total_a_pagar += imposto_a_pagar
     return {
         'linhas': linhas,
-        'totais': {},
+        'totais': {
+            'total_base_calculo': total_base_calculo,
+            'total_imposto_devido': total_pis,
+            'total_imposto_retido_nf': total_retido,
+            'total_imposto_a_pagar': total_a_pagar,
+        },
     }
