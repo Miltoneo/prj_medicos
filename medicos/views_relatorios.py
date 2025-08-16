@@ -269,18 +269,22 @@ def relatorio_apuracao(request, empresa_id):
     
     # Relatório ISSQN
     relatorio_issqn = montar_relatorio_issqn(empresa_id, mes_ano)
+    # Obter alíquota ISSQN para exibir na descrição (geralmente é a mesma para todo o ano)
+    aliquota_issqn = relatorio_issqn['linhas'][0].get('aliquota', 0) if relatorio_issqn['linhas'] else 0
     linhas_issqn = [
         {'descricao': 'Base cálculo', 'valores': [linha['valor_bruto'] for linha in relatorio_issqn['linhas']]},
-        {'descricao': 'Imposto devido', 'valores': [linha['valor_iss'] for linha in relatorio_issqn['linhas']]},
+        {'descricao': f'Imposto devido ({aliquota_issqn}%)', 'valores': [linha['valor_iss'] for linha in relatorio_issqn['linhas']]},
         {'descricao': 'Imposto retido NF', 'valores': [linha['imposto_retido_nf'] for linha in relatorio_issqn['linhas']]},
         {'descricao': 'Imposto a pagar', 'valores': [linha['valor_iss'] - linha['imposto_retido_nf'] for linha in relatorio_issqn['linhas']]},
     ]
 
     # Relatório PIS
     relatorio_pis = montar_relatorio_pis_persistente(empresa_id, ano)
+    # Obter alíquota PIS para exibir na descrição (geralmente é a mesma para todo o ano)
+    aliquota_pis = relatorio_pis['linhas'][0].get('aliquota', 0) if relatorio_pis['linhas'] else 0
     linhas_pis = [
         {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_pis['linhas']]},
-        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_pis['linhas']]},
+        {'descricao': f'Imposto devido ({aliquota_pis}%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_pis['linhas']]},
         {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_pis['linhas']]},
         {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_pis['linhas']]},
         {'descricao': 'Crédito mês anterior', 'valores': [linha.get('credito_mes_anterior', 0) for linha in relatorio_pis['linhas']]},
@@ -289,9 +293,11 @@ def relatorio_apuracao(request, empresa_id):
 
     # Relatório COFINS
     relatorio_cofins = montar_relatorio_cofins_persistente(empresa_id, ano)
+    # Obter alíquota COFINS para exibir na descrição (geralmente é a mesma para todo o ano)
+    aliquota_cofins = relatorio_cofins['linhas'][0].get('aliquota', 0) if relatorio_cofins['linhas'] else 0
     linhas_cofins = [
         {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_cofins['linhas']]},
-        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_cofins['linhas']]},
+        {'descricao': f'Imposto devido ({aliquota_cofins}%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_cofins['linhas']]},
         {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_cofins['linhas']]},
         {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_cofins['linhas']]},
         {'descricao': 'Crédito mês anterior', 'valores': [linha.get('credito_mes_anterior', 0) for linha in relatorio_cofins['linhas']]},
@@ -300,6 +306,8 @@ def relatorio_apuracao(request, empresa_id):
 
     # Relatório IRPJ Mensal
     relatorio_irpj_mensal = montar_relatorio_irpj_mensal_persistente(empresa_id, ano)
+    # Obter alíquota IRPJ para exibir na descrição (geralmente é a mesma para todo o ano)
+    aliquota_irpj = relatorio_irpj_mensal['linhas'][0].get('aliquota', 0) if relatorio_irpj_mensal['linhas'] else 0
     linhas_irpj_mensal = [
         {'descricao': 'Receita consultas', 'valores': [linha.get('receita_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
@@ -307,7 +315,7 @@ def relatorio_apuracao(request, empresa_id):
         {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Rendimentos aplicações', 'valores': [linha.get('rendimentos_aplicacoes', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Base cálculo total', 'valores': [linha.get('base_calculo_total', 0) for linha in relatorio_irpj_mensal['linhas']]},
-        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
+        {'descricao': f'Imposto devido ({aliquota_irpj}%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Adicional', 'valores': [linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Retenção aplicação financeira', 'valores': [linha.get('retencao_aplicacao_financeira', 0) for linha in relatorio_irpj_mensal['linhas']]},

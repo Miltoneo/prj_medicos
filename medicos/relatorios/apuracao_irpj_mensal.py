@@ -155,6 +155,7 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
             'imposto_retido_nf': imposto_retido_nf,
             'retencao_aplicacao_financeira': retencao_aplicacao_financeira,
             'imposto_a_pagar': imposto_a_pagar,
+            'aliquota': float(aliquota.IRPJ_ALIQUOTA),  # Adicionar alíquota para exibição
         })
     
     return {'linhas': resultados}

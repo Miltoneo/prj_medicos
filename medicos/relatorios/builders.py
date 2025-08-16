@@ -377,12 +377,20 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
     Retorna dict padronizado: {'linhas': [...], 'totais': {...}}
     Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
     """
-    from medicos.models.fiscal import NotaFiscal
+    from medicos.models.fiscal import NotaFiscal, Aliquotas
     empresa = Empresa.objects.get(id=empresa_id)
     ano = int(mes_ano[:4])
     linhas = []
     total_iss = 0
     total_imposto_retido_nf = 0
+    
+    # Obter alíquota ISS da empresa
+    aliquota_obj = Aliquotas.objects.filter(
+        empresa=empresa,
+        data_vigencia_inicio__lte=f'{ano}-12-31',
+    ).order_by('-data_vigencia_inicio').first()
+    aliquota_iss = float(getattr(aliquota_obj, 'ISS', 0)) if aliquota_obj else 0
+    
     for mes in range(1, 13):
         notas_mes = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
@@ -400,6 +408,7 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
             'valor_bruto': valor_bruto,
             'valor_iss': valor_iss,
             'imposto_retido_nf': imposto_retido_nf,
+            'aliquota': aliquota_iss,
         })
     return {
         'linhas': linhas,
