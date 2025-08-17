@@ -1,5 +1,439 @@
 {% extends 'layouts/base_cenario_apuracao.html' %}
+{% load humanize %}
+
 {% block content %}
-<h2>RElatorio executivo</h2>
-<p>Conteúdo a definir.</p>
+<style>
+    .valor-monetario {
+        font-family: 'Courier New', monospace;
+        font-weight: 500;
+        text-align: right;
+    }
+    .total-row {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-weight: bold;
+        border-top: 2px solid #4e73df;
+    }
+    .card-header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0,0,0,.02);
+    }
+    .card-estatistica {
+        transition: transform 0.2s;
+    }
+    .card-estatistica:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
+<!-- Card Principal - Resumo Empresa -->
+<div class="card shadow border-0 mb-4">
+    <div class="card-header card-header-gradient text-white">
+        <div class="d-flex align-items-center">
+            <span class="fas fa-chart-line me-3 fs-4"></span>
+            <div>
+                <h4 class="mb-0 fw-bold">Movimentação de Notas Fiscais - {{ ano_atual }}</h4>
+                <small class="opacity-75">{{ empresa.name }} | CNPJ: {{ empresa.cnpj|default:"N/A" }}</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr class="table-primary">
+                        <th style="width: 20%;">Descrição</th>
+                        <th style="width: 6.25%;" class="text-center">Jan</th>
+                        <th style="width: 6.25%;" class="text-center">Fev</th>
+                        <th style="width: 6.25%;" class="text-center">Mar</th>
+                        <th style="width: 6.25%;" class="text-center">Abr</th>
+                        <th style="width: 6.25%;" class="text-center">Mai</th>
+                        <th style="width: 6.25%;" class="text-center">Jun</th>
+                        <th style="width: 6.25%;" class="text-center">Jul</th>
+                        <th style="width: 6.25%;" class="text-center">Ago</th>
+                        <th style="width: 6.25%;" class="text-center">Set</th>
+                        <th style="width: 6.25%;" class="text-center">Out</th>
+                        <th style="width: 6.25%;" class="text-center">Nov</th>
+                        <th style="width: 6.25%;" class="text-center">Dez</th>
+                        <th style="width: 10%;" class="text-center">Total Anual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Valor Total Notas Emitidas -->
+                    <tr>
+                        <td class="fw-semibold text-success">
+                            <i class="fas fa-arrow-up me-2"></i>
+                            Valor Total Notas Emitidas
+                        </td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.1|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.2|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.3|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.4|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.5|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.6|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.7|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.8|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.9|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.10|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.11|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.12|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario fw-bold text-success">R$ {{ total_emitidas|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <!-- Valor Total Notas Recebidas -->
+                    <tr>
+                        <td class="fw-semibold text-primary">
+                            <i class="fas fa-arrow-down me-2"></i>
+                            Valor Total Notas Recebidas
+                        </td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.1|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.2|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.3|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.4|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.5|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.6|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.7|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.8|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.9|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.10|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.11|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.12|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario fw-bold text-primary">R$ {{ total_recebidas|floatformat:2 }}</td>
+                    </tr>
+                    
+                    <!-- Valor Total Notas Pendentes -->
+                    <tr>
+                        <td class="fw-semibold text-warning">
+                            <i class="fas fa-clock me-2"></i>
+                            Valor Total Notas Pendentes
+                        </td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.1|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.2|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.3|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.4|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.5|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.6|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.7|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.8|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.9|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.10|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.11|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.12|default:0|floatformat:2 }}</td>
+                        <td class="valor-monetario fw-bold text-warning">R$ {{ total_pendentes|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Resumo Estatístico -->
+        <div class="row mt-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white h-100 card-estatistica">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-2x mb-2"></i>
+                        <h6 class="card-title">Receita Anual</h6>
+                        <h4 class="mb-0">R$ {{ total_emitidas|floatformat:2 }}</h4>
+                        <small class="opacity-75">Notas Emitidas</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white h-100 card-estatistica">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                        <h6 class="card-title">Despesas Anuais</h6>
+                        <h4 class="mb-0">R$ {{ total_recebidas|floatformat:2 }}</h4>
+                        <small class="opacity-75">Notas Recebidas</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-dark h-100 card-estatistica">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <h6 class="card-title">Pendências</h6>
+                        <h4 class="mb-0">R$ {{ total_pendentes|floatformat:2 }}</h4>
+                        <small class="opacity-75">{{ percentual_pendencias|floatformat:1 }}% do total</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white h-100 card-estatistica">
+                    <div class="card-body text-center">
+                        <i class="fas fa-balance-scale fa-2x mb-2"></i>
+                        <h6 class="card-title">Saldo Líquido</h6>
+                        <h4 class="mb-0">R$ {{ total_emitidas|add:total_recebidas|floatformat:2 }}</h4>
+                        <small class="opacity-75">Receita - Despesas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Observações -->
+        <div class="mt-4 p-3 bg-light rounded">
+            <h6 class="fw-bold mb-2">
+                <i class="fas fa-info-circle me-2 text-primary"></i>
+                Observações do Relatório:
+            </h6>
+            <ul class="mb-0 small text-muted">
+                <li><strong>Notas Emitidas:</strong> Representa o faturamento mensal da empresa (receita)</li>
+                <li><strong>Notas Recebidas:</strong> Despesas operacionais e de fornecedores</li>
+                <li><strong>Notas Pendentes:</strong> Valores em aberto ou aguardando processamento</li>
+                <li><strong>Valores:</strong> Todos os montantes estão em Reais (R$) e incluem impostos</li>
+                <li><strong>Período:</strong> Exercício fiscal de Janeiro a Dezembro de {{ ano_atual }}</li>
+                <li><strong>Última Atualização:</strong> {% now "d/m/Y H:i" %}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Seção de Relatórios por Sócio -->
+{% if socios_data %}
+<div class="mt-5">
+    <h3 class="text-center mb-4">
+        <span class="badge bg-primary fs-5 p-3">
+            <i class="fas fa-users me-2"></i>
+            RELATÓRIOS INDIVIDUAIS POR SÓCIO
+        </span>
+    </h3>
+    
+    {% for socio_data in socios_data %}
+    <!-- Sócio {{ forloop.counter }} -->
+    <div class="card shadow border-0 mb-4">
+        <div class="card-header card-header-gradient text-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <span class="fas fa-user-md me-3 fs-4"></span>
+                    <div>
+                        <h5 class="mb-0 fw-bold">{{ socio_data.socio.pessoa.name }}</h5>
+                        <small class="opacity-75">
+                            {% if socio_data.socio.cpf %}CPF: {{ socio_data.socio.cpf }}{% endif %}
+                            {% if socio_data.socio.especialidade %} | Especialidade: {{ socio_data.socio.especialidade }}{% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="opacity-75">Sócio {{ forloop.counter }} de {{ socios_data|length }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                        <tr class="table-primary">
+                            <th style="width: 20%;">Descrição</th>
+                            <th style="width: 6.67%;" class="text-center">Jan</th>
+                            <th style="width: 6.67%;" class="text-center">Fev</th>
+                            <th style="width: 6.67%;" class="text-center">Mar</th>
+                            <th style="width: 6.67%;" class="text-center">Abr</th>
+                            <th style="width: 6.67%;" class="text-center">Mai</th>
+                            <th style="width: 6.67%;" class="text-center">Jun</th>
+                            <th style="width: 6.67%;" class="text-center">Jul</th>
+                            <th style="width: 6.67%;" class="text-center">Ago</th>
+                            <th style="width: 6.67%;" class="text-center">Set</th>
+                            <th style="width: 6.67%;" class="text-center">Out</th>
+                            <th style="width: 6.67%;" class="text-center">Nov</th>
+                            <th style="width: 6.67%;" class="text-center">Dez</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-semibold text-success">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                RECEITA BRUTA (=)
+                            </td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.1.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.2.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.3.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.4.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.5.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.6.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.7.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.8.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.9.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.10.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.11.receita_bruta|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.12.receita_bruta|default:0|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold text-danger">
+                                <i class="fas fa-minus-circle me-2"></i>
+                                TOTAL IMPOSTOS (-)
+                            </td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.1.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.2.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.3.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.4.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.5.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.6.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.7.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.8.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.9.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.10.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.11.total_impostos|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.12.total_impostos|default:0|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold text-primary">
+                                <i class="fas fa-equals me-2"></i>
+                                RECEITA LÍQUIDA (=)
+                            </td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.1.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.2.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.3.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.4.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.5.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.6.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.7.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.8.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.9.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.10.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.11.receita_liquida|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.12.receita_liquida|default:0|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold text-info">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)
+                            </td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.1.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.2.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.3.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.4.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.5.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.6.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.7.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.8.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.9.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.10.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.11.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.12.movimentacoes_financeiras|default:0|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold text-warning">
+                                <i class="fas fa-minus me-2"></i>
+                                DESPESAS (-)
+                            </td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.1.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.2.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.3.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.4.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.5.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.6.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.7.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.8.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.9.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.10.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.11.despesas|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.12.despesas|default:0|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold text-secondary">
+                                <i class="fas fa-percentage me-2"></i>
+                                RATEIO MENSAL DO ADICIONAL DE IR (-)
+                            </td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.1.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.2.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.3.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.4.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.5.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.6.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.7.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.8.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.9.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.10.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.11.rateio_ir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario">R$ {{ socio_data.meses.12.rateio_ir|default:0|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td class="fw-bold">
+                                <i class="fas fa-calculator me-2"></i>
+                                SALDO A TRANSFERIR (=)
+                            </td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.1.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.2.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.3.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.4.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.5.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.6.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.7.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.8.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.9.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.10.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.11.saldo_transferir|default:0|floatformat:2 }}</td>
+                            <td class="valor-monetario fw-bold">R$ {{ socio_data.meses.12.saldo_transferir|default:0|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Resumo do Sócio -->
+            <div class="row mt-3">
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-success text-white h-100 card-estatistica">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-line fa-lg mb-2"></i>
+                            <h6 class="card-title">Receita Anual</h6>
+                            <h5 class="mb-0">R$ {{ socio_data.receita_bruta_anual|default:0|floatformat:2 }}</h5>
+                            <small class="opacity-75">Faturamento Bruto</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-primary text-white h-100 card-estatistica">
+                        <div class="card-body text-center">
+                            <i class="fas fa-hand-holding-usd fa-lg mb-2"></i>
+                            <h6 class="card-title">Saldo Semestral</h6>
+                            <h5 class="mb-0">R$ {{ socio_data.saldo_acumulado|default:0|floatformat:2 }}</h5>
+                            <small class="opacity-75">Jan-Jun</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white h-100 card-estatistica">
+                        <div class="card-body text-center">
+                            <i class="fas fa-percentage fa-lg mb-2"></i>
+                            <h6 class="card-title">Carga Tributária</h6>
+                            <h5 class="mb-0">{{ socio_data.carga_tributaria|default:0|floatformat:1 }}%</h5>
+                            <small class="opacity-75">Impostos/Receita</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-warning text-dark h-100 card-estatistica">
+                        <div class="card-body text-center">
+                            <i class="fas fa-coins fa-lg mb-2"></i>
+                            <h6 class="card-title">Total Impostos</h6>
+                            <h5 class="mb-0">R$ {{ socio_data.total_impostos_anual|default:0|floatformat:2 }}</h5>
+                            <small class="opacity-75">Anual</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Footer -->
+<div class="text-center mt-5 mb-4">
+    <div class="card border-0 bg-light">
+        <div class="card-body p-3">
+            <small class="text-muted">
+                <i class="fas fa-clock me-1"></i>
+                Relatório gerado em {% now "d/m/Y \à\s H:i" %} | 
+                <i class="fas fa-building me-1"></i>
+                Sistema de Gestão Médica | 
+                <i class="fas fa-database me-1"></i>
+                {{ socios_data|length }} sócio{{ socios_data|length|pluralize:"s" }} ativo{{ socios_data|length|pluralize:"s" }}
+            </small>
+        </div>
+    </div>
+</div>
 {% endblock %}
