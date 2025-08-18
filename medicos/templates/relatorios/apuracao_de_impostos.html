@@ -302,7 +302,7 @@
                   {% endfor %}
                 </tr>
                 <tr class="table-success">
-                  <td class="text-end fw-bold">Adicional de IR devido pela empresa: excedente × 10,00%</td>
+                  <td class="text-end fw-bold">Adicional de IR</td>
                   {% for espelho in espelho_adicional_trimestral %}
                     <td class="text-end fw-bold">{{ espelho.excedente|floatformat:2 }} × 10% = R$ {{ espelho.adicional_devido|floatformat:2 }}</td>
                   {% endfor %}
