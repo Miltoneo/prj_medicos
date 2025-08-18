@@ -176,7 +176,7 @@
                   <table class="table table-bordered table-striped table-hover mb-0 table-sm">
                     <thead class="table-secondary">
                       <tr>
-                        <th style="width: 60%;">Descrição</th>
+                        <th class="fw-medium" style="width: 60%;">Descrição</th>
                         {% for trimestre in trimestres %}
                           <th class="text-center" style="width: 10%;">{{ trimestre }}</th>
                         {% endfor %}
@@ -185,9 +185,9 @@
                     <tbody>
                       {% for linha in linhas_irpj %}
                       <tr>
-                        <td class="small">{{ linha.descricao }}</td>
+                        <td class="fw-medium">{{ linha.descricao }}</td>
                         {% for valor in linha.valores %}
-                          <td class="text-end small">{{ valor|floatformat:2 }}</td>
+                          <td class="text-end">{{ valor|floatformat:2 }}</td>
                         {% endfor %}
                       </tr>
                       {% endfor %}
@@ -198,36 +198,36 @@
             </div>
             
             <!-- CSLL Trimestral -->
-            <div class="col-12 col-xl-6 mb-4">
-              <div class="border rounded p-3 h-100 bg-light bg-opacity-50">
-                <h6 class="text-primary mb-3">
-                  <span class="bi bi-percent me-1"></span>
-                  CSLL - Trimestres
-                </h6>
-                <div class="table-responsive">
-                  <table class="table table-bordered table-striped table-hover mb-0 table-sm">
-                    <thead class="table-primary">
-                      <tr>
-                        <th style="width: 60%;">Descrição</th>
-                        {% for trimestre in trimestres %}
-                          <th class="text-center" style="width: 10%;">{{ trimestre }}</th>
+              <div class="col-12 col-xl-6 mb-4">
+                <div class="border rounded p-3 h-100 bg-light bg-opacity-50">
+                  <h6 class="text-primary mb-3">
+                    <span class="bi bi-percent me-1"></span>
+                    CSLL - Trimestres
+                  </h6>
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover mb-0 table-sm">
+                      <thead class="table-primary">
+                        <tr>
+                          <th class="fw-medium" style="width: 60%;">Descrição</th>
+                          {% for trimestre in trimestres %}
+                            <th class="text-center" style="width: 10%;">{{ trimestre }}</th>
+                          {% endfor %}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for linha in linhas_csll %}
+                        <tr>
+                          <td class="fw-medium">{{ linha.descricao }}</td>
+                          {% for valor in linha.valores %}
+                            <td class="text-end">{{ valor|floatformat:2 }}</td>
+                          {% endfor %}
+                        </tr>
                         {% endfor %}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for linha in linhas_csll %}
-                      <tr>
-                        <td class="small">{{ linha.descricao }}</td>
-                        {% for valor in linha.valores %}
-                          <td class="text-end small">{{ valor|floatformat:2 }}</td>
-                        {% endfor %}
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </div>
