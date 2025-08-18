@@ -147,6 +147,8 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
             'receita_consultas': receita_consultas,
             'receita_outros': receita_outros,
             'receita_bruta': receita_bruta,
+            'base_calculo_consultas': base_calculo_consultas,
+            'base_calculo_outros': base_calculo_outros,
             'base_calculo': base_calculo,
             'rendimentos_aplicacoes': rendimentos_aplicacoes,
             'base_calculo_total': base_calculo_total,
