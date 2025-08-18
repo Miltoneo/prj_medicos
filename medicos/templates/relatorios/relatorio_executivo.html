@@ -149,50 +149,6 @@
             </table>
         </div>
         
-        <!-- Resumo Estatístico -->
-        <div class="row mt-4">
-            <div class="col-md-3 mb-3">
-                <div class="card bg-success text-white h-100 card-estatistica">
-                    <div class="card-body text-center">
-                        <i class="fas fa-chart-line fa-2x mb-2"></i>
-                        <h6 class="card-title">Receita Anual</h6>
-                        <h4 class="mb-0">R$ {{ total_emitidas|floatformat:2 }}</h4>
-                        <small class="opacity-75">Notas Emitidas</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="card bg-primary text-white h-100 card-estatistica">
-                    <div class="card-body text-center">
-                        <i class="fas fa-shopping-cart fa-2x mb-2"></i>
-                        <h6 class="card-title">Despesas Anuais</h6>
-                        <h4 class="mb-0">R$ {{ total_recebidas|floatformat:2 }}</h4>
-                        <small class="opacity-75">Notas Recebidas</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="card bg-warning text-dark h-100 card-estatistica">
-                    <div class="card-body text-center">
-                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                        <h6 class="card-title">Pendências</h6>
-                        <h4 class="mb-0">R$ {{ total_pendentes|floatformat:2 }}</h4>
-                        <small class="opacity-75">{{ percentual_pendencias|floatformat:1 }}% do total</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="card bg-info text-white h-100 card-estatistica">
-                    <div class="card-body text-center">
-                        <i class="fas fa-balance-scale fa-2x mb-2"></i>
-                        <h6 class="card-title">Saldo Líquido</h6>
-                        <h4 class="mb-0">R$ {{ total_emitidas|add:total_recebidas|floatformat:2 }}</h4>
-                        <small class="opacity-75">Receita - Despesas</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Observações -->
         <div class="mt-4 p-3 bg-light rounded">
             <h6 class="fw-bold mb-2">
