@@ -117,10 +117,23 @@ def relatorio_executivo(request, empresa_id):
         ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         notas_pendentes_mes[mes] = pendentes
     
+    # Dados de despesas coletivas por mês (ano atual)
+    despesas_coletivas_mes = {}
+    
+    for mes in range(1, 13):
+        # Despesas coletivas (DespesaRateada) da empresa no mês
+        despesas_coletivas = DespesaRateada.objects.filter(
+            item_despesa__grupo_despesa__empresa=empresa,
+            data__year=ano_atual,
+            data__month=mes
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0')
+        despesas_coletivas_mes[mes] = despesas_coletivas
+    
     # Totais anuais
     total_emitidas = sum(notas_emitidas_mes.values())
     total_recebidas = sum(notas_recebidas_mes.values())
     total_pendentes = sum(notas_pendentes_mes.values())
+    total_despesas_coletivas = sum(despesas_coletivas_mes.values())
     percentual_pendencias = float(total_pendentes / total_emitidas * 100) if total_emitidas > 0 else 0
     
     # Dados dos sócios ativos com cálculos reais de impostos
@@ -208,13 +221,51 @@ def relatorio_executivo(request, empresa_id):
             despesas = despesas_diretas + despesas_rateadas_valor
             despesas_anual += despesas
             
-            # Rateio mensal do adicional de IR: usar dados reais dos rateios das notas fiscais
-            from medicos.models.fiscal import NotaFiscalRateioMedico
-            rateio_ir = NotaFiscalRateioMedico.objects.filter(
-                medico=socio,
-                nota_fiscal__dtEmissao__year=ano_atual,
-                nota_fiscal__dtEmissao__month=mes
-            ).aggregate(total=Sum('valor_ir_medico'))['total'] or Decimal('0')
+            # Rateio mensal do adicional de IR: usar a mesma lógica do ESPELHO DO ADICIONAL DE IR MENSAL
+            from medicos.models.fiscal import NotaFiscal, Aliquotas
+            
+            # Buscar alíquotas da empresa para o cálculo de adicional de IR
+            try:
+                aliquota = Aliquotas.objects.filter(empresa=empresa).first()
+                valor_base_adicional = 0
+                aliquota_adicional = 0
+                
+                if aliquota and hasattr(aliquota, 'IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL'):
+                    valor_base_adicional = float(aliquota.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL)
+                    aliquota_adicional = float(aliquota.IRPJ_ADICIONAL) / 100
+                
+                # Calcular receita bruta do sócio no mês através dos rateios
+                receita_bruta_socio_mes = notas_socio.aggregate(
+                    total_rateio=Sum('rateios_medicos__valor_bruto_medico')
+                )['total_rateio'] or Decimal('0')
+                
+                # Separar receita do sócio por tipo de serviço para aplicar presunções corretas
+                receita_consultas_socio = notas_socio.filter(
+                    tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+                ).aggregate(
+                    total_rateio=Sum('rateios_medicos__valor_bruto_medico')
+                )['total_rateio'] or Decimal('0')
+                
+                receita_outros_socio = notas_socio.filter(
+                    tipo_servico=NotaFiscal.TIPO_SERVICO_OUTROS
+                ).aggregate(
+                    total_rateio=Sum('rateios_medicos__valor_bruto_medico')
+                )['total_rateio'] or Decimal('0')
+                
+                # Calcular base de cálculo do IR do sócio conforme presunção de lucro
+                if aliquota:
+                    base_consultas_socio = receita_consultas_socio * (Decimal(str(aliquota.IRPJ_PRESUNCAO_CONSULTA)) / 100)
+                    base_outros_socio = receita_outros_socio * (Decimal(str(aliquota.IRPJ_PRESUNCAO_OUTROS)) / 100)
+                    base_calculo_ir_socio = base_consultas_socio + base_outros_socio
+                    
+                    # Calcular adicional de IR baseado na base individual do sócio
+                    excedente_adicional_socio = max(base_calculo_ir_socio - Decimal(str(valor_base_adicional)), Decimal('0'))
+                    rateio_ir = excedente_adicional_socio * Decimal(str(aliquota_adicional))
+                else:
+                    rateio_ir = Decimal('0')
+                
+            except Exception:
+                rateio_ir = Decimal('0')
             
             saldo_transferir = receita_liquida + movimentacoes_financeiras - despesas - rateio_ir
             
@@ -253,9 +304,11 @@ def relatorio_executivo(request, empresa_id):
         'notas_emitidas_mes': notas_emitidas_mes,
         'notas_recebidas_mes': notas_recebidas_mes,
         'notas_pendentes_mes': notas_pendentes_mes,
+        'despesas_coletivas_mes': despesas_coletivas_mes,
         'total_emitidas': total_emitidas,
         'total_recebidas': total_recebidas,
         'total_pendentes': total_pendentes,
+        'total_despesas_coletivas': total_despesas_coletivas,
         'percentual_pendencias': percentual_pendencias,
         'socios_data': socios_data,
     })
@@ -498,12 +551,9 @@ def relatorio_apuracao(request, empresa_id):
         {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Receita bruta', 'valores': [linha.get('receita_bruta', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
-        {'descricao': 'Rendimentos aplicações', 'valores': [linha.get('rendimentos_aplicacoes', 0) for linha in relatorio_irpj_mensal['linhas']]},
-        {'descricao': 'Base cálculo total', 'valores': [linha.get('base_calculo_total', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': f'Imposto devido ({aliquota_irpj}%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Adicional', 'valores': [linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
-        {'descricao': 'Retenção aplicação financeira', 'valores': [linha.get('retencao_aplicacao_financeira', 0) for linha in relatorio_irpj_mensal['linhas']]},
         {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]},
     ]
 
@@ -568,6 +618,68 @@ def relatorio_apuracao(request, empresa_id):
             'aliquota_adicional': aliquota_adicional,
             'adicional_devido': adicional_devido,
         })
+
+    # Espelho do Adicional de IR Mensal (exemplo para julho/2025)
+    from medicos.models.base import Socio
+    from medicos.models.fiscal import NotaFiscalRateioMedico, NotaFiscal, Aliquotas
+    from django.db.models import Sum
+    
+    espelho_adicional_mensal = []
+    mes_exemplo = 7  # Julho
+    ano_exemplo = 2025
+    limite_mensal = Decimal('20000.00')  # R$ 20.000,00/mês (base para adicional)
+    
+    # Buscar sócios ativos da empresa
+    socios_ativos = Socio.objects.filter(empresa=empresa, ativo=True).order_by('pessoa__name')
+    
+    for socio in socios_ativos:
+        # Buscar rateios do sócio em julho/2025
+        rateios_mes = NotaFiscalRateioMedico.objects.filter(
+            nota_fiscal__empresa_destinataria=empresa,
+            nota_fiscal__dtEmissao__year=ano_exemplo,
+            nota_fiscal__dtEmissao__month=mes_exemplo,
+            medico=socio
+        )
+        
+        # Calcular receita do sócio por tipo de serviço
+        receita_consultas_socio = rateios_mes.filter(
+            nota_fiscal__tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+        ).aggregate(total=Sum('valor_bruto_medico'))['total'] or Decimal('0')
+        
+        receita_outros_socio = rateios_mes.filter(
+            nota_fiscal__tipo_servico=NotaFiscal.TIPO_SERVICO_OUTROS
+        ).aggregate(total=Sum('valor_bruto_medico'))['total'] or Decimal('0')
+        
+        receita_total_socio = receita_consultas_socio + receita_outros_socio
+        
+        # Só incluir sócios que tiveram receita no mês
+        if receita_total_socio > 0:
+            # Buscar alíquotas para cálculo
+            aliquota_config = Aliquotas.objects.filter(empresa=empresa).first()
+            if aliquota_config:
+                # Calcular base de cálculo individual do sócio
+                base_consultas_socio = receita_consultas_socio * (Decimal(str(aliquota_config.IRPJ_PRESUNCAO_CONSULTA)) / 100)
+                base_outros_socio = receita_outros_socio * (Decimal(str(aliquota_config.IRPJ_PRESUNCAO_OUTROS)) / 100)
+                base_total_socio = base_consultas_socio + base_outros_socio
+                
+                # Usar o valor configurado na empresa para limite
+                limite_adicional = Decimal(str(aliquota_config.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL))
+                excedente_socio = max(base_total_socio - limite_adicional, Decimal('0'))
+                adicional_socio = excedente_socio * (Decimal(str(aliquota_config.IRPJ_ADICIONAL)) / 100)
+                
+                espelho_adicional_mensal.append({
+                    'socio_nome': socio.pessoa.name,
+                    'receita_consultas': receita_consultas_socio,
+                    'receita_outros': receita_outros_socio,
+                    'receita_total': receita_total_socio,
+                    'base_consultas': base_consultas_socio,
+                    'base_outros': base_outros_socio,
+                    'base_total': base_total_socio,
+                    'limite_adicional': limite_adicional,
+                    'excedente': excedente_socio,
+                    'aliquota_adicional': Decimal(str(aliquota_config.IRPJ_ADICIONAL)),
+                    'adicional_devido': adicional_socio,
+                })
     
     context = _contexto_base(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
@@ -583,6 +695,7 @@ def relatorio_apuracao(request, empresa_id):
         'linhas_irpj': linhas_irpj,
         'linhas_csll': linhas_csll,
         'espelho_adicional_trimestral': espelho_adicional_trimestral,
+        'espelho_adicional_mensal': espelho_adicional_mensal,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)
