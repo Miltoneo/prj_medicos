@@ -76,6 +76,7 @@ urlpatterns = [
 
     # =====================
     # Financeiro Views
+    path('relatorio-financeiro-empresa/<int:empresa_id>/', views_relatorios.relatorio_financeiro_empresa, name='relatorio_financeiro_empresa'),
     # =====================
     path('financeiro/lancamentos/', FinanceiroListView.as_view(), name='financeiro_lancamentos'),
     

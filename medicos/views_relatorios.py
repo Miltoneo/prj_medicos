@@ -1,3 +1,13 @@
+def relatorio_financeiro_empresa(request, empresa_id):
+    """View básica para Relatório Financeiro Empresa."""
+    from medicos.models import Empresa
+    empresa = Empresa.objects.get(pk=empresa_id)
+    context = {
+        'empresa': empresa,
+        'empresa_id': empresa_id,
+        'titulo_pagina': 'Relatório Financeiro Empresa',
+    }
+    return render(request, 'relatorios/relatorio_financeiro_empresa.html', context)
 
 """
 Views dos relatórios do sistema Medicos
