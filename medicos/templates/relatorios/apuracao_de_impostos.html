@@ -278,7 +278,7 @@
                   {% endfor %}
                 </tr>
                 <tr class="table-info">
-                  <td class="text-end fw-medium">Base de cálculo do IR (total): (consultas + outros)</td>
+                  <td class="text-end fw-medium">Total Base de cálculo</td>
                   {% for espelho in espelho_adicional_trimestral %}
                     <td class="text-end">{{ espelho.base_calculo_consultas|floatformat:2 }} + {{ espelho.base_calculo_outros|floatformat:2 }} = R$ {{ espelho.base_calculo_total|floatformat:2 }}</td>
                   {% endfor %}
