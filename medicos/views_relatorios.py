@@ -552,15 +552,15 @@ def relatorio_apuracao(request, empresa_id):
     {'descricao': 'Total Receita bruta', 'valores': [linha.get('receita_bruta', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Base consultas (32%)', 'valores': [linha.get('base_calculo_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Base outros (8%)', 'valores': [linha.get('base_calculo_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'Total base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': f'Imposto devido ({aliquota_irpj}%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'TOTAL BASE DE CALCULO', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'TOTAL IMPOSTO DEVIDO (15%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'CALCULO DO ADICIONAL DE IR', 'valores': [linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Valor base para adicional', 'valores': [getattr(linha, 'valor_base_adicional', 20000.00) if hasattr(linha, 'valor_base_adicional') else 20000.00 for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Base de cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Excedente', 'valores': [(linha.get('base_calculo', 0) - Decimal('20000.00')) if linha.get('base_calculo', 0) > Decimal('20000.00') else Decimal('0.00') for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Alíquota de adicional de IR (10%)', 'valores': [Decimal('10.00') for _ in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Total Adicional de IR', 'valores': [(linha.get('base_calculo', 0) - Decimal('20000.00')) * Decimal('0.10') if linha.get('base_calculo', 0) > Decimal('20000.00') else Decimal('0.00') for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'TOTAL IMPOSTO A PAGAR', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
     ]
 
