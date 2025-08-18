@@ -619,65 +619,48 @@ def relatorio_apuracao(request, empresa_id):
             'adicional_devido': adicional_devido,
         })
 
-    # Espelho do Adicional de IR Mensal (exemplo para julho/2025)
-    from medicos.models.base import Socio
-    from medicos.models.fiscal import NotaFiscalRateioMedico, NotaFiscal, Aliquotas
-    from django.db.models import Sum
-    
+    # Espelho do Adicional de IR Mensal (baseado nos dados da tabela IRPJ Mensal)
     espelho_adicional_mensal = []
-    mes_exemplo = 7  # Julho
-    ano_exemplo = 2025
-    limite_mensal = Decimal('20000.00')  # R$ 20.000,00/mês (base para adicional)
+    mes_exemplo = 7  # Julho (posição 6 no array, pois começa em 0)
     
-    # Buscar sócios ativos da empresa
-    socios_ativos = Socio.objects.filter(empresa=empresa, ativo=True).order_by('pessoa__name')
-    
-    for socio in socios_ativos:
-        # Buscar rateios do sócio em julho/2025
-        rateios_mes = NotaFiscalRateioMedico.objects.filter(
-            nota_fiscal__empresa_destinataria=empresa,
-            nota_fiscal__dtEmissao__year=ano_exemplo,
-            nota_fiscal__dtEmissao__month=mes_exemplo,
-            medico=socio
-        )
+    # Usar os dados já calculados do relatório IRPJ Mensal
+    if relatorio_irpj_mensal['linhas'] and len(relatorio_irpj_mensal['linhas']) > mes_exemplo - 1:
+        linha_julho = relatorio_irpj_mensal['linhas'][mes_exemplo - 1]  # Julho é o índice 6 (7-1)
         
-        # Calcular receita do sócio por tipo de serviço
-        receita_consultas_socio = rateios_mes.filter(
-            nota_fiscal__tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
-        ).aggregate(total=Sum('valor_bruto_medico'))['total'] or Decimal('0')
+        # Buscar sócios ativos da empresa para mostrar dados individuais baseados na empresa
+        socios_ativos = Socio.objects.filter(empresa=empresa, ativo=True).order_by('pessoa__name')
         
-        receita_outros_socio = rateios_mes.filter(
-            nota_fiscal__tipo_servico=NotaFiscal.TIPO_SERVICO_OUTROS
-        ).aggregate(total=Sum('valor_bruto_medico'))['total'] or Decimal('0')
+        # Para o espelho, vamos usar os dados da empresa e dividi-los proporcionalmente pelos sócios
+        # (ou usar dados individuais se existirem no relatório)
+        receita_consultas_total = linha_julho.get('receita_consultas', 0)
+        receita_outros_total = linha_julho.get('receita_outros', 0)
+        base_calculo_total = linha_julho.get('base_calculo', 0)
+        adicional_total = linha_julho.get('adicional', 0)
         
-        receita_total_socio = receita_consultas_socio + receita_outros_socio
-        
-        # Só incluir sócios que tiveram receita no mês
-        if receita_total_socio > 0:
-            # Buscar alíquotas para cálculo
+        # Se há sócios, distribuir proporcionalmente (simplificado para demonstração)
+        if socios_ativos.exists():
+            num_socios = socios_ativos.count()
             aliquota_config = Aliquotas.objects.filter(empresa=empresa).first()
-            if aliquota_config:
-                # Calcular base de cálculo individual do sócio
-                base_consultas_socio = receita_consultas_socio * (Decimal(str(aliquota_config.IRPJ_PRESUNCAO_CONSULTA)) / 100)
-                base_outros_socio = receita_outros_socio * (Decimal(str(aliquota_config.IRPJ_PRESUNCAO_OUTROS)) / 100)
-                base_total_socio = base_consultas_socio + base_outros_socio
+            limite_adicional = Decimal(str(aliquota_config.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL)) if aliquota_config else Decimal('20000.00')
+            
+            for socio in socios_ativos:
+                # Dividir proporcionalmente pelos sócios (método simplificado)
+                receita_consultas_socio = receita_consultas_total / num_socios
+                receita_outros_socio = receita_outros_total / num_socios
+                base_calculo_socio = base_calculo_total / num_socios
                 
-                # Usar o valor configurado na empresa para limite
-                limite_adicional = Decimal(str(aliquota_config.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL))
-                excedente_socio = max(base_total_socio - limite_adicional, Decimal('0'))
-                adicional_socio = excedente_socio * (Decimal(str(aliquota_config.IRPJ_ADICIONAL)) / 100)
+                # Calcular excedente e adicional para cada sócio
+                excedente_socio = max(base_calculo_socio - limite_adicional, Decimal('0'))
+                adicional_socio = adicional_total / num_socios if adicional_total > 0 else Decimal('0')
                 
                 espelho_adicional_mensal.append({
                     'socio_nome': socio.pessoa.name,
                     'receita_consultas': receita_consultas_socio,
                     'receita_outros': receita_outros_socio,
-                    'receita_total': receita_total_socio,
-                    'base_consultas': base_consultas_socio,
-                    'base_outros': base_outros_socio,
-                    'base_total': base_total_socio,
+                    'receita_total': receita_consultas_socio + receita_outros_socio,
+                    'base_total': base_calculo_socio,
                     'limite_adicional': limite_adicional,
                     'excedente': excedente_socio,
-                    'aliquota_adicional': Decimal(str(aliquota_config.IRPJ_ADICIONAL)),
                     'adicional_devido': adicional_socio,
                 })
     
