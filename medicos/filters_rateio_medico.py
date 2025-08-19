@@ -30,6 +30,14 @@ class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
             'value': datetime.date.today().strftime('%Y-%m')
         })
     )
+    data_recebimento = django_filters.CharFilter(
+        label='Data Recebimento',
+        method='filter_data_recebimento',
+        widget=forms.DateInput(attrs={
+            'type': 'month',
+            'class': 'form-control'
+        })
+    )
 
     def __init__(self, data=None, queryset=None, *, request=None, prefix=None):
         super().__init__(data, queryset, request=request, prefix=prefix)
@@ -62,6 +70,14 @@ class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):
         except Exception:
             return queryset
 
+    def filter_data_recebimento(self, queryset, name, value):
+        # value esperado: 'YYYY-MM' - filtra por data de recebimento
+        try:
+            year, month = value.split('-')
+            return queryset.filter(nota_fiscal__dtRecebimento__year=year, nota_fiscal__dtRecebimento__month=month)
+        except Exception:
+            return queryset
+
     class Meta:
         model = NotaFiscalRateioMedico
-        fields = ['medico', 'nota_fiscal', 'competencia']
+        fields = ['medico', 'nota_fiscal', 'competencia', 'data_recebimento']

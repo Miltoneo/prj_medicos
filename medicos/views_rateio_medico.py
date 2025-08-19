@@ -46,9 +46,12 @@ class NotaFiscalRateioMedicoListView(FilterView):
         # Remove parâmetros que não são de filtro
         if 'page' in filter_params:
             filter_params.pop('page')
+        
+        # Remove o parâmetro clear se existir (usado para detectar ação de limpar)
+        is_clear_action = filter_params.pop('clear', None) == ['1']
             
-        # Se não há filtros específicos, aplicar filtro do mês corrente por padrão
-        if not filter_params:
+        # Se não há filtros específicos E não é uma ação de limpar, aplicar filtro do mês corrente por padrão
+        if not filter_params and not is_clear_action:
             from datetime import date
             mes_corrente = date.today().strftime('%Y-%m')
             filter_params['competencia'] = mes_corrente
