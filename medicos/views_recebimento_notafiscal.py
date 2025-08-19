@@ -25,14 +25,8 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
             return NotaFiscal.objects.none()
         qs = NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
         
-        # Filtro por mês/ano de emissão - aplica mês atual como padrão se não especificado
+        # Filtro por mês/ano de emissão - só aplica se explicitamente informado
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
-        if not mes_ano_emissao:
-            # Se não há filtro na query string, aplica o mês atual
-            import datetime
-            now = datetime.date.today()
-            mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
-        
         if mes_ano_emissao:
             try:
                 ano, mes = mes_ano_emissao.split('-')
@@ -48,20 +42,27 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
                 qs = qs.filter(dtRecebimento__year=int(ano), dtRecebimento__month=int(mes))
             except Exception:
                 pass
+        
+        # Filtro por status de recebimento
+        status_recebimento = self.request.GET.get('status_recebimento')
+        if status_recebimento:
+            qs = qs.filter(status_recebimento=status_recebimento)
+        
+        # Filtro por número da nota fiscal
+        numero = self.request.GET.get('numero')
+        if numero:
+            qs = qs.filter(numero__icontains=numero)
+        
         return qs
 
     def get_context_data(self, **kwargs):
-        import datetime
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Recebimento de Notas Fiscais'
         context['cenario_nome'] = 'Financeiro'
         context['menu_nome'] = 'Recebimento de Notas'
         
-        # Define valor default para mes_ano_emissao se não informado
-        mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
-        if not mes_ano_emissao:
-            now = datetime.date.today()
-            mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
+        # Define valor default para mes_ano_emissao apenas se informado na query string
+        mes_ano_emissao = self.request.GET.get('mes_ano_emissao', '')
         context['mes_ano_emissao_default'] = mes_ano_emissao
         
         # Define valor default para mes_ano_recebimento (mantém valor do GET se existir)

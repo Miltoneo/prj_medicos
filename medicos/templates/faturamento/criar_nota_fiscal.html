@@ -50,7 +50,18 @@
                 {% if field.name != 'numero' and field.name != 'tipo_servico' %}
                   <div class="col-md-6">
                     <label class="form-label fw-bold">{{ field.label }}</label>
-                    {{ field }}
+                    {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' or field.name == 'dtRecebimento' %}
+                      <!-- Campos apenas para leitura -->
+                      <input type="text" class="form-control" readonly 
+                             value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% elif field.name == 'dtRecebimento' %}{{ field.value|default:'-' }}{% endif %}" 
+                             style="background-color: #f8f9fa; cursor: not-allowed;">
+                      <!-- Campo hidden para manter o valor no POST -->
+                      {% if field.value %}
+                        <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                      {% endif %}
+                    {% else %}
+                      {{ field }}
+                    {% endif %}
                     {% if field.help_text %}
                       <small class="form-text text-muted">{{ field.help_text }}</small>
                     {% endif %}

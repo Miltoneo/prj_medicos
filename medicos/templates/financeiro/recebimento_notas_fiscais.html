@@ -14,25 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
-  
-  // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
-  const mesAnoEmissaoField = document.getElementById('id_mes_ano_emissao');
-  if (mesAnoEmissaoField) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasFilterParams = urlParams.has('numero') || urlParams.has('mes_ano_emissao') || urlParams.has('mes_ano_recebimento') || urlParams.has('status_recebimento');
-    
-    if (!hasFilterParams && !mesAnoEmissaoField.value) {
-      // Define o mês atual se não há valor
-      const today = new Date();
-      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
-      mesAnoEmissaoField.value = currentMonth;
-      
-      // Submete automaticamente para aplicar o filtro do mês atual
-      setTimeout(() => {
-        mesAnoEmissaoField.closest('form').submit();
-      }, 100);
-    }
-  }
 });
 </script>
 {% endblock %}
@@ -106,12 +87,24 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
             </div>
             
-            <!-- Indicador visual do filtro ativo -->
-            {% if mes_ano_emissao_default %}
+            <!-- Indicador visual dos filtros ativos -->
+            {% if mes_ano_emissao_default or request.GET.numero or mes_ano_recebimento_default or request.GET.status_recebimento %}
               <div class="mt-2">
                 <small class="text-muted">
                   <i class="fas fa-filter me-1"></i>
-                  Exibindo notas de: <strong>{{ mes_ano_emissao_default }}</strong>
+                  Filtros ativos:
+                  {% if mes_ano_emissao_default %}
+                    <strong>Mês emissão: {{ mes_ano_emissao_default }}</strong>
+                  {% endif %}
+                  {% if request.GET.numero %}
+                    <strong>Número: {{ request.GET.numero }}</strong>
+                  {% endif %}
+                  {% if mes_ano_recebimento_default %}
+                    <strong>Mês recebimento: {{ mes_ano_recebimento_default }}</strong>
+                  {% endif %}
+                  {% if request.GET.status_recebimento %}
+                    <strong>Status: {{ request.GET.status_recebimento }}</strong>
+                  {% endif %}
                 </small>
               </div>
             {% endif %}
