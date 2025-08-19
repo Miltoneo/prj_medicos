@@ -106,7 +106,8 @@ class NotaFiscalImportXMLView(View):
                         continue
                     if numero and dtEmissao:
                         if not NotaFiscal.objects.filter(numero=numero, serie=serie, empresa_destinataria=empresa).exists():
-                            NotaFiscal.objects.create(
+                            # Criar nota fiscal sem recalcular impostos (importação de XML)
+                            nota_fiscal = NotaFiscal(
                                 numero=numero,
                                 serie=serie,
                                 empresa_destinataria=empresa,
@@ -121,8 +122,11 @@ class NotaFiscalImportXMLView(View):
                                 val_COFINS=val_cofins,
                                 val_IR=val_ir,
                                 val_CSLL=val_csll,
+                                val_outros=Decimal('0.00'),  # XML não contém val_outros, definir como zero
                                 aliquotas=aliquota,
                             )
+                            # Usar save com flag para evitar recálculo de impostos
+                            nota_fiscal.save(importacao_xml=True)
                             importado = True
                             total_importadas += 1
                         else:

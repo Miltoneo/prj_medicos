@@ -77,10 +77,8 @@
                 <tr><th>ISS (%)</th><td>{{ aliquota_ISS|default_if_none:0|floatformat:2 }}</td></tr>
                 <tr><th>PIS (%)</th><td>{{ aliquota_PIS|default_if_none:0|floatformat:2 }}</td></tr>
                 <tr><th>COFINS (%)</th><td>{{ aliquota_COFINS|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>IRPJ Base (%)</th><td>{{ aliquota_IR_BASE|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>IRPJ (%)</th><td>{{ aliquota_IR|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>CSLL Base (%)</th><td>{{ aliquota_CSLL_BASE|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>CSLL (%)</th><td>{{ aliquota_CSLL|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>IRPJ - Retenção na Fonte (%)</th><td>{{ aliquota_IR|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>CSLL - Retenção na Fonte (%)</th><td>{{ aliquota_CSLL|default_if_none:0|floatformat:2 }}</td></tr>
               </table>
             </div>
           </form>
@@ -110,13 +108,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const valCOFINSInput = getInput('val_COFINS');
   const valIRInput = getInput('val_IR');
   const valCSLLInput = getInput('val_CSLL');
+  const valOutrosInput = getInput('val_outros');
 
   const aliquotaISS = Number('{{ aliquota_ISS|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaPIS = Number('{{ aliquota_PIS|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaCOFINS = Number('{{ aliquota_COFINS|default:0|floatformat:2 }}'.replace(',', '.'));
-  const aliquotaIRBase = Number('{{ aliquota_IR_BASE|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaIR = Number('{{ aliquota_IR|default:0|floatformat:2 }}'.replace(',', '.'));
-  const aliquotaCSLLBase = Number('{{ aliquota_CSLL_BASE|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaCSLL = Number('{{ aliquota_CSLL|default:0|floatformat:2 }}'.replace(',', '.'));
 
   function setFieldValue(field, value) {
@@ -126,16 +123,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function calcularCampos() {
     let bruto = 0;
+    let outros = 0;
     if (valBrutoInput) {
       bruto = parseFloat(valBrutoInput.value.replace(',', '.')) || 0;
+    }
+    if (valOutrosInput) {
+      outros = parseFloat(valOutrosInput.value.replace(',', '.')) || 0;
     }
     const valorISS = bruto * (aliquotaISS/100);
     const valorPIS = bruto * (aliquotaPIS/100);
     const valorCOFINS = bruto * (aliquotaCOFINS/100);
-    const valorIR = (bruto * (aliquotaIRBase/100)) * (aliquotaIR/100);
-    const valorCSLL = (bruto * (aliquotaCSLLBase/100)) * (aliquotaCSLL/100);
+    const valorIR = bruto * (aliquotaIR/100);
+    const valorCSLL = bruto * (aliquotaCSLL/100);
     const totalImpostos = valorISS + valorPIS + valorCOFINS + valorIR + valorCSLL;
-    const liquido = bruto - totalImpostos;
+    const liquido = bruto - totalImpostos - outros;
 
     setFieldValue(valISSInput, valorISS.toFixed(2));
     setFieldValue(valPISInput, valorPIS.toFixed(2));
@@ -151,13 +152,23 @@ document.addEventListener('DOMContentLoaded', function() {
     valBrutoInput.addEventListener('change', calcularCampos);
   }
 
+  // Adicionar listener para val_outros
+  if (valOutrosInput) {
+    valOutrosInput.addEventListener('input', calcularCampos);
+    valOutrosInput.addEventListener('change', calcularCampos);
+  }
+
   // Recalcula valor líquido ao editar manualmente qualquer imposto
   [valISSInput, valPISInput, valCOFINSInput, valIRInput, valCSLLInput].forEach(function(impostoInput) {
     if (impostoInput) {
       impostoInput.addEventListener('input', function() {
         let bruto = 0;
+        let outros = 0;
         if (valBrutoInput) {
           bruto = parseFloat(valBrutoInput.value.replace(',', '.')) || 0;
+        }
+        if (valOutrosInput) {
+          outros = parseFloat(valOutrosInput.value.replace(',', '.')) || 0;
         }
         // Pega os valores atuais dos impostos (permite edição manual)
         const valorISS = parseFloat(valISSInput && valISSInput.value.replace(',', '.') || 0) || 0;
@@ -166,16 +177,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const valorIR = parseFloat(valIRInput && valIRInput.value.replace(',', '.') || 0) || 0;
         const valorCSLL = parseFloat(valCSLLInput && valCSLLInput.value.replace(',', '.') || 0) || 0;
         const totalImpostos = valorISS + valorPIS + valorCOFINS + valorIR + valorCSLL;
-        const liquido = bruto - totalImpostos;
+        const liquido = bruto - totalImpostos - outros;
         setFieldValue(valLiquidoInput, liquido.toFixed(2));
       });
     }
   });
 
-  // Cálculo inicial
-  calcularCampos();
+  // NÃO executar cálculo inicial na edição - preservar valores existentes
+  // calcularCampos(); <- REMOVIDO para não recalcular na abertura
+  
   if (!valBrutoInput) {
-    // Se não encontrar o campo, mostra erro no console
     console.error('Campo "Valor Bruto" não encontrado. Verifique o nome/id do campo no template.');
   }
 });

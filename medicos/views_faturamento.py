@@ -54,10 +54,8 @@ class NotaFiscalCreateView(CreateView):
                 'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0) if aliquota_vigente else 0,
                 'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0) if aliquota_vigente else 0,
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0) if aliquota_vigente else 0,
-                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0) if aliquota_vigente else 0,
-                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0) if aliquota_vigente else 0,
-                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_PRESUNCAO_OUTROS', 0) if aliquota_vigente else 0,
-                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA', 0) if aliquota_vigente else 0,
+                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_RETENCAO_FONTE', 0) if aliquota_vigente else 0,
+                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_RETENCAO_FONTE', 0) if aliquota_vigente else 0,
                 'campos_topo': [
                     'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
                 ],
@@ -76,19 +74,15 @@ class NotaFiscalCreateView(CreateView):
                         'aliquota_ISS': getattr(aliquota_para_data, 'ISS', 0),
                         'aliquota_PIS': getattr(aliquota_para_data, 'PIS', 0),
                         'aliquota_COFINS': getattr(aliquota_para_data, 'COFINS', 0),
-                        'aliquota_IR_BASE': getattr(aliquota_para_data, 'IRPJ_ALIQUOTA', 0),
-                        'aliquota_IR': getattr(aliquota_para_data, 'IRPJ_PRESUNCAO_OUTROS', 0),
-                        'aliquota_CSLL_BASE': getattr(aliquota_para_data, 'CSLL_PRESUNCAO_OUTROS', 0),
-                        'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_ALIQUOTA', 0),
+                        'aliquota_IR': getattr(aliquota_para_data, 'IRPJ_RETENCAO_FONTE', 0),
+                        'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_RETENCAO_FONTE', 0),
                     })
         else:
             context.update({
                 'aliquota_ISS': 0,
                 'aliquota_PIS': 0,
                 'aliquota_COFINS': 0,
-                'aliquota_IR_BASE': 0,
                 'aliquota_IR': 0,
-                'aliquota_CSLL_BASE': 0,
                 'aliquota_CSLL': 0,
             })
         return context
@@ -156,10 +150,8 @@ class NotaFiscalUpdateView(UpdateView):
                 'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0),
                 'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0),
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0),
-                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0),
-                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0),
-                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_PRESUNCAO_OUTROS', 0),
-                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA', 0),
+                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_RETENCAO_FONTE', 0),
+                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_RETENCAO_FONTE', 0),
             })
         else:
             # Definir alíquotas zeradas se não houver alíquota vigente
@@ -167,9 +159,7 @@ class NotaFiscalUpdateView(UpdateView):
                 'aliquota_ISS': 0,
                 'aliquota_PIS': 0,
                 'aliquota_COFINS': 0,
-                'aliquota_IR_BASE': 0,
                 'aliquota_IR': 0,
-                'aliquota_CSLL_BASE': 0,
                 'aliquota_CSLL': 0,
             })
         context.update({

@@ -63,7 +63,7 @@ class NotaFiscalForm(forms.ModelForm):
         model = NotaFiscal
         fields = [
             'numero', 'tomador', 'cnpj_tomador', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento',
-            'val_bruto', 'val_ISS', 'val_PIS', 'val_COFINS', 'val_IR', 'val_CSLL', 'val_liquido'
+            'val_bruto', 'val_ISS', 'val_PIS', 'val_COFINS', 'val_IR', 'val_CSLL', 'val_outros', 'val_liquido'
         ]
         widgets = {
             'dtEmissao': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),

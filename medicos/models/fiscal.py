@@ -63,36 +63,11 @@ class RegimeTributarioHistorico(models.Model):
         help_text="Data de fim da vigência (deixe vazio se ainda vigente)"
     )
     
-    # Controle de receita para validação do regime de caixa (Lei 9.718/1998)
+    # Controle básico de receita para validação do regime de caixa
     receita_bruta_ano_anterior = models.DecimalField(
         max_digits=15, decimal_places=2, null=True, blank=True,
         verbose_name="Receita Bruta Ano Anterior (R$)",
-        help_text="Receita bruta do ano anterior que justifica a opção pelo regime (limite R$ 78 milhões para caixa)"
-    )
-    
-    # Controle de comunicação aos órgãos fiscais
-    comunicado_receita_federal = models.BooleanField(
-        default=False,
-        verbose_name="Comunicado à Receita Federal",
-        help_text="Indica se a alteração foi devidamente comunicada à Receita Federal"
-    )
-    
-    data_comunicacao_rf = models.DateField(
-        null=True, blank=True,
-        verbose_name="Data Comunicação RF",
-        help_text="Data da comunicação à Receita Federal"
-    )
-    
-    comunicado_municipio = models.BooleanField(
-        default=False,
-        verbose_name="Comunicado ao Município",
-        help_text="Indica se a alteração foi comunicada ao município (relevante para ISS)"
-    )
-    
-    data_comunicacao_municipio = models.DateField(
-        null=True, blank=True,
-        verbose_name="Data Comunicação Município",
-        help_text="Data da comunicação ao município"
+        help_text="Receita bruta do ano anterior (limite R$ 78 milhões para regime de caixa)"
     )
     
     # Metadados
@@ -105,38 +80,29 @@ class RegimeTributarioHistorico(models.Model):
     
     observacoes = models.TextField(
         blank=True, verbose_name="Observações",
-        help_text="Motivo da alteração, base legal aplicada ou observações sobre este período"
+        help_text="Observações sobre este período de regime tributário"
     )
 
     def clean(self):
-        """Validações do modelo conforme legislação brasileira"""
+        """Validações básicas do modelo"""
         # Validar datas
         if self.data_fim and self.data_inicio >= self.data_fim:
             raise ValidationError({
                 'data_fim': 'Data fim deve ser posterior à data início'
             })
         
-        # Validar que data de início é 1º de janeiro (legislação brasileira)
-        if self.data_inicio and (self.data_inicio.month != 1 or self.data_inicio.day != 1):
+        # Validar limite de receita para regime de caixa
+        if (self.regime_tributario == REGIME_TRIBUTACAO_CAIXA and 
+            self.receita_bruta_ano_anterior and 
+            self.receita_bruta_ano_anterior > 78000000.00):
             raise ValidationError({
-                'data_inicio': 'Alterações de regime devem iniciar em 1º de janeiro conforme legislação (Art. 12 Lei 9.718/1998)'
+                'receita_bruta_ano_anterior': 
+                'Receita bruta excede o limite de R$ 78.000.000,00 para regime de caixa'
             })
         
-        # Validar limite de receita para regime de caixa
-        if self.regime_tributario == REGIME_TRIBUTACAO_CAIXA:
-            limite_receita = 78000000.00  # R$ 78 milhões
-            if (self.receita_bruta_ano_anterior and 
-                self.receita_bruta_ano_anterior > limite_receita):
-                raise ValidationError({
-                    'receita_bruta_ano_anterior': 
-                    f'Receita bruta de R$ {self.receita_bruta_ano_anterior:,.2f} excede o limite '
-                    f'de R$ {limite_receita:,.2f} para regime de caixa (Lei 9.718/1998)'
-                })
-        
-        # Validar que não há sobreposição de períodos para a mesma empresa
+        # Validar sobreposição de períodos
         if self.empresa_id:
             qs = RegimeTributarioHistorico.objects.filter(empresa=self.empresa)
-            
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             
@@ -144,51 +110,22 @@ class RegimeTributarioHistorico(models.Model):
                 if self._periodos_se_sobrepoe(regime):
                     raise ValidationError({
                         'data_inicio': 
-                        f'Período sobrepõe com regime existente de '
-                        f'{regime.data_inicio} até {regime.data_fim or "vigente"}'
+                        f'Período sobrepõe com regime existente: {regime.data_inicio} - {regime.data_fim or "vigente"}'
                     })
-        
-        # Validar que só há um regime por ano fiscal para a mesma empresa
-        if self.empresa_id and self.data_inicio:
-            ano_fiscal = self.data_inicio.year
-            regimes_mesmo_ano = RegimeTributarioHistorico.objects.filter(
-                empresa=self.empresa,
-                data_inicio__year=ano_fiscal
-            )
-            
-            if self.pk:
-                regimes_mesmo_ano = regimes_mesmo_ano.exclude(pk=self.pk)
-            
-            if regimes_mesmo_ano.exists():
-                raise ValidationError({
-                    'data_inicio': 
-                    f'Já existe alteração de regime para o ano fiscal {ano_fiscal}. '
-                    'É permitida apenas uma alteração por ano.'
-                })
-        
-        # Validar comunicação obrigatória para regime de caixa
-        if (self.regime_tributario == REGIME_TRIBUTACAO_CAIXA and 
-            not self.comunicado_receita_federal and 
-            self.data_inicio and 
-            self.data_inicio <= timezone.now().date()):
-            # Apenas aviso, não erro bloqueante
-            import warnings
-            warnings.warn(
-                "Regime de caixa requer comunicação à Receita Federal até 31/01 do ano de vigência",
-                UserWarning
-            )
     
     def _periodos_se_sobrepoe(self, outro_regime):
         """Verifica se dois períodos de regime se sobrepõem"""
         from datetime import date, timedelta
         
+        # Se não há data fim, considera vigente por 100 anos
+        data_futura = date.today() + timedelta(days=36500)
+        
         inicio_self = self.data_inicio
-        fim_self = self.data_fim or date.today() + timedelta(days=36500)  # ~100 anos no futuro
-        
+        fim_self = self.data_fim or data_futura
         inicio_outro = outro_regime.data_inicio
-        fim_outro = outro_regime.data_fim or date.today() + timedelta(days=36500)
+        fim_outro = outro_regime.data_fim or data_futura
         
-        # Dois períodos se sobrepõem se um não termina antes do outro começar
+        # Períodos se sobrepõem se um não termina antes do outro começar
         return not (fim_self < inicio_outro or fim_outro < inicio_self)
     
     def __str__(self):
@@ -229,22 +166,15 @@ class RegimeTributarioHistorico(models.Model):
     
     @classmethod
     def obter_ou_criar_regime_atual(cls, empresa):
-        """
-        Obtém o regime atual ou cria baseado no regime da empresa
-        
-        Este método garante compatibilidade com o sistema existente,
-        criando automaticamente o histórico baseado no regime atual da empresa
-        """
+        """Obtém ou cria o regime tributário vigente para a empresa"""
         regime_atual = cls.obter_regime_vigente(empresa)
         
         if not regime_atual:
-            # Criar registro para o regime atual da empresa
-            hoje = timezone.now().date()
             regime_atual = cls.objects.create(
                 empresa=empresa,
                 regime_tributario=empresa.regime_tributario,
-                data_inicio=hoje,
-                observacoes="Regime inicial criado automaticamente baseado na configuração da empresa"
+                data_inicio=timezone.now().date(),
+                observacoes="Regime inicial criado automaticamente"
             )
         
         return regime_atual
@@ -355,6 +285,19 @@ class Aliquotas(models.Model):
         help_text="Percentual da receita bruta presumido como lucro para consultas médicas (32% para serviços médicos, conforme Lei 9.249/1995, art. 20)"
     )
     
+    # === RETENÇÃO NA FONTE ===
+    IRPJ_RETENCAO_FONTE = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=1.5,
+        verbose_name="IRPJ - Retenção na Fonte (%)",
+        help_text="Alíquota de retenção de IRPJ na fonte aplicada pelo tomador de serviços (1,5% conforme IN RFB nº 1.234/2012)"
+    )
+    
+    CSLL_RETENCAO_FONTE = models.DecimalField(
+        max_digits=5, decimal_places=2, null=False, default=1.0,
+        verbose_name="CSLL - Retenção na Fonte (%)",
+        help_text="Alíquota de retenção de CSLL na fonte aplicada pelo tomador de serviços (1,0% conforme IN RFB nº 1.234/2012)"
+    )
+    
     # === CONTROLE E AUDITORIA ===
     ativa = models.BooleanField(
         default=True,
@@ -389,44 +332,14 @@ class Aliquotas(models.Model):
     )
 
     def clean(self):
-        campos_percentuais = [
-            ('ISS', self.ISS, 0, 20),
-            ('PIS', self.PIS, 0, 10),
-            ('COFINS', self.COFINS, 0, 10),
-            ('IRPJ_ALIQUOTA', self.IRPJ_ALIQUOTA, 0, 50),
-            ('IRPJ_PRESUNCAO_OUTROS', self.IRPJ_PRESUNCAO_OUTROS, 0, 100),
-            ('IRPJ_PRESUNCAO_CONSULTA', self.IRPJ_PRESUNCAO_CONSULTA, 0, 100),
-            ('CSLL_ALIQUOTA', self.CSLL_ALIQUOTA, 0, 50),
-            ('CSLL_PRESUNCAO_OUTROS', self.CSLL_PRESUNCAO_OUTROS, 0, 100),
-            ('CSLL_PRESUNCAO_CONSULTA', self.CSLL_PRESUNCAO_CONSULTA, 0, 100),
-        ]
-        for nome, valor, minimo, maximo in campos_percentuais:
-            if valor < minimo or valor > maximo:
-                raise ValidationError({
-                    nome.lower(): f'{nome} deve estar entre {minimo}% e {maximo}%'
-                })
+        """Validações simplificadas do modelo"""
         # Validar datas de vigência
         if (self.data_vigencia_inicio and self.data_vigencia_fim and 
             self.data_vigencia_inicio > self.data_vigencia_fim):
             raise ValidationError({
                 'data_vigencia_fim': 'Data fim deve ser posterior à data início'
             })
-        # Validar sobreposição de vigências para a mesma empresa
-        if self.ativa and self.data_vigencia_inicio:
-            qs = Aliquotas.objects.filter(
-                empresa=self.empresa,
-                ativa=True
-            )
-            if self.pk:
-                qs = qs.exclude(pk=self.pk)
-            # Verificar sobreposição de datas
-            for aliquota in qs:
-                if self._vigencias_se_sobrepoe(aliquota):
-                    raise ValidationError({
-                        'data_vigencia_inicio': 
-                        f'Período de vigência sobrepõe com configuração existente de '
-                        f'{aliquota.data_vigencia_inicio} até {aliquota.data_vigencia_fim or "indeterminado"}'
-                    })
+        
         # REGRA: Só pode haver uma alíquota ativa por empresa
         if self.ativa:
             qs_ativas = Aliquotas.objects.filter(empresa=self.empresa, ativa=True)
@@ -436,29 +349,6 @@ class Aliquotas(models.Model):
                 raise ValidationError({
                     'ativa': 'Já existe uma alíquota ativa para esta empresa. Desative a configuração anterior antes de ativar uma nova.'
                 })
-
-    def _vigencias_se_sobrepoe(self, outra_aliquota):
-        """Verifica se as vigências de duas configurações se sobrepõem"""
-        # Se alguma das configurações não tem data de início definida, não verifica
-        if not self.data_vigencia_inicio or not outra_aliquota.data_vigencia_inicio:
-            return False
-        
-        inicio_self = self.data_vigencia_inicio
-        fim_self = self.data_vigencia_fim
-        inicio_outra = outra_aliquota.data_vigencia_inicio
-        fim_outra = outra_aliquota.data_vigencia_fim
-        
-        # Se não há data fim, considera como vigência indefinida (até hoje + 100 anos)
-        from datetime import date, timedelta
-        data_muito_futura = date.today() + timedelta(days=36500)  # ~100 anos
-        
-        if fim_self is None:
-            fim_self = data_muito_futura
-        if fim_outra is None:
-            fim_outra = data_muito_futura
-        
-        # Verifica sobreposição: duas vigências se sobrepõem se uma não termina antes da outra começar
-        return not (fim_self < inicio_outra or fim_outra < inicio_self)
 
     def __str__(self):
         return f"Alíquotas - {self.empresa.name} (ISS: {self.ISS}%)"
@@ -486,21 +376,14 @@ class Aliquotas(models.Model):
         valor_pis = valor_bruto * (self.PIS / 100)
         valor_cofins = valor_bruto * (self.COFINS / 100)
         
-        # Base de cálculo para IR e CSLL
+        # IRPJ e CSLL - Usar alíquotas de retenção na fonte para emissão de NF
+        # Conforme IN RFB nº 1.234/2012: IRPJ 1,5% e CSLL 1,0% sobre valor bruto
+        valor_ir_total = valor_bruto * (self.IRPJ_RETENCAO_FONTE / 100)
+        valor_csll = valor_bruto * (self.CSLL_RETENCAO_FONTE / 100)
+        
+        # Base de cálculo para apuração (mantida para referência)
         base_calculo_ir = valor_bruto * (self.IRPJ_PRESUNCAO_OUTROS / 100)
         base_calculo_csll = valor_bruto * (self.CSLL_PRESUNCAO_OUTROS / 100)
-        
-        # IRPJ
-        valor_ir_normal = base_calculo_ir * (self.IRPJ_ALIQUOTA / 100)
-        valor_ir_adicional = 0
-        if base_calculo_ir > self.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL:
-            excesso = base_calculo_ir - self.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL
-            valor_ir_adicional = excesso * (self.IRPJ_ADICIONAL / 100)
-        
-        valor_ir_total = valor_ir_normal + valor_ir_adicional
-        
-        # CSLL
-        valor_csll = base_calculo_csll * (self.CSLL_ALIQUOTA / 100)
         
         # Valor líquido
         total_impostos = valor_iss + valor_pis + valor_cofins + valor_ir_total + valor_csll
@@ -518,14 +401,15 @@ class Aliquotas(models.Model):
             'valor_pis': valor_pis,
             'valor_cofins': valor_cofins,
             'valor_ir': valor_ir_total,
-            'valor_ir_normal': valor_ir_normal,
-            'valor_ir_adicional': valor_ir_adicional,
+            'aliquota_ir_retencao': self.IRPJ_RETENCAO_FONTE,
             'valor_csll': valor_csll,
+            'aliquota_csll_retencao': self.CSLL_RETENCAO_FONTE,
             'total_impostos': total_impostos,
             'valor_liquido': valor_liquido,
             'base_calculo_ir': base_calculo_ir,
             'base_calculo_csll': base_calculo_csll,
             'regime_tributario': regime_info,
+            'observacao': 'Impostos calculados com alíquotas de retenção na fonte (IR: 1,5%, CSLL: 1,0%)'
         }
     
     def calcular_impostos_com_regime(self, valor_bruto, tipo_servico='consultas', empresa=None, data_referencia=None):
@@ -703,46 +587,16 @@ class Aliquotas(models.Model):
         return resultado
     
     def _gerar_observacoes_legais(self, regimes_por_imposto):
-        """Gera observações legais sobre os regimes aplicados"""
-        observacoes = []
-        
-        # Verificar se há regimes mistos
-        regimes_utilizados = set(r['regime'] for r in regimes_por_imposto.values())
-        
-        if len(regimes_utilizados) > 1:
-            observacoes.append("⚠️ REGIME MISTO APLICADO:")
-            observacoes.append("• ISS: Sempre competência (Lei Complementar 116/2003)")
-            
-            if any(r['regime'] == REGIME_TRIBUTACAO_CAIXA for r in regimes_por_imposto.values() if r != regimes_por_imposto['ISS']):
-                observacoes.append("• PIS/COFINS/IRPJ/CSLL: Regime de caixa (Lei 9.718/1998)")
-            else:
-                observacoes.append("• PIS/COFINS/IRPJ/CSLL: Regime de competência")
-        else:
-            regime_unico = list(regimes_utilizados)[0]
-            if regime_unico == REGIME_TRIBUTACAO_COMPETENCIA:
-                observacoes.append("✓ REGIME DE COMPETÊNCIA aplicado para todos os impostos")
-            else:
-                observacoes.append("⚠️ Regime de caixa aplicado (exceto ISS que é sempre competência)")
-        
-        observacoes.extend([
-            "",
+        """Gera observações legais simplificadas sobre os regimes aplicados"""
+        return [
             "PRAZOS DE RECOLHIMENTO:",
             "• ISS: Conforme cronograma municipal",
             "• PIS/COFINS: Até o 25º dia do mês seguinte",
             "• IRPJ/CSLL: Conforme opção (mensal ou trimestral)"
-        ])
-        
-        return observacoes
+        ]
     
     def _obter_info_regime_tributario(self, empresa):
         """Obtém informações sobre o regime tributário atual"""
-        if not empresa:
-            return {
-                'codigo': REGIME_TRIBUTACAO_COMPETENCIA,
-                'nome': 'Competência (padrão)',
-                'observacoes': ['Regime não especificado - usando competência como padrão']
-            }
-        
         return {
             'codigo': empresa.regime_tributario,
             'nome': empresa.regime_tributario_nome,
@@ -750,25 +604,7 @@ class Aliquotas(models.Model):
         }
     
     def _obter_regime_vigente_na_data(self, empresa, data_referencia):
-        """
-        Obtém o regime tributário vigente para uma empresa em uma data específica
-        
-        Args:
-            empresa: Instância da empresa
-            data_referencia: Data para consulta
-            
-        Returns:
-            dict: Informações do regime tributário vigente na data
-        """
-        if not empresa:
-            return {
-                'codigo': REGIME_TRIBUTACAO_COMPETENCIA,
-                'nome': 'Competência (padrão)',
-                'observacoes': ['Empresa não especificada - usando competência como padrão'],
-                'fonte': 'padrao'
-            }
-        
-        # Buscar no histórico de regimes
+        """Obtém o regime tributário vigente para uma empresa em uma data específica"""
         regime_historico = RegimeTributarioHistorico.obter_regime_vigente(empresa, data_referencia)
         
         if regime_historico:
@@ -783,88 +619,37 @@ class Aliquotas(models.Model):
                 'fonte': 'historico'
             }
         else:
-            # Fallback para o regime atual da empresa (compatibilidade)
             return {
                 'codigo': empresa.regime_tributario,
                 'nome': empresa.regime_tributario_nome,
-                'observacoes': self._obter_observacoes_regime(empresa.regime_tributario, data_referencia) + 
-                              ['⚠️ Regime obtido da configuração atual da empresa - recomenda-se configurar histórico'],
+                'observacoes': self._obter_observacoes_regime(empresa.regime_tributario, data_referencia),
                 'fonte': 'empresa_atual'
             }
     
     def _aplicar_regime_competencia(self, resultado_base, data_referencia=None):
-        """
-        Aplica regras específicas do regime de competência
-        
-        No regime de competência:
-        - Impostos são devidos no mês da prestação do serviço
-        - Não há diferimento por recebimento
-        - Cálculo padrão se aplica
-        """
+        """Aplica regras específicas do regime de competência"""
         resultado_base['regime_observacoes'] = [
             "Regime de Competência:",
             "• Impostos devidos no mês da prestação do serviço",
-            "• Independe da data de recebimento",
             "• Recolhimento conforme cronograma legal"
         ]
-        
         return resultado_base
     
     def _aplicar_regime_caixa(self, resultado_base, data_referencia=None):
-        """
-        Aplica regras específicas do regime de caixa
-        
-        No regime de caixa:
-        - Impostos são devidos no mês do recebimento
-        - Pode haver diferimento se recebimento for em mês posterior
-        - Ajustes podem ser necessários
-        """
-        from django.utils import timezone
-        
-        resultado = resultado_base.copy()
-        
-        # Se não há data de referência, usar hoje
-        if data_referencia is None:
-            data_referencia = timezone.now().date()
-        
-        resultado['regime_observacoes'] = [
+        """Aplica regras específicas do regime de caixa"""
+        resultado_base['regime_observacoes'] = [
             "Regime de Caixa:",
-            "• Impostos devidos no mês do recebimento",
-            "• Diferimento permitido conforme legislação",
-            "• Atenção aos prazos de recolhimento"
+            "• Impostos devidos no mês do recebimento"
         ]
-        
-        # No regime de caixa, pode haver diferimento
-        # Aqui podem ser implementadas regras específicas se necessário
-        resultado['permite_diferimento'] = True
-        resultado['data_base_calculo'] = data_referencia
-        
-        return resultado
+        resultado_base['permite_diferimento'] = True
+        return resultado_base
     
     def _obter_observacoes_regime(self, regime, data_referencia=None):
         """Retorna observações específicas sobre o regime tributário"""
         if regime == REGIME_TRIBUTACAO_CAIXA:
-            observacoes = [
-                "Regime de Caixa aplicado",
-                "Impostos calculados para recolhimento no mês do recebimento",
-                "Verifique cronograma específico de cada imposto"
-            ]
+            return ["Regime de Caixa aplicado"]
         else:
-            observacoes = [
-                "Regime de Competência aplicado", 
-                "Impostos calculados para recolhimento no mês da prestação",
-                "Cronograma padrão de recolhimento"
-            ]
-        
-        # Adicionar informação sobre data de referência se fornecida
-        if data_referencia:
-            hoje = timezone.now().date()
-            if data_referencia < hoje:
-                observacoes.append(f"⏰ Cálculo para data passada: {data_referencia}")
-            elif data_referencia > hoje:
-                observacoes.append(f"📅 Cálculo para data futura: {data_referencia}")
-        
-        return observacoes
+            return ["Regime de Competência aplicado"]
     
     @classmethod
     def obter_aliquota_vigente(cls, empresa, data_referencia=None):
@@ -881,79 +666,16 @@ class Aliquotas(models.Model):
         ).first()
     
     @classmethod
-    def obter_aliquota_ou_padrao(cls, empresa, tipo_servico='consultas', data_referencia=None):
-        """
-        Obtém a alíquota ISS específica ou valor padrão se não houver configuração
-        
-        Args:
-            conta: Conta para buscar configuração
-            tipo_servico: 'consultas', 'plantao' ou 'outros'
-            data_referencia: Data para qual buscar a alíquota (default: hoje)
-            
-        Returns:
-            Decimal: Alíquota a ser aplicada
-        """
-        aliquotas = cls.obter_aliquota_vigente(empresa, data_referencia)
-        
-        if aliquotas:
-            if tipo_servico == 'consultas':
-                return aliquotas.ISS_CONSULTAS
-            elif tipo_servico == 'plantao':
-                return aliquotas.ISS_PLANTAO
-            elif tipo_servico == 'outros':
-                return aliquotas.ISS_OUTROS
-        
-        # Valores padrão baseados na legislação comum quando não há configuração
-        valores_padrao = {
-            'consultas': 2.00,  # 2% - alíquota comum para consultas
-            'plantao': 2.00,    # 2% - alíquota comum para plantões  
-            'outros': 3.00,     # 3% - alíquota comum para procedimentos
-        }
-        
-        return valores_padrao.get(tipo_servico, 2.00)
-    
-    @classmethod
     def calcular_impostos_para_empresa(cls, empresa, valor_bruto, tipo_servico='consultas', data_referencia=None):
-        """
-        Método de conveniência para calcular impostos considerando a empresa e seu regime
-        
-        Args:
-            empresa: Instância da empresa
-            valor_bruto: Valor bruto da nota fiscal
-            tipo_servico: Tipo de serviço prestado
-            data_referencia: Data para cálculo
-            
-        Returns:
-            dict: Detalhamento completo dos impostos
-        """
+        """Calcula impostos considerando a empresa e seu regime"""
         aliquotas = cls.obter_aliquota_vigente(empresa, data_referencia)
         
-        if aliquotas:
-            return aliquotas.calcular_impostos_com_regime(
-                valor_bruto=valor_bruto,
-                tipo_servico=tipo_servico,
-                empresa=empresa,
-                data_referencia=data_referencia
-            )
-        else:
-            # Fallback - cálculo básico usando alíquotas padrão
-            from decimal import Decimal
-            
-            aliquota_iss = cls.obter_aliquota_ou_padrao(empresa, tipo_servico, data_referencia)
-            valor_iss = valor_bruto * (aliquota_iss / 100)
-            
-            return {
-                'valor_bruto': valor_bruto,
-                'valor_iss': valor_iss,
-                'valor_liquido': valor_bruto - valor_iss,
-                'aliquota_iss_aplicada': aliquota_iss,
-                'regime_tributario': {
-                    'codigo': empresa.regime_tributario,
-                    'nome': empresa.regime_tributario_nome,
-                    'observacoes': ['Cálculo básico - configure alíquotas da conta para cálculo completo']
-                },
-                'observacao': 'Cálculo simplificado - recomenda-se configurar alíquotas específicas da conta'
-            }
+        return aliquotas.calcular_impostos_com_regime(
+            valor_bruto=valor_bruto,
+            tipo_servico=tipo_servico,
+            empresa=empresa,
+            data_referencia=data_referencia
+        )
 
 
 class NotaFiscal(models.Model):
@@ -1093,10 +815,16 @@ class NotaFiscal(models.Model):
         help_text="Valor da Contribuição Social sobre o Lucro Líquido"
     )
     
+    val_outros = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Valor Outros (R$)",
+        help_text="Outros valores a serem deduzidos do valor bruto"
+    )
+    
     val_liquido = models.DecimalField(
         max_digits=12, decimal_places=2,
         verbose_name="Valor Líquido (R$)",
-        help_text="Valor líquido após dedução dos impostos"
+        help_text="Valor líquido após dedução dos impostos e outros valores"
     )
     
     # === CONTROLE DE RECEBIMENTO ===
@@ -1145,52 +873,35 @@ class NotaFiscal(models.Model):
     )
 
     def clean(self):
-        """Validações do modelo"""
+        """Validações simplificadas do modelo"""
         # Validar datas
         if self.dtVencimento and self.dtEmissao and self.dtVencimento < self.dtEmissao:
             raise ValidationError({
                 'dtVencimento': 'Data de vencimento não pode ser anterior à data de emissão'
             })
-        if self.dtRecebimento and self.dtEmissao and self.dtRecebimento < self.dtEmissao:
-            raise ValidationError({
-                'dtRecebimento': 'Data de recebimento não pode ser anterior à data de emissão'
-            })
+        
         # Validar valores
         if self.val_bruto <= 0:
             raise ValidationError({
                 'val_bruto': 'Valor bruto deve ser maior que zero'
             })
-        # Validar total de impostos vs valor bruto
+        
+        # Validar valor líquido
         total_impostos = (self.val_ISS + self.val_PIS + self.val_COFINS + 
                          self.val_IR + self.val_CSLL)
-        if total_impostos > self.val_bruto:
-            raise ValidationError({
-                'val_bruto': 'Total de impostos não pode ser maior que o valor bruto'
-            })
-        # Validar valor líquido
-        valor_liquido_calculado = self.val_bruto - total_impostos
+        valor_liquido_calculado = self.val_bruto - total_impostos - self.val_outros
         if abs(self.val_liquido - valor_liquido_calculado) > 0.01:  # Tolerância de 1 centavo
             raise ValidationError({
                 'val_liquido': f'Valor líquido deve ser R$ {valor_liquido_calculado:.2f} '
-                              f'(valor bruto - impostos)'
+                              f'(valor bruto - impostos - outros valores)'
             })
-        # (Regra removida: meio de pagamento não é mais obrigatório quando há data de recebimento)
+        
         # Validar consistência do status de recebimento
         if self.status_recebimento == 'recebido' and not self.dtRecebimento:
             raise ValidationError({
                 'status_recebimento': 'Status "Recebido" requer data de recebimento'
             })
-        # Bloquear recebimento se rateio não estiver completo
-        if self.status_recebimento == 'recebido':
-            # Só bloqueia se houver pelo menos um rateio cadastrado
-            if self.tem_rateio and not self.rateio_completo:
-                raise ValidationError({
-                    'status_recebimento': (
-                        'Não é permitido marcar como "Recebido" enquanto o rateio não estiver completo. '
-                        f'Total rateado: {self.percentual_total_rateado:.2f}%. '
-                        f'Faltam {self.percentual_pendente_rateio:.2f}% para completar 100%.'
-                    )
-                })
+        
         # Corrigir validação de unicidade para edição
         if self.pk:
             if NotaFiscal.objects.filter(
@@ -1204,80 +915,71 @@ class NotaFiscal(models.Model):
 
     def save(self, *args, **kwargs):
         """Override do save para cálculos automáticos"""
-        # Se é uma nova nota ou os valores básicos mudaram, recalcular impostos
-        if (not self.pk or 
-            'val_bruto' in kwargs.get('update_fields', []) or
-            'tipo_servico' in kwargs.get('update_fields', [])):
+        # Verificar se é importação de XML (não recalcular impostos)
+        importacao_xml = kwargs.pop('importacao_xml', False)
+        
+        # Verificar se realmente houve mudança nos campos que justifiquem recálculo
+        deve_recalcular = False
+        
+        if not importacao_xml:
+            if not self.pk:
+                # Nova nota - recalcular sempre
+                deve_recalcular = True
+            else:
+                # Nota existente - verificar se campos relevantes mudaram
+                if 'update_fields' in kwargs:
+                    campos_relevantes = ['val_bruto', 'tipo_servico']
+                    deve_recalcular = any(campo in kwargs.get('update_fields', []) for campo in campos_relevantes)
+                else:
+                    # Se não há update_fields, verificar se val_bruto ou tipo_servico mudaram
+                    try:
+                        nota_original = NotaFiscal.objects.get(pk=self.pk)
+                        deve_recalcular = (
+                            nota_original.val_bruto != self.val_bruto or
+                            nota_original.tipo_servico != self.tipo_servico
+                        )
+                    except NotaFiscal.DoesNotExist:
+                        # Se não conseguir obter a nota original, é uma nova nota
+                        deve_recalcular = True
+        
+        if deve_recalcular:
             self.calcular_impostos()
 
         # Preencher aliquotas automaticamente se não estiver definido
         if not self.aliquotas:
-            from medicos.models.fiscal import Aliquotas
-            empresa = self.empresa_destinataria
-            aliquota_vigente = Aliquotas.obter_aliquota_vigente(empresa, self.dtEmissao)
-            if aliquota_vigente:
-                self.aliquotas = aliquota_vigente
+            aliquota_vigente = Aliquotas.obter_aliquota_vigente(self.empresa_destinataria, self.dtEmissao)
+            self.aliquotas = aliquota_vigente
 
         super().save(*args, **kwargs)
 
     def calcular_impostos(self):
-        """
-        Calcula todos os impostos baseado nas alíquotas configuradas
-        e no regime tributário vigente na data de emissão
-        """
-        try:
-            # Obter alíquotas vigentes para a empresa
-            empresa = self.empresa_destinataria
-            aliquotas = Aliquotas.obter_aliquota_vigente(empresa, self.dtEmissao)
-            if aliquotas:
-                # Determinar tipo de serviço para as alíquotas
-                tipo_servico_map = {
-                    self.TIPO_SERVICO_CONSULTAS: 'consultas',
-                    self.TIPO_SERVICO_OUTROS: 'outros',
-                }
-                tipo_servico = tipo_servico_map.get(self.tipo_servico, 'consultas')
-                # Calcular impostos considerando regime tributário
-                resultado = aliquotas.calcular_impostos_com_regime(
-                    valor_bruto=self.val_bruto,
-                    tipo_servico=tipo_servico,
-                    empresa=empresa,
-                    data_referencia=self.dtEmissao
-                )
-                # Aplicar valores calculados
-                self.val_ISS = resultado['valor_iss']
-                self.val_PIS = resultado['valor_pis']
-                self.val_COFINS = resultado['valor_cofins']
-                self.val_IR = resultado['valor_ir']
-                self.val_CSLL = resultado['valor_csll']
-                self.val_liquido = resultado['valor_liquido']
-            else:
-                # Fallback: cálculo básico usando apenas ISS padrão
-                tipo_servico_map = {
-                    self.TIPO_SERVICO_CONSULTAS: 'consultas',
-                    self.TIPO_SERVICO_OUTROS: 'outros',
-                }
-                aliquota_iss = Aliquotas.obter_aliquota_ou_padrao(
-                    empresa,
-                    tipo_servico_map.get(self.tipo_servico, 'consultas'),
-                    self.dtEmissao
-                )
-                from decimal import Decimal
-                self.val_ISS = self.val_bruto * (Decimal(str(aliquota_iss)) / Decimal('100'))
-                self.val_PIS = 0
-                self.val_COFINS = 0
-                self.val_IR = 0
-                self.val_CSLL = 0
-                self.val_liquido = self.val_bruto - self.val_ISS
-        except Exception as e:
-            # Em caso de erro, manter valores zerados para impostos federais
-            # e calcular apenas ISS básico
-            from decimal import Decimal
-            self.val_ISS = self.val_bruto * Decimal('0.02')  # 2% padrão
-            self.val_PIS = 0
-            self.val_COFINS = 0
-            self.val_IR = 0
-            self.val_CSLL = 0
-            self.val_liquido = self.val_bruto - self.val_ISS
+        """Calcula todos os impostos baseado nas alíquotas configuradas"""
+        aliquotas = Aliquotas.obter_aliquota_vigente(self.empresa_destinataria, self.dtEmissao)
+        
+        # Determinar tipo de serviço para as alíquotas
+        tipo_servico_map = {
+            self.TIPO_SERVICO_CONSULTAS: 'consultas',
+            self.TIPO_SERVICO_OUTROS: 'outros',
+        }
+        tipo_servico = tipo_servico_map.get(self.tipo_servico, 'consultas')
+        
+        # Calcular impostos considerando regime tributário
+        resultado = aliquotas.calcular_impostos_com_regime(
+            valor_bruto=self.val_bruto,
+            tipo_servico=tipo_servico,
+            empresa=self.empresa_destinataria,
+            data_referencia=self.dtEmissao
+        )
+        
+        # Aplicar valores calculados
+        self.val_ISS = resultado['valor_iss']
+        self.val_PIS = resultado['valor_pis']
+        self.val_COFINS = resultado['valor_cofins']
+        self.val_IR = resultado['valor_ir']
+        self.val_CSLL = resultado['valor_csll']
+        
+        # Calcular valor líquido incluindo val_outros
+        self.val_liquido = resultado['valor_liquido'] - self.val_outros
 
     def get_tipo_servico_display_extended(self):
         """Retorna descrição extendida do tipo de serviço"""
