@@ -44,8 +44,7 @@ class NotaFiscalRateioFilter(django_filters.FilterSet):
         method='filter_mes_emissao',
         widget=forms.DateInput(attrs={
             'type': 'month',
-            'class': 'form-control',
-            'value': date.today().strftime('%Y-%m')  # Valor padrão: mês corrente
+            'class': 'form-control'
         })
     )
     numero = django_filters.CharFilter(field_name="numero", lookup_expr="icontains", label="Nº NF")

@@ -68,12 +68,24 @@
                     </div>
                   </div>
                   
-                  <!-- Indicador visual do filtro ativo -->
-                  {% if filter.form.mes_emissao.value %}
+                  <!-- Indicador visual dos filtros ativos -->
+                  {% if filter.form.mes_emissao.value or filter.form.numero.value or filter.form.tomador.value or filter.form.cnpj_tomador.value %}
                     <div class="mt-2">
                       <small class="text-muted">
                         <i class="fas fa-filter me-1"></i>
-                        Exibindo notas de: <strong>{{ filter.form.mes_emissao.value }}</strong>
+                        Filtros ativos:
+                        {% if filter.form.mes_emissao.value %}
+                          <strong>Mês: {{ filter.form.mes_emissao.value }}</strong>
+                        {% endif %}
+                        {% if filter.form.numero.value %}
+                          <strong>Número: {{ filter.form.numero.value }}</strong>
+                        {% endif %}
+                        {% if filter.form.tomador.value %}
+                          <strong>Tomador: {{ filter.form.tomador.value }}</strong>
+                        {% endif %}
+                        {% if filter.form.cnpj_tomador.value %}
+                          <strong>CNPJ: {{ filter.form.cnpj_tomador.value }}</strong>
+                        {% endif %}
                       </small>
                     </div>
                   {% endif %}
@@ -228,20 +240,6 @@ document.addEventListener('DOMContentLoaded', function() {
       // Submete o formulário automaticamente quando o mês é alterado
       this.closest('form').submit();
     });
-    
-    // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
-    const hasFilterParams = urlParams.has('mes_emissao') || urlParams.has('numero') || urlParams.has('tomador') || urlParams.has('cnpj_tomador');
-    if (!hasFilterParams && !mesEmissaoField.value) {
-      // Define o mês atual se não há valor
-      const today = new Date();
-      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
-      mesEmissaoField.value = currentMonth;
-      
-      // Submete automaticamente para aplicar o filtro do mês atual
-      setTimeout(() => {
-        mesEmissaoField.closest('form').submit();
-      }, 100);
-    }
   }
 });
 </script>

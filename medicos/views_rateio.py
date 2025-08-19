@@ -131,18 +131,12 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         # Filtrar notas com status cancelado - não exibir no rateio
         qs = qs.exclude(status_recebimento='cancelado')
         
-        # Aplica o filtro de busca
+        # Aplica o filtro de busca sem forçar mês corrente
         filter_params = self.request.GET.copy()
         if 'page' in filter_params:
             filter_params.pop('page')
         if 'nota_id' in filter_params:
             filter_params.pop('nota_id')
-            
-        # Se não há filtros específicos, aplicar filtro do mês corrente por padrão
-        if not filter_params:
-            from datetime import date
-            mes_corrente = date.today().strftime('%Y-%m')
-            filter_params['mes_emissao'] = mes_corrente
             
         self.filter = self.filterset_class(filter_params, queryset=qs)
         # Aplica ordenação padrão por data de emissão descendente se não houver ordenação específica
