@@ -1,35 +1,65 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
 {% load render_table from django_tables2 %}
 {% block title %}Itens de Despesa{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="d-flex align-items-center mb-4 gap-3">
-        <a href="{% url 'medicos:item_despesa_create' empresa_id=empresa.id %}" class="btn btn-success btn-sm px-3">
-          <i class="fas fa-plus me-1"></i>Novo Item
-        </a>
-        <i class="fas fa-list fa-2x text-primary me-2"></i>
-        <!-- O título principal é definido pelo bloco title, não é necessário duplicar aqui -->
-      </div>
-      <div class="card shadow-sm border-0">
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-list me-2"></i>
+          <span class="fw-bold">Itens de Despesa</span>
+        </div>
         <div class="card-body">
-          <form method="get" class="row row-cols-lg-auto g-2 align-items-end mb-3">
-            {% for field in filter.form.visible_fields %}
-              <div class="col">
-                {{ field.label_tag }}
-                {{ field }}
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          
+          <div class="d-flex align-items-center mb-3 gap-3">
+            <a href="{% url 'medicos:item_despesa_create' empresa_id=empresa.id %}" class="btn btn-success">
+              <i class="fas fa-plus me-1"></i>Novo Item
+            </a>
+          </div>
+          
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              {% for field in filter.form.visible_fields %}
+                <div class="col-auto">
+                  <label for="id_{{ field.name }}" class="form-label mb-0">
+                    <i class="fas fa-filter me-1"></i>{{ field.label }}
+                  </label>
+                  {{ field }}
+                </div>
+              {% endfor %}
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fas fa-search me-1"></i>Filtrar
+                </button>
               </div>
-            {% endfor %}
-            <div class="col">
-              <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+              <div class="col-auto">
+                <a href="{% url 'medicos:lista_itens_despesa' empresa_id=empresa.id %}" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Limpar
+                </a>
+              </div>
             </div>
           </form>
-          <div class="table-responsive">
-            {% render_table table %}
+          
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-table me-1"></i>Lista de Itens de Despesa</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
           </div>
+          
           {% if table.page and table.paginator %}
-          <nav aria-label="Paginação de itens de despesa">
+          <nav aria-label="Paginação de itens de despesa" class="mt-3">
             <ul class="pagination justify-content-center">
               {% if table.page.has_previous %}
                 <li class="page-item">

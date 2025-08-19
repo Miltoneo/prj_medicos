@@ -25,7 +25,20 @@ class NotaFiscalCreateView(CreateView):
     model = NotaFiscal
     form_class = NotaFiscalForm
     template_name = 'faturamento/criar_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def get_success_url(self):
+        # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
+        params = []
+        
+        # Preserva todos os parâmetros GET que vieram da tela de lista
+        for key, value in self.request.GET.items():
+            if value:
+                params.append(f'{key}={value}')
+        
+        url = reverse('medicos:lista_notas_fiscais')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
 
     def get_context_data(self, **kwargs):
@@ -41,10 +54,10 @@ class NotaFiscalCreateView(CreateView):
                 'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0) if aliquota_vigente else 0,
                 'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0) if aliquota_vigente else 0,
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0) if aliquota_vigente else 0,
-                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_BASE_CAL', 0) if aliquota_vigente else 0,
-                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA_OUTROS', 0) if aliquota_vigente else 0,
-                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0) if aliquota_vigente else 0,
-                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0) if aliquota_vigente else 0,
+                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0) if aliquota_vigente else 0,
+                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0) if aliquota_vigente else 0,
+                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_PRESUNCAO_OUTROS', 0) if aliquota_vigente else 0,
+                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA', 0) if aliquota_vigente else 0,
                 'campos_topo': [
                     'numero', 'tipo_servico', 'meio_pagamento', 'status_recebimento', 'dtEmissao', 'dtRecebimento'
                 ],
@@ -63,10 +76,10 @@ class NotaFiscalCreateView(CreateView):
                         'aliquota_ISS': getattr(aliquota_para_data, 'ISS', 0),
                         'aliquota_PIS': getattr(aliquota_para_data, 'PIS', 0),
                         'aliquota_COFINS': getattr(aliquota_para_data, 'COFINS', 0),
-                        'aliquota_IR_BASE': getattr(aliquota_para_data, 'IRPJ_BASE_CAL', 0),
-                        'aliquota_IR': getattr(aliquota_para_data, 'IRPJ_ALIQUOTA_OUTROS', 0),
-                        'aliquota_CSLL_BASE': getattr(aliquota_para_data, 'CSLL_BASE_CAL', 0),
-                        'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_ALIQUOTA_OUTROS', 0),
+                        'aliquota_IR_BASE': getattr(aliquota_para_data, 'IRPJ_ALIQUOTA', 0),
+                        'aliquota_IR': getattr(aliquota_para_data, 'IRPJ_PRESUNCAO_OUTROS', 0),
+                        'aliquota_CSLL_BASE': getattr(aliquota_para_data, 'CSLL_PRESUNCAO_OUTROS', 0),
+                        'aliquota_CSLL': getattr(aliquota_para_data, 'CSLL_ALIQUOTA', 0),
                     })
         else:
             context.update({
@@ -81,7 +94,12 @@ class NotaFiscalCreateView(CreateView):
         return context
 
     def get_form(self, form_class=None):
-        return super().get_form(form_class)
+        form = super().get_form(form_class)
+        # Passar empresa para o formulário para filtrar meio de pagamento
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            form.empresa_sessao = empresa
+        return form
 
     def form_valid(self, form):
         empresa = empresa_context(self.request).get('empresa')
@@ -106,13 +124,26 @@ class NotaFiscalUpdateView(UpdateView):
     model = NotaFiscal
     form_class = NotaFiscalForm
     template_name = 'faturamento/editar_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def get_success_url(self):
+        # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
+        params = []
+        
+        # Preserva todos os parâmetros GET que vieram da tela de lista
+        for key, value in self.request.GET.items():
+            if value:
+                params.append(f'{key}={value}')
+        
+        url = reverse('medicos:lista_notas_fiscais')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Nota Fiscal'
         context['cenario_nome'] = 'Faturamento'
-        empresa = context.get('empresa')  # Usar empresa do context processor
+        empresa = empresa_context(self.request).get('empresa')  # Usar empresa do context processor
         aliquota_vigente = None
         dt_emissao = self.object.dtEmissao if hasattr(self.object, 'dtEmissao') else None
         if empresa:
@@ -125,10 +156,21 @@ class NotaFiscalUpdateView(UpdateView):
                 'aliquota_ISS': getattr(aliquota_vigente, 'ISS', 0),
                 'aliquota_PIS': getattr(aliquota_vigente, 'PIS', 0),
                 'aliquota_COFINS': getattr(aliquota_vigente, 'COFINS', 0),
-                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_BASE_CAL', 0),
-                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA_OUTROS', 0),
-                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_BASE_CAL', 0),
-                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA_OUTROS', 0),
+                'aliquota_IR_BASE': getattr(aliquota_vigente, 'IRPJ_ALIQUOTA', 0),
+                'aliquota_IR': getattr(aliquota_vigente, 'IRPJ_PRESUNCAO_OUTROS', 0),
+                'aliquota_CSLL_BASE': getattr(aliquota_vigente, 'CSLL_PRESUNCAO_OUTROS', 0),
+                'aliquota_CSLL': getattr(aliquota_vigente, 'CSLL_ALIQUOTA', 0),
+            })
+        else:
+            # Definir alíquotas zeradas se não houver alíquota vigente
+            context.update({
+                'aliquota_ISS': 0,
+                'aliquota_PIS': 0,
+                'aliquota_COFINS': 0,
+                'aliquota_IR_BASE': 0,
+                'aliquota_IR': 0,
+                'aliquota_CSLL_BASE': 0,
+                'aliquota_CSLL': 0,
             })
         context.update({
             'campos_topo': [
@@ -140,10 +182,57 @@ class NotaFiscalUpdateView(UpdateView):
         })
         return context
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Passar empresa para o formulário para filtrar meio de pagamento
+        empresa = empresa_context(self.request).get('empresa')
+        if empresa:
+            form.empresa_sessao = empresa
+        return form
+
 class NotaFiscalDeleteView(DeleteView):
     model = NotaFiscal
     template_name = 'faturamento/excluir_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:lista_notas_fiscais')
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Override do método delete para adicionar logging e verificações antes da exclusão
+        """
+        import logging
+        logger = logging.getLogger('medicos.views_faturamento')
+        
+        self.object = self.get_object()
+        
+        # Log das movimentações financeiras antes da exclusão
+        movimentacoes_count = self.object.lancamentos_financeiros.count()
+        rateios_count = self.object.rateios_medicos.count()
+        
+        logger.info(f"Excluindo Nota Fiscal {self.object.numero} (ID: {self.object.id})")
+        logger.info(f"Movimentações financeiras associadas: {movimentacoes_count}")
+        logger.info(f"Rateios associados: {rateios_count}")
+        
+        # Executa a exclusão (signals serão disparados automaticamente)
+        result = super().delete(request, *args, **kwargs)
+        
+        logger.info(f"Nota Fiscal {self.object.numero} excluída com sucesso")
+        logger.info("Signals post_delete foram disparados automaticamente para limpeza")
+        
+        return result
+
+    def get_success_url(self):
+        # Preservar TODOS os filtros originais da busca (vindos da tela de lista)
+        params = []
+        
+        # Preserva todos os parâmetros GET que vieram da tela de lista
+        for key, value in self.request.GET.items():
+            if value:
+                params.append(f'{key}={value}')
+        
+        url = reverse('medicos:lista_notas_fiscais')
+        if params:
+            url += '?' + '&'.join(params)
+        return url
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Não injeta empresa manualmente
@@ -182,16 +271,58 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
 
     def get_context_data(self, **kwargs):
         import datetime
+        from django.db.models import Sum
         context = super().get_context_data(**kwargs)
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
         if not mes_ano_emissao:
             now = datetime.date.today()
             mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
+        
+        # Calcular totalizações usando o queryset filtrado do filterset
+        # Isso garante que os totais reflitam exatamente os registros exibidos na tabela
+        # EXCLUINDO notas fiscais canceladas da totalização
+        if hasattr(self, 'filterset') and self.filterset is not None:
+            queryset_filtrado = self.filterset.qs.exclude(status_recebimento='cancelado')
+        else:
+            queryset_filtrado = self.get_queryset().exclude(status_recebimento='cancelado')
+            
+        totais = queryset_filtrado.aggregate(
+            total_bruto=Sum('val_bruto'),
+            total_iss=Sum('val_ISS'),
+            total_pis=Sum('val_PIS'),
+            total_cofins=Sum('val_COFINS'),
+            total_ir=Sum('val_IR'),
+            total_csll=Sum('val_CSLL'),
+            total_liquido=Sum('val_liquido')
+        )
+        
+        # Contar notas canceladas para informação adicional
+        if hasattr(self, 'filterset') and self.filterset is not None:
+            queryset_base = self.filterset.qs
+        else:
+            queryset_base = self.get_queryset()
+            
+        total_notas = queryset_base.count()
+        notas_canceladas = queryset_base.filter(status_recebimento='cancelado').count()
+        notas_validas = total_notas - notas_canceladas
+        
+        # Garantir que valores None sejam convertidos para 0
+        for key, value in totais.items():
+            if value is None:
+                totais[key] = 0
+        
         context.update({
             'titulo_pagina': 'Lista de notas fiscais',
             'menu_nome': 'Notas Fiscais',
             'mes_ano': self.request.session.get('mes_ano'),
-            'mes_ano_emissao_default': mes_ano_emissao
+            'mes_ano_emissao_default': mes_ano_emissao,
+            'totais': totais,
+            'total_notas': total_notas,
+            'notas_canceladas': notas_canceladas,
+            'notas_validas': notas_validas,
+            # Variáveis de filtro para a tabela (seguindo padrão das despesas)
+            'mes_ano_emissao': self.request.GET.get('mes_ano_emissao'),
+            'status_recebimento': self.request.GET.get('status_recebimento')
         })
         context['cenario_nome'] = 'Faturamento'
         # Não injeta empresa manualmente

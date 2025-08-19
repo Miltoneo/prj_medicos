@@ -2,102 +2,163 @@
 {% extends 'layouts/base_cenario_financeiro.html' %}
 {% load render_table from django_tables2 %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit do formulário de filtro quando campos forem alterados
+  const formFields = document.querySelectorAll('#id_data_movimentacao_mes, #id_socio, #id_descricao_movimentacao_financeira');
+  formFields.forEach(function(field) {
+    if (field) {
+      field.addEventListener('change', function() {
+        // Submete o formulário automaticamente quando um campo é alterado
+        this.closest('form').submit();
+      });
+    }
+  });
+  
+  // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
+  const dataField = document.getElementById('id_data_movimentacao_mes');
+  if (dataField) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilterParams = urlParams.has('data_movimentacao_mes') || urlParams.has('socio') || urlParams.has('descricao_movimentacao_financeira');
+    
+    if (!hasFilterParams && !dataField.value) {
+      // Define o mês atual se não há valor
+      const today = new Date();
+      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+      dataField.value = currentMonth;
+      
+      // Submete automaticamente para aplicar o filtro do mês atual
+      setTimeout(() => {
+        dataField.closest('form').submit();
+      }, 100);
+    }
+  }
+});
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-{# O título será exibido pelo layout base via {{ titulo_pagina }} #}
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <!-- Nome da empresa removido, já exibido pelo base_header -->
-    <a href="{% url 'financeiro:financeiro_create' request.session.empresa_id %}" class="btn btn-success btn-sm px-3">
-      <i class="fas fa-plus-circle me-1"></i> Nova Movimentação
-    </a>
-  </div>
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      {% if filter %}
-      <form method="get" class="mb-3">
-        {% if filter.form.non_field_errors %}
-          <div class="alert alert-danger mb-2">
-            {{ filter.form.non_field_errors }}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-coins me-2"></i>
+            <span class="fw-bold">Lançamentos de Movimentações Financeiras</span>
           </div>
-        {% endif %}
-        <div class="row g-2 flex-wrap align-items-end">
-          {% for field in filter.form.visible_fields %}
-            {% if field.name == 'data_movimentacao_mes' %}
-              <div class="mb-2 d-flex flex-column" style="max-width: 140px;">
-                <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
-                {% endif %}
-                {% if field.help_text %}
-                  <div class="form-text">{{ field.help_text }}</div>
-                {% endif %}
-              </div>
-            {% elif field.name == 'descricao_movimentacao_financeira' %}
-              <div class="mb-2 d-flex flex-column" style="max-width: 200px;">
-                <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
-                {% endif %}
-                {% if field.help_text %}
-                  <div class="form-text">{{ field.help_text }}</div>
-                {% endif %}
-              </div>
-            {% elif field.name == 'socio' %}
-              <div class="mb-2 d-flex flex-column" style="max-width: 180px;">
-                <label class="form-label small" for="id_{{ field.name }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
-                {% endif %}
-                {% if field.help_text %}
-                  <div class="form-text">{{ field.help_text }}</div>
-                {% endif %}
+          <a href="{% url 'medicos:financeiro_create' request.session.empresa_id %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm">
+            <i class="fas fa-plus-circle me-1"></i> Nova Movimentação
+          </a>
+        </div>
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          {% if filter %}
+          <form method="get" class="mb-3">
+            {% if filter.form.non_field_errors %}
+              <div class="alert alert-danger mb-2">
+                {{ filter.form.non_field_errors }}
               </div>
             {% endif %}
-          {% endfor %}
-          <div class="col-lg-3 col-md-4 col-sm-6 mb-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
-          </div>
-        </div>
-        {{ filter.form.hidden_fields }}
-      </form>
-      {% endif %}
-      <!-- Totalização removida conforme solicitado -->
-      <div class="table-responsive mt-4">
-        {% render_table table %}
-        {% if table.page and table.paginator %}
-          <nav aria-label="Paginação" class="mt-3">
-            <ul class="pagination justify-content-center">
-              {% if table.page.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?{% querystring page=table.page.previous_page_number %}" aria-label="Anterior">
-                    <span aria-hidden="true">&laquo;</span>
-                  </a>
-                </li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            <div class="row g-2 align-items-end">
+              <!-- Campo de data em primeira posição -->
+              {% if filter.form.data_movimentacao_mes %}
+                <div class="col-auto">
+                  <label for="id_data_movimentacao_mes" class="form-label mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>{{ filter.form.data_movimentacao_mes.label }}
+                  </label>
+                  {{ filter.form.data_movimentacao_mes }}
+                </div>
               {% endif %}
-              {% for i in table.paginator.page_range %}
-                {% if i == table.page.number %}
-                  <li class="page-item active"><span class="page-link">{{ i }}</span></li>
-                {% else %}
-                  <li class="page-item"><a class="page-link" href="?{% querystring page=i %}">{{ i }}</a></li>
+              
+              <!-- Demais campos -->
+              {% for field in filter.form.visible_fields %}
+                {% if field.name != 'data_movimentacao_mes' %}
+                  <div class="col-auto">
+                    <label for="id_{{ field.name }}" class="form-label mb-0">
+                      {% if field.name == 'socio' %}
+                        <i class="fas fa-user me-1"></i>
+                      {% elif field.name == 'descricao_movimentacao_financeira' %}
+                        <i class="fas fa-file-alt me-1"></i>
+                      {% endif %}
+                      {{ field.label }}
+                    </label>
+                    {{ field }}
+                  </div>
                 {% endif %}
               {% endfor %}
-              {% if table.page.has_next %}
-                <li class="page-item">
-                  <a class="page-link" href="?{% querystring page=table.page.next_page_number %}" aria-label="Próxima">
-                    <span aria-hidden="true">&raquo;</span>
-                  </a>
-                </li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-              {% endif %}
-            </ul>
-          </nav>
-        {% endif %}
+              
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+              </div>
+              <div class="col-auto">
+                <a href="{% url 'medicos:financeiro_lancamentos' %}" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Limpar
+                </a>
+              </div>
+            </div>
+            
+            <!-- Indicador visual do filtro ativo -->
+            {% if filter.form.data_movimentacao_mes.value %}
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-filter me-1"></i>
+                  Exibindo lançamentos de: <strong>{{ filter.form.data_movimentacao_mes.value }}</strong>
+                </small>
+              </div>
+            {% endif %}
+            {{ filter.form.hidden_fields }}
+          </form>
+          {% endif %}
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-list me-1"></i>Movimentações financeiras</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
+          </div>
+          {% if table.page and table.paginator %}
+            <nav aria-label="Paginação" class="mt-3">
+              <ul class="pagination justify-content-center">
+                {% if table.page.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% querystring page=table.page.previous_page_number %}" aria-label="Anterior">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+                {% for i in table.paginator.page_range %}
+                  {% if i == table.page.number %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                  {% else %}
+                    <li class="page-item"><a class="page-link" href="?{% querystring page=i %}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% if table.page.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% querystring page=table.page.next_page_number %}" aria-label="Próxima">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>

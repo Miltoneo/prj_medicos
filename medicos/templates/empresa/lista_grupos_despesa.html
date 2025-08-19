@@ -2,88 +2,422 @@
 {% load crispy_forms_tags %}
 {% block title %}Grupos de Despesas{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="d-flex align-items-center mb-4 gap-3">
-        <a href="{% url 'medicos:grupo_despesa_edit' empresa_id=empresa.id grupo_id=0 %}" class="btn btn-success btn-sm px-3">
-          <i class="fas fa-plus me-1"></i>Novo Grupo
-        </a>
-        <i class="fas fa-layer-group fa-2x text-primary me-2"></i>
-        <!-- O título principal é definido pelo bloco title, não é necessário duplicar aqui -->
-      </div>
-      <div class="card shadow-sm border-0 mb-3">
+{% csrf_token %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-layer-group me-2"></i>
+          <span class="fw-bold">Grupos de Despesas</span>
+        </div>
         <div class="card-body">
-          {% if filter %}
-          <form method="get" class="row row-cols-lg-auto g-2 align-items-end mb-3">
-            {% for field in filter.form.visible_fields %}
-              <div class="col">
-                {{ field.label_tag }}
-                {{ field }}
-              </div>
-            {% endfor %}
-            <div class="col">
-              <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
             </div>
-          </form>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
           {% endif %}
-          <div class="table-responsive">
-            <table class="table table-striped table-hover sortable">
-              <thead>
-                <tr>
-                  <th><a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=codigo">Código</a></th>
-                  <th><a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=descricao">Descrição</a></th>
-                  <th>Tipo de Rateio</th>
-                  <th><a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=created_at">Criado em</a></th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for grupo in grupos %}
-                <tr>
-                  <td>{{ grupo.codigo }}</td>
-                  <td>{{ grupo.descricao }}</td>
-                  <td>{{ grupo.get_tipo_rateio_display }}</td>
-                  <td>{{ grupo.created_at|date:'d/m/Y H:i' }}</td>
-                  <td>
-                    <a href="{% url 'medicos:grupo_despesa_edit' empresa_id=empresa.id grupo_id=grupo.id %}" class="btn btn-sm btn-primary">Editar</a>
-                    <a href="{% url 'medicos:grupo_despesa_delete' empresa_id=empresa.id grupo_id=grupo.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão do grupo?');">Excluir</a>
-                  </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-center">Nenhum grupo cadastrado.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
+
+          <!-- Botão de Novo e Filtros -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <a href="{% url 'medicos:grupo_despesa_edit' empresa_id=empresa.id grupo_id=0 %}" class="btn btn-success me-2">
+                <i class="fas fa-plus me-1"></i>Novo Grupo de Despesa
+              </a>
+              <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importarGruposModal">
+                <i class="fas fa-copy me-1"></i>Importar Grupos e Itens de Despesa
+              </button>
+            </div>
           </div>
-          <nav aria-label="Paginação de grupos de despesa">
-            <ul class="pagination justify-content-center">
-              {% if grupos.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ grupos.previous_page_number }}" aria-label="Anterior">&laquo;</a>
-                </li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+
+          <!-- Formulário de Filtro -->
+          {% if filter %}
+            <form method="get" class="mb-3">
+              <div class="row g-2 align-items-end">
+                {% for field in filter.form.visible_fields %}
+                  <div class="col-auto">
+                    <label for="id_{{ field.name }}" class="form-label mb-0">
+                      <i class="fas fa-search me-1"></i>{{ field.label }}
+                    </label>
+                    {{ field }}
+                  </div>
+                {% endfor %}
+                <div class="col-auto">
+                  <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-1"></i>Filtrar
+                  </button>
+                </div>
+                <div class="col-auto">
+                  <a href="{% url 'medicos:lista_grupos_despesa' empresa_id=empresa.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Limpar
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Indicador visual do filtro ativo -->
+              {% if filter.form.visible_fields %}
+                {% for field in filter.form.visible_fields %}
+                  {% if field.value %}
+                    <div class="mt-2">
+                      <small class="text-muted">
+                        <i class="fas fa-filter me-1"></i>
+                        Filtrando por {{ field.label|lower }}: <strong>{{ field.value }}</strong>
+                      </small>
+                    </div>
+                  {% endif %}
+                {% endfor %}
               {% endif %}
-              {% for num in grupos.paginator.page_range %}
-                {% if grupos.number == num %}
-                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% else %}
-                  <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                {% endif %}
-              {% endfor %}
-              {% if grupos.has_next %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ grupos.next_page_number }}" aria-label="Próxima">&raquo;</a>
-                </li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-              {% endif %}
-            </ul>
-          </nav>
+            </form>
+          {% endif %}
+
+          <!-- Tabela de Grupos de Despesa -->
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-table me-1"></i>Lista de Grupos de Despesas</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              <table class="table table-striped table-hover sortable align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>
+                      <a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=codigo" class="text-decoration-none">
+                        <i class="fas fa-hashtag me-1"></i>Código
+                      </a>
+                    </th>
+                    <th>
+                      <a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=descricao" class="text-decoration-none">
+                        <i class="fas fa-align-left me-1"></i>Descrição
+                      </a>
+                    </th>
+                    <th><i class="fas fa-cogs me-1"></i>Tipo de Rateio</th>
+                    <th>
+                      <a href="?{{ request.GET.urlencode|default:''|add:'&' }}sort=created_at" class="text-decoration-none">
+                        <i class="fas fa-calendar me-1"></i>Criado em
+                      </a>
+                    </th>
+                    <th><i class="fas fa-tools me-1"></i>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for grupo in grupos %}
+                  <tr>
+                    <td class="fw-semibold">{{ grupo.codigo }}</td>
+                    <td>{{ grupo.descricao }}</td>
+                    <td>
+                      <span class="badge bg-{% if grupo.tipo_rateio == 'COM_RATEIO' %}success{% else %}info{% endif %}">
+                        {{ grupo.get_tipo_rateio_display }}
+                      </span>
+                    </td>
+                    <td>{{ grupo.created_at|date:'d/m/Y H:i' }}</td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <a href="{% url 'medicos:grupo_despesa_edit' empresa_id=empresa.id grupo_id=grupo.id %}" 
+                           class="btn btn-sm btn-outline-primary" title="Editar">
+                          Editar
+                        </a>
+                        <a href="{% url 'medicos:grupo_despesa_delete' empresa_id=empresa.id grupo_id=grupo.id %}" 
+                           class="btn btn-sm btn-outline-danger" 
+                           onclick="return confirm('Confirma exclusão do grupo {{ grupo.descricao }}?');" 
+                           title="Excluir">
+                          Excluir
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                      <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                      Nenhum grupo cadastrado.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Paginação -->
+          {% if grupos.paginator.num_pages > 1 %}
+            <div class="d-flex justify-content-center mt-4">
+              <nav aria-label="Paginação de grupos de despesa">
+                <ul class="pagination">
+                  {% if grupos.has_previous %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ grupos.previous_page_number }}" aria-label="Anterior">Anterior</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                  {% endif %}
+                  
+                  {% for num in grupos.paginator.page_range %}
+                    {% if grupos.number == num %}
+                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                      <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                  {% endfor %}
+                  
+                  {% if grupos.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ grupos.next_page_number }}" aria-label="Próxima">Próxima</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Modal para Importar Grupos de Despesa -->
+<div class="modal fade" id="importarGruposModal" tabindex="-1" aria-labelledby="importarGruposModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="importarGruposModalLabel">
+          <i class="fas fa-copy me-2"></i>Importar Grupos e Itens de Despesa
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Atenção:</strong> Esta ação irá copiar todos os grupos de despesa e seus respectivos itens 
+          da empresa selecionada para a empresa atual (<strong>{{ empresa.nome_fantasia|default:empresa.name }}</strong>).
+        </div>
+        
+        <form id="formImportarGrupos">
+          <div class="mb-3">
+            <label for="empresaOrigemSelect" class="form-label">
+              <i class="fas fa-building me-1"></i>Selecione a empresa de origem:
+            </label>
+            <select class="form-select" id="empresaOrigemSelect" required>
+              <option value="">Carregando empresas...</option>
+            </select>
+          </div>
+          
+          <div id="detalhesEmpresaOrigem" class="d-none">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-title mb-2">
+                  <i class="fas fa-info-circle me-1"></i>Detalhes da empresa selecionada:
+                </h6>
+                <div id="infoEmpresaOrigem"></div>
+                <div class="mt-3">
+                  <button type="button" class="btn btn-primary" onclick="verificarDados()">
+                    <i class="fas fa-search me-1"></i>Verificar Dados Disponíveis
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="dadosDisponiveis" class="d-none mt-3">
+            <div class="card bg-success text-white">
+              <div class="card-body">
+                <h6 class="card-title mb-2">
+                  <i class="fas fa-check-circle me-1"></i>Dados encontrados:
+                </h6>
+                <div id="resumoDados"></div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" id="btnConfirmarImportacao" disabled onclick="confirmarImportacao()">
+          <i class="fas fa-copy me-1"></i>Importar Dados
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmarImportacaoModal" tabindex="-1" aria-labelledby="confirmarImportacaoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="confirmarImportacaoModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Importação
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>ATENÇÃO:</strong> Esta ação não pode ser desfeita!
+        </div>
+        
+        <p>Você confirma a importação dos seguintes dados:</p>
+        <div id="resumoConfirmacao"></div>
+        
+        <p class="mt-3">
+          <strong>Para a empresa:</strong> {{ empresa.nome_fantasia|default:empresa.name }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" onclick="executarImportacao()">
+          <i class="fas fa-check me-1"></i>Confirmar e Importar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let empresaDestino = {{ empresa.id }};
+let empresaOrigemSelecionada = null;
+let dadosParaImportar = null;
+
+// Carregar empresas quando o modal for aberto
+document.getElementById('importarGruposModal').addEventListener('show.bs.modal', function (event) {
+  carregarEmpresas();
+});
+
+// Quando uma empresa for selecionada
+document.getElementById('empresaOrigemSelect').addEventListener('change', function() {
+  const empresaId = this.value;
+  if (empresaId) {
+    empresaOrigemSelecionada = empresaId;
+    mostrarDetalhesEmpresa(empresaId);
+  } else {
+    document.getElementById('detalhesEmpresaOrigem').classList.add('d-none');
+    document.getElementById('dadosDisponiveis').classList.add('d-none');
+    document.getElementById('btnConfirmarImportacao').disabled = true;
+  }
+});
+
+function carregarEmpresas() {
+  fetch(`/medicos/api/empresas-conta/`)
+    .then(response => response.json())
+    .then(data => {
+      const select = document.getElementById('empresaOrigemSelect');
+      select.innerHTML = '<option value="">Selecione uma empresa...</option>';
+      
+      data.empresas.forEach(empresa => {
+        if (empresa.id !== empresaDestino) {  // Não mostrar a empresa atual
+          const option = document.createElement('option');
+          option.value = empresa.id;
+          option.textContent = empresa.nome_fantasia || empresa.name;
+          select.appendChild(option);
+        }
+      });
+    })
+    .catch(error => {
+      console.error('Erro ao carregar empresas:', error);
+      document.getElementById('empresaOrigemSelect').innerHTML = '<option value="">Erro ao carregar empresas</option>';
+    });
+}
+
+function mostrarDetalhesEmpresa(empresaId) {
+  fetch(`/medicos/api/empresas-conta/`)
+    .then(response => response.json())
+    .then(data => {
+      const empresa = data.empresas.find(e => e.id == empresaId);
+      if (empresa) {
+        document.getElementById('infoEmpresaOrigem').innerHTML = `
+          <strong>Razão Social:</strong> ${empresa.name}<br>
+          <strong>Nome Fantasia:</strong> ${empresa.nome_fantasia || 'Não informado'}<br>
+          <strong>CNPJ:</strong> ${empresa.cnpj || 'Não informado'}
+        `;
+        document.getElementById('detalhesEmpresaOrigem').classList.remove('d-none');
+      }
+    });
+}
+
+function verificarDados() {
+  if (!empresaOrigemSelecionada) {
+    alert('Selecione uma empresa primeiro');
+    return;
+  }
+  
+  fetch(`/medicos/empresas/${empresaOrigemSelecionada}/grupos-despesa/verificar-dados/`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        dadosParaImportar = data;
+        document.getElementById('resumoDados').innerHTML = `
+          <strong>${data.total_grupos}</strong> grupo(s) de despesa<br>
+          <strong>${data.total_itens}</strong> item(ns) de despesa
+        `;
+        document.getElementById('dadosDisponiveis').classList.remove('d-none');
+        document.getElementById('btnConfirmarImportacao').disabled = false;
+      } else {
+        alert('Erro ao verificar dados: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Erro ao verificar dados:', error);
+      alert('Erro ao verificar dados disponíveis');
+    });
+}
+
+function confirmarImportacao() {
+  if (!dadosParaImportar) {
+    alert('Verifique os dados primeiro');
+    return;
+  }
+  
+  document.getElementById('resumoConfirmacao').innerHTML = `
+    <ul>
+      <li><strong>${dadosParaImportar.total_grupos}</strong> grupo(s) de despesa</li>
+      <li><strong>${dadosParaImportar.total_itens}</strong> item(ns) de despesa</li>
+    </ul>
+    <small class="text-muted">Origem: ${dadosParaImportar.empresa_origem_nome}</small>
+  `;
+  
+  // Fechar modal atual e abrir modal de confirmação
+  bootstrap.Modal.getInstance(document.getElementById('importarGruposModal')).hide();
+  new bootstrap.Modal(document.getElementById('confirmarImportacaoModal')).show();
+}
+
+function executarImportacao() {
+  const button = event.target;
+  button.disabled = true;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importando...';
+  
+  fetch(`/medicos/empresas/${empresaDestino}/grupos-despesa/importar/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify({
+      empresa_origem_id: empresaOrigemSelecionada
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`Importação realizada com sucesso!\n\nGrupos importados: ${data.grupos_importados}\nItens importados: ${data.itens_importados}`);
+      location.reload(); // Recarregar a página para mostrar os novos dados
+    } else {
+      alert('Erro na importação: ' + data.message);
+      button.disabled = false;
+      button.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar e Importar';
+    }
+  })
+  .catch(error => {
+    console.error('Erro na importação:', error);
+    alert('Erro na importação. Tente novamente.');
+    button.disabled = false;
+    button.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar e Importar';
+  });
+}
+</script>
 {% endblock %}

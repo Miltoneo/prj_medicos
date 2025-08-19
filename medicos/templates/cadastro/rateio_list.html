@@ -1,87 +1,353 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
+{% block bl_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit do formulário de filtro quando o mês de competência for alterado
+  const mesField = document.getElementById('mes_competencia');
+  if (mesField) {
+    mesField.addEventListener('change', function() {
+      this.closest('form').submit();
+    });
+
+    // Define o mês atual automaticamente se a página não tiver parâmetros de filtro
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilterParams = urlParams.has('mes_competencia') || urlParams.has('item_despesa');
+    if (!hasFilterParams && !mesField.value) {
+      const today = new Date();
+      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+      mesField.value = currentMonth;
+      // Submete automaticamente para aplicar o filtro do mês atual
+      setTimeout(() => {
+        mesField.closest('form').submit();
+      }, 100);
+    }
+  }
+});
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <!-- Coluna 1: Seleção de mês e lista de itens de despesa -->
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    Filtros
-                </div>
-                <div class="card-body">
-                    <form method="get">
-                        <div class="mb-3">
-                            <label for="mes_competencia" class="form-label"><b>Mês de Competência:</b></label>
-                            <input type="month" id="mes_competencia" name="mes_competencia" class="form-control" value="{{ mes_competencia|default:default_mes }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label"><b>Itens de Despesa:</b></label>
-                            <div class="list-group" style="max-height: 320px; overflow-y: auto;">
-                                {% for item in itens_despesa %}
-                                    <button type="submit" name="item_despesa" value="{{ item.id }}" class="list-group-item list-group-item-action {% if item.id == selected_item_id %}active{% endif %}{% if item.id in itens_com_rateio_ids %} list-group-item-info fw-bold{% endif %}">
-                                        {{ item.descricao|default:item|default:'(sem descrição)' }}
-                                        {% if item.id in itens_com_rateio_ids %}<span class="badge bg-info text-dark ms-2">Com Rateio</span>{% endif %}
-                                    </button>
-                                {% empty %}
-                                    <span class="text-muted">Nenhum item cadastrado.</span>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-calculator me-2"></i>
+          <span class="fw-bold">Configuração de Rateio</span>
         </div>
-        <!-- Coluna 2: Tabela de sócios e percentuais -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    Rateio por Sócio
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+          
+          <div class="row">
+            <!-- Coluna 1: Seleção de mês e lista de itens de despesa -->
+            <div class="col-lg-4">
+              <div class="card shadow-sm border-info mb-4">
+                <div class="card-header bg-info bg-opacity-10 border-info fw-bold d-flex align-items-center">
+                  <i class="fas fa-filter me-2"></i>
+                  <span>Filtros</span>
                 </div>
                 <div class="card-body">
-                    <form method="post">
-                        <input type="hidden" name="mes_competencia" value="{{ mes_competencia|default:default_mes }}">
-                        <input type="hidden" name="item_despesa" value="{{ selected_item_id }}">
-                        {% csrf_token %}
-                        <table class="table table-bordered table-striped mb-3">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Sócio</th>
-                                    <th>Percentual (%)</th>
-                                    <th>Observações</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for rateio in rateios %}
-                                <tr>
-                                    <td>{{ rateio.socio.pessoa.name }}</td>
-                                    <td>
-                                        <input type="number"
-                                            name="{% if rateio.id %}percentual_{{ rateio.id }}{% else %}percentual_socio_{{ rateio.socio.id }}{% endif %}"
-                                            {% if rateio.percentual_rateio is not None and rateio.percentual_rateio != 0 %}value="{{ rateio.percentual_rateio|stringformat:'.2f' }}"{% endif %}
-                                            placeholder="0.00"
-                                            min="0" max="100" step="0.01" class="form-control text-end">
-                                    </td>
-                                    <td>{{ rateio.observacoes }}</td>
-                                    <td class="actions">
-                                        <button name="edit" value="{{ rateio.id }}" class="btn btn-sm btn-outline-primary me-1">Editar</button>
-                                        <button name="delete" value="{{ rateio.id }}" class="btn btn-sm btn-outline-danger">Remover</button>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4" class="text-muted">Nenhum sócio cadastrado para este item.</td></tr>
-                                {% endfor %}
-                            </tbody>
+                  <form method="get">
+                    <div class="mb-3">
+                      <label for="mes_competencia" class="form-label mb-0">
+                        <i class="fas fa-calendar-alt me-1"></i><b>Mês de Competência:</b>
+                      </label>
+                      <input type="month" id="mes_competencia" name="mes_competencia" class="form-control" value="{{ mes_competencia|default:default_mes }}">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label mb-0">
+                        <i class="fas fa-list me-1"></i><b>Itens de Despesa:</b>
+                      </label>
+                      <div class="rounded shadow-sm p-2 bg-light mt-2">
+                        <div class="bg-white rounded-2 p-2">
+                          <div class="list-group" style="max-height: 320px; overflow-y: auto;">
+                            {% for item in itens_despesa %}
+                              <button type="submit" name="item_despesa" value="{{ item.id }}" class="list-group-item list-group-item-action {% if item.id == selected_item_id %}active{% endif %}{% if item.id in itens_com_rateio_ids %} list-group-item-info fw-bold{% endif %}">
+                                {{ item.descricao|default:item|default:'(sem descrição)' }}
+                                {% if item.id in itens_com_rateio_ids %}<span class="badge bg-info text-dark ms-2">Com Rateio</span>{% endif %}
+                              </button>
+                            {% empty %}
+                              <span class="text-muted">Nenhum item cadastrado.</span>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Coluna 2: Tabela de sócios e percentuais -->
+            <div class="col-lg-8">
+              <div class="card shadow-sm border-success">
+                <div class="card-header bg-success bg-opacity-10 border-success fw-bold d-flex align-items-center">
+                  <i class="fas fa-users me-2"></i>
+                  <span>Rateio por Sócio</span>
+                </div>
+                <div class="card-body">
+                  <form method="post">
+                    <input type="hidden" name="mes_competencia" value="{{ mes_competencia|default:default_mes }}">
+                    <input type="hidden" name="item_despesa" value="{{ selected_item_id }}">
+                    {% csrf_token %}
+                    
+                    <h5 class="fw-bold mt-2 mb-2"><i class="fas fa-table me-1"></i>Configuração de Percentuais</h5>
+                    <div class="table-responsive rounded shadow-sm p-3 bg-light">
+                      <div class="bg-white rounded-2 p-2">
+                        <table class="table table-bordered table-striped table-hover mb-3">
+                          <thead class="table-light">
+                            <tr>
+                              <th><i class="fas fa-user me-1"></i>Sócio</th>
+                              <th><i class="fas fa-percentage me-1"></i>Percentual (%)</th>
+                              <th><i class="fas fa-comment me-1"></i>Observações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for rateio in rateios %}
+                            <tr>
+                              <td>{{ rateio.socio.pessoa.name }}</td>
+                              <td>
+                                <input type="number"
+                                    name="{% if rateio.id %}percentual_{{ rateio.id }}{% else %}percentual_socio_{{ rateio.socio.id }}{% endif %}"
+                                    {% if rateio.percentual_rateio is not None and rateio.percentual_rateio != 0 %}value="{{ rateio.percentual_rateio|stringformat:'.2f' }}"{% endif %}
+                                    placeholder="0.00"
+                                    min="0" max="100" step="0.01" class="form-control text-end">
+                              </td>
+                              <td>{{ rateio.observacoes }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-muted text-center">Nenhum sócio cadastrado para este item.</td></tr>
+                            {% endfor %}
+                          </tbody>
                         </table>
-                        <div class="total fw-bold mt-2">Total Percentual: {{ total_percentual|default:"0,00" }}%</div>
-                        <div class="controls mt-3">
-                            <button type="submit" class="btn btn-success">Salvar</button>
-                            <a href="{% url 'medicos:cadastro_rateio' %}" class="btn btn-secondary ms-2">Cancelar</a>
+                      </div>
+                    </div>
+                    
+                    <div class="mb-3 rounded shadow-sm p-3 bg-light">
+                      <div class="bg-white rounded-2 p-3">
+                        <div class="total fw-bold text-primary">
+                          <i class="fas fa-calculator me-1"></i>
+                          Total Percentual: {{ total_percentual|default:"0,00" }}%
                         </div>
-                    </form>
+                      </div>
+                    </div>
+                    
+                    <div class="controls d-flex gap-2">
+                      <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i>Salvar
+                      </button>
+                      <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalCopiarRateio">
+                        <i class="fas fa-copy me-1"></i>Copiar Tabela de Rateio para Mês
+                      </button>
+                      <a href="{% url 'medicos:cadastro_rateio' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                      </a>
+                    </div>
+                  </form>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- Modal para Copiar Rateio -->
+<div class="modal fade" id="modalCopiarRateio" tabindex="-1" aria-labelledby="modalCopiarRateioLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCopiarRateioLabel">
+          <i class="fas fa-copy me-2"></i>Copiar Tabela de Rateio para Mês
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-1"></i>
+          <strong>Mês de Origem:</strong> {{ mes_competencia|date:"m/Y" }}
+        </div>
+        
+        <p class="text-muted mb-3">
+          Selecione o mês de destino para copiar todas as configurações de rateio do mês atual.
+          <strong>Atenção:</strong> Esta ação irá sobrescrever todas as configurações existentes no mês de destino.
+        </p>
+        
+        <div class="form-group">
+          <label for="mesDestino" class="form-label">
+            <i class="fas fa-calendar-alt me-1"></i>Mês de Destino:
+          </label>
+          <input type="month" id="mesDestino" class="form-control" required>
+        </div>
+        
+        <div id="errorMessage" class="alert alert-danger" style="display: none;">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          <span id="errorText"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" id="btnConfirmarCopia" class="btn btn-primary" disabled>
+          <i class="fas fa-copy me-1"></i>Copiar Configurações
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="modalConfirmacaoCopia" tabindex="-1" aria-labelledby="modalConfirmacaoCopiaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmacaoCopiaLabel">
+          <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Confirmar Cópia
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="fas fa-warning me-1"></i>
+          <strong>Atenção!</strong> Esta ação irá sobrescrever todas as configurações de rateio existentes.
+        </div>
+        
+        <p>
+          <strong>Confirma a cópia das configurações de rateio?</strong>
+        </p>
+        <ul class="list-unstyled">
+          <li><i class="fas fa-arrow-right me-1 text-success"></i><strong>De:</strong> <span id="mesOrigemTexto">{{ mes_competencia|date:"m/Y" }}</span></li>
+          <li><i class="fas fa-arrow-right me-1 text-primary"></i><strong>Para:</strong> <span id="mesDestinoTexto"></span></li>
+        </ul>
+        
+        <p class="text-muted">
+          <small>Todas as configurações de percentuais de rateio serão copiadas para o mês de destino. As configurações existentes no mês de destino serão substituídas.</small>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" id="btnExecutarCopia" class="btn btn-success">
+          <i class="fas fa-check me-1"></i>Confirmar e Copiar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% csrf_token %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalCopiarRateio');
+    const modalConfirmacao = document.getElementById('modalConfirmacaoCopia');
+    const mesDestinoInput = document.getElementById('mesDestino');
+    const btnConfirmar = document.getElementById('btnConfirmarCopia');
+    const btnExecutar = document.getElementById('btnExecutarCopia');
+    const mesOrigemAtual = '{{ mes_competencia }}';
+    
+    // Habilita botão quando mês é selecionado
+    mesDestinoInput.addEventListener('change', function() {
+        const mesDestino = this.value;
+        if (mesDestino && mesDestino !== mesOrigemAtual.substring(0, 7)) {
+            btnConfirmar.disabled = false;
+            document.getElementById('errorMessage').style.display = 'none';
+        } else {
+            btnConfirmar.disabled = true;
+            if (mesDestino === mesOrigemAtual.substring(0, 7)) {
+                mostrarErro('O mês de destino deve ser diferente do mês de origem');
+            }
+        }
+    });
+
+    // Mostra modal de confirmação
+    btnConfirmar.addEventListener('click', function() {
+        const mesDestino = mesDestinoInput.value;
+        if (mesDestino) {
+            const [ano, mes] = mesDestino.split('-');
+            const mesDestinoFormatado = `${mes}/${ano}`;
+            document.getElementById('mesDestinoTexto').textContent = mesDestinoFormatado;
+            
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+            bsModal.hide();
+            const bsModalConfirmacao = new bootstrap.Modal(modalConfirmacao);
+            bsModalConfirmacao.show();
+        }
+    });
+
+    // Executa a cópia
+    btnExecutar.addEventListener('click', function() {
+        const mesDestino = mesDestinoInput.value;
+        if (mesDestino) {
+            executarCopiaRateio(mesDestino);
+        }
+    });
+
+    function executarCopiaRateio(mesDestino) {
+        btnExecutar.disabled = true;
+        btnExecutar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Copiando...';
+
+        const formData = new FormData();
+        formData.append('mes_origem', mesOrigemAtual);
+        formData.append('mes_destino', mesDestino + '-01');
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "medicos:copiar_rateio_mes" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const bsModalConfirmacao = bootstrap.Modal.getOrCreateInstance(modalConfirmacao);
+                bsModalConfirmacao.hide();
+                
+                // Mostra mensagem de sucesso
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-1"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.row'));
+                
+                // Reset do modal
+                mesDestinoInput.value = '';
+                btnConfirmar.disabled = true;
+                
+            } else {
+                mostrarErro(data.error || 'Erro ao copiar configurações de rateio');
+                btnExecutar.disabled = false;
+                btnExecutar.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar e Copiar';
+            }
+        })
+        .catch(error => {
+            mostrarErro('Erro de conexão ao copiar configurações');
+            btnExecutar.disabled = false;
+            btnExecutar.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar e Copiar';
+        });
+    }
+
+    function mostrarErro(mensagem) {
+        document.getElementById('errorText').textContent = mensagem;
+        document.getElementById('errorMessage').style.display = 'block';
+    }
+});
+</script>
+
 {% endblock %}

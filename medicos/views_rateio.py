@@ -7,6 +7,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django_tables2 import RequestConfig
 from django_filters.views import FilterView
+from datetime import date
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.base import Empresa, Socio
 from .tables_rateio import NotaFiscalRateioTable
@@ -41,6 +42,13 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             nota_fiscal = queryset.first()
         if not nota_fiscal:
             return self.get(request, *args, **kwargs)
+        
+        # Verificar se a nota fiscal não está cancelada antes de salvar rateio
+        if nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            messages.error(request, 'Não é possível salvar rateio para nota fiscal cancelada.')
+            return self.get(request, *args, **kwargs)
+            
         # Get all active medicos for empresa
         medicos_empresa = []
         if empresa:
@@ -90,7 +98,22 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             else:
                 NotaFiscalRateioMedico.objects.filter(nota_fiscal=nota_fiscal, medico=medico).delete()
         nota_fiscal.rateios_medicos.exclude(medico__in=medicos_empresa).delete()
-        return redirect(f"{request.path}?nota_id={nota_fiscal.id}")
+        
+        # Preservar TODOS os filtros originais ao retornar após salvar rateio
+        params = []
+        for key, value in self.request.GET.items():
+            if value and key != 'nota_id':  # Mantém todos os filtros exceto nota_id (será adicionado depois)
+                params.append(f'{key}={value}')
+        
+        # Adiciona a nota_id atual
+        params.append(f'nota_id={nota_fiscal.id}')
+        
+        # Constrói URL com todos os filtros preservados
+        url = request.path
+        if params:
+            url += '?' + '&'.join(params)
+        
+        return redirect(url)
     model = NotaFiscal
     template_name = 'faturamento/lista_notas_rateio.html'
     context_object_name = 'table'
@@ -104,21 +127,47 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         qs = NotaFiscal.objects.all()
         if empresa_id:
             qs = qs.filter(empresa_destinataria_id=empresa_id)
+        
+        # Filtrar notas com status cancelado - não exibir no rateio
+        qs = qs.exclude(status_recebimento='cancelado')
+        
         # Aplica o filtro de busca
         filter_params = self.request.GET.copy()
         if 'page' in filter_params:
             filter_params.pop('page')
         if 'nota_id' in filter_params:
             filter_params.pop('nota_id')
+            
+        # Se não há filtros específicos, aplicar filtro do mês corrente por padrão
+        if not filter_params:
+            from datetime import date
+            mes_corrente = date.today().strftime('%Y-%m')
+            filter_params['mes_emissao'] = mes_corrente
+            
         self.filter = self.filterset_class(filter_params, queryset=qs)
-        # Não aplica ordenação fixa para permitir ordenação dinâmica via django-tables2
-        return self.filter.qs
+        # Aplica ordenação padrão por data de emissão descendente se não houver ordenação específica
+        filtered_qs = self.filter.qs
+        if 'sort' not in self.request.GET:
+            filtered_qs = filtered_qs.order_by('-dtEmissao')
+        return filtered_qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         queryset = self.get_queryset()
         table = self.table_class(queryset)
-        RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
+        
+        # Configurar tabela com parâmetros específicos incluindo ordenação padrão
+        request_config = RequestConfig(
+            self.request, 
+            paginate={'per_page': self.paginate_by}
+        )
+        
+        # Se não há parâmetro de ordenação na URL, usar ordenação padrão da tabela
+        if 'sort' not in self.request.GET:
+            # Force a ordenação padrão por data de emissão descendente
+            table.order_by = '-dtEmissao'
+            
+        request_config.configure(table)
         nota_id = self.request.GET.get('nota_id')
         context['filter'] = getattr(self, 'filter', None)
         nota_fiscal = None
@@ -133,7 +182,10 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             nota_fiscal = NotaFiscal.objects.get(id=nota_fiscal.id)
         medicos_empresa = []
         if nota_fiscal and nota_fiscal.empresa_destinataria:
-            medicos_empresa = list(Socio.objects.filter(empresa=nota_fiscal.empresa_destinataria, ativo=True).select_related('pessoa'))
+            medicos_empresa = list(Socio.objects.filter(
+                empresa=nota_fiscal.empresa_destinataria, 
+                ativo=True
+            ).select_related('pessoa').order_by('pessoa__name'))  # Ordenação alfabética por nome
         medicos_rateio = []
         rateios_map = {}
         total_percentual_rateado = None
@@ -155,6 +207,7 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             'medicos_rateio': medicos_rateio,
             'titulo_pagina': 'Rateio de Notas Fiscais',
             'total_percentual_rateado': total_percentual_rateado,
+            'mes_corrente': date.today().strftime('%Y-%m'),  # Para valor padrão do filtro
         })
         return context
 
@@ -168,6 +221,12 @@ class NotaFiscalRateioMedicoListView(RateioContextMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível acessar rateio de nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -194,6 +253,12 @@ class NotaFiscalRateioMedicoCreateView(RateioContextMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível criar rateio para nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -222,6 +287,12 @@ class NotaFiscalRateioMedicoUpdateView(RateioContextMixin, UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível editar rateio de nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         self.rateio = get_object_or_404(NotaFiscalRateioMedico, id=self.kwargs['rateio_id'], nota_fiscal=self.nota_fiscal)
         return super().dispatch(request, *args, **kwargs)
 
@@ -244,6 +315,12 @@ class NotaFiscalRateioMedicoDeleteView(RateioContextMixin, DeleteView):
 
     def dispatch(self, request, *args, **kwargs):
         self.nota_fiscal = get_object_or_404(NotaFiscal, id=self.kwargs['nota_id'])
+        # Redirecionar se a nota fiscal estiver cancelada
+        if self.nota_fiscal.status_recebimento == 'cancelado':
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'Não é possível excluir rateio de nota fiscal cancelada.')
+            return redirect('medicos:lista_notas_rateio')
         self.rateio = get_object_or_404(NotaFiscalRateioMedico, id=self.kwargs['rateio_id'], nota_fiscal=self.nota_fiscal)
         return super().dispatch(request, *args, **kwargs)
 

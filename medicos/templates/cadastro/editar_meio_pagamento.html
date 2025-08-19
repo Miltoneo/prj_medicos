@@ -4,10 +4,10 @@
   <form method="post">{% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-success">Salvar</button>
-    {% if object.conta.empresas.first %}
-      <a href="{% url 'medicos:lista_meios_pagamento' empresa_id=object.conta.empresas.first.id %}" class="btn btn-secondary">Cancelar</a>
+    {% if empresa_id %}
+      <a href="{% url 'medicos:lista_meios_pagamento' empresa_id=empresa_id %}" class="btn btn-secondary">Cancelar</a>
     {% else %}
-      <a href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}" class="btn btn-secondary">Cancelar</a>
+      <a href="{% url 'medicos:cenario_cadastro' %}" class="btn btn-secondary">Cancelar</a>
     {% endif %}
   </form>
 </div>

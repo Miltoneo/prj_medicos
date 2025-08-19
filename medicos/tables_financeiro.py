@@ -5,8 +5,8 @@ from django.utils.safestring import mark_safe
 class FinanceiroTable(tables.Table):
     acoes = tables.TemplateColumn(
         template_code='''
-            <a href="{% url 'financeiro:financeiro_edit' empresa_id=empresa.id pk=record.pk %}" class="btn btn-sm btn-primary me-1">Editar</a>
-            <a href="{% url 'financeiro:financeiro_delete' empresa_id=empresa.id pk=record.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
+            <a href="{% url 'medicos:financeiro_edit' empresa_id=empresa.id pk=record.pk %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-primary me-1">Editar</a>
+            <a href="{% url 'medicos:financeiro_delete' empresa_id=empresa.id pk=record.pk %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?');">Excluir</a>
         ''',
         verbose_name='Ações',
         orderable=False

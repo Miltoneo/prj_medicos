@@ -1,14 +1,289 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
 {% load render_table from django_tables2 %}
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{% url 'medicos:criar_meio_pagamento' empresa_id=empresa_id %}" class="btn btn-primary">Novo Meio de Pagamento</a>
+{% csrf_token %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-credit-card me-2"></i>
+          <span class="fw-bold">Meios de Pagamento</span>
+        </div>
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+
+          <!-- Botão de Novo e Filtros -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex gap-2">
+              <a href="{% url 'medicos:criar_meio_pagamento' empresa_id=empresa_id %}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>Novo Meio de Pagamento
+              </a>
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalImportarMeiosPagamento">
+                <i class="fas fa-download me-1"></i>Importar Meios de Pagamento
+              </button>
+            </div>
+          </div>
+
+          <!-- Formulário de Filtro -->
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-auto">
+                <label for="nome" class="form-label mb-0">
+                  <i class="fas fa-search me-1"></i>Nome do Meio de Pagamento
+                </label>
+                <input type="text" name="nome" value="{{ nome_filtro }}" class="form-control" placeholder="Filtrar por nome..." style="max-width: 300px;">
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+              </div>
+              <div class="col-auto">
+                <a href="{% url 'medicos:lista_meios_pagamento' empresa_id=empresa_id %}" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Limpar
+                </a>
+              </div>
+            </div>
+            
+            <!-- Indicador visual do filtro ativo -->
+            {% if nome_filtro %}
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-filter me-1"></i>
+                  Filtrando por: <strong>{{ nome_filtro }}</strong>
+                </small>
+              </div>
+            {% endif %}
+          </form>
+
+          <!-- Tabela de Meios de Pagamento -->
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-table me-1"></i>Lista de Meios de Pagamento</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <form method="get" class="mb-3 d-flex gap-2">
-    <input type="text" name="nome" value="{{ nome_filtro }}" class="form-control" placeholder="Filtrar por nome..." style="max-width: 300px;">
-    <button type="submit" class="btn btn-outline-primary">Filtrar</button>
-  </form>
-  {% render_table table %}
 </div>
+
+<!-- Modal para Importar Meios de Pagamento -->
+<div class="modal fade" id="modalImportarMeiosPagamento" tabindex="-1" aria-labelledby="modalImportarMeiosPagamentoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalImportarMeiosPagamentoLabel">
+          <i class="fas fa-download me-2"></i>Importar Meios de Pagamento
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">
+          Selecione uma empresa para copiar todos os meios de pagamento para a empresa atual: <strong>{{ empresa.nome_fantasia|default:empresa.name }}</strong>
+        </p>
+        
+        <div id="loadingEmpresas" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando empresas...</span>
+          </div>
+        </div>
+        
+        <div id="listaEmpresas" style="display: none;">
+          <div class="form-group">
+            <label for="empresaOrigem" class="form-label">
+              <i class="fas fa-building me-1"></i>Empresa de Origem:
+            </label>
+            <select id="empresaOrigem" class="form-select">
+              <option value="">Selecione uma empresa...</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="errorMessage" class="alert alert-danger" style="display: none;">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          <span id="errorText"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" id="btnConfirmarImport" class="btn btn-primary" disabled>
+          <i class="fas fa-check me-1"></i>Importar Meios de Pagamento
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="modalConfirmacao" tabindex="-1" aria-labelledby="modalConfirmacaoLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmacaoLabel">
+          <i class="fas fa-question-circle me-2"></i>Confirmar Importação
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          <i class="fas fa-warning me-1 text-warning"></i>
+          Tem certeza que deseja importar todos os meios de pagamento da empresa <strong id="nomeEmpresaOrigem"></strong> 
+          para a empresa atual <strong>{{ empresa.nome_fantasia|default:empresa.name }}</strong>?
+        </p>
+        <p class="text-muted">
+          <small>Esta ação irá copiar todos os meios de pagamento da empresa selecionada.</small>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" id="btnExecutarImport" class="btn btn-success">
+          <i class="fas fa-check me-1"></i>Confirmar Importação
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modalImportarMeiosPagamento');
+    const modalConfirmacao = document.getElementById('modalConfirmacao');
+    const empresaSelect = document.getElementById('empresaOrigem');
+    const btnConfirmar = document.getElementById('btnConfirmarImport');
+    const btnExecutar = document.getElementById('btnExecutarImport');
+    let empresaSelecionada = null;
+
+    // Carrega empresas quando o modal abre
+    modal.addEventListener('shown.bs.modal', function() {
+        carregarEmpresas();
+    });
+
+    // Habilita botão quando empresa é selecionada
+    empresaSelect.addEventListener('change', function() {
+        const empresaId = this.value;
+        if (empresaId) {
+            empresaSelecionada = this.options[this.selectedIndex];
+            btnConfirmar.disabled = false;
+        } else {
+            empresaSelecionada = null;
+            btnConfirmar.disabled = true;
+        }
+    });
+
+    // Mostra modal de confirmação
+    btnConfirmar.addEventListener('click', function() {
+        if (empresaSelecionada) {
+            document.getElementById('nomeEmpresaOrigem').textContent = empresaSelecionada.text;
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+            bsModal.hide();
+            const bsModalConfirmacao = new bootstrap.Modal(modalConfirmacao);
+            bsModalConfirmacao.show();
+        }
+    });
+
+    // Executa a importação
+    btnExecutar.addEventListener('click', function() {
+        if (empresaSelecionada) {
+            executarImportacao(empresaSelecionada.value);
+        }
+    });
+
+    function carregarEmpresas() {
+        document.getElementById('loadingEmpresas').style.display = 'block';
+        document.getElementById('listaEmpresas').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'none';
+
+        fetch('{% url "medicos:api_empresas_conta" %}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    empresaSelect.innerHTML = '<option value="">Selecione uma empresa...</option>';
+                    data.empresas.forEach(empresa => {
+                        const option = document.createElement('option');
+                        option.value = empresa.id;
+                        option.textContent = empresa.nome_fantasia || empresa.name;
+                        empresaSelect.appendChild(option);
+                    });
+                    document.getElementById('loadingEmpresas').style.display = 'none';
+                    document.getElementById('listaEmpresas').style.display = 'block';
+                } else {
+                    mostrarErro(data.error || 'Erro ao carregar empresas');
+                }
+            })
+            .catch(error => {
+                mostrarErro('Erro de conexão ao carregar empresas');
+            });
+    }
+
+    function executarImportacao(empresaOrigemId) {
+        btnExecutar.disabled = true;
+        btnExecutar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importando...';
+
+        const formData = new FormData();
+        formData.append('empresa_origem_id', empresaOrigemId);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "medicos:importar_meios_pagamento" empresa_id=empresa_id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const bsModalConfirmacao = bootstrap.Modal.getOrCreateInstance(modalConfirmacao);
+                bsModalConfirmacao.hide();
+                
+                // Mostra mensagem de sucesso e recarrega a página
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-1"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.d-flex'));
+                
+                // Recarrega a página após 2 segundos
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                mostrarErro(data.error || 'Erro ao importar meios de pagamento');
+                btnExecutar.disabled = false;
+                btnExecutar.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar Importação';
+            }
+        })
+        .catch(error => {
+            mostrarErro('Erro de conexão ao importar meios de pagamento');
+            btnExecutar.disabled = false;
+            btnExecutar.innerHTML = '<i class="fas fa-check me-1"></i>Confirmar Importação';
+        });
+    }
+
+    function mostrarErro(mensagem) {
+        document.getElementById('errorText').textContent = mensagem;
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('loadingEmpresas').style.display = 'none';
+    }
+});
+</script>
+
 {% endblock %}

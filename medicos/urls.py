@@ -6,7 +6,13 @@ from .views_rateio import (
     NotaFiscalRateioMedicoDeleteView,
 )
 from .views_rateio_medico import NotaFiscalRateioMedicoListView
-from .views_financeiro_lancamentos import FinanceiroListView
+from .views_financeiro_lancamentos import FinanceiroListView, FinanceiroCreateView, FinanceiroUpdateView, FinanceiroDeleteView
+from .views_descricao_movimentacao import (
+    DescricaoMovimentacaoFinanceiraListView,
+    DescricaoMovimentacaoFinanceiraCreateView,
+    DescricaoMovimentacaoFinanceiraUpdateView,
+    DescricaoMovimentacaoFinanceiraDeleteView,
+)
 from django.urls import path, include
 from .views_cadastro_rateio import (
     CadastroRateioView,
@@ -14,6 +20,7 @@ from .views_cadastro_rateio import (
     CadastroRateioUpdateView,
     CadastroRateioDeleteView,
     cadastro_rateio_list,
+    copiar_rateio_mes,
 )
 from . import views_user_invite
 from . import views_user
@@ -31,6 +38,7 @@ from . import views_socio
 from . import views_aliquota
 from . import views_despesa_cadastro
 from . import views_despesas
+from . import views_descricao_movimentacao
 from . import urls_despesas
 
 from .views_aplicacoes_financeiras import (
@@ -55,6 +63,7 @@ urlpatterns = [
     path('cadastro/rateio/novo/', CadastroRateioCreateView.as_view(), name='cadastro_rateio_create'),
     path('cadastro/rateio/<int:pk>/editar/', CadastroRateioUpdateView.as_view(), name='cadastro_rateio_update'),
     path('cadastro/rateio/<int:pk>/remover/', CadastroRateioDeleteView.as_view(), name='cadastro_rateio_delete'),
+    path('cadastro/rateio/copiar-mes/', copiar_rateio_mes, name='copiar_rateio_mes'),
     # Rateio por Médico
     path('lista_rateio_medicos/<int:nota_id>/', NotaFiscalRateioMedicoListView.as_view(), name='lista_rateio_medicos'),
     path('novo_rateio_medico/<int:nota_id>/', NotaFiscalRateioMedicoCreateView.as_view(), name='novo_rateio_medico'),
@@ -69,6 +78,19 @@ urlpatterns = [
     # Financeiro Views
     # =====================
     path('financeiro/lancamentos/', FinanceiroListView.as_view(), name='financeiro_lancamentos'),
+    
+    # Descrições de Movimentação Financeira
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/', DescricaoMovimentacaoFinanceiraListView.as_view(), name='lista_descricoes_movimentacao'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/novo/', DescricaoMovimentacaoFinanceiraCreateView.as_view(), name='descricao_movimentacao_create'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/<int:pk>/editar/', DescricaoMovimentacaoFinanceiraUpdateView.as_view(), name='descricao_movimentacao_edit'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/<int:pk>/excluir/', DescricaoMovimentacaoFinanceiraDeleteView.as_view(), name='descricao_movimentacao_delete'),
+    path('empresas/<int:empresa_id>/descricoes-movimentacao/importar/', views_descricao_movimentacao.importar_descricoes_movimentacao, name='importar_descricoes_movimentacao'),
+    
+    # Lançamentos Financeiros CRUD
+    path('empresas/<int:empresa_id>/lancamentos/novo/', FinanceiroCreateView.as_view(), name='financeiro_create'),
+    path('empresas/<int:empresa_id>/lancamentos/<int:pk>/editar/', FinanceiroUpdateView.as_view(), name='financeiro_edit'),
+    path('empresas/<int:empresa_id>/lancamentos/<int:pk>/excluir/', FinanceiroDeleteView.as_view(), name='financeiro_delete'),
+    path('empresas/<int:empresa_id>/lancamentos/', FinanceiroListView.as_view(), name='lancamentos'),
 
 
     # =====================
@@ -124,6 +146,7 @@ path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView
     path('criar_meio_pagamento/<int:empresa_id>/meios-pagamento/novo/', views_meio_pagamento.MeioPagamentoCreateView.as_view(), name='criar_meio_pagamento'),
     path('editar_meio_pagamento/<int:pk>/editar/', views_meio_pagamento.MeioPagamentoUpdateView.as_view(), name='editar_meio_pagamento'),
     path('excluir_meio_pagamento/<int:pk>/excluir/', views_meio_pagamento.MeioPagamentoDeleteView.as_view(), name='excluir_meio_pagamento'),
+    path('meios_pagamento/<int:empresa_id>/importar/', views_meio_pagamento.importar_meios_pagamento, name='importar_meios_pagamento'),
 
     # =====================
     # Despesa Views
@@ -137,6 +160,11 @@ path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa_cadastro.lista_g
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa_cadastro.grupo_despesa_edit, name='grupo_despesa_edit'),
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/excluir/', views_despesa_cadastro.grupo_despesa_delete, name='grupo_despesa_delete'),
 
+# APIs para importação de grupos de despesa
+path('api/empresas-conta/', views_despesa_cadastro.api_empresas_conta, name='api_empresas_conta'),
+path('empresas/<int:empresa_id>/grupos-despesa/verificar-dados/', views_despesa_cadastro.verificar_dados_grupos_despesa, name='verificar_dados_grupos_despesa'),
+path('empresas/<int:empresa_id>/grupos-despesa/importar/', views_despesa_cadastro.importar_grupos_despesa, name='importar_grupos_despesa'),
+
 # Itens de Despesa (padronizado)
 path('lista_itens_despesa/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaListView.as_view(), name='lista_itens_despesa'),
 path('item_despesa_create/<int:empresa_id>/', views_despesa_cadastro.ItemDespesaCreateView.as_view(), name='item_despesa_create'),
@@ -148,6 +176,8 @@ path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa_cadast
     # =====================
     path('aliquotas/<int:empresa_id>/', views_aliquota.ListaAliquotasView.as_view(), name='lista_aliquotas'),
     path('aliquotas/<int:empresa_id>/<int:aliquota_id>/editar/', views_aliquota.aliquota_edit, name='aliquota_edit'),
+    path('api/empresas-conta/', views_aliquota.api_empresas_conta, name='api_empresas_conta'),
+    path('aliquotas/<int:empresa_id>/importar/', views_aliquota.importar_aliquotas, name='importar_aliquotas'),
 
     # =====================
     # Cadastro e Cenário Views

@@ -3,16 +3,10 @@ from medicos.models.fiscal import NotaFiscal
 
 class NotaFiscalListaTable(tables.Table):
     acoes = tables.TemplateColumn(
-        template_code='''
-            <a href="{% url 'medicos:editar_nota_fiscal' pk=record.pk %}" class="btn btn-sm btn-primary me-1" title="Editar">
-                <i class="bi bi-pencil"></i>
-            </a>
-            <a href="{% url 'medicos:excluir_nota_fiscal' pk=record.pk %}" class="btn btn-sm btn-danger" title="Excluir" onclick="return confirm('Confirma a exclusão desta nota fiscal?');">
-                <i class="bi bi-trash"></i>
-            </a>
-        ''',
+        template_name='faturamento/col_acoes_notafiscal.html',
         verbose_name='Ações',
-        orderable=False
+        orderable=False,
+        attrs={"td": {"class": "text-center"}}
     )
     numero = tables.Column(verbose_name='Número da NF')
     # empresa_destinataria removida (coluna Empresa Emitente)

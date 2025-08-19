@@ -2,49 +2,110 @@
 {% extends 'layouts/base_cenario_empresa.html' %}
 {% load render_table from django_tables2 %}
 {% block title %}Dashboard da Empresa{% endblock %}
-{% block content %}
-<div class="container mt-4">
 
-  <div class="row g-4">
-    <div class="col-auto">
-      <div class="card shadow-sm">
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
         <div class="card-header bg-primary text-white d-flex align-items-center">
-          <i class="fas fa-industry fa-lg me-2"></i>
-          <span>Dados Básicos da Empresa</span>
+          <i class="fas fa-tachometer-alt me-2"></i>
+          <span class="fw-bold">Dashboard da Empresa</span>
         </div>
-        <div class="card-body py-4">
-          <p><strong>Razão Social:</strong> {{ empresa.name }}</p>
-          <p><strong>CNPJ:</strong> {{ empresa.cnpj }}</p>
-          <p><strong>Regime Tributário:</strong> {{ empresa.get_regime_tributario_display }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-auto">
-      <div class="card shadow-sm">
-        <div class="card-header bg-secondary text-white d-flex align-items-center">
-          <i class="fas fa-users fa-lg me-2"></i>
-          <span>Lista de Sócios</span>
-        </div>
-        <div class="card-body py-4">
-          <h6 class="fw-bold mb-3"><i class="fas fa-filter me-1"></i>Filtrar Sócios</h6>
-          <form method="get" class="mb-3">
-            <div class="row g-3 align-items-end p-2 rounded bg-light border mb-2">
-              <div class="col-12">
-                <label class="form-label fw-bold" for="id_nome"><i class="fas fa-user me-1"></i>Nome</label>
-                {{ socio_filter.form.nome }}
+        <div class="card-body">
+          {% if empresa %}
+            <div class="mb-4">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
+            </div>
+          {% else %}
+            <div class="mb-4">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
+          {% endif %}
+
+          <!-- Seção de Dados Básicos da Empresa -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="rounded shadow-sm p-3 bg-light">
+                <h5 class="fw-bold mb-3 text-dark">
+                  <i class="fas fa-industry me-1"></i>Dados Básicos da Empresa
+                </h5>
+                <div class="bg-white rounded-2 p-3">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold mb-1">
+                        <i class="fas fa-building me-1"></i>Razão Social
+                      </label>
+                      <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                        {{ empresa.name }}
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold mb-1">
+                        <i class="fas fa-id-card me-1"></i>CNPJ
+                      </label>
+                      <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                        {{ empresa.cnpj }}
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold mb-1">
+                        <i class="fas fa-file-alt me-1"></i>Regime Tributário
+                      </label>
+                      <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                        {{ empresa.get_regime_tributario_display }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="mt-2 text-end">
-              <button type="submit" class="btn btn-primary btn-sm px-4"><i class="fas fa-filter me-1"></i>Filtrar</button>
+          </div>
+
+          <!-- Tabela de Sócios -->
+          {% if table.rows %}
+            <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-table me-1"></i>Sócios da Empresa</h5>
+            <div class="rounded shadow-sm p-3 bg-light">
+              <!-- Filtro integrado -->
+              <div class="bg-white rounded-2 p-3 mb-3">
+                <form method="get" class="mb-3">
+                  <div class="row g-2 align-items-end">
+                    {% if socio_filter.form.nome %}
+                      <div class="col-auto">
+                        <label for="id_nome" class="form-label mb-0">
+                          <i class="fas fa-user me-1"></i>{{ socio_filter.form.nome.label }}
+                        </label>
+                        {{ socio_filter.form.nome }}
+                      </div>
+                    {% endif %}
+                    
+                    <div class="col-auto">
+                      <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                      </button>
+                    </div>
+                    <div class="col-auto">
+                      <a href="{% url 'medicos:startempresa' empresa_id=empresa.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Limpar
+                      </a>
+                    </div>
+                  </div>
+                </form>
+                
+                <div class="mb-0">
+                  <small class="text-muted">
+                    <i class="fas fa-users me-1"></i>
+                    Total de sócios encontrados: <strong>{{ table.rows|length }}</strong>
+                  </small>
+                </div>
+              </div>
+              
+              <!-- Tabela -->
+              <div class="bg-white rounded-2 p-2">
+                {% render_table table %}
+              </div>
             </div>
-          </form>
-          <div class="d-flex align-items-center mb-3">
-            <span class="h5 mb-0">Sócios da Empresa</span>
-            <span class="badge bg-success ms-3">{{ table.rows|length }} sócios</span>
-          </div>
-          <div class="table-responsive">
-            {% render_table table %}
-          </div>
+          {% endif %}
         </div>
       </div>
     </div>

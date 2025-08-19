@@ -2,6 +2,7 @@
 
 
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -15,7 +16,47 @@ from medicos.forms import ItemDespesaRateioMensalForm
 from medicos.filters_rateio_medico import ItemDespesaRateioMensalFilter
 
 
+def converter_percentual_seguro(valor_str):
+    """
+    Converte string de percentual para Decimal com exatamente 2 casas decimais
+    
+    Args:
+        valor_str: String com o valor do percentual
+        
+    Returns:
+        Decimal: Valor convertido com 2 casas decimais ou None se inválido
+    """
+    if not valor_str or valor_str.strip() == '':
+        return None
+    
+    try:
+        # Substitui vírgula por ponto para aceitar formato brasileiro
+        valor_limpo = str(valor_str).strip().replace(',', '.')
+        
+        # Converte para Decimal diretamente, garantindo precisão
+        decimal_valor = Decimal(valor_limpo)
+        
+        # Arredonda para exatamente 2 casas decimais
+        return decimal_valor.quantize(Decimal('0.01'))
+        
+    except (InvalidOperation, ValueError, TypeError):
+        return None
+
+
 def cadastro_rateio_list(request):
+    # Obter empresa da sessão via context processor
+    empresa_id = request.session.get('empresa_id')
+    if not empresa_id:
+        messages.error(request, 'Nenhuma empresa selecionada. Selecione uma empresa primeiro.')
+        return redirect('medicos:home')
+    
+    from medicos.models.base import Empresa
+    try:
+        empresa_ativa = Empresa.objects.get(id=empresa_id)
+    except Empresa.DoesNotExist:
+        messages.error(request, 'Empresa selecionada não encontrada.')
+        return redirect('medicos:home')
+    
     # Mês padrão
     default_mes = date.today().strftime('%Y-%m')
     # Suporte a GET e POST para manter filtros
@@ -38,17 +79,27 @@ def cadastro_rateio_list(request):
         mes_competencia_date = date.today().replace(day=1)
     # Garante que sempre será o primeiro dia do mês
     mes_competencia_date = mes_competencia_date.replace(day=1)
-    # Exibir apenas itens de grupos com tipo_rateio=COM_RATEIO
-    grupos_com_rateio = GrupoDespesa.objects.filter(tipo_rateio=GrupoDespesa.Tipo_t.COM_RATEIO)
-    itens_despesa = ItemDespesa.objects.filter(grupo_despesa__in=grupos_com_rateio)
-    # Itens de despesa com rateio para o mês selecionado
-    itens_com_rateio_ids = ItemDespesaRateioMensal.objects.filter(data_referencia=mes_competencia).values_list('item_despesa_id', flat=True).distinct()
+    # CORREÇÃO: Filtrar grupos, itens e rateios apenas da empresa ativa
+    grupos_com_rateio = GrupoDespesa.objects.filter(
+        empresa=empresa_ativa,
+        tipo_rateio=GrupoDespesa.Tipo_t.COM_RATEIO
+    )
+    itens_despesa = ItemDespesa.objects.filter(grupo_despesa__in=grupos_com_rateio).order_by('descricao')
+    # CORREÇÃO: Filtrar rateios apenas dos itens da empresa ativa
+    itens_com_rateio_ids = ItemDespesaRateioMensal.objects.filter(
+        data_referencia=mes_competencia,
+        item_despesa__grupo_despesa__empresa=empresa_ativa
+    ).values_list('item_despesa_id', flat=True).distinct()
     itens_com_rateio_ids = list(itens_com_rateio_ids)
     rateios = []
     total_percentual = 0
     if selected_item_id:
         try:
-            item = ItemDespesa.objects.select_related('grupo_despesa').get(id=selected_item_id)
+            # CORREÇÃO: Garantir que o item pertence à empresa ativa
+            item = ItemDespesa.objects.select_related('grupo_despesa').get(
+                id=selected_item_id,
+                grupo_despesa__empresa=empresa_ativa
+            )
             grupo = getattr(item, 'grupo_despesa', None)
             empresa = getattr(grupo, 'empresa', None) if grupo else None
             permite_rateio = True
@@ -58,14 +109,16 @@ def cadastro_rateio_list(request):
             empresa = None
             permite_rateio = False
         if empresa:
-            socios_empresa = Socio.objects.filter(empresa=empresa, ativo=True)
+            socios_empresa = Socio.objects.filter(empresa=empresa, ativo=True).select_related('pessoa').order_by('pessoa__name')
         else:
             socios_empresa = Socio.objects.none()
         # Só processa rateio se o item permitir
         if permite_rateio:
             if request.method == 'POST':
-                # Validação do total do rateio
-                total_percentual_post = 0
+                # Validação do total do rateio usando Decimal para precisão
+                total_percentual_post = Decimal('0.00')
+                valores_validos = {}  # Para armazenar valores convertidos
+                
                 for socio in socios_empresa:
                     r_id = None
                     val = None
@@ -74,17 +127,21 @@ def cadastro_rateio_list(request):
                     if rateio_existente:
                         r_id = rateio_existente.id
                         val = request.POST.get(f'percentual_{r_id}')
+                        chave = f'percentual_{r_id}'
                     else:
                         val = request.POST.get(f'percentual_socio_{socio.id}')
+                        chave = f'percentual_socio_{socio.id}'
+                    
                     if val is not None and val != '':
-                        try:
-                            val_num = float(str(val).replace(',', '.'))
-                        except Exception:
-                            val_num = 0
-                        total_percentual_post += val_num
+                        val_decimal = converter_percentual_seguro(val)
+                        if val_decimal is not None:
+                            valores_validos[chave] = val_decimal
+                            total_percentual_post += val_decimal
+                
                 # Permite pequena margem de erro de ponto flutuante (0.01)
-                if abs(total_percentual_post - 100.0) > 0.01:
-                    messages.error(request, 'O total do rateio deve ser exatamente 100%. Corrija os percentuais antes de salvar.')
+                cem_percent = Decimal('100.00')
+                if abs(total_percentual_post - cem_percent) > Decimal('0.01'):
+                    messages.error(request, f'O total do rateio deve ser exatamente 100%. Total atual: {total_percentual_post:.2f}%. Corrija os percentuais antes de salvar.')
                     # Monta rateios para reexibir na tela com os valores do POST
                     rateios = []
                     for socio in socios_empresa:
@@ -94,12 +151,9 @@ def cadastro_rateio_list(request):
                             val = request.POST.get(f'percentual_{r_id}')
                         else:
                             val = request.POST.get(f'percentual_socio_{socio.id}')
-                        percentual = None
-                        if val is not None and val != '':
-                            try:
-                                percentual = float(str(val).replace(',', '.'))
-                            except Exception:
-                                percentual = None
+                        
+                        percentual = converter_percentual_seguro(val)
+                        
                         fake = ItemDespesaRateioMensal(
                             item_despesa_id=selected_item_id,
                             socio=socio,
@@ -108,8 +162,11 @@ def cadastro_rateio_list(request):
                             data_referencia=mes_competencia_date,
                             ativo=True
                         )
+                        # Adiciona ID fictício para rateios existentes
+                        if rateio_existente:
+                            fake.id = rateio_existente.id
                         rateios.append(fake)
-                    total_percentual = total_percentual_post
+                    total_percentual = float(total_percentual_post)
                     context = {
                         'default_mes': default_mes,
                         'mes_competencia': mes_competencia[:7] if mes_competencia else '',
@@ -126,35 +183,26 @@ def cadastro_rateio_list(request):
                         'permite_rateio': permite_rateio,
                     }
                     return render(request, 'cadastro/rateio_list.html', context)
-                # Se passou na validação, salva normalmente
+                # Se passou na validação, salva normalmente usando valores já validados
                 rateios_qs = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia_date)
                 rateios_dict = {r.socio_id: r for r in rateios_qs}
+                
                 for socio in socios_empresa:
                     # Atualiza existentes
                     r = rateios_dict.get(socio.id)
                     if r:
-                        val = request.POST.get(f'percentual_{r.id}')
-                        if val is not None:
-                            val_num = str(val).replace(',', '.')
-                            try:
-                                val_num = float(val_num)
-                            except Exception:
-                                val_num = 0
-                            r.percentual_rateio = val_num
+                        chave = f'percentual_{r.id}'
+                        if chave in valores_validos:
+                            r.percentual_rateio = valores_validos[chave]
                             r.save()
                     else:
                         # Cria novos
-                        val = request.POST.get(f'percentual_socio_{socio.id}')
-                        if val is not None and val != '':
-                            val_num = str(val).replace(',', '.')
-                            try:
-                                val_num = float(val_num)
-                            except Exception:
-                                val_num = 0
+                        chave = f'percentual_socio_{socio.id}'
+                        if chave in valores_validos:
                             ItemDespesaRateioMensal.objects.create(
                                 item_despesa_id=selected_item_id,
                                 socio=socio,
-                                percentual_rateio=val_num,
+                                percentual_rateio=valores_validos[chave],
                                 data_referencia=mes_competencia_date
                             )
                 # Após salvar, redireciona para GET com filtros (PRG pattern)
@@ -180,7 +228,12 @@ def cadastro_rateio_list(request):
                         ativo=True
                     )
                     rateios.append(fake)
-            total_percentual = sum([float(r.percentual_rateio) for r in rateios if r.percentual_rateio])
+            # Calcula total percentual usando Decimal para precisão
+            total_percentual = sum([
+                Decimal(str(r.percentual_rateio)) for r in rateios 
+                if r.percentual_rateio is not None
+            ], Decimal('0.00'))
+            total_percentual = float(total_percentual)  # Converte para float apenas para exibição
         else:
             # Item não permite rateio, não processa POST nem busca rateios
             pass
@@ -222,11 +275,43 @@ class CadastroRateioView(SingleTableMixin, FilterView):
     filterset_class = ItemDespesaRateioMensalFilter
     paginate_by = 20
 
+    def get_queryset(self):
+        # CORREÇÃO: Filtrar queryset apenas da empresa ativa
+        empresa_id = self.request.session.get('empresa_id')
+        if empresa_id:
+            from medicos.models.base import Empresa
+            try:
+                empresa_ativa = Empresa.objects.get(id=empresa_id)
+                return super().get_queryset().filter(
+                    item_despesa__grupo_despesa__empresa=empresa_ativa
+                )
+            except Empresa.DoesNotExist:
+                return super().get_queryset().none()
+        else:
+            return super().get_queryset().none()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = _(u"Configuração de Rateio Mensal")
-        context['itens_despesa'] = ItemDespesa.objects.all()
-        context['socios'] = Socio.objects.all()
+        
+        # Obter empresa da sessão via context processor
+        empresa_id = self.request.session.get('empresa_id')
+        if empresa_id:
+            from medicos.models.base import Empresa
+            try:
+                empresa_ativa = Empresa.objects.get(id=empresa_id)
+                # CORREÇÃO: Filtrar itens_despesa e socios apenas da empresa ativa
+                context['itens_despesa'] = ItemDespesa.objects.filter(
+                    grupo_despesa__empresa=empresa_ativa
+                )
+                context['socios'] = Socio.objects.filter(empresa=empresa_ativa, ativo=True)
+            except Empresa.DoesNotExist:
+                context['itens_despesa'] = ItemDespesa.objects.none()
+                context['socios'] = Socio.objects.none()
+        else:
+            context['itens_despesa'] = ItemDespesa.objects.none()
+            context['socios'] = Socio.objects.none()
+        
         # Adiciona mes_competencia e default_mes ao contexto para compatibilidade com o template
         from datetime import date
         default_mes = date.today().strftime('%Y-%m')
@@ -278,3 +363,104 @@ class CadastroRateioDeleteView(DeleteView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = "Configuração de Rateio"
         return context
+
+
+def copiar_rateio_mes(request):
+    """
+    View para copiar configurações de rateio de um mês para outro.
+    """
+    if request.method != 'POST':
+        from django.http import JsonResponse
+        return JsonResponse({'success': False, 'error': 'Método não permitido'})
+    
+    try:
+        from django.http import JsonResponse
+        from django.db import transaction
+        from datetime import datetime
+        
+        # Obter empresa da sessão
+        empresa_id = request.session.get('empresa_id')
+        if not empresa_id:
+            return JsonResponse({'success': False, 'error': 'Nenhuma empresa selecionada'})
+        
+        from medicos.models.base import Empresa
+        empresa_ativa = Empresa.objects.get(id=empresa_id)
+        
+        # Parâmetros
+        mes_origem = request.POST.get('mes_origem')
+        mes_destino = request.POST.get('mes_destino')
+        
+        if not mes_origem or not mes_destino:
+            return JsonResponse({'success': False, 'error': 'Mês de origem e destino são obrigatórios'})
+        
+        # Converter strings para dates
+        try:
+            if len(mes_origem) == 7:  # YYYY-MM
+                mes_origem += '-01'
+            if len(mes_destino) == 7:  # YYYY-MM
+                mes_destino += '-01'
+                
+            data_origem = datetime.strptime(mes_origem, '%Y-%m-%d').date()
+            data_destino = datetime.strptime(mes_destino, '%Y-%m-%d').date()
+            
+            # Garantir que seja primeiro dia do mês
+            data_origem = data_origem.replace(day=1)
+            data_destino = data_destino.replace(day=1)
+            
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Formato de data inválido'})
+        
+        # Verificar se as datas são diferentes
+        if data_origem == data_destino:
+            return JsonResponse({'success': False, 'error': 'O mês de origem deve ser diferente do mês de destino'})
+        
+        # Buscar configurações de rateio do mês de origem
+        rateios_origem = ItemDespesaRateioMensal.objects.filter(
+            data_referencia=data_origem,
+            item_despesa__grupo_despesa__empresa=empresa_ativa,
+            ativo=True
+        ).select_related('item_despesa', 'socio')
+        
+        if not rateios_origem.exists():
+            return JsonResponse({'success': False, 'error': 'Nenhuma configuração de rateio encontrada no mês de origem'})
+        
+        # Executar cópia em transação
+        with transaction.atomic():
+            # Remover configurações existentes no mês de destino (sobrescrever)
+            ItemDespesaRateioMensal.objects.filter(
+                data_referencia=data_destino,
+                item_despesa__grupo_despesa__empresa=empresa_ativa
+            ).delete()
+            
+            # Copiar configurações do mês de origem para o destino
+            contador_copiados = 0
+            
+            for rateio_origem in rateios_origem:
+                ItemDespesaRateioMensal.objects.create(
+                    item_despesa=rateio_origem.item_despesa,
+                    socio=rateio_origem.socio,
+                    data_referencia=data_destino,
+                    percentual_rateio=rateio_origem.percentual_rateio,
+                    ativo=rateio_origem.ativo,
+                    observacoes=rateio_origem.observacoes,
+                    # Campos de auditoria serão preenchidos automaticamente
+                )
+                contador_copiados += 1
+        
+        # Preparar mensagem de sucesso
+        mes_origem_formatado = data_origem.strftime('%m/%Y')
+        mes_destino_formatado = data_destino.strftime('%m/%Y')
+        mensagem = f'{contador_copiados} configuração(ões) de rateio copiada(s) de {mes_origem_formatado} para {mes_destino_formatado} com sucesso'
+        
+        return JsonResponse({
+            'success': True,
+            'message': mensagem,
+            'copiados': contador_copiados,
+            'mes_origem': mes_origem_formatado,
+            'mes_destino': mes_destino_formatado
+        })
+        
+    except Empresa.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Empresa não encontrada'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Erro interno: {str(e)}'})

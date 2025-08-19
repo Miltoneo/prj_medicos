@@ -69,7 +69,19 @@
             </div>
             <div class="mt-4 d-flex justify-content-end gap-2">
               <button type="submit" class="btn btn-success px-4">Salvar</button>
-              <a href="{% url 'medicos:lista_notas_fiscais' %}" class="btn btn-secondary px-4">Cancelar</a>
+              <a href="{% url 'medicos:lista_notas_fiscais' %}?{{ request.GET.urlencode }}" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+            <div class="mt-4">
+              <h6 class="fw-bold text-primary">Alíquotas Vigentes</h6>
+              <table class="table table-sm table-bordered w-auto bg-light text-dark">
+                <tr><th>ISS (%)</th><td>{{ aliquota_ISS|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>PIS (%)</th><td>{{ aliquota_PIS|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>COFINS (%)</th><td>{{ aliquota_COFINS|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>IRPJ Base (%)</th><td>{{ aliquota_IR_BASE|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>IRPJ (%)</th><td>{{ aliquota_IR|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>CSLL Base (%)</th><td>{{ aliquota_CSLL_BASE|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>CSLL (%)</th><td>{{ aliquota_CSLL|default_if_none:0|floatformat:2 }}</td></tr>
+              </table>
             </div>
           </form>
         </div>

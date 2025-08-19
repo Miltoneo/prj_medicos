@@ -1,33 +1,71 @@
 {% extends 'layouts/base_cenario_cadastro.html' %}
 {% load render_table from django_tables2 %}
 {% block title %}Lista de Sócios da Empresa{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="d-flex align-items-center mb-4 gap-3">
-        <a href="{% url 'medicos:socio_create' empresa_id=empresa.id %}" class="btn btn-success btn-sm px-3">
-          <i class="fas fa-user-plus me-1"></i>Novo Sócio
-        </a>
-        <i class="fas fa-users fa-2x text-primary me-2"></i>
-        <!-- O título principal é definido pelo bloco title, não é necessário duplicar aqui -->
-      </div>
-      <div class="card shadow-sm border-0">
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-users me-2"></i>
+          <span class="fw-bold">Lista de Sócios da Empresa</span>
+        </div>
         <div class="card-body">
-          {% if socio_filter %}
-          <form method="get" class="row row-cols-lg-auto g-2 align-items-end mb-3">
-            {% for field in socio_filter.form.visible_fields %}
-              <div class="col">
-                {{ field.label_tag }}
-                {{ field }}
-              </div>
-            {% endfor %}
-            <div class="col">
-              <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+          {% if empresa %}
+            <div class="mb-3">
+              <span class="fw-bold">Empresa:</span> {{ empresa.nome_fantasia|default:empresa.name }}
             </div>
-          </form>
-          <div class="table-responsive">
-            {% render_table table %}
-          </div>
+          {% else %}
+            <div class="mb-3">
+              <span class="fw-bold text-danger">Empresa não selecionada</span>
+            </div>
           {% endif %}
+
+          <!-- Botão de Novo Sócio -->
+          <div class="mb-3">
+            <a href="{% url 'medicos:socio_create' empresa_id=empresa.id %}" class="btn btn-success">
+              <i class="fas fa-user-plus me-1"></i>Novo Sócio
+            </a>
+          </div>
+
+          <!-- Formulário de Filtro -->
+          {% if socio_filter %}
+            <form method="get" class="mb-3">
+              <div class="row g-2 align-items-end">
+                {% for field in socio_filter.form.visible_fields %}
+                  <div class="col-auto">
+                    <label for="id_{{ field.name }}" class="form-label mb-0">
+                      <i class="fas fa-filter me-1"></i>{{ field.label }}
+                    </label>
+                    {{ field }}
+                  </div>
+                {% endfor %}
+                
+                <div class="col-auto">
+                  <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-1"></i>Filtrar
+                  </button>
+                </div>
+                <div class="col-auto">
+                  <a href="{% url 'medicos:lista_socios_empresa' empresa_id=empresa.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Limpar
+                  </a>
+                </div>
+              </div>
+            </form>
+          {% endif %}
+
+          <!-- Tabela de Sócios -->
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-table me-1"></i>Sócios da Empresa</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

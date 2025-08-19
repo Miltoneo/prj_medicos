@@ -36,9 +36,9 @@ class AliquotasTable(tables.Table):
         template_name = "django_tables2/bootstrap5.html"
         fields = (
             "data_vigencia_inicio", "data_vigencia_fim", "ativa",
-            "ISS", "PIS", "COFINS", "IRPJ_BASE_CAL", "IRPJ_ALIQUOTA_OUTROS", "IRPJ_ALIQUOTA_CONSULTA",
-            "IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL", "IRPJ_ADICIONAL", "CSLL_BASE_CAL", "CSLL_ALIQUOTA_OUTROS",
-            "CSLL_ALIQUOTA_CONSULTA", "observacoes"
+            "ISS", "PIS", "COFINS", "IRPJ_ALIQUOTA", "IRPJ_PRESUNCAO_OUTROS", "IRPJ_PRESUNCAO_CONSULTA",
+            "IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL", "IRPJ_ADICIONAL", "CSLL_ALIQUOTA", "CSLL_PRESUNCAO_OUTROS",
+            "CSLL_PRESUNCAO_CONSULTA", "observacoes"
         )
         order_by = "-data_vigencia_inicio"
 
@@ -70,8 +70,8 @@ class DescricaoMovimentacaoFinanceiraTable(tables.Table):
     observacoes = tables.Column(verbose_name='Observações')
     actions = tables.TemplateColumn(
         template_code='''
-        <a href="{% url 'financeiro:descricao_movimentacao_edit' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-primary">Editar</a>
-        <a href="{% url 'financeiro:descricao_movimentacao_delete' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-danger">Excluir</a>
+        <a href="{% url 'medicos:descricao_movimentacao_edit' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-primary">Editar</a>
+        <a href="{% url 'medicos:descricao_movimentacao_delete' empresa_id=record.empresa_id pk=record.pk %}" class="btn btn-sm btn-danger">Excluir</a>
         ''',
         verbose_name='Ações', orderable=False
     )

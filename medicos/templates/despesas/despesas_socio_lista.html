@@ -1,70 +1,135 @@
 {% extends 'layouts/base_cenario_despesas.html' %}
-{% load django_tables2 %}
+{% load render_table from django_tables2 %}
+{% block title %}Despesas Apropriadas dos Sócios{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit do formulário de filtro quando a competência ou sócio for alterado
+  const competenciaField = document.getElementById('competencia');
+  const socioField = document.getElementById('socio');
+  
+  if (competenciaField) {
+    competenciaField.addEventListener('change', function() {
+      // Submete o formulário automaticamente quando a competência é alterada
+      this.closest('form').submit();
+    });
+  }
+  
+  if (socioField) {
+    socioField.addEventListener('change', function() {
+      // Submete o formulário automaticamente quando o sócio é alterado
+      this.closest('form').submit();
+    });
+  }
+  
+  // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasFilterParams = urlParams.has('competencia') || urlParams.has('socio');
+  
+  if (!hasFilterParams && competenciaField && !competenciaField.value) {
+    // Define o mês atual se não há valor
+    const today = new Date();
+    const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    competenciaField.value = currentMonth;
+    
+    // Submete automaticamente para aplicar o filtro do mês atual
+    setTimeout(() => {
+      competenciaField.closest('form').submit();
+    }, 100);
+  }
+});
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid px-0">
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-12 col-lg-12 col-xl-11" style="max-width: 1600px;">
-      <div class="card shadow-sm border-0 mt-4">
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-coins me-2"></i>
+          <span class="fw-bold">Despesas Apropriadas dos Sócios</span>
+        </div>
         <div class="card-body">
-          <!-- TOTAL GERAL EM DESTAQUE -->
-          <div class="mb-3">
-            <div class="alert alert-info d-flex align-items-center justify-content-between mb-0" role="alert" style="font-size:1.25rem;">
-              <div class="fw-bold">Total geral de despesas apropriadas:</div>
-              <div class="fw-bold text-success" style="font-size:1.5rem;">R$ {{ total_despesas|floatformat:2 }}</div>
-            </div>
-          </div>
-          <!-- Linha removida: contador e total geral redundantes -->
-          <form method="get" class="bg-light rounded-3 p-3 mb-4 shadow-sm">
-            <div class="row g-3 align-items-end">
-              <div class="col-12 col-md-4 col-lg-3">
-                <label for="competencia" class="form-label mb-1">Competência:</label>
-                <input type="month" id="competencia" name="competencia" class="form-control form-control-sm" value="{{ competencia }}">
+          <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-2 col-12">
+                <label for="competencia" class="form-label small"><i class="fas fa-calendar-alt me-1"></i>Competência</label>
+                <input type="month" id="competencia" name="competencia" class="form-control" value="{{ competencia }}">
               </div>
-              <div class="col-12 col-md-4 col-lg-3">
-                <label for="socio" class="form-label mb-1">Sócio:</label>
-                <select id="socio" name="socio" class="form-select form-select-sm">
+              <div class="col-md-3 col-12">
+                <label for="socio" class="form-label small"><i class="fas fa-user-tie me-1"></i>Sócio</label>
+                <select id="socio" name="socio" class="form-select">
                   {% for id, nome in socios %}
                     <option value="{{ id }}" {% if forloop.first and not socio_id %}selected{% elif socio_id|stringformat:'s' == id|stringformat:'s' %}selected{% endif %}>{{ nome }}</option>
                   {% endfor %}
                 </select>
               </div>
-              <div class="col-12 col-md-12 col-lg-6">
-                <div class="d-flex gap-2 align-items-end flex-nowrap">
-                  <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i>Filtrar</button>
-                  <a href="{% url 'medicos:despesas_socio_form' empresa_id=request.resolver_match.kwargs.empresa_id %}?socio={{ socio_id }}{% if competencia %}&competencia={{ competencia }}{% endif %}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Nova Despesa</a>
-                </div>
+              
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+              </div>
+              <div class="col-auto">
+                <a href="{% url 'medicos:despesas_socio_form' empresa_id=request.resolver_match.kwargs.empresa_id %}?socio={{ socio_id }}{% if competencia %}&competencia={{ competencia }}{% endif %}" class="btn btn-success">
+                  <i class="fas fa-plus me-1"></i>Nova Despesa
+                </a>
               </div>
             </div>
-          </form>
-          <div class="table-responsive rounded-3 border bg-white shadow-sm">
-            {% if table.rows %}
-              {% render_table table %}
-              <script>
-                // Move a coluna Data para a primeira posição na tabela renderizada
-                document.addEventListener('DOMContentLoaded', function() {
-                  const table = document.querySelector('.table-responsive table');
-                  if (table) {
-                    // Move o th
-                    const ths = table.querySelectorAll('thead tr th');
-                    const dataTh = Array.from(ths).find(th => th.textContent.trim().toLowerCase().includes('data'));
-                    if (dataTh && ths[0] !== dataTh) {
-                      dataTh.parentNode.insertBefore(dataTh, ths[0]);
-                    }
-                    // Move os tds
-                    table.querySelectorAll('tbody tr').forEach(tr => {
-                      const tds = tr.querySelectorAll('td');
-                      const dataTd = Array.from(tds).find((td, idx) => ths[idx].textContent.trim().toLowerCase().includes('data'));
-                      if (dataTd && tds[0] !== dataTd) {
-                        dataTd.parentNode.insertBefore(dataTd, tds[0]);
-                      }
-                    });
-                  }
-                });
-              </script>
-            {% else %}
-              <div class="text-center text-muted py-4">Nenhuma despesa apropriada encontrada para o mês selecionado.</div>
+            
+            <!-- Indicador visual do filtro ativo -->
+            {% if competencia %}
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-filter me-1"></i>
+                  Exibindo despesas de: <strong>{{ competencia }}</strong>
+                  {% if socio_id %}para o sócio selecionado{% endif %}
+                </small>
+              </div>
             {% endif %}
-          </div>
+          </form>
+          {% if table.rows %}
+            <div class="mb-3 rounded shadow-sm p-3 bg-light">
+              <h5 class="fw-bold mb-2 text-dark"><i class="fas fa-calculator me-1"></i>Totalização</h5>
+              <div class="alert alert-info d-flex align-items-center justify-content-between mb-0" role="alert">
+                <div class="fw-bold">Total geral de despesas apropriadas:</div>
+                <div class="fw-bold text-success" style="font-size:1.25rem;">R$ {{ total_despesas|floatformat:2 }}</div>
+              </div>
+            </div>
+            
+            <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-file-invoice-dollar me-1"></i>Despesas apropriadas</h5>
+            <div class="table-responsive rounded shadow-sm p-3 bg-light">
+              <div class="bg-white rounded-2 p-2">
+                {% render_table table %}
+                <script>
+                  // Move a coluna Data para a primeira posição na tabela renderizada
+                  document.addEventListener('DOMContentLoaded', function() {
+                    const table = document.querySelector('.table-responsive table');
+                    if (table) {
+                      // Move o th
+                      const ths = table.querySelectorAll('thead tr th');
+                      const dataTh = Array.from(ths).find(th => th.textContent.trim().toLowerCase().includes('data'));
+                      if (dataTh && ths[0] !== dataTh) {
+                        dataTh.parentNode.insertBefore(dataTh, ths[0]);
+                      }
+                      // Move os tds
+                      table.querySelectorAll('tbody tr').forEach(tr => {
+                        const tds = tr.querySelectorAll('td');
+                        const dataTd = Array.from(tds).find((td, idx) => ths[idx].textContent.trim().toLowerCase().includes('data'));
+                        if (dataTd && tds[0] !== dataTd) {
+                          dataTd.parentNode.insertBefore(dataTd, tds[0]);
+                        }
+                      });
+                    }
+                  });
+                </script>
+              </div>
+            </div>
+          {% else %}
+            <div class="alert alert-info mt-4">Nenhuma despesa apropriada encontrada para o período selecionado.</div>
+          {% endif %}
         </div>
       </div>
     </div>

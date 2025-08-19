@@ -1,20 +1,20 @@
 {# Sidebar para o cenário faturamento #}
 <nav id="sidebar" class="sidebar bg-dark text-light">
   <div class="sidebar-header p-3">
-    <a href="/" class="navbar-brand text-light"><i class="fas fa-file-invoice-dollar me-2"></i>Faturamento</a>
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-file-invoice-dollar me-2 text-success"></i>Faturamento</a>
     <div class="fw-bold text-uppercase small text-secondary mt-2" style="letter-spacing:1px;">{{ cenario_nome|default:'Faturamento' }}</div>
-    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars text-light"></i></button>
   </div>
   <hr class="border-secondary m-0">
   <ul class="nav flex-column">
     <li class="nav-item">
       <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}">
-        <i class="fas fa-arrow-left me-2"></i>Voltar
+        <i class="fas fa-arrow-left me-2 text-secondary"></i>Voltar
       </a>
     </li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_notas_fiscais' %}"><i class="fas fa-file-invoice me-2"></i>Notas Fiscais: Entrada</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_notas_rateio' %}"><i class="fas fa-chart-bar me-2"></i>Notas Fiscais: Rateio</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_notas_rateio_medicos' %}"><i class="fas fa-chart-bar me-2"></i>Notas Fiscais: Médicos</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_notas_fiscais' %}"><i class="fas fa-file-invoice me-2 text-info"></i>Notas Fiscais: Serviços</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_notas_rateio' %}"><i class="fas fa-chart-bar me-2 text-warning"></i>Notas Fiscais: Rateio</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_notas_rateio_medicos' %}"><i class="fas fa-chart-bar me-2 text-primary"></i>Notas Fiscais: Médicos</a></li>
 
   </ul>
 </nav>

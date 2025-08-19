@@ -1,33 +1,34 @@
 {# Sidebar para o cenário cadastro #}
 <nav id="sidebar" class="sidebar bg-dark text-light">
   <div class="sidebar-header p-3">
-    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2"></i>Medicos</a>
-    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2 text-primary"></i>Medicos</a>
+    <div class="fw-bold text-uppercase small text-secondary mt-2" style="letter-spacing:1px;">Cadastro</div>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars text-light"></i></button>
   </div>
   <hr class="border-secondary m-0">
   <ul class="nav flex-column">
     <li class="nav-item">
       <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}">
-        <i class="fas fa-arrow-left me-2"></i>Voltar
+        <i class="fas fa-arrow-left me-2 text-secondary"></i>Voltar
       </a>
     </li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_socios_empresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-user-plus me-2"></i>Cadastro de Sócios</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_aliquotas' empresa_id=request.session.empresa_id %}"><i class="fas fa-percent me-2"></i>Cadastro de Alíquotas</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_grupos_despesa' empresa_id=request.session.empresa_id %}"><i class="fas fa-layer-group me-2"></i>Cadastro de Grupo de Despesas</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_itens_despesa' empresa_id=request.session.empresa_id %}"><i class="fas fa-list me-2"></i>Cadastro de Item de Despesa</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_socios_empresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-user-plus me-2 text-success"></i>Cadastro de Sócios</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_aliquotas' empresa_id=request.session.empresa_id %}"><i class="fas fa-percent me-2 text-warning"></i>Cadastro de Alíquotas</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_grupos_despesa' empresa_id=request.session.empresa_id %}"><i class="fas fa-layer-group me-2 text-info"></i>Cadastro de Grupo de Despesas</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_itens_despesa' empresa_id=request.session.empresa_id %}"><i class="fas fa-list me-2 text-primary"></i>Cadastro de Item de Despesa</a></li>
     <li class="nav-item">
       <a class="nav-link text-light" href="{% url 'medicos:cadastro_rateio' %}">
-        <i class="fas fa-divide me-2"></i>Configuração de Rateio
+        <i class="fas fa-divide me-2 text-danger"></i>Configuração de Rateio
       </a>
     </li>
     <li class="nav-item">
       <a class="nav-link text-light" href="{% url 'medicos:lista_meios_pagamento' empresa_id=request.session.empresa_id %}">
-        <i class="fas fa-credit-card me-2"></i>Cadastro de Meio de Pagamento
+        <i class="fas fa-credit-card me-2 text-warning"></i>Cadastro de Meio de Pagamento
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link text-light" href="{% url 'financeiro:lista_descricoes_movimentacao' empresa_id=request.session.empresa_id %}">
-        <i class="fas fa-file-alt me-2"></i>Cadastro de Descrição de Movimentação Financeira
+      <a class="nav-link text-light" href="{% url 'medicos:lista_descricoes_movimentacao' empresa_id=request.session.empresa_id %}">
+        <i class="fas fa-file-alt me-2 text-info"></i>Cadastro de Descrição de Movimentação Financeira
       </a>
     </li>
   </ul>

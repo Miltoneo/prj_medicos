@@ -20,6 +20,16 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'medicos.signals_financeiro': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'medicos.views_faturamento': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
     'root': {
         'handlers': ['console'],

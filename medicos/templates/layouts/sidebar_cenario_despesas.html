@@ -1,22 +1,22 @@
 <nav id="sidebar" class="sidebar bg-dark text-light">
   <div class="sidebar-header p-3">
-    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2"></i>Medicos</a>
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2 text-primary"></i>Medicos</a>
     <div class="fw-bold text-uppercase small text-secondary mt-2" style="letter-spacing:1px;">{{ cenario_nome|default:'Despesas' }}</div>
-    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars text-light"></i></button>
   </div>
   <hr class="border-secondary m-0">
   <ul class="nav flex-column">
     <li class="nav-item mb-2">
-      <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-arrow-left me-2"></i>Voltar para Empresa</a>
+      <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-arrow-left me-2 text-secondary"></i>Voltar para Empresa</a>
     </li>
     <li class="nav-item mb-2">
-      <a class="nav-link text-light" href="{% url 'medicos:lista_consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-chart-pie me-2"></i>Consolidado de Despesas</a>
+      <a class="nav-link text-light" href="{% url 'medicos:lista_consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-chart-pie me-2 text-primary"></i>Consolidado de Despesas</a>
     </li>
     <li class="nav-item mb-2">
-      <a class="nav-link text-light" href="{% url 'medicos:lista_despesas_empresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-building me-2"></i>Despesa da Empresa</a>
+      <a class="nav-link text-light" href="{% url 'medicos:lista_despesas_empresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-building me-2 text-warning"></i>Despesa da Empresa</a>
     </li>
     <li class="nav-item mb-2">
-      <a class="nav-link text-light" href="{% url 'medicos:despesas_socio_lista' empresa_id=request.session.empresa_id %}"><i class="fas fa-user-friends me-2"></i>Despesas de Sócio</a>
+      <a class="nav-link text-light" href="{% url 'medicos:despesas_socio_lista' empresa_id=request.session.empresa_id %}"><i class="fas fa-user-friends me-2 text-danger"></i>Despesas de Sócio</a>
     </li>
   </ul>
 </nav>

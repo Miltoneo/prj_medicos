@@ -1,57 +1,102 @@
 {% extends 'layouts/base_cenario_home.html' %}
 
 {% block content %}
-<div class="container-fluid py-4 px-0 px-md-4">
-  <div class="row justify-content-center">
-    <div class="col-12 col-lg-10 col-xxl-9">
-      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <a class="btn btn-primary d-flex align-items-center gap-2" href="{% url 'medicos:user_invite' %}">
-          <i class="bi bi-person-plus"></i> Convidar Usuário
-        </a>
-      </div>
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="fas fa-users me-2 text-light"></i>
+          <span class="fw-bold">Usuários da Conta</span>
+        </div>
+        <div class="card-body">
+          <!-- Exibição de mensagens -->
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          <!-- Botão de Convidar Usuário -->
+          <div class="mb-3">
+            <a href="{% url 'medicos:user_invite' %}" class="btn btn-success">
+              <i class="fas fa-user-plus me-1"></i>Convidar Usuário
+            </a>
           </div>
-        {% endfor %}
-      {% endif %}
-      <div class="card bg-dark text-light border-0 shadow-sm">
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle mb-0">
-              <thead class="table-secondary">
-                <tr>
-                  <th>Email</th>
-                  <th>Nome</th>
-                  <th>Ativo</th>
-                  <th>Tipo</th>
-                  <th class="text-center" style="width: 320px;">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for user in users %}
+
+          <!-- Tabela de Usuários -->
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-table me-1"></i>Usuários Cadastrados</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              <table class="table table-striped align-middle mb-0">
+                <thead class="table-light">
                   <tr>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.get_full_name }}</td>
-                    <td>{{ user.is_active|yesno:"Sim,Não" }}</td>
-                    <td>
-                      {% if user.is_superuser %}Superuser{% elif user.is_staff %}Staff{% else %}Usuário{% endif %}
-                    </td>
-                    <td class="text-center">
-                      <a class="btn btn-sm btn-outline-light me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_detail' user_id=user.id %}"><i class="bi bi-eye"></i> Detalhes</a>
-                      <a class="btn btn-sm btn-outline-warning me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_update' user_id=user.id %}"><i class="bi bi-pencil"></i> Editar</a>
-                      <a class="btn btn-sm btn-outline-danger me-1 d-inline-flex align-items-center gap-1" href="{% url 'medicos:user_delete' conta_id=conta_id user_id=user.id %}"><i class="bi bi-trash"></i> Excluir</a>
-                    </td>
+                    <th><i class="fas fa-envelope me-1"></i>Email</th>
+                    <th><i class="fas fa-user me-1"></i>Nome</th>
+                    <th><i class="fas fa-toggle-on me-1"></i>Ativo</th>
+                    <th><i class="fas fa-shield-alt me-1"></i>Tipo</th>
+                    <th class="text-center"><i class="fas fa-cogs me-1"></i>Ações</th>
                   </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="3" class="text-center text-muted">Nenhum usuário cadastrado.</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {% for user in users %}
+                    <tr>
+                      <td>{{ user.email }}</td>
+                      <td class="fw-semibold">{{ user.get_full_name }}</td>
+                      <td>
+                        {% if user.is_active %}
+                          <span class="badge bg-success">
+                            <i class="fas fa-check me-1"></i>Sim
+                          </span>
+                        {% else %}
+                          <span class="badge bg-danger">
+                            <i class="fas fa-times me-1"></i>Não
+                          </span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if user.is_superuser %}
+                          <span class="badge bg-warning text-dark">
+                            <i class="fas fa-crown me-1"></i>Superuser
+                          </span>
+                        {% elif user.is_staff %}
+                          <span class="badge bg-info">
+                            <i class="fas fa-user-tie me-1"></i>Staff
+                          </span>
+                        {% else %}
+                          <span class="badge bg-secondary">
+                            <i class="fas fa-user me-1"></i>Usuário
+                          </span>
+                        {% endif %}
+                      </td>
+                      <td class="text-center">
+                        <div class="btn-group" role="group">
+                          <a href="{% url 'medicos:user_detail' user_id=user.id %}" class="btn btn-sm btn-outline-primary">
+                            Detalhes
+                          </a>
+                          <a href="{% url 'medicos:user_update' user_id=user.id %}" class="btn btn-sm btn-outline-warning">
+                            Editar
+                          </a>
+                          <a href="{% url 'medicos:user_delete' conta_id=conta_id user_id=user.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Deseja realmente excluir este usuário?');">
+                            Excluir
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5" class="text-center text-muted">
+                        <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                        Nenhum usuário cadastrado.
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ from .auditoria import *
 
 from .relatorios import *
 from .relatorios_apuracao_csll import *
+from .relatorios_apuracao_irpj_mensal import *
 
 # Definir __all__ para controlar as importações
 __all__ = [
@@ -22,7 +23,7 @@ __all__ = [
     'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',
 
     # Modelos de Apuração
-    'ApuracaoCSLL',
+    'ApuracaoCSLL', 'ApuracaoIRPJMensal',
     
     # Modelos de Auditoria
     'LogAuditoriaFinanceiro', 'ConfiguracaoSistemaManual', 'registrar_auditoria',

@@ -32,10 +32,11 @@ class AplicacaoFinanceiraForm(forms.ModelForm):
         raise forms.ValidationError('Informe uma data válida (mês/ano).')
     class Meta:
         model = AplicacaoFinanceira
-        fields = ['data_referencia', 'saldo', 'ir_cobrado', 'descricao']
+        fields = ['data_referencia', 'saldo', 'rendimentos', 'ir_cobrado', 'descricao']
         widgets = {
             'data_referencia': forms.DateInput(attrs={'type': 'month', 'class': 'form-control form-control-sm', 'style': 'max-width: 140px;'}),
             'saldo': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'style': 'max-width: 120px;'}),
+            'rendimentos': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'style': 'max-width: 120px;'}),
             'ir_cobrado': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'style': 'max-width: 120px;'}),
             'descricao': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'maxlength': '60', 'style': 'max-width: 300px;'}),
         }

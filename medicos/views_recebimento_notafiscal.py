@@ -24,14 +24,22 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         if not empresa_id:
             return NotaFiscal.objects.none()
         qs = NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
-        # Filtro por mês/ano de emissão
+        
+        # Filtro por mês/ano de emissão - aplica mês atual como padrão se não especificado
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
+        if not mes_ano_emissao:
+            # Se não há filtro na query string, aplica o mês atual
+            import datetime
+            now = datetime.date.today()
+            mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
+        
         if mes_ano_emissao:
             try:
                 ano, mes = mes_ano_emissao.split('-')
                 qs = qs.filter(dtEmissao__year=int(ano), dtEmissao__month=int(mes))
             except Exception:
                 pass
+        
         # Filtro por mês/ano de recebimento
         mes_ano_recebimento = self.request.GET.get('mes_ano_recebimento')
         if mes_ano_recebimento:
@@ -48,12 +56,18 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         context['titulo_pagina'] = 'Recebimento de Notas Fiscais'
         context['cenario_nome'] = 'Financeiro'
         context['menu_nome'] = 'Recebimento de Notas'
+        
         # Define valor default para mes_ano_emissao se não informado
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
         if not mes_ano_emissao:
             now = datetime.date.today()
             mes_ano_emissao = f"{now.year:04d}-{now.month:02d}"
         context['mes_ano_emissao_default'] = mes_ano_emissao
+        
+        # Define valor default para mes_ano_recebimento (mantém valor do GET se existir)
+        mes_ano_recebimento = self.request.GET.get('mes_ano_recebimento', '')
+        context['mes_ano_recebimento_default'] = mes_ano_recebimento
+        
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -62,12 +76,51 @@ class NotaFiscalRecebimentoUpdateView(UpdateView):
     from .forms_recebimento_notafiscal import NotaFiscalRecebimentoForm
     form_class = NotaFiscalRecebimentoForm
     template_name = 'financeiro/editar_recebimento_nota_fiscal.html'
-    success_url = reverse_lazy('medicos:recebimento_notas_fiscais')
+
+    def get_success_url(self):
+        """Redireciona de volta para a listagem mantendo os filtros originais"""
+        from django.http import QueryDict
+        
+        # Captura os parâmetros de filtro da query string atual
+        filtros = self.request.GET.copy()
+        
+        # Remove parâmetros que não são filtros (se houver)
+        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        # Constrói a URL de retorno com os filtros
+        url_base = reverse_lazy('medicos:recebimento_notas_fiscais')
+        if filtros_limpos:
+            return f"{url_base}?{filtros_limpos.urlencode()}"
+        
+        return url_base
+
+    def get_object(self):
+        """Garantir que temos acesso ao objeto antes de instanciar o formulário"""
+        obj = super().get_object()
+        return obj
+
+    def get_form_kwargs(self):
+        """Garantir que a instância está disponível para o formulário"""
+        kwargs = super().get_form_kwargs()
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Recebimento de Nota Fiscal'
         context['cenario_nome'] = 'Financeiro'
+        
+        # Adiciona informações sobre os filtros para debug/referência
+        filtros_ativos = {}
+        for param in ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento']:
+            if param in self.request.GET:
+                filtros_ativos[param] = self.request.GET[param]
+        context['filtros_originais'] = filtros_ativos
+        
         return context
 
     def form_valid(self, form):

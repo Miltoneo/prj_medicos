@@ -1,127 +1,48 @@
 {% extends 'layouts/base_cenario_apuracao.html' %}
 {% block content %}
 <div class="container-fluid py-4" style="max-width:100vw;">
-  <div class="titulo-relatorio">Apuração de Impostos - Exemplo Estático</div>
+  <div class="titulo-relatorio">Apuração de Impostos</div>
   <div class="subtitulo-relatorio">Competência: {{ ano }} &nbsp;|&nbsp; Empresa: {{ empresa.nome }}</div>
 
-  <!-- Card PIS -->
-  <div class="card shadow-sm border-info mb-4">
-    <div class="card-header bg-info bg-opacity-10 border-info">
-      <span class="bi bi-percent text-info me-2"></span> Apuração PIS - Janeiro a Dezembro
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              {% for competencia in competencias %}
-                <th>{{ competencia|slice:":2" }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for linha in linhas_pis %}
-            <tr>
-              <td>{{ linha.descricao }}</td>
-              {% for valor in linha.valores %}
-                <td>{{ valor|floatformat:2 }}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card COFINS -->
-  <div class="card shadow-sm border-success mb-4">
-    <div class="card-header bg-success bg-opacity-10 border-success">
-      <span class="bi bi-percent text-success me-2"></span> Apuração COFINS - Janeiro a Dezembro
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              {% for competencia in competencias %}
-                <th>{{ competencia|slice:":2" }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for linha in linhas_cofins %}
-            <tr>
-              <td>{{ linha.descricao }}</td>
-              {% for valor in linha.valores %}
-                <td>{{ valor|floatformat:2 }}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card ISSQN -->
-  <div class="card shadow-sm border-warning mb-4">
-    <div class="card-header bg-warning bg-opacity-10 border-warning">
-      <span class="bi bi-percent text-warning me-2"></span> Apuração ISSQN - Janeiro a Dezembro
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              {% for competencia in competencias %}
-                <th>{{ competencia|slice:":2" }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for linha in linhas_issqn %}
-            <tr>
-              <td>{{ linha.descricao }}</td>
-              {% for valor in linha.valores %}
-                <td>{{ valor|floatformat:2 }}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-
-  <div class="row">
-    <!-- Card IRPJ -->
-    <div class="col-12 col-md-6">
-      <div class="card shadow-sm border-secondary mb-4 h-100">
-        <div class="card-header bg-secondary bg-opacity-10 border-secondary">
-          <span class="bi bi-percent text-secondary me-2"></span> Apuração IRPJ - Trimestres em linha
+  <!-- Card Principal - Todas as Apurações -->
+  <div class="card shadow border-0">
+    <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
+      <div class="d-flex align-items-center">
+        <span class="bi bi-calculator-fill me-3 fs-4"></span>
+        <div>
+          <h4 class="mb-0 fw-bold">APURAÇÃO CONSOLIDADA DE IMPOSTOS</h4>
+          <small class="opacity-75">Análise tributária completa - Lucro Presumido</small>
         </div>
-        <div class="card-body p-0">
+      </div>
+    </div>
+    
+    <div class="card-body p-0">
+      
+      <!-- Seção PIS -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-info bg-opacity-10 border-start border-info border-3">
+          <h5 class="mb-0 text-info">
+            <span class="bi bi-percent me-2"></span>
+            Apuração PIS - Janeiro a Dezembro
+          </h5>
+        </div>
+        <div class="p-3">
           <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-              <thead>
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:700px;">
+              <thead class="table-info">
                 <tr>
                   <th>Descrição</th>
-                  {% for trimestre in trimestres %}
-                    <th>{{ trimestre }}</th>
+                  {% for competencia in competencias %}
+                    <th class="text-center">{{ competencia|slice:":2" }}</th>
                   {% endfor %}
                 </tr>
               </thead>
               <tbody>
-                {% for linha in linhas_irpj %}
+                {% for linha in linhas_pis %}
                 <tr>
-                  <td>{{ linha.descricao }}</td>
+                  <td class="fw-medium">{{ linha.descricao }}</td>
                   {% for valor in linha.valores %}
-                    <td>{{ valor|floatformat:2 }}</td>
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 {% endfor %}
@@ -130,30 +51,32 @@
           </div>
         </div>
       </div>
-    </div>
-    <!-- Card CSLL -->
-    <div class="col-12 col-md-6">
-      <div class="card shadow-sm border-primary mb-4 h-100">
-        <div class="card-header bg-primary bg-opacity-10 border-primary">
-          <span class="bi bi-percent text-primary me-2"></span> Apuração CSLL - Trimestres em linha
+
+      <!-- Seção COFINS -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-success bg-opacity-10 border-start border-success border-3">
+          <h5 class="mb-0 text-success">
+            <span class="bi bi-percent me-2"></span>
+            Apuração COFINS - Janeiro a Dezembro
+          </h5>
         </div>
-        <div class="card-body p-0">
+        <div class="p-3">
           <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover mb-0 w-auto" style="min-width:700px;max-width:1100px;">
-              <thead>
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:700px;">
+              <thead class="table-success">
                 <tr>
                   <th>Descrição</th>
-                  {% for trimestre in trimestres %}
-                    <th>{{ trimestre }}</th>
+                  {% for competencia in competencias %}
+                    <th class="text-center">{{ competencia|slice:":2" }}</th>
                   {% endfor %}
                 </tr>
               </thead>
               <tbody>
-                {% for linha in linhas_csll %}
+                {% for linha in linhas_cofins %}
                 <tr>
-                  <td>{{ linha.descricao }}</td>
+                  <td class="fw-medium">{{ linha.descricao }}</td>
                   {% for valor in linha.valores %}
-                    <td>{{ valor|floatformat:2 }}</td>
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 {% endfor %}
@@ -162,6 +85,229 @@
           </div>
         </div>
       </div>
+
+      <!-- Seção ISSQN -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-warning bg-opacity-10 border-start border-warning border-3">
+          <h5 class="mb-0 text-warning">
+            <span class="bi bi-building me-2"></span>
+            Apuração ISSQN - Janeiro a Dezembro
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:700px;">
+              <thead class="table-warning">
+                <tr>
+                  <th>Descrição</th>
+                  {% for competencia in competencias %}
+                    <th class="text-center">{{ competencia|slice:":2" }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for linha in linhas_issqn %}
+                <tr>
+                  <td class="fw-medium">{{ linha.descricao }}</td>
+                  {% for valor in linha.valores %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção IRPJ Mensal -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-danger bg-opacity-10 border-start border-danger border-3">
+          <h5 class="mb-0 text-danger">
+            <span class="bi bi-calendar3 me-2"></span>
+            Apuração IRPJ Mensal
+            <small class="text-muted ms-2">Lei 9.430/1996, Art. 2º - Presunção de Lucro</small>
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:700px;">
+              <thead class="table-danger">
+                <tr>
+                  <th>Descrição</th>
+                  {% for competencia in competencias %}
+                    <th class="text-center">{{ competencia|slice:":2" }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for linha in linhas_irpj_mensal %}
+                <tr>
+                  <td class="fw-medium">{{ linha.descricao }}</td>
+                  {% for valor in linha.valores %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção IRPJ e CSLL Trimestral -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-secondary bg-opacity-10 border-start border-secondary border-3">
+          <h5 class="mb-0 text-secondary">
+            <span class="bi bi-calendar4-range me-2"></span>
+            Apuração Trimestral - IRPJ e CSLL
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="row">
+            <!-- IRPJ Trimestral -->
+            <div class="col-12 col-xl-6 mb-4">
+              <div class="border rounded p-3 h-100 bg-light bg-opacity-50">
+                <h6 class="text-secondary mb-3">
+                  <span class="bi bi-percent me-1"></span>
+                  IRPJ - Trimestres
+                </h6>
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped table-hover mb-0 table-sm">
+                    <thead class="table-secondary">
+                      <tr>
+                        <th class="fw-medium" style="width: 60%;">Descrição</th>
+                        {% for trimestre in trimestres %}
+                          <th class="text-center" style="width: 10%;">{{ trimestre }}</th>
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for linha in linhas_irpj %}
+                      <tr>
+                        <td class="fw-medium">{{ linha.descricao }}</td>
+                        {% for valor in linha.valores %}
+                          <td class="text-end">{{ valor|floatformat:2 }}</td>
+                        {% endfor %}
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- CSLL Trimestral -->
+              <div class="col-12 col-xl-6 mb-4">
+                <div class="border rounded p-3 h-100 bg-light bg-opacity-50">
+                  <h6 class="text-primary mb-3">
+                    <span class="bi bi-percent me-1"></span>
+                    CSLL - Trimestres
+                  </h6>
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover mb-0 table-sm">
+                      <thead class="table-primary">
+                        <tr>
+                          <th class="fw-medium" style="width: 60%;">Descrição</th>
+                          {% for trimestre in trimestres %}
+                            <th class="text-center" style="width: 10%;">{{ trimestre }}</th>
+                          {% endfor %}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for linha in linhas_csll %}
+                        <tr>
+                          <td class="fw-medium">{{ linha.descricao }}</td>
+                          {% for valor in linha.valores %}
+                            <td class="text-end">{{ valor|floatformat:2 }}</td>
+                          {% endfor %}
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção Espelho do Adicional -->
+      <div>
+        <div class="px-4 py-3 bg-warning bg-opacity-10 border-start border-warning border-3">
+          <h5 class="mb-0 text-warning">
+            <span class="bi bi-calculator me-2"></span>
+            ESPELHO DO ADICIONAL DE IR TRIMESTRAL
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:900px;">
+              <thead class="table-warning">
+                <tr>
+                  <th style="width: 35%;">Descrição</th>
+                  <th class="text-center" style="width: 16.25%;">T1</th>
+                  <th class="text-center" style="width: 16.25%;">T2</th>
+                  <th class="text-center" style="width: 16.25%;">T3</th>
+                  <th class="text-center" style="width: 16.25%;">T4</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-primary">
+                  <td class="text-end fw-medium">Total Receita bruta</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">R$ {{ espelho.receita_bruta|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="text-end">Base das notas fiscais recebidas do tipo "consultas médicas": (× 32,00%)</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.receita_consultas|floatformat:2 }} × 32% = R$ {{ espelho.base_calculo_consultas|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="text-end">Base das notas fiscais recebidas do tipo "outros serviços": (× 8,00%)</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.receita_outros|floatformat:2 }} × 8% = R$ {{ espelho.base_calculo_outros|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-info">
+                  <td class="text-end fw-medium">Total Base de cálculo</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.base_calculo_consultas|floatformat:2 }} + {{ espelho.base_calculo_outros|floatformat:2 }} = R$ {{ espelho.base_calculo_total|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-secondary">
+                  <td class="text-end">Limite de isenção do adicional de IR:</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">R$ {{ espelho.limite_isencao|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-warning">
+                  <td class="text-end fw-medium">Excedente sujeito ao adicional: (base cálculo - limite)</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.base_calculo_total|floatformat:2 }} - {{ espelho.limite_isencao|floatformat:2 }} = R$ {{ espelho.excedente|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-secondary">
+                  <td class="text-end">Alíquota do adicional de IR:</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.aliquota_adicional|floatformat:2 }}%</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-success">
+                  <td class="text-end fw-bold">Adicional de IR</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end fw-bold">{{ espelho.excedente|floatformat:2 }} × 10% = R$ {{ espelho.adicional_devido|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
     </div>
   </div>
 </div>

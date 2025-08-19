@@ -38,7 +38,21 @@ class RelatorioMensalSocio(models.Model):
     total_csll = models.DecimalField(max_digits=15, decimal_places=2)
     total_notas_bruto = models.DecimalField(max_digits=15, decimal_places=2)
     total_notas_liquido = models.DecimalField(max_digits=15, decimal_places=2)
-    total_notas_emitidas_mes = models.PositiveIntegerField()
+    total_notas_emitidas_mes = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Total Notas Emitidas no Mês", help_text="Valor total das notas fiscais emitidas no mês pelo sócio (considerando data de emissão).")
+
+    # Totais das notas fiscais do sócio (para linha de totais da tabela)
+    total_nf_valor_bruto = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_iss = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_pis = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_cofins = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_irpj = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_csll = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_valor_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+    # Faturamento por tipo de serviço
+    faturamento_consultas = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Faturamento Consultas", help_text="Valor total do faturamento de consultas.")
+    faturamento_plantao = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Faturamento Plantão", help_text="Valor total do faturamento de plantões.")
+    faturamento_outros = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Faturamento Outros", help_text="Valor total do faturamento de outros serviços.")
 
     saldo_apurado = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_movimentacao_financeira = models.DecimalField(max_digits=15, decimal_places=2)

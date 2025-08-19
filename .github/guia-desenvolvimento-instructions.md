@@ -1,3 +1,129 @@
+## 14. Padrão de Persistência de Filtros em Operações CRUD
+
+**Regra Obrigatória:** Sempre que implementar funcionalidades CRUD (Create, Read, Update, Delete) em views que possuem filtros de listagem, o sistema deve preservar os filtros aplicados após qualquer operação, retornando o usuário para a listagem com o mesmo contexto de navegação.
+
+### **Componentes a Modificar:**
+
+#### **A. Tabela (django-tables2)**
+Links de ação devem propagar os parâmetros de filtro atuais:
+```python
+# Exemplo em tables.py
+actions = tables.TemplateColumn(
+    template_code='''
+        <a href="{% url 'app:edit' pk=record.pk %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-primary">Editar</a>
+        <a href="{% url 'app:delete' pk=record.pk %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-danger">Excluir</a>
+    ''',
+    verbose_name='Ações',
+    orderable=False
+)
+```
+
+#### **B. Template de Listagem**
+Botões de ação (ex: "Novo") devem manter os filtros:
+```django
+<a href="{% url 'app:create' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+  <i class="fas fa-plus me-1"></i>Novo
+</a>
+```
+
+#### **C. Views CRUD**
+Implementar `get_success_url()` para reconstruir URL com filtros:
+```python
+def get_success_url(self):
+    """Redireciona mantendo os filtros originais"""
+    from django.http import QueryDict
+    
+    # Captura os parâmetros de filtro da query string atual
+    filtros = self.request.GET.copy()
+    
+    # Define quais parâmetros são considerados filtros válidos
+    parametros_filtro = ['data_inicio', 'status', 'categoria', 'mes_ano']
+    filtros_limpos = QueryDict(mutable=True)
+    
+    for param in parametros_filtro:
+        if param in filtros:
+            filtros_limpos[param] = filtros[param]
+    
+    # Constrói a URL de retorno com os filtros
+    url_base = reverse_lazy('app:list')
+    if filtros_limpos:
+        return f"{url_base}?{filtros_limpos.urlencode()}"
+    
+    return url_base
+```
+
+#### **D. Templates de Formulários**
+Botões "Cancelar" devem retornar com filtros preservados:
+```django
+<a href="{% url 'app:list' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">Cancelar</a>
+```
+
+#### **E. Context Data para Debug (Opcional)**
+Adicionar informações sobre filtros para facilitar desenvolvimento:
+```python
+def get_context_data(self, **kwargs):
+    context = super().get_context_data(**kwargs)
+    
+    # Adiciona informações sobre os filtros ativos
+    filtros_ativos = {}
+    for param in ['data_inicio', 'status', 'categoria']:
+        if param in self.request.GET:
+            filtros_ativos[param] = self.request.GET[param]
+    context['filtros_originais'] = filtros_ativos
+    
+    return context
+```
+
+### **Exemplo de Implementação Completa:**
+
+#### **1. View de Listagem:**
+```python
+# Para tabelas que precisam de acesso ao request
+def get_table(self, **kwargs):
+    """Passa contexto da request para a tabela acessar filtros"""
+    table = super().get_table(**kwargs)
+    table.context = {'request': self.request}
+    return table
+```
+
+#### **2. View de Criação/Edição:**
+```python
+class ItemCreateView(CreateView):
+    def get_success_url(self):
+        filtros = self.request.GET.copy()
+        parametros_filtro = ['categoria', 'status', 'data_mes']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        url_base = reverse_lazy('app:list')
+        return f"{url_base}?{filtros_limpos.urlencode()}" if filtros_limpos else url_base
+```
+
+### **Fluxo de Funcionamento:**
+1. **Listagem com Filtros:** `/lista/?categoria=A&status=ativo`
+2. **Clique "Novo":** `/novo/?categoria=A&status=ativo`
+3. **Salvar:** Retorna para `/lista/?categoria=A&status=ativo`
+4. **Clique "Editar":** `/editar/123/?categoria=A&status=ativo`
+5. **Salvar:** Retorna para `/lista/?categoria=A&status=ativo`
+6. **✅ Contexto sempre preservado**
+
+### **Vantagens:**
+- ✅ Experiência de usuário fluida e contextual
+- ✅ Não há perda de filtros após operações CRUD
+- ✅ Funciona com qualquer combinação de filtros
+- ✅ Compatível com paginação
+- ✅ Seguro - só propaga parâmetros conhecidos
+
+### **Exemplos de Referência no Projeto:**
+- `medicos/views_financeiro_lancamentos.py` - Lançamentos financeiros
+- `medicos/views_recebimento_notafiscal.py` - Recebimento de notas fiscais
+- `medicos/views_aplicacoes_financeiras.py` - Aplicações financeiras
+
+**Regra:** Este padrão deve ser aplicado obrigatoriamente em todas as funcionalidades CRUD que possuem filtros de listagem, garantindo consistência e qualidade da experiência do usuário em todo o sistema.
+
 ## 13. Padrão de Dropdown Filtrável Multi-tenant (Select2)
 
 **Atenção:** Dropdowns e interfaces de despesas servem para apropriação e controle gerencial. Não utilize despesas como base de cálculo de impostos, exceto para ISS em casos previstos em lei municipal. Para apuração de ISS, PIS, COFINS, IRPJ e CSLL, utilize exclusivamente os dados das notas fiscais conforme documentação tributária.

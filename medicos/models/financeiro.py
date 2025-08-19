@@ -276,6 +276,13 @@ class AplicacaoFinanceira(models.Model):
         help_text="Saldo da aplicação financeira"
     )
     
+    rendimentos = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        help_text="Rendimentos auferidos no período"
+    )
+    
     ir_cobrado = models.DecimalField(
         max_digits=15,
         decimal_places=2,
@@ -308,11 +315,14 @@ class AplicacaoFinanceira(models.Model):
         if self.saldo < 0:
             raise ValidationError({'saldo': 'Saldo não pode ser negativo'})
         
+        if self.rendimentos < 0:
+            raise ValidationError({'rendimentos': 'Rendimentos não podem ser negativos'})
+        
         if self.ir_cobrado < 0:
             raise ValidationError({'ir_cobrado': 'IR cobrado não pode ser negativo'})
     
     def __str__(self):
-        return f"{self.empresa.nome_fantasia} - {self.data_referencia.strftime('%m/%Y')} - R$ {self.saldo:,.2f}"
+        return f"{self.empresa.nome_fantasia} - {self.data_referencia.strftime('%m/%Y')} - Saldo: R$ {self.saldo:,.2f} - Rendimentos: R$ {self.rendimentos:,.2f}"
 
 
 class Financeiro(models.Model):

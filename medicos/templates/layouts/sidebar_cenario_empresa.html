@@ -1,18 +1,18 @@
 {# Sidebar para o cenário empresa #}
 <nav id="sidebar" class="sidebar bg-dark text-light">
   <div class="sidebar-header p-3">
-    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2"></i>Medicos</a>
+    <a href="/" class="navbar-brand text-light"><i class="fas fa-user-md me-2 text-primary"></i>Medicos</a>
     <div class="fw-bold text-uppercase small text-secondary mt-2" style="letter-spacing:1px;">{{ cenario_nome|default:'Empresa' }}</div>
-    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-outline-light d-md-none" id="sidebarToggle"><i class="fas fa-bars text-light"></i></button>
   </div>
   <hr class="border-secondary m-0">
   <ul class="nav flex-column">
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:home' %}"><i class="fas fa-home me-2"></i>Home</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="#"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_faturamento' %}">Faturamento</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-coins me-2"></i>Financeiro</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-file-invoice-dollar me-2"></i>Despesas</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_executivo' empresa_id=empresa.id %}">Apuração</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_cadastro' %}"><i class="fas fa-arrow-left me-2"></i><b>Cadastro</b></a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:home' %}"><i class="fas fa-home me-2 text-info"></i>Home</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="#"><i class="fas fa-chart-pie me-2 text-primary"></i>Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_faturamento' %}"><i class="fas fa-receipt me-2 text-success"></i>Faturamento</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-wallet me-2 text-warning"></i>Financeiro</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-credit-card me-2 text-danger"></i>Despesas</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_executivo' empresa_id=empresa.id %}"><i class="fas fa-calculator me-2 text-secondary"></i>Apuração</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_cadastro' %}"><i class="fas fa-cogs me-2 text-light"></i><b>Cadastro</b></a></li>
   </ul>
 </nav>

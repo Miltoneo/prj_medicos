@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Anual - Notas Fiscais</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fc;
+            color: #2d3436;
+            line-height: 1.6;
+        }
+        .titulo-relatorio {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4e73df;
+            margin-bottom: 0.5rem;
+        }
+        .subtitulo-relatorio {
+            text-align: center;
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 2rem;
+        }
+        .table th {
+            background-color: #4e73df;
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 12px;
+            text-align: center;
+        }
+        .table td {
+            border: 1px solid #e3e6f0;
+            padding: 10px;
+            text-align: right;
+            vertical-align: middle;
+        }
+        .table td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(78, 115, 223, 0.05);
+        }
+        .valor-monetario {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+        }
+        .total-row {
+            background-color: #f8f9fc !important;
+            font-weight: bold;
+            border-top: 2px solid #4e73df;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Cabeçalho do Relatório -->
+        <div class="titulo-relatorio">RELATÓRIO ANUAL DE NOTAS FISCAIS</div>
+        <div class="subtitulo-relatorio">Exercício: 2025 | Empresa: CLINICA EXEMPLO LTDA</div>
+
+        <!-- Card Principal -->
+        <div class="card shadow border-0">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);">
+                <div class="d-flex align-items-center">
+                    <span class="fas fa-chart-line me-3 fs-4"></span>
+                    <div>
+                        <h4 class="mb-0 fw-bold">Movimentação de Notas Fiscais por Mês</h4>
+                        <small class="opacity-75">Controle de emissão, recebimento e pendências</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Descrição</th>
+                                <th style="width: 6.25%;">Jan</th>
+                                <th style="width: 6.25%;">Fev</th>
+                                <th style="width: 6.25%;">Mar</th>
+                                <th style="width: 6.25%;">Abr</th>
+                                <th style="width: 6.25%;">Mai</th>
+                                <th style="width: 6.25%;">Jun</th>
+                                <th style="width: 6.25%;">Jul</th>
+                                <th style="width: 6.25%;">Ago</th>
+                                <th style="width: 6.25%;">Set</th>
+                                <th style="width: 6.25%;">Out</th>
+                                <th style="width: 6.25%;">Nov</th>
+                                <th style="width: 6.25%;">Dez</th>
+                                <th style="width: 8%;">Total Anual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Valor Total Notas Emitidas -->
+                            <tr>
+                                <td class="fw-semibold text-success">
+                                    <i class="fas fa-arrow-up me-2"></i>
+                                    Valor Total Notas Emitidas
+                                </td>
+                                <td class="valor-monetario">R$ 85.450,00</td>
+                                <td class="valor-monetario">R$ 92.340,00</td>
+                                <td class="valor-monetario">R$ 78.920,00</td>
+                                <td class="valor-monetario">R$ 89.560,00</td>
+                                <td class="valor-monetario">R$ 95.780,00</td>
+                                <td class="valor-monetario">R$ 88.340,00</td>
+                                <td class="valor-monetario">R$ 91.230,00</td>
+                                <td class="valor-monetario">R$ 87.650,00</td>
+                                <td class="valor-monetario">R$ 93.410,00</td>
+                                <td class="valor-monetario">R$ 89.870,00</td>
+                                <td class="valor-monetario">R$ 86.540,00</td>
+                                <td class="valor-monetario">R$ 94.320,00</td>
+                                <td class="valor-monetario fw-bold text-success">R$ 1.073.410,00</td>
+                            </tr>
+                            
+                            <!-- Valor Total Notas Recebidas -->
+                            <tr>
+                                <td class="fw-semibold text-primary">
+                                    <i class="fas fa-arrow-down me-2"></i>
+                                    Valor Total Notas Recebidas
+                                </td>
+                                <td class="valor-monetario">R$ 15.230,00</td>
+                                <td class="valor-monetario">R$ 18.450,00</td>
+                                <td class="valor-monetario">R$ 22.100,00</td>
+                                <td class="valor-monetario">R$ 19.870,00</td>
+                                <td class="valor-monetario">R$ 21.340,00</td>
+                                <td class="valor-monetario">R$ 17.890,00</td>
+                                <td class="valor-monetario">R$ 23.560,00</td>
+                                <td class="valor-monetario">R$ 20.450,00</td>
+                                <td class="valor-monetario">R$ 18.920,00</td>
+                                <td class="valor-monetario">R$ 24.680,00</td>
+                                <td class="valor-monetario">R$ 16.740,00</td>
+                                <td class="valor-monetario">R$ 22.310,00</td>
+                                <td class="valor-monetario fw-bold text-primary">R$ 241.540,00</td>
+                            </tr>
+                            
+                            <!-- Valor Total Notas Pendentes -->
+                            <tr>
+                                <td class="fw-semibold text-warning">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Valor Total Notas Pendentes
+                                </td>
+                                <td class="valor-monetario">R$ 0,00</td>
+                                <td class="valor-monetario">R$ 2.450,00</td>
+                                <td class="valor-monetario">R$ 0,00</td>
+                                <td class="valor-monetario">R$ 1.230,00</td>
+                                <td class="valor-monetario">R$ 0,00</td>
+                                <td class="valor-monetario">R$ 3.120,00</td>
+                                <td class="valor-monetario">R$ 0,00</td>
+                                <td class="valor-monetario">R$ 1.890,00</td>
+                                <td class="valor-monetario">R$ 2.340,00</td>
+                                <td class="valor-monetario">R$ 0,00</td>
+                                <td class="valor-monetario">R$ 1.560,00</td>
+                                <td class="valor-monetario">R$ 2.780,00</td>
+                                <td class="valor-monetario fw-bold text-warning">R$ 15.370,00</td>
+                            </tr>
+                            
+                            <!-- Linha de Totais -->
+                            <tr class="total-row">
+                                <td class="fw-bold">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    MOVIMENTAÇÃO TOTAL
+                                </td>
+                                <td class="valor-monetario fw-bold">R$ 100.680,00</td>
+                                <td class="valor-monetario fw-bold">R$ 113.240,00</td>
+                                <td class="valor-monetario fw-bold">R$ 101.020,00</td>
+                                <td class="valor-monetario fw-bold">R$ 110.660,00</td>
+                                <td class="valor-monetario fw-bold">R$ 117.120,00</td>
+                                <td class="valor-monetario fw-bold">R$ 109.350,00</td>
+                                <td class="valor-monetario fw-bold">R$ 114.790,00</td>
+                                <td class="valor-monetario fw-bold">R$ 109.990,00</td>
+                                <td class="valor-monetario fw-bold">R$ 114.670,00</td>
+                                <td class="valor-monetario fw-bold">R$ 114.550,00</td>
+                                <td class="valor-monetario fw-bold">R$ 104.840,00</td>
+                                <td class="valor-monetario fw-bold">R$ 119.410,00</td>
+                                <td class="valor-monetario fw-bold text-dark">R$ 1.330.320,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Resumo Estatístico -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <h5 class="card-title">Receita Anual</h5>
+                                <h4 class="mb-0">R$ 1.073.410,00</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                <h5 class="card-title">Despesas Anuais</h5>
+                                <h4 class="mb-0">R$ 241.540,00</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <h5 class="card-title">Pendências</h5>
+                                <h4 class="mb-0">R$ 15.370,00</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-percentage fa-2x mb-2"></i>
+                                <h5 class="card-title">Pendências (%)</h5>
+                                <h4 class="mb-0">1,16%</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Observações -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="fw-bold mb-2">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        Observações do Relatório:
+                    </h6>
+                    <ul class="mb-0 small text-muted">
+                        <li><strong>Notas Emitidas:</strong> Representa o faturamento mensal da empresa</li>
+                        <li><strong>Notas Recebidas:</strong> Despesas operacionais e de fornecedores</li>
+                        <li><strong>Notas Pendentes:</strong> Valores em aberto ou aguardando processamento</li>
+                        <li><strong>Valores:</strong> Todos os montantes estão em Reais (R$) e incluem impostos</li>
+                        <li><strong>Período:</strong> Exercício fiscal de Janeiro a Dezembro de 2025</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Seção de Relatórios por Sócio -->
+        <div class="mt-5">
+            <h3 class="text-center mb-4 text-primary">
+                <i class="fas fa-users me-2"></i>
+                RELATÓRIOS INDIVIDUAIS POR SÓCIO
+            </h3>
+            
+            <!-- Sócio 1 -->
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <div class="d-flex align-items-center">
+                        <span class="fas fa-user-md me-3 fs-4"></span>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. João Silva Santos</h5>
+                            <small class="opacity-75">CRM: 12345-SP | Especialidade: Cardiologia</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Descrição</th>
+                                    <th style="width: 6.25%;">Jan</th>
+                                    <th style="width: 6.25%;">Fev</th>
+                                    <th style="width: 6.25%;">Mar</th>
+                                    <th style="width: 6.25%;">Abr</th>
+                                    <th style="width: 6.25%;">Mai</th>
+                                    <th style="width: 6.25%;">Jun</th>
+                                    <th style="width: 6.25%;">Jul</th>
+                                    <th style="width: 6.25%;">Ago</th>
+                                    <th style="width: 6.25%;">Set</th>
+                                    <th style="width: 6.25%;">Out</th>
+                                    <th style="width: 6.25%;">Nov</th>
+                                    <th style="width: 6.25%;">Dez</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-semibold text-success">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        RECEITA BRUTA (=)
+                                    </td>
+                                    <td class="valor-monetario">R$ 70.637,74</td>
+                                    <td class="valor-monetario">R$ 71.575,65</td>
+                                    <td class="valor-monetario">R$ 68.296,00</td>
+                                    <td class="valor-monetario">R$ 65.810,30</td>
+                                    <td class="valor-monetario">R$ 69.193,60</td>
+                                    <td class="valor-monetario">R$ 53.770,75</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-danger">
+                                        <i class="fas fa-minus-circle me-2"></i>
+                                        TOTAL IMPOSTOS (-)
+                                    </td>
+                                    <td class="valor-monetario">R$ 10.864,15</td>
+                                    <td class="valor-monetario">R$ 10.764,69</td>
+                                    <td class="valor-monetario">R$ 10.029,29</td>
+                                    <td class="valor-monetario">R$ 9.608,20</td>
+                                    <td class="valor-monetario">R$ 10.192,82</td>
+                                    <td class="valor-monetario">R$ 7.705,35</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-primary">
+                                        <i class="fas fa-equals me-2"></i>
+                                        RECEITA LÍQUIDA (=)
+                                    </td>
+                                    <td class="valor-monetario">R$ 30.423,59</td>
+                                    <td class="valor-monetario">R$ 73.810,96</td>
+                                    <td class="valor-monetario">R$ 74.616,71</td>
+                                    <td class="valor-monetario">R$ 41.002,10</td>
+                                    <td class="valor-monetario">R$ 59.000,78</td>
+                                    <td class="valor-monetario">R$ 45.097,75</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-info">
+                                        <i class="fas fa-exchange-alt me-2"></i>
+                                        SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (=)
+                                    </td>
+                                    <td class="valor-monetario text-danger">R$ -26.680,31</td>
+                                    <td class="valor-monetario text-danger">R$ -65.692,57</td>
+                                    <td class="valor-monetario text-danger">R$ -51.722,61</td>
+                                    <td class="valor-monetario text-danger">R$ -30.246,53</td>
+                                    <td class="valor-monetario text-danger">R$ -60.350,80</td>
+                                    <td class="valor-monetario text-danger">R$ -42.653,29</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-warning">
+                                        <i class="fas fa-minus me-2"></i>
+                                        DESPESAS (-)
+                                    </td>
+                                    <td class="valor-monetario">R$ 3.193,51</td>
+                                    <td class="valor-monetario">R$ 2.910,08</td>
+                                    <td class="valor-monetario">R$ 3.081,09</td>
+                                    <td class="valor-monetario">R$ 4.280,61</td>
+                                    <td class="valor-monetario">R$ 2.351,52</td>
+                                    <td class="valor-monetario">R$ 2.319,83</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-secondary">
+                                        <i class="fas fa-percentage me-2"></i>
+                                        RATEIO MENSAL DO ADICIONAL DE IR (-)
+                                    </td>
+                                    <td class="valor-monetario">R$ 3.193,51</td>
+                                    <td class="valor-monetario">R$ 2.910,08</td>
+                                    <td class="valor-monetario">R$ 3.081,09</td>
+                                    <td class="valor-monetario">R$ 4.280,61</td>
+                                    <td class="valor-monetario">R$ 2.351,52</td>
+                                    <td class="valor-monetario">R$ 2.319,83</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td class="fw-bold text-dark">
+                                        <i class="fas fa-calculator me-2"></i>
+                                        SALDO A TRANSFERIR (=)
+                                    </td>
+                                    <td class="valor-monetario fw-bold">R$ 27.971,84</td>
+                                    <td class="valor-monetario fw-bold">R$ 71.408,78</td>
+                                    <td class="valor-monetario fw-bold">R$ 71.778,09</td>
+                                    <td class="valor-monetario fw-bold">R$ 36.899,07</td>
+                                    <td class="valor-monetario fw-bold">R$ 56.926,64</td>
+                                    <td class="valor-monetario fw-bold">R$ 42.590,49</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Resumo do Sócio -->
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-lg mb-2"></i>
+                                    <h6 class="card-title">Receita Semestral</h6>
+                                    <h5 class="mb-0">R$ 399.284,04</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-hand-holding-usd fa-lg mb-2"></i>
+                                    <h6 class="card-title">Saldo Acumulado</h6>
+                                    <h5 class="mb-0">R$ 306.574,91</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-percentage fa-lg mb-2"></i>
+                                    <h6 class="card-title">Carga Tributária</h6>
+                                    <h5 class="mb-0">15,38%</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sócio 2 -->
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    <div class="d-flex align-items-center">
+                        <span class="fas fa-user-md me-3 fs-4"></span>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dra. Maria Fernanda Costa</h5>
+                            <small class="opacity-75">CRM: 23456-SP | Especialidade: Pediatria</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Descrição</th>
+                                    <th style="width: 6.25%;">Jan</th>
+                                    <th style="width: 6.25%;">Fev</th>
+                                    <th style="width: 6.25%;">Mar</th>
+                                    <th style="width: 6.25%;">Abr</th>
+                                    <th style="width: 6.25%;">Mai</th>
+                                    <th style="width: 6.25%;">Jun</th>
+                                    <th style="width: 6.25%;">Jul</th>
+                                    <th style="width: 6.25%;">Ago</th>
+                                    <th style="width: 6.25%;">Set</th>
+                                    <th style="width: 6.25%;">Out</th>
+                                    <th style="width: 6.25%;">Nov</th>
+                                    <th style="width: 6.25%;">Dez</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-semibold text-success">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        RECEITA BRUTA (=)
+                                    </td>
+                                    <td class="valor-monetario">R$ 58.420,15</td>
+                                    <td class="valor-monetario">R$ 62.340,22</td>
+                                    <td class="valor-monetario">R$ 55.180,00</td>
+                                    <td class="valor-monetario">R$ 61.950,80</td>
+                                    <td class="valor-monetario">R$ 64.120,45</td>
+                                    <td class="valor-monetario">R$ 49.820,75</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-danger">
+                                        <i class="fas fa-minus-circle me-2"></i>
+                                        TOTAL IMPOSTOS (-)
+                                    </td>
+                                    <td class="valor-monetario">R$ 8.984,20</td>
+                                    <td class="valor-monetario">R$ 9.590,25</td>
+                                    <td class="valor-monetario">R$ 8.482,70</td>
+                                    <td class="valor-monetario">R$ 9.532,87</td>
+                                    <td class="valor-monetario">R$ 9.858,54</td>
+                                    <td class="valor-monetario">R$ 7.660,19</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-primary">
+                                        <i class="fas fa-equals me-2"></i>
+                                        RECEITA LÍQUIDA (=)
+                                    </td>
+                                    <td class="valor-monetario">R$ 49.435,95</td>
+                                    <td class="valor-monetario">R$ 52.749,97</td>
+                                    <td class="valor-monetario">R$ 46.697,30</td>
+                                    <td class="valor-monetario">R$ 52.417,93</td>
+                                    <td class="valor-monetario">R$ 54.261,91</td>
+                                    <td class="valor-monetario">R$ 42.160,56</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-info">
+                                        <i class="fas fa-exchange-alt me-2"></i>
+                                        SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (=)
+                                    </td>
+                                    <td class="valor-monetario text-danger">R$ -22.150,40</td>
+                                    <td class="valor-monetario text-danger">R$ -28.340,75</td>
+                                    <td class="valor-monetario text-danger">R$ -25.680,12</td>
+                                    <td class="valor-monetario text-danger">R$ -31.220,85</td>
+                                    <td class="valor-monetario text-danger">R$ -29.540,30</td>
+                                    <td class="valor-monetario text-danger">R$ -24.890,70</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-warning">
+                                        <i class="fas fa-minus me-2"></i>
+                                        DESPESAS (-)
+                                    </td>
+                                    <td class="valor-monetario">R$ 2.480,30</td>
+                                    <td class="valor-monetario">R$ 2.120,45</td>
+                                    <td class="valor-monetario">R$ 2.850,60</td>
+                                    <td class="valor-monetario">R$ 3.150,20</td>
+                                    <td class="valor-monetario">R$ 1.980,75</td>
+                                    <td class="valor-monetario">R$ 2.540,85</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold text-secondary">
+                                        <i class="fas fa-percentage me-2"></i>
+                                        RATEIO MENSAL DO ADICIONAL DE IR (-)
+                                    </td>
+                                    <td class="valor-monetario">R$ 2.480,30</td>
+                                    <td class="valor-monetario">R$ 2.120,45</td>
+                                    <td class="valor-monetario">R$ 2.850,60</td>
+                                    <td class="valor-monetario">R$ 3.150,20</td>
+                                    <td class="valor-monetario">R$ 1.980,75</td>
+                                    <td class="valor-monetario">R$ 2.540,85</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                    <td class="valor-monetario">R$ 0,00</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td class="fw-bold text-dark">
+                                        <i class="fas fa-calculator me-2"></i>
+                                        SALDO A TRANSFERIR (=)
+                                    </td>
+                                    <td class="valor-monetario fw-bold">R$ 22.325,95</td>
+                                    <td class="valor-monetario fw-bold">R$ 20.168,32</td>
+                                    <td class="valor-monetario fw-bold">R$ 15.315,98</td>
+                                    <td class="valor-monetario fw-bold">R$ 14.896,68</td>
+                                    <td class="valor-monetario fw-bold">R$ 20.760,11</td>
+                                    <td class="valor-monetario fw-bold">R$ 12.188,16</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                    <td class="valor-monetario fw-bold">R$ 0,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Resumo do Sócio -->
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-lg mb-2"></i>
+                                    <h6 class="card-title">Receita Semestral</h6>
+                                    <h5 class="mb-0">R$ 351.832,37</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-hand-holding-usd fa-lg mb-2"></i>
+                                    <h6 class="card-title">Saldo Acumulado</h6>
+                                    <h5 class="mb-0">R$ 105.655,20</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-percentage fa-lg mb-2"></i>
+                                    <h6 class="card-title">Carga Tributária</h6>
+                                    <h5 class="mb-0">15,28%</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                Relatório gerado em {{ "now"|date:"d/m/Y H:i" }} | Sistema de Gestão Médica
+            </small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

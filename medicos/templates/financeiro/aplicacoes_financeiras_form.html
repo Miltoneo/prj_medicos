@@ -24,6 +24,13 @@
             {% endif %}
           </div>
           <div class="mb-3">
+            <label for="id_rendimentos" class="form-label">Rendimentos no Mês (R$)</label>
+            {{ form.rendimentos }}
+            {% if form.rendimentos.errors %}
+              <div class="text-danger small">{{ form.rendimentos.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
             <label for="id_ir_cobrado" class="form-label">IR Pago no Mês (R$)</label>
             {{ form.ir_cobrado }}
             {% if form.ir_cobrado.errors %}
@@ -39,7 +46,7 @@
           </div>
           <div class="text-start mt-4">
             <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="{% url 'medicos:aplicacoes_financeiras' empresa_id=empresa_id|default:form.instance.empresa_id %}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            <a href="{% url 'medicos:aplicacoes_financeiras' empresa_id=empresa_id|default:form.instance.empresa_id %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
           </div>
         </form>
       </div>
