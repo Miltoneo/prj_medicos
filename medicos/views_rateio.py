@@ -131,6 +131,9 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         # Filtrar notas com status cancelado - não exibir no rateio
         qs = qs.exclude(status_recebimento='cancelado')
         
+        # Otimizar carregamento dos rateios relacionados
+        qs = qs.prefetch_related('rateios_medicos__medico__pessoa')
+        
         # Aplica o filtro de busca sem forçar mês corrente
         filter_params = self.request.GET.copy()
         if 'page' in filter_params:

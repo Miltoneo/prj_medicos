@@ -8,6 +8,25 @@
   .table-selected {
     background-color: #cce5ff !important;
   }
+  
+  /* Destaque para notas com rateio completo */
+  .table-success {
+    background-color: #d1e7dd !important;
+  }
+  
+  .table-success:hover {
+    background-color: #c3e6cb !important;
+  }
+  
+  /* Tooltip para explicar as cores */
+  .rateio-legend {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+  
+  .rateio-legend .badge {
+    margin-right: 0.5rem;
+  }
 </style>
 {% endblock %}
 
@@ -91,6 +110,19 @@
                   {% endif %}
                 </form>
               {% endif %}
+
+              <!-- Legenda das cores -->
+              <div class="rateio-legend">
+                <span class="badge bg-success">
+                  <i class="fas fa-check me-1"></i>Rateio Completo (100%)
+                </span>
+                <span class="badge bg-warning text-dark">
+                  <i class="fas fa-clock me-1"></i>Rateio Parcial
+                </span>
+                <span class="badge bg-secondary">
+                  <i class="fas fa-minus me-1"></i>Sem Rateio
+                </span>
+              </div>
 
               <!-- Tabela de Notas -->
               <div class="table-responsive rounded shadow-sm p-3 bg-light">

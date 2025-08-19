@@ -8,6 +8,23 @@ class NotaFiscalRateioTable(tables.Table):
     tomador = tables.Column(verbose_name="Tomador", orderable=True)
     cnpj_tomador = tables.Column(verbose_name="CNPJ do Tomador", orderable=True)
     val_bruto = tables.Column(verbose_name="Valor Bruto (R$)", orderable=True)
+    total_rateado = tables.TemplateColumn(
+        template_code='''
+        {% if record.percentual_total_rateado %}
+          <span class="{% if record.rateio_completo %}text-success fw-bold{% else %}text-warning{% endif %}">
+            {{ record.percentual_total_rateado|floatformat:1 }}%
+          </span>
+          <br>
+          <small class="text-muted">
+            R$ {{ record.valor_total_rateado|floatformat:2 }}
+          </small>
+        {% else %}
+          <span class="text-muted">-</span>
+        {% endif %}
+        ''',
+        verbose_name="Total Rateado",
+        orderable=False
+    )
     selecionar = tables.TemplateColumn(
         template_code='''
         <form method="get" style="display:inline;">
@@ -27,8 +44,11 @@ class NotaFiscalRateioTable(tables.Table):
     class Meta:
         model = NotaFiscal
         template_name = "django_tables2/bootstrap5.html"
-        fields = ("numero", "dtEmissao", "tomador", "cnpj_tomador", "val_bruto")
+        fields = ("numero", "dtEmissao", "tomador", "cnpj_tomador", "val_bruto", "total_rateado")
         order_by = ("-dtEmissao",)  # Ordenação padrão por data de emissão (mais recente primeiro)
+        row_attrs = {
+            'class': lambda record: 'table-success' if record.rateio_completo else ''
+        }
         
     def render_val_bruto(self, value):
         """Formatação personalizada para valor bruto"""

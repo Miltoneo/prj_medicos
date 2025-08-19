@@ -174,10 +174,10 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         excedente_adicional = 0
     
     valor_adicional_rateio = excedente_adicional * aliquota_adicional
-    # Participação do sócio na receita bruta da empresa (para cálculo de adicional de IR)
-    # Usar notas por data de emissão conforme documentação - deve somar apenas a parte do sócio
+    # Receita bruta recebida do sócio no mês - usar notas por data de recebimento
+    # para ser consistente com a tabela "Notas Fiscais Recebidas no Mês"
     receita_bruta_socio = 0
-    for nf in notas_fiscais_emissao_qs:
+    for nf in notas_fiscais_qs:  # Usar notas por data de recebimento
         rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
         if rateio:
             receita_bruta_socio += float(rateio.valor_bruto_medico)
@@ -224,7 +224,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'numero': getattr(nf, 'numero', ''),
                 'tp_aliquota': nf.get_tipo_servico_display(),
                 'tomador': nf.tomador,
-                'valor_bruto': valor_bruto_total_nf,  # Valor bruto total da nota fiscal
+                'valor_bruto': valor_bruto_rateio,  # Valor bruto rateado para o sócio
                 'valor_liquido': float(rateio.valor_liquido_medico),
                 'iss': float(rateio.valor_iss_medico),
                 'pis': float(rateio.valor_pis_medico),
