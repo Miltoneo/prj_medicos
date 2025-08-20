@@ -47,6 +47,7 @@ class RelatorioMensalSocio(models.Model):
     total_nf_cofins = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_nf_irpj = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_nf_csll = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_outros = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_nf_valor_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     # Faturamento por tipo de serviço

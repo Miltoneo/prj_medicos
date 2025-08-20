@@ -231,9 +231,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'cofins': float(rateio.valor_cofins_medico),
                 'irpj': float(rateio.valor_ir_medico),
                 'csll': float(rateio.valor_csll_medico),
+                'outros': float(nf.val_outros or 0),  # Adicionar campo outros
                 'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
                 'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
-                'fornecedor': nf.empresa_destinataria.nome if hasattr(nf.empresa_destinataria, 'nome') else str(nf.empresa_destinataria),
             })
             # Acumular totais do sócio
             total_iss_socio += float(rateio.valor_iss_medico or 0)
@@ -251,11 +251,16 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     total_nf_cofins = sum(float(nf['cofins'] or 0) for nf in notas_fiscais)
     total_nf_irpj = sum(float(nf['irpj'] or 0) for nf in notas_fiscais)
     total_nf_csll = sum(float(nf['csll'] or 0) for nf in notas_fiscais)
+    total_nf_outros = sum(float(nf['outros'] or 0) for nf in notas_fiscais)
     total_nf_valor_liquido = sum(float(nf['valor_liquido'] or 0) for nf in notas_fiscais)
 
-    # Total notas emitidas no mês: deve considerar todas as notas fiscais com data de emissão no mês de competência
-    # Somar todas as notas emitidas do sócio no mês (valor total da nota fiscal)
-    total_notas_emitidas_mes = sum(float(nf.val_bruto or 0) for nf in notas_fiscais_emissao_qs)
+    # Total notas emitidas no mês: deve considerar apenas a parte rateada para o sócio específico
+    # Somar apenas o valor rateado para o sócio de cada nota fiscal emitida no mês
+    total_notas_emitidas_mes = 0
+    for nf in notas_fiscais_emissao_qs:
+        rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+        if rateio:
+            total_notas_emitidas_mes += float(rateio.valor_bruto_medico or 0)
 
     # Receita bruta e líquida do sócio - usar apenas a parte do sócio calculada anteriormente
     receita_bruta_recebida = receita_bruta_socio  # Usar valor correto (parte do sócio)
@@ -315,6 +320,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'total_nf_cofins': total_nf_cofins,
         'total_nf_irpj': total_nf_irpj,
         'total_nf_csll': total_nf_csll,
+        'total_nf_outros': total_nf_outros,
         'total_nf_valor_liquido': total_nf_valor_liquido,
         'faturamento_consultas': faturamento_consultas,
         'faturamento_plantao': faturamento_plantao,

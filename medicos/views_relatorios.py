@@ -464,6 +464,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'total_nf_cofins': getattr(relatorio_obj, 'total_nf_cofins', 0),
         'total_nf_irpj': getattr(relatorio_obj, 'total_nf_irpj', 0),
         'total_nf_csll': getattr(relatorio_obj, 'total_nf_csll', 0),
+        'total_nf_outros': getattr(relatorio_obj, 'total_nf_outros', 0),
         'total_nf_valor_liquido': getattr(relatorio_obj, 'total_nf_valor_liquido', 0),
         # Campos específicos para o cálculo de IRPJ utilizados no template
         'base_calculo_consultas': relatorio_dict.get('base_calculo_consultas', 0),
