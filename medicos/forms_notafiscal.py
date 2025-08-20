@@ -1,8 +1,28 @@
+from django.core.exceptions import ValidationError
+from medicos.models import NotaFiscal
 from django import forms
 from medicos.models.fiscal import NotaFiscal
 from medicos.models.financeiro import MeioPagamento
 
 class NotaFiscalForm(forms.ModelForm):
+    def clean(self):
+        cleaned_data = super().clean()
+        numero = cleaned_data.get('numero')
+        serie = cleaned_data.get('serie')
+        empresa_destinataria = cleaned_data.get('empresa_destinataria')
+        if numero and serie and empresa_destinataria:
+            qs = NotaFiscal.objects.filter(
+                numero=numero,
+                serie=serie,
+                empresa_destinataria=empresa_destinataria
+            )
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise ValidationError(
+                    'Já existe uma nota fiscal com este número, série e empresa destinatária.'
+                )
+        return cleaned_data
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in ['meio_pagamento', 'dtRecebimento', 'status_recebimento']:
@@ -59,6 +79,13 @@ class NotaFiscalForm(forms.ModelForm):
                     'Já existe uma nota fiscal com este número, série e empresa. Escolha outro número ou série.'
                 )
         return cleaned_data
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if commit:
+            # Salvar sem recalcular impostos automaticamente (preserva valores editados manualmente)
+            instance.save(pular_recalculo=True)
+        return instance
+
     class Meta:
         model = NotaFiscal
         fields = [

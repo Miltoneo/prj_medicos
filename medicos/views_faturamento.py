@@ -112,6 +112,8 @@ class NotaFiscalCreateView(CreateView):
             form.add_error(None, 'Não foi encontrada alíquota vigente para a empresa e data informada. Cadastre uma alíquota antes de emitir a nota fiscal.')
             return self.form_invalid(form)
         form.instance.aliquotas = aliquota_vigente
+        
+        # Salvar com flag especial para não recalcular impostos
         return super().form_valid(form)
  
 class NotaFiscalUpdateView(UpdateView):
@@ -179,6 +181,10 @@ class NotaFiscalUpdateView(UpdateView):
         if empresa:
             form.empresa_sessao = empresa
         return form
+
+    def form_valid(self, form):
+        # Salvar sem recalcular impostos automaticamente (preserva valores editados manualmente)
+        return super().form_valid(form)
 
 class NotaFiscalDeleteView(DeleteView):
     model = NotaFiscal
@@ -283,6 +289,7 @@ class NotaFiscalListView(SingleTableMixin, FilterView):
             total_cofins=Sum('val_COFINS'),
             total_ir=Sum('val_IR'),
             total_csll=Sum('val_CSLL'),
+            total_outros=Sum('val_outros'),
             total_liquido=Sum('val_liquido')
         )
         

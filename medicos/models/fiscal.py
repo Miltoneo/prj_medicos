@@ -918,10 +918,13 @@ class NotaFiscal(models.Model):
         # Verificar se é importação de XML (não recalcular impostos)
         importacao_xml = kwargs.pop('importacao_xml', False)
         
+        # Verificar se deve pular o recálculo (para preservar valores editados manualmente)
+        pular_recalculo = kwargs.pop('pular_recalculo', False)
+        
         # Verificar se realmente houve mudança nos campos que justifiquem recálculo
         deve_recalcular = False
         
-        if not importacao_xml:
+        if not importacao_xml and not pular_recalculo:
             if not self.pk:
                 # Nova nota - recalcular sempre
                 deve_recalcular = True

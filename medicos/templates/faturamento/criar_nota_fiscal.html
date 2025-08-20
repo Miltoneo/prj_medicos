@@ -147,6 +147,38 @@ document.addEventListener('DOMContentLoaded', function() {
     setFieldValue(valLiquidoInput, liquido.toFixed(2));
   }
 
+  function calcularLiquido() {
+    let bruto = 0;
+    let outros = 0;
+    let valorISS = 0, valorPIS = 0, valorCOFINS = 0, valorIR = 0, valorCSLL = 0;
+    
+    if (valBrutoInput) {
+      bruto = parseFloat(valBrutoInput.value.replace(',', '.')) || 0;
+    }
+    if (valOutrosInput) {
+      outros = parseFloat(valOutrosInput.value.replace(',', '.')) || 0;
+    }
+    if (valISSInput) {
+      valorISS = parseFloat(valISSInput.value.replace(',', '.')) || 0;
+    }
+    if (valPISInput) {
+      valorPIS = parseFloat(valPISInput.value.replace(',', '.')) || 0;
+    }
+    if (valCOFINSInput) {
+      valorCOFINS = parseFloat(valCOFINSInput.value.replace(',', '.')) || 0;
+    }
+    if (valIRInput) {
+      valorIR = parseFloat(valIRInput.value.replace(',', '.')) || 0;
+    }
+    if (valCSLLInput) {
+      valorCSLL = parseFloat(valCSLLInput.value.replace(',', '.')) || 0;
+    }
+    
+    const totalImpostos = valorISS + valorPIS + valorCOFINS + valorIR + valorCSLL;
+    const liquido = bruto - totalImpostos - outros;
+    setFieldValue(valLiquidoInput, liquido.toFixed(2));
+  }
+
   if (valBrutoInput) {
     valBrutoInput.addEventListener('input', calcularCampos);
     valBrutoInput.addEventListener('change', calcularCampos);
@@ -161,6 +193,14 @@ document.addEventListener('DOMContentLoaded', function() {
     valOutrosInput.addEventListener('input', calcularCampos);
     valOutrosInput.addEventListener('change', calcularCampos);
   }
+
+  // Adicionar listeners para os campos de tributos (apenas para recalcular o líquido)
+  [valISSInput, valPISInput, valCOFINSInput, valIRInput, valCSLLInput].forEach(function(field) {
+    if (field) {
+      field.addEventListener('input', calcularLiquido);
+      field.addEventListener('change', calcularLiquido);
+    }
+  });
 });
 </script>
 {% endblock %}
