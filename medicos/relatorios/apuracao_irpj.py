@@ -20,24 +20,34 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
     for num_tri, meses in TRIMESTRES:
         competencia = f"T{num_tri}/{ano}"
         
-        # Verificar regime tributário da empresa para IRPJ
+        # 1. IRPJ PRINCIPAL: Verificar regime tributário da empresa
         if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
             # Regime de competência: considera data de emissão
-            notas = NotaFiscal.objects.filter(
+            notas_irpj = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtEmissao__year=ano,
                 dtEmissao__month__in=meses
             )
         else:
             # Regime de caixa: considera data de recebimento
-            notas = NotaFiscal.objects.filter(
+            notas_irpj = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtRecebimento__year=ano,
                 dtRecebimento__month__in=meses,
                 dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
             )
-        receita_consultas = notas.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
-        receita_outros = notas.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        
+        # 2. ADICIONAL DE IR: SEMPRE considera data de emissão (independente do regime)
+        # Lei 9.249/1995, Art. 3º, §1º - sempre por competência
+        notas_adicional = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtEmissao__year=ano,
+            dtEmissao__month__in=meses
+        )
+        
+        # Cálculo das receitas para IRPJ principal (baseado no regime tributário)
+        receita_consultas = notas_irpj.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        receita_outros = notas_irpj.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_bruta = receita_consultas + receita_outros
         
         # CORREÇÃO: Calcular base de cálculo aplicando presunções específicas por tipo de serviço
@@ -62,18 +72,24 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
         
         # CORREÇÃO: Adicional trimestral conforme Lei 9.249/1995, Art. 3º, §1º
         # Adicional de 10% sobre parcela do LUCRO PRESUMIDO que exceder R$ 60.000,00/trimestre
-        # IMPORTANTE: Adicional incide apenas sobre lucro presumido, NÃO sobre rendimentos de aplicações
+        # IMPORTANTE: Adicional SEMPRE usa data de emissão (independente do regime da empresa)
         adicional = Decimal('0')
         limite_trimestral_legal = Decimal('60000.00')  # R$ 60.000,00/trimestre (3 × R$ 20.000,00/mês)
         
-        # Usar apenas a base de cálculo (lucro presumido), excluindo rendimentos de aplicações
-        lucro_presumido_trimestral = base_calculo  # Apenas 32% da receita bruta, sem aplicações
+        # Cálculo das receitas para ADICIONAL (SEMPRE por data de emissão)
+        receita_adicional_consultas = notas_adicional.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        receita_adicional_outros = notas_adicional.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        
+        # Base do adicional: aplicar presunções sobre receitas por data de emissão
+        base_adicional_consultas = receita_adicional_consultas * (aliquota.IRPJ_PRESUNCAO_CONSULTA/Decimal('100'))
+        base_adicional_outros = receita_adicional_outros * (aliquota.IRPJ_PRESUNCAO_OUTROS/Decimal('100'))
+        lucro_presumido_trimestral = base_adicional_consultas + base_adicional_outros  # Base do adicional
         
         if lucro_presumido_trimestral > limite_trimestral_legal:
             excesso_lucro_presumido = lucro_presumido_trimestral - limite_trimestral_legal
             adicional = excesso_lucro_presumido * (Decimal('10.00') / Decimal('100'))  # 10% fixo por lei
         
-        imposto_retido_nf = notas.aggregate(total=Sum('val_IR'))['total'] or Decimal('0')
+        imposto_retido_nf = notas_irpj.aggregate(total=Sum('val_IR'))['total'] or Decimal('0')
         # já atribuído acima
         imposto_a_pagar = imposto_devido + adicional - imposto_retido_nf - retencao_aplicacao_financeira
         with transaction.atomic():

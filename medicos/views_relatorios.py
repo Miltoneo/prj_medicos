@@ -606,6 +606,7 @@ def relatorio_apuracao(request, empresa_id):
     ]
 
     # Espelho do Adicional de IR Trimestral
+    # IMPORTANTE: Usa dados já calculados pelos builders que consideram regime de tributação
     espelho_adicional_trimestral = []
     limite_trimestral = Decimal('60000.00')  # R$ 60.000,00/trimestre
     aliquota_adicional = Decimal('10.00')  # 10%
@@ -615,10 +616,13 @@ def relatorio_apuracao(request, empresa_id):
         receita_outros = linha.get('receita_outros', 0)
         receita_bruta = linha.get('receita_bruta', 0)
         
-        # Cálculo das bases com presunções corretas
+        # CORREÇÃO: Usar base de cálculo já calculada pelo builder (que considera regime tributário)
+        # O builder já aplicou presunções corretas e filtrou por data de emissão/recebimento
+        base_calculo_total = Decimal(str(linha.get('base_calculo', 0)))  # Base já calculada pelo builder
+        
+        # Calcular componentes apenas para exibição no espelho (mas usar base_calculo_total do builder)
         base_calculo_consultas = Decimal(str(receita_consultas)) * Decimal('0.32')  # 32% para consultas
         base_calculo_outros = Decimal(str(receita_outros)) * Decimal('0.08')  # 8% para outros (não 32%!)
-        base_calculo_total = base_calculo_consultas + base_calculo_outros
         
         excedente = max(Decimal('0'), base_calculo_total - limite_trimestral)
         adicional_devido = excedente * (aliquota_adicional / Decimal('100'))
@@ -638,6 +642,7 @@ def relatorio_apuracao(request, empresa_id):
         })
 
     # Espelho do Adicional de IR Mensal (baseado nos dados da tabela IRPJ Mensal)
+    # IMPORTANTE: Usa dados já calculados pelos builders que consideram regime de tributação
     espelho_adicional_mensal = []
     mes_exemplo = 7  # Julho (posição 6 no array, pois começa em 0)
     

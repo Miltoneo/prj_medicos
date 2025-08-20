@@ -55,26 +55,34 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
         # Verificar regime tributário da empresa para IRPJ
         if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
             # Regime de competência: considera data de emissão
-            notas = NotaFiscal.objects.filter(
+            notas_irpj = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtEmissao__year=ano,
                 dtEmissao__month=num_mes
             )
         else:
             # Regime de caixa: considera data de recebimento
-            notas = NotaFiscal.objects.filter(
+            notas_irpj = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtRecebimento__year=ano,
                 dtRecebimento__month=num_mes,
                 dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
             )
         
-        # Receitas por tipo de serviço
-        receita_consultas = notas.filter(
+        # ADICIONAL DE IR: SEMPRE considera data de emissão (independente do regime)
+        # Lei 9.249/1995, Art. 3º, §1º - sempre por competência
+        notas_adicional = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtEmissao__year=ano,
+            dtEmissao__month=num_mes
+        )
+        
+        # Receitas por tipo de serviço (para IRPJ principal)
+        receita_consultas = notas_irpj.filter(
             tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
         ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         
-        receita_outros = notas.exclude(
+        receita_outros = notas_irpj.exclude(
             tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
         ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         
@@ -112,19 +120,30 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
         
         # CORREÇÃO: Adicional mensal conforme Lei 9.249/1995, Art. 3º, §1º
         # Adicional de 10% sobre parcela do LUCRO PRESUMIDO que exceder R$ 20.000,00/mês
-        # IMPORTANTE: Adicional incide apenas sobre lucro presumido, NÃO sobre rendimentos de aplicações
+        # IMPORTANTE: Adicional SEMPRE usa data de emissão (independente do regime da empresa)
         adicional = Decimal('0')
         limite_mensal_legal = Decimal('20000.00')  # R$ 20.000,00/mês (Lei 9.249/1995)
         
-        # Usar apenas a base de cálculo (lucro presumido), excluindo rendimentos de aplicações
-        lucro_presumido_mensal = base_calculo  # Apenas 32% da receita bruta, sem aplicações
+        # Cálculo das receitas para ADICIONAL (SEMPRE por data de emissão)
+        receita_adicional_consultas = notas_adicional.filter(
+            tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        
+        receita_adicional_outros = notas_adicional.exclude(
+            tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        
+        # Base do adicional: aplicar presunções sobre receitas por data de emissão
+        base_adicional_consultas = receita_adicional_consultas * (aliquota.IRPJ_PRESUNCAO_CONSULTA / Decimal('100'))
+        base_adicional_outros = receita_adicional_outros * (aliquota.IRPJ_PRESUNCAO_OUTROS / Decimal('100'))
+        lucro_presumido_mensal = base_adicional_consultas + base_adicional_outros  # Base do adicional
         
         if lucro_presumido_mensal > limite_mensal_legal:
             excesso_lucro_presumido = lucro_presumido_mensal - limite_mensal_legal
             adicional = excesso_lucro_presumido * (Decimal('10.00') / Decimal('100'))  # 10% fixo por lei
         
-        # Impostos retidos nas notas fiscais
-        imposto_retido_nf = notas.aggregate(
+        # Impostos retidos nas notas fiscais (usar notas do IRPJ principal)
+        imposto_retido_nf = notas_irpj.aggregate(
             total=Sum('val_IR')
         )['total'] or Decimal('0')
         
