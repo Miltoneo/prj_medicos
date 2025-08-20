@@ -106,9 +106,35 @@
               <button type="submit" class="btn btn-success">
                 <i class="fas fa-save me-1"></i>Salvar Alterações
               </button>
+              <button type="button" class="btn btn-warning" id="btn-limpar-recebimento">
+                <i class="fas fa-eraser me-1"></i>Limpar Campos
+              </button>
               <a href="{% url 'medicos:recebimento_notas_fiscais' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary">
                 <i class="fas fa-times me-1"></i>Cancelar
               </a>
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const btnLimpar = document.getElementById('btn-limpar-recebimento');
+  if (btnLimpar) {
+    btnLimpar.addEventListener('click', function() {
+      // Limpa campos do formulário
+      const form = btnLimpar.closest('form');
+      if (form) {
+        // Limpa todos os inputs e selects exceto CSRF
+        form.querySelectorAll('input:not([type=hidden]), select').forEach(function(field) {
+          if (field.id === 'id_status_recebimento') {
+            field.value = 'pendente';
+          } else {
+            field.value = '';
+          }
+        });
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
             </div>
           </form>
         </div>
