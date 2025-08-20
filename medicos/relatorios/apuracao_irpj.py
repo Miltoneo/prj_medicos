@@ -1,8 +1,8 @@
 from medicos.models.relatorios_apuracao_irpj import ApuracaoIRPJ
-from medicos.models.base import Empresa
+from medicos.models.base import Empresa, REGIME_TRIBUTACAO_COMPETENCIA
 from medicos.models.fiscal import Aliquotas
 from medicos.models import NotaFiscal
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db import transaction
 from decimal import Decimal
 
@@ -19,11 +19,23 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
     resultados = []
     for num_tri, meses in TRIMESTRES:
         competencia = f"T{num_tri}/{ano}"
-        notas = NotaFiscal.objects.filter(
-            empresa_destinataria=empresa,
-            dtEmissao__year=ano,
-            dtEmissao__month__in=meses
-        )
+        
+        # Verificar regime tributário da empresa para IRPJ
+        if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
+            # Regime de competência: considera data de emissão
+            notas = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtEmissao__year=ano,
+                dtEmissao__month__in=meses
+            )
+        else:
+            # Regime de caixa: considera data de recebimento
+            notas = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtRecebimento__year=ano,
+                dtRecebimento__month__in=meses,
+                dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
+            )
         receita_consultas = notas.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_outros = notas.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         receita_bruta = receita_consultas + receita_outros
