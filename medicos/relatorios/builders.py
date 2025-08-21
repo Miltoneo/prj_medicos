@@ -227,12 +227,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 faturamento_outros += valor_bruto_rateio
             
             # O cálculo detalhado do adicional de IR para o sócio foi desfeito; manter apenas o necessário para o relatório.
-            # Calcular valor "outros" rateado para o sócio
-            valor_outros_rateado = 0
-            if nf.val_outros and valor_bruto_total_nf > 0:
-                proporcao_rateio = valor_bruto_rateio / valor_bruto_total_nf
-                valor_outros_rateado = float(nf.val_outros) * proporcao_rateio
-            
             notas_fiscais.append({
                 'id': nf.id,
                 'numero': getattr(nf, 'numero', ''),
@@ -246,7 +240,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'cofins': float(rateio.valor_cofins_medico),
                 'irpj': float(rateio.valor_ir_medico),
                 'csll': float(rateio.valor_csll_medico),
-                'outros': valor_outros_rateado,  # Usar valor "outros" rateado para o sócio
+                'outros': float(rateio.valor_outros_medico),  # Usar propriedade padronizada do modelo
                 'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
                 'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
             })

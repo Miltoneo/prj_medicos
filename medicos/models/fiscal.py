@@ -1296,3 +1296,20 @@ class NotaFiscalRateioMedico(models.Model):
 
     def __str__(self):
         return f"Rateio NF {self.nota_fiscal.numero} - Médico {self.medico.pessoa.name}"
+    
+    @property
+    def valor_outros_medico(self):
+        """
+        Calcula o valor de 'outros' rateado proporcionalmente para o médico
+        
+        Returns:
+            Decimal: Valor de 'outros' rateado para este médico
+        """
+        if not self.nota_fiscal or not self.nota_fiscal.val_outros or not self.nota_fiscal.val_bruto:
+            return 0
+        
+        # Calcular proporção do rateio
+        proporcao = self.valor_bruto_medico / self.nota_fiscal.val_bruto
+        
+        # Calcular valor "outros" rateado
+        return self.nota_fiscal.val_outros * proporcao
