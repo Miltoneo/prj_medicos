@@ -295,6 +295,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td class="text-start">Total notas recebidas no mês (sócio)</td>
                         <td><b>R$ {{ relatorio.receita_bruta_recebida|floatformat:2 }}</b> (considera data de recebimento da nota)</td>
                       </tr>
+                      <tr>
+                        <td class="text-start">Adicional de IR mensal</td>
+                        <td>considera data de emissão das notas</td>
+                      </tr>
                     </table>
                   </div>
                 </div>
@@ -316,15 +320,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <col style="width: 30%; min-width: 120px;">
                       </colgroup>
                       <tr class="table-primary">
-                        <td colspan="2" class="text-start">Receita bruta total da empresa no mês:</td>
+                        <td colspan="2" class="text-start">Receita bruta de notas emitidas no mês (empresa):</td>
                         <td class="text-end text-nowrap">R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</td>
                       </tr>
                       <tr>
-                        <td colspan="2" class="text-start">Base das notas fiscais recebidas do tipo "consultas médicas": ({{ base_consultas_medicas|floatformat:2|default:"0,00" }} × 32,00%)</td>
+                        <td colspan="2" class="text-start">Base sobre notas emitidas tipo "consultas médicas": ({{ base_consultas_medicas|floatformat:2|default:"0,00" }} × 32,00%)</td>
                         <td class="text-end text-nowrap">R$ {{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr>
-                        <td colspan="2" class="text-start">Base das notas fiscais recebidas do tipo "outros serviços": ({{ base_outros_servicos|floatformat:2|default:"0,00" }} × 8,00%)</td>
+                        <td colspan="2" class="text-start">Base sobre notas emitidas do tipo "outros serviços": ({{ base_outros_servicos|floatformat:2|default:"0,00" }} × 8,00%)</td>
                         <td class="text-end text-nowrap">R$ {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }}</td>
                       </tr>
                       <tr class="table-info">

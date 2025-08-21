@@ -1130,25 +1130,39 @@ class NotaFiscalRateioMedico(models.Model):
     def save(self, *args, **kwargs):
         # Calculate all required fields before saving
         if self.nota_fiscal and self.valor_bruto_medico is not None:
-            # Use aliquotas from nota_fiscal
-            aliquotas = self.nota_fiscal.aliquotas
-            tipo_servico_map = {
-                self.nota_fiscal.TIPO_SERVICO_CONSULTAS: 'consultas',
-                self.nota_fiscal.TIPO_SERVICO_OUTROS: 'outros',
-            }
-            tipo_servico = tipo_servico_map.get(self.nota_fiscal.tipo_servico, 'consultas')
-            resultado = aliquotas.calcular_impostos_com_regime(
-                valor_bruto=self.valor_bruto_medico,
-                tipo_servico=tipo_servico,
-                empresa=self.nota_fiscal.empresa_destinataria,
-                data_referencia=self.nota_fiscal.dtEmissao
-            )
-            self.valor_iss_medico = resultado.get('valor_iss', 0)
-            self.valor_pis_medico = resultado.get('valor_pis', 0)
-            self.valor_cofins_medico = resultado.get('valor_cofins', 0)
-            self.valor_ir_medico = resultado.get('valor_ir', 0)
-            self.valor_csll_medico = resultado.get('valor_csll', 0)
-            self.valor_liquido_medico = resultado.get('valor_liquido', self.valor_bruto_medico)
+            # CORREÇÃO: Usar valores já calculados da nota fiscal original
+            # Em vez de recalcular, fazer rateio proporcional dos impostos da NF
+            
+            nota_fiscal = self.nota_fiscal
+            valor_bruto_total = nota_fiscal.val_bruto
+            
+            if valor_bruto_total > 0:
+                # Calcular proporção do rateio
+                proporcao = self.valor_bruto_medico / valor_bruto_total
+                
+                # Ratear os impostos proporcionalmente baseado nos valores da NF original
+                self.valor_iss_medico = (nota_fiscal.val_ISS or 0) * proporcao
+                self.valor_pis_medico = (nota_fiscal.val_PIS or 0) * proporcao
+                self.valor_cofins_medico = (nota_fiscal.val_COFINS or 0) * proporcao
+                self.valor_ir_medico = (nota_fiscal.val_IR or 0) * proporcao
+                self.valor_csll_medico = (nota_fiscal.val_CSLL or 0) * proporcao
+                
+                # Calcular valor líquido
+                total_impostos_medico = (
+                    self.valor_iss_medico + self.valor_pis_medico + 
+                    self.valor_cofins_medico + self.valor_ir_medico + 
+                    self.valor_csll_medico
+                )
+                self.valor_liquido_medico = self.valor_bruto_medico - total_impostos_medico
+            else:
+                # Se valor bruto zero, zerar todos os impostos
+                self.valor_iss_medico = 0
+                self.valor_pis_medico = 0
+                self.valor_cofins_medico = 0
+                self.valor_ir_medico = 0
+                self.valor_csll_medico = 0
+                self.valor_liquido_medico = 0
+        
         # Set data_rateio if not provided
         if not self.data_rateio:
             from django.utils import timezone

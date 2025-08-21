@@ -130,23 +130,22 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     
     # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
     # A base de cálculo do IR deve considerar tipos de serviços separadamente
-    # Usar notas RECEBIDAS no mês conforme especificação
+    # CORREÇÃO: Usar notas EMITIDAS no mês conforme Lei 9.249/1995 (adicional sempre por emissão)
     try:
         aliquota = Aliquotas.objects.filter(empresa=empresa).first()
         if aliquota:
-            # Separar notas RECEBIDAS por tipo de serviço para cálculo correto da base
+            # Separar notas EMITIDAS por tipo de serviço para cálculo correto da base
             total_consultas = 0
             total_outros = 0
             
-            # Usar todas as notas recebidas da empresa no mês (não apenas do sócio)
-            notas_recebidas_empresa = NotaFiscal.objects.filter(
+            # CORREÇÃO: Usar todas as notas EMITIDAS da empresa no mês (adicional sempre por emissão)
+            notas_emitidas_empresa = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
-                dtRecebimento__year=competencia.year,
-                dtRecebimento__month=competencia.month,
-                dtRecebimento__isnull=False
+                dtEmissao__year=competencia.year,
+                dtEmissao__month=competencia.month
             )
             
-            for nf in notas_recebidas_empresa:
+            for nf in notas_emitidas_empresa:
                 if nf.tipo_servico == nf.TIPO_SERVICO_CONSULTAS:
                     total_consultas += float(nf.val_bruto or 0)
                 else:  # TIPO_SERVICO_OUTROS
@@ -174,17 +173,26 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         excedente_adicional = 0
     
     valor_adicional_rateio = excedente_adicional * aliquota_adicional
+    
     # Receita bruta recebida do sócio no mês - usar notas por data de recebimento
     # para ser consistente com a tabela "Notas Fiscais Recebidas no Mês"
-    receita_bruta_socio = 0
+    receita_bruta_socio_recebida = 0
     for nf in notas_fiscais_qs:  # Usar notas por data de recebimento
         rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
         if rateio:
-            receita_bruta_socio += float(rateio.valor_bruto_medico)
+            receita_bruta_socio_recebida += float(rateio.valor_bruto_medico)
     
-    # Calcular a participação do sócio na receita bruta da empresa
-    # Usar receita_bruta_socio calculada pelos rateios para o cálculo inicial
-    participacao_socio = receita_bruta_socio / total_notas_bruto_empresa if total_notas_bruto_empresa > 0 else 0
+    # CORREÇÃO: Para o cálculo do adicional de IR, usar receita EMITIDA do sócio
+    # para ser consistente com o cálculo do adicional (sempre por emissão)
+    receita_bruta_socio_emitida = 0
+    for nf in notas_fiscais_emissao_qs:  # Usar notas por data de emissão
+        rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+        if rateio:
+            receita_bruta_socio_emitida += float(rateio.valor_bruto_medico)
+    
+    # Calcular a participação do sócio na receita bruta da empresa (para adicional de IR)
+    # Usar receita_bruta_socio_emitida para ser consistente com base do adicional (emissão)
+    participacao_socio = receita_bruta_socio_emitida / total_notas_bruto_empresa if total_notas_bruto_empresa > 0 else 0
     valor_adicional_socio = valor_adicional_rateio * participacao_socio if valor_adicional_rateio > 0 else 0
     
     # Processar notas fiscais do sócio para exibição
@@ -263,7 +271,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             total_notas_emitidas_mes += float(rateio.valor_bruto_medico or 0)
 
     # Receita bruta e líquida do sócio - usar apenas a parte do sócio calculada anteriormente
-    receita_bruta_recebida = receita_bruta_socio  # Usar valor correto (parte do sócio)
+    receita_bruta_recebida = receita_bruta_socio_recebida  # Usar valor correto (parte do sócio)
 
     # Impostos agregados do sócio (incluindo o rateio mensal de adicional de IR)
     impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio + valor_adicional_socio
@@ -354,7 +362,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     contexto['participacao_socio_percentual'] = round(percentual, 2) if percentual else 0.0
     
     # Campos auxiliares utilizados no template
-    contexto['receita_bruta_socio'] = receita_bruta_socio  # Usar notas emitidas para cálculo de adicional de IR
+    contexto['receita_bruta_socio'] = receita_bruta_socio_emitida  # Usar notas emitidas para cálculo de adicional de IR
     
     # Adicionar campos calculados que não estão no modelo
     contexto['base_consultas_medicas'] = total_consultas
