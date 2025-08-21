@@ -184,6 +184,7 @@ path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa_cadast
     # Cadastro e Cenário Views
     # =====================
     path('cenario_cadastro/', views_cenario.cenario_cadastro, name='cenario_cadastro'),
+    path('cenario_demonstrativo/', views_cenario.cenario_demonstrativo, name='cenario_demonstrativo'),
     path('', views_main.main, name='index'),
     path('dashboard/', views_main.main, name='dashboard'),
     path('home/', views_main.main, name='home'),

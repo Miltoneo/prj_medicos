@@ -307,7 +307,7 @@ def relatorio_executivo(request, empresa_id):
             'despesas_anual': despesas_anual
         })
     
-    context = _contexto_base(request, empresa=empresa, menu_nome='Apuração', cenario_nome='Relatório Executivo')
+    context = _contexto_base(request, empresa=empresa, menu_nome='Demonstrativo', cenario_nome='Relatório Executivo')
     context.update({
         'titulo_pagina': 'Relatório Executivo Anual',
         'ano_atual': ano_atual,
@@ -477,7 +477,7 @@ def relatorio_mensal_socio(request, empresa_id):
     }
     
     # Montar contexto final
-    context = _contexto_base(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Relatório Mensal Sócio')
+    context = _contexto_base(request, empresa=empresa, menu_nome='Demonstrativo', cenario_nome='Relatório Mensal Sócio')
     context.update({
         'relatorio': relatorio,
         'titulo_pagina': 'Relatório Mensal do Sócio',

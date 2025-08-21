@@ -36,4 +36,21 @@ def cenario_cadastro(request):
     request.session['empresa_nome'] = empresa.name if empresa else ''
     return redirect('medicos:lista_socios_empresa', empresa_id=empresa.id if empresa else None)
 
+@login_required
+def cenario_demonstrativo(request):
+    """
+    Regra de padronização:
+    - Injete no contexto a variável 'empresa' usando o ID salvo na sessão (request.session['empresa_id']).
+    - O nome da empresa será exibido automaticamente pelo template base_header.html, que deve ser incluído no template base.
+    - Injete também 'titulo_pagina' para exibição do título padrão no header.
+    - Nunca defina manualmente o nome da empresa ou o título em templates filhos; sempre utilize o contexto da view e o template base_header.html para garantir consistência visual e semântica.
+    """
+    from core.context_processors import empresa_context
+    empresa = empresa_context(request).get('empresa')
+    request.session['menu_nome'] = 'Demonstrativo'
+    request.session['cenario_nome'] = 'Demonstrativo'
+    request.session['titulo_pagina'] = 'Relatórios Demonstrativos'
+    request.session['empresa_nome'] = empresa.name if empresa else ''
+    return redirect('medicos:relatorio_executivo', empresa_id=empresa.id if empresa else None)
+
 
