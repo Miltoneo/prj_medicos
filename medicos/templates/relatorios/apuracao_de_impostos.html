@@ -272,19 +272,19 @@
               </thead>
               <tbody>
                 <tr class="table-primary">
-                  <td class="text-end fw-medium">Total Receita bruta</td>
+                  <td class="text-end fw-medium">Total Receita bruta emitida</td>
                   {% for espelho in espelho_adicional_trimestral %}
                     <td class="text-end">R$ {{ espelho.receita_bruta|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="text-end">Base das notas fiscais recebidas do tipo "consultas médicas": (× 32,00%)</td>
+                  <td class="text-end">Base sobre notas fiscais emitidas do tipo "consultas médicas"</td>
                   {% for espelho in espelho_adicional_trimestral %}
                     <td class="text-end">{{ espelho.receita_consultas|floatformat:2 }} × 32% = R$ {{ espelho.base_calculo_consultas|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="text-end">Base das notas fiscais recebidas do tipo "outros serviços": (× 8,00%)</td>
+                  <td class="text-end">Base sobre notas fiscais emitidas do tipo "outros serviços"</td>
                   {% for espelho in espelho_adicional_trimestral %}
                     <td class="text-end">{{ espelho.receita_outros|floatformat:2 }} × 8% = R$ {{ espelho.base_calculo_outros|floatformat:2 }}</td>
                   {% endfor %}
