@@ -611,6 +611,9 @@ def relatorio_apuracao(request, empresa_id):
     limite_trimestral = Decimal('60000.00')  # R$ 60.000,00/trimestre
     aliquota_adicional = Decimal('10.00')  # 10%
     
+    # Obter alíquotas da empresa para cálculos corretos
+    aliquotas_empresa = Aliquotas.obter_aliquota_vigente(empresa)
+    
     for linha in relatorio_irpj['linhas']:
         receita_consultas = linha.get('receita_consultas', 0)
         receita_outros = linha.get('receita_outros', 0)
@@ -620,9 +623,9 @@ def relatorio_apuracao(request, empresa_id):
         # O builder já aplicou presunções corretas e filtrou por data de emissão/recebimento
         base_calculo_total = Decimal(str(linha.get('base_calculo', 0)))  # Base já calculada pelo builder
         
-        # Calcular componentes apenas para exibição no espelho (mas usar base_calculo_total do builder)
-        base_calculo_consultas = Decimal(str(receita_consultas)) * Decimal('0.32')  # 32% para consultas
-        base_calculo_outros = Decimal(str(receita_outros)) * Decimal('0.08')  # 8% para outros (não 32%!)
+        # Calcular componentes para exibição no espelho usando alíquotas da empresa
+        base_calculo_consultas = Decimal(str(receita_consultas)) * (aliquotas_empresa.IRPJ_PRESUNCAO_CONSULTA / Decimal('100'))
+        base_calculo_outros = Decimal(str(receita_outros)) * (aliquotas_empresa.IRPJ_PRESUNCAO_OUTROS / Decimal('100'))
         
         excedente = max(Decimal('0'), base_calculo_total - limite_trimestral)
         adicional_devido = excedente * (aliquota_adicional / Decimal('100'))
