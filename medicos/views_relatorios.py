@@ -571,8 +571,8 @@ def relatorio_apuracao(request, empresa_id):
     {'descricao': 'Excedente', 'valores': [(linha.get('base_calculo', 0) - Decimal('20000.00')) if linha.get('base_calculo', 0) > Decimal('20000.00') else Decimal('0.00') for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Alíquota de adicional de IR (10%)', 'valores': [Decimal('10.00') for _ in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Total Adicional de IR', 'valores': [(linha.get('base_calculo', 0) - Decimal('20000.00')) * Decimal('0.10') if linha.get('base_calculo', 0) > Decimal('20000.00') else Decimal('0.00') for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'IMPOSTO RETIDO NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'TOTAL IMPOSTO A PAGAR', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
     ]
 
     # Relatório IRPJ
