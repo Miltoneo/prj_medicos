@@ -323,7 +323,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'total_irpj': total_irpj_socio,
         'total_irpj_adicional': valor_adicional_socio,
         'total_csll': total_csll_socio,
-        'total_outros': total_outros_socio,
         'total_notas_bruto': total_notas_bruto_empresa,
         'total_notas_liquido': total_notas_liquido_socio,
         'total_notas_emitidas_mes': total_notas_emitidas_mes,
