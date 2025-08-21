@@ -557,6 +557,10 @@ def relatorio_apuracao(request, empresa_id):
     relatorio_irpj_mensal = montar_relatorio_irpj_mensal_persistente(empresa_id, ano)
     # Obter alíquota IRPJ para exibir na descrição (geralmente é a mesma para todo o ano)
     aliquota_irpj = relatorio_irpj_mensal['linhas'][0].get('aliquota', 0) if relatorio_irpj_mensal['linhas'] else 0
+    
+    # Obter alíquotas da empresa para cálculos corretos
+    aliquotas_empresa = Aliquotas.obter_aliquota_vigente(empresa)
+    
     linhas_irpj_mensal = [
     {'descricao': 'Receita consultas', 'valores': [linha.get('receita_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
@@ -566,8 +570,10 @@ def relatorio_apuracao(request, empresa_id):
     {'descricao': 'TOTAL BASE DE CALCULO', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'TOTAL IMPOSTO DEVIDO (15%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'CALCULO DO ADICIONAL DE IR', 'valores': [linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'Base sobre notas fiscais emitidas do tipo "consultas médicas"', 'valores': [Decimal(str(linha.get('receita_consultas', 0))) * (aliquotas_empresa.IRPJ_PRESUNCAO_CONSULTA / Decimal('100')) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'Base sobre notas fiscais emitidas do tipo "outros serviços"', 'valores': [Decimal(str(linha.get('receita_outros', 0))) * (aliquotas_empresa.IRPJ_PRESUNCAO_OUTROS / Decimal('100')) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'Total base de cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Valor base para adicional', 'valores': [getattr(linha, 'valor_base_adicional', 20000.00) if hasattr(linha, 'valor_base_adicional') else 20000.00 for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'Base de cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Excedente', 'valores': [(linha.get('base_calculo', 0) - Decimal('20000.00')) if linha.get('base_calculo', 0) > Decimal('20000.00') else Decimal('0.00') for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Alíquota de adicional de IR (10%)', 'valores': [Decimal('10.00') for _ in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Total Adicional de IR', 'valores': [(linha.get('base_calculo', 0) - Decimal('20000.00')) * Decimal('0.10') if linha.get('base_calculo', 0) > Decimal('20000.00') else Decimal('0.00') for linha in relatorio_irpj_mensal['linhas']]},
@@ -610,9 +616,6 @@ def relatorio_apuracao(request, empresa_id):
     espelho_adicional_trimestral = []
     limite_trimestral = Decimal('60000.00')  # R$ 60.000,00/trimestre
     aliquota_adicional = Decimal('10.00')  # 10%
-    
-    # Obter alíquotas da empresa para cálculos corretos
-    aliquotas_empresa = Aliquotas.obter_aliquota_vigente(empresa)
     
     for linha in relatorio_irpj['linhas']:
         receita_consultas = linha.get('receita_consultas', 0)
