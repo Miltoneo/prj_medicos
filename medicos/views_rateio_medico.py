@@ -79,6 +79,7 @@ class NotaFiscalRateioMedicoListView(FilterView):
             context['total_cofins'] = 0
             context['total_ir'] = 0
             context['total_csll'] = 0
+            context['total_outros'] = 0
         else:
             table = self.table_class(self.get_queryset())
             context['table'] = table
@@ -93,6 +94,15 @@ class NotaFiscalRateioMedicoListView(FilterView):
             context['total_cofins'] = sum(getattr(obj, 'valor_cofins_medico', 0) or 0 for obj in qs)
             context['total_ir'] = sum(getattr(obj, 'valor_ir_medico', 0) or 0 for obj in qs)
             context['total_csll'] = sum(getattr(obj, 'valor_csll_medico', 0) or 0 for obj in qs)
+            
+            # Calcular total de "outros" rateado
+            total_outros = 0
+            for obj in qs:
+                if obj.nota_fiscal and obj.nota_fiscal.val_outros and obj.nota_fiscal.val_bruto:
+                    proporcao = float(obj.valor_bruto_medico) / float(obj.nota_fiscal.val_bruto)
+                    valor_outros_rateado = float(obj.nota_fiscal.val_outros) * proporcao
+                    total_outros += valor_outros_rateado
+            context['total_outros'] = total_outros
         
         context['titulo_pagina'] = 'Notas Fiscais Rateadas por Médico'
         return context

@@ -179,6 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <th>Total COFINS</th>
                     <th>Total IR</th>
                     <th>Total CSLL</th>
+                    <th>Total Outros</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -191,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td class="text-dark">R$ {{ total_cofins|floatformat:2 }}</td>
                     <td class="text-dark">R$ {{ total_ir|floatformat:2 }}</td>
                     <td class="text-dark">R$ {{ total_csll|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_outros|floatformat:2 }}</td>
                   </tr>
                 </tbody>
               </table>

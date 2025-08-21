@@ -1147,13 +1147,16 @@ class NotaFiscalRateioMedico(models.Model):
                 self.valor_ir_medico = (nota_fiscal.val_IR or 0) * proporcao
                 self.valor_csll_medico = (nota_fiscal.val_CSLL or 0) * proporcao
                 
-                # Calcular valor líquido
+                # Calcular valor "outros" rateado
+                valor_outros_rateado = (nota_fiscal.val_outros or 0) * proporcao
+                
+                # Calcular valor líquido incluindo o campo "outros"
                 total_impostos_medico = (
                     self.valor_iss_medico + self.valor_pis_medico + 
                     self.valor_cofins_medico + self.valor_ir_medico + 
                     self.valor_csll_medico
                 )
-                self.valor_liquido_medico = self.valor_bruto_medico - total_impostos_medico
+                self.valor_liquido_medico = self.valor_bruto_medico - total_impostos_medico - valor_outros_rateado
             else:
                 # Se valor bruto zero, zerar todos os impostos
                 self.valor_iss_medico = 0
