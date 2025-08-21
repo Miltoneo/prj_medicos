@@ -202,6 +202,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     total_cofins_socio = 0
     total_irpj_socio = 0
     total_csll_socio = 0
+    total_outros_socio = 0
     total_notas_liquido_socio = 0
     
     # Separar faturamento por tipo de serviço
@@ -250,6 +251,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
             total_cofins_socio += float(rateio.valor_cofins_medico or 0)
             total_irpj_socio += float(rateio.valor_ir_medico or 0)
             total_csll_socio += float(rateio.valor_csll_medico or 0)
+            total_outros_socio += float(rateio.valor_outros_medico or 0)
             total_notas_liquido_socio += float(rateio.valor_liquido_medico or 0)
 
 
@@ -275,7 +277,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     receita_bruta_recebida = receita_bruta_socio_recebida  # Usar valor correto (parte do sócio)
 
     # Impostos agregados do sócio (incluindo o rateio mensal de adicional de IR)
-    impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio + valor_adicional_socio
+    # CORREÇÃO: Usar total_nf_outros em vez de total_outros_socio para consistência
+    impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio + total_nf_outros + valor_adicional_socio
     
     # Receita líquida = Receita bruta recebida - Impostos totais
     receita_liquida = receita_bruta_recebida - impostos_total
@@ -320,6 +323,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'total_irpj': total_irpj_socio,
         'total_irpj_adicional': valor_adicional_socio,
         'total_csll': total_csll_socio,
+        'total_outros': total_outros_socio,
         'total_notas_bruto': total_notas_bruto_empresa,
         'total_notas_liquido': total_notas_liquido_socio,
         'total_notas_emitidas_mes': total_notas_emitidas_mes,

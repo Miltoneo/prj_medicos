@@ -1305,7 +1305,7 @@ class NotaFiscalRateioMedico(models.Model):
         Returns:
             Decimal: Valor de 'outros' rateado para este médico
         """
-        if not self.nota_fiscal or not self.nota_fiscal.val_outros or not self.nota_fiscal.val_bruto:
+        if not self.nota_fiscal or self.nota_fiscal.val_outros is None or not self.nota_fiscal.val_bruto:
             return 0
         
         # Calcular proporção do rateio

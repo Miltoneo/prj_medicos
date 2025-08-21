@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           <tr><td>3</td><td>IRPJ</td><td>{{ relatorio.total_irpj|floatformat:2 }}</td></tr>
                           <tr><td>4</td><td>CSLL</td><td>{{ relatorio.total_csll|floatformat:2 }}</td></tr>
                           <tr><td>5</td><td>ISSQN</td><td>{{ relatorio.total_iss|floatformat:2 }}</td></tr>
+                          <tr><td>6</td><td>OUTROS</td><td>{{ relatorio.total_nf_outros|default:0|floatformat:2 }}</td></tr>
                           <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
                         </table>
                       </div>
