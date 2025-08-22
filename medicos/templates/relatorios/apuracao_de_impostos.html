@@ -145,7 +145,7 @@
               </thead>
               <tbody>
                 {% for linha in linhas_irpj_mensal %}
-                  {% if linha.descricao == 'Valor base para adicional' or linha.descricao == 'Base de cálculo' or linha.descricao == 'Excedente' or linha.descricao == 'Alíquota de adicional de IR (10%)' or linha.descricao == 'Total Adicional de IR' %}
+                  {% if linha.descricao == 'Valor base para adicional' or linha.descricao == 'Total base de cálculo' or linha.descricao == 'Excedente' or linha.descricao == 'Alíquota de adicional de IR (10%)' or linha.descricao == 'Total Adicional de IR' %}
                     <tr>
                       <td class="fw-medium fst-italic">{{ linha.descricao }}</td>
                       {% for valor in linha.valores %}
