@@ -101,31 +101,21 @@ class NotaFiscalAdmin(admin.ModelAdmin):
     def get_meio_pagamento_display(self, obj):
         """Display meio de pagamento with info"""
         if obj.meio_pagamento:
-            taxas_info = ""
-            if obj.meio_pagamento.taxa_percentual > 0 or obj.meio_pagamento.taxa_fixa > 0:
-                taxas_info = f" (taxa: {obj.meio_pagamento.taxa_percentual}%"
-                if obj.meio_pagamento.taxa_fixa > 0:
-                    taxas_info += f" + R${obj.meio_pagamento.taxa_fixa}"
-                taxas_info += ")"
-            
             return format_html(
-                '<span title="{}"><strong>{}</strong>{}</span>',
-                obj.meio_pagamento.descricao or 'Sem descrição',
-                obj.meio_pagamento.nome,
-                taxas_info
+                '<span title="{}"><strong>{}</strong></span>',
+                obj.meio_pagamento.observacoes or 'Sem observações',
+                obj.meio_pagamento.nome
             )
         return format_html('<span style="color: #6c757d;">-</span>')
     get_meio_pagamento_display.short_description = 'Meio de Pagamento'
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """Filtrar meios de pagamento por conta do usuário"""
+        """Filtrar meios de pagamento por empresa"""
         if db_field.name == "meio_pagamento":
-            # Aqui seria ideal filtrar por conta do usuário/nota fiscal
-            # Por enquanto, mostrar apenas meios ativos que permitem crédito
+            # Filtrar apenas meios de pagamento ativos
             kwargs["queryset"] = MeioPagamento.objects.filter(
-                ativo=True,
-                tipo_movimentacao__in=['credito', 'ambos']
-            ).select_related('conta')
+                ativo=True
+            ).select_related('empresa')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Aliquotas)

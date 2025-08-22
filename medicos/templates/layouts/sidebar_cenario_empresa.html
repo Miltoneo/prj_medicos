@@ -13,7 +13,7 @@
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-wallet me-2 text-warning"></i>Financeiro</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-credit-card me-2 text-danger"></i>Despesas</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_apuracao' empresa_id=request.session.empresa_id  %}"><i class="fas fa-exchange-alt me-2 text-warning"></i>Apuração</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_executivo' empresa_id=request.session.empresa_id %}"><i class="fas fa-file-alt me-2 text-info"></i>Demonstrativo</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_executivo' empresa_id=request.session.empresa_id %}"><i class="fas fa-file-alt me-2 text-info"></i>Demonstrativos</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_cadastro' %}"><i class="fas fa-cogs me-2 text-light"></i><b>Cadastro</b></a></li>
   </ul>
 </nav>

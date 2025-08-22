@@ -874,27 +874,31 @@ class NotaFiscal(models.Model):
 
     def clean(self):
         """Validações simplificadas do modelo"""
+        # Pula validação de valor líquido se for contexto de recebimento
+        skip_value_validation = getattr(self, '_skip_value_validation', False)
+        
         # Validar datas
         if self.dtVencimento and self.dtEmissao and self.dtVencimento < self.dtEmissao:
             raise ValidationError({
                 'dtVencimento': 'Data de vencimento não pode ser anterior à data de emissão'
             })
         
-        # Validar valores
-        if self.val_bruto <= 0:
-            raise ValidationError({
-                'val_bruto': 'Valor bruto deve ser maior que zero'
-            })
-        
-        # Validar valor líquido
-        total_impostos = (self.val_ISS + self.val_PIS + self.val_COFINS + 
-                         self.val_IR + self.val_CSLL)
-        valor_liquido_calculado = self.val_bruto - total_impostos - self.val_outros
-        if abs(self.val_liquido - valor_liquido_calculado) > 0.01:  # Tolerância de 1 centavo
-            raise ValidationError({
-                'val_liquido': f'Valor líquido deve ser R$ {valor_liquido_calculado:.2f} '
-                              f'(valor bruto - impostos - outros valores)'
-            })
+        # Validar valores (apenas se não for contexto de recebimento)
+        if not skip_value_validation:
+            if self.val_bruto <= 0:
+                raise ValidationError({
+                    'val_bruto': 'Valor bruto deve ser maior que zero'
+                })
+            
+            # Validar valor líquido
+            total_impostos = (self.val_ISS + self.val_PIS + self.val_COFINS + 
+                             self.val_IR + self.val_CSLL)
+            valor_liquido_calculado = self.val_bruto - total_impostos - self.val_outros
+            if abs(self.val_liquido - valor_liquido_calculado) > 0.01:  # Tolerância de 1 centavo
+                raise ValidationError({
+                    'val_liquido': f'Valor líquido deve ser R$ {valor_liquido_calculado:.2f} '
+                                  f'(valor bruto - impostos - outros valores)'
+                })
         
         # Validar consistência do status de recebimento
         if self.status_recebimento == 'recebido' and not self.dtRecebimento:

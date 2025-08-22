@@ -25,15 +25,22 @@
                     {% if field.name == name and field.name not in campos_excluir %}
                       <div class="col-md-6">
                         <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' or field.name == 'dtRecebimento' %}
-                          <!-- Campos apenas para leitura -->
-                          <input type="text" class="form-control" readonly 
-                                 value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% elif field.name == 'dtRecebimento' %}{{ field.value|default:'-' }}{% endif %}" 
-                                 style="background-color: #f8f9fa; cursor: not-allowed;">
-                          <!-- Campo hidden para manter o valor no POST -->
-                          {% if field.value %}
-                            <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                        {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' %}
+                          <!-- Campos de recebimento readonly quando já há recebimento -->
+                          {% if object.dtRecebimento %}
+                            <input type="text" class="form-control" readonly 
+                                   value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% endif %}" 
+                                   style="background-color: #f8f9fa; cursor: not-allowed;">
+                            <!-- Campo hidden para manter o valor no POST -->
+                            {% if field.value %}
+                              <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                            {% endif %}
+                          {% else %}
+                            {{ field }}
                           {% endif %}
+                        {% elif field.name == 'dtRecebimento' %}
+                          <!-- Data de recebimento sempre editável -->
+                          {{ field }}
                         {% else %}
                           {{ field }}
                         {% endif %}
@@ -52,15 +59,22 @@
                   {% if field.name not in campos_excluir and field.name not in campos_topo %}
                     <div class="col-md-6">
                       <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                      {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' or field.name == 'dtRecebimento' %}
-                        <!-- Campos apenas para leitura -->
-                        <input type="text" class="form-control" readonly 
-                               value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% elif field.name == 'dtRecebimento' %}{{ field.value|default:'-' }}{% endif %}" 
-                               style="background-color: #f8f9fa; cursor: not-allowed;">
-                        <!-- Campo hidden para manter o valor no POST -->
-                        {% if field.value %}
-                          <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                      {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' %}
+                        <!-- Campos de recebimento readonly quando já há recebimento -->
+                        {% if object.dtRecebimento %}
+                          <input type="text" class="form-control" readonly 
+                                 value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% endif %}" 
+                                 style="background-color: #f8f9fa; cursor: not-allowed;">
+                          <!-- Campo hidden para manter o valor no POST -->
+                          {% if field.value %}
+                            <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                          {% endif %}
+                        {% else %}
+                          {{ field }}
                         {% endif %}
+                      {% elif field.name == 'dtRecebimento' %}
+                        <!-- Data de recebimento sempre editável -->
+                        {{ field }}
                       {% else %}
                         {{ field }}
                       {% endif %}
@@ -78,15 +92,22 @@
                 {% for field in form.visible_fields %}
                   <div class="col-md-6">
                     <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' or field.name == 'dtRecebimento' %}
-                      <!-- Campos apenas para leitura -->
-                      <input type="text" class="form-control" readonly 
-                             value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% elif field.name == 'dtRecebimento' %}{{ field.value|default:'-' }}{% endif %}" 
-                             style="background-color: #f8f9fa; cursor: not-allowed;">
-                      <!-- Campo hidden para manter o valor no POST -->
-                      {% if field.value %}
-                        <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                    {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' %}
+                      <!-- Campos de recebimento readonly quando já há recebimento -->
+                      {% if object.dtRecebimento %}
+                        <input type="text" class="form-control" readonly 
+                               value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% endif %}" 
+                               style="background-color: #f8f9fa; cursor: not-allowed;">
+                        <!-- Campo hidden para manter o valor no POST -->
+                        {% if field.value %}
+                          <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                        {% endif %}
+                      {% else %}
+                        {{ field }}
                       {% endif %}
+                    {% elif field.name == 'dtRecebimento' %}
+                      <!-- Data de recebimento sempre editável -->
+                      {{ field }}
                     {% else %}
                       {{ field }}
                     {% endif %}

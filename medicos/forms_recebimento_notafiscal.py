@@ -3,6 +3,38 @@ from medicos.models.fiscal import NotaFiscal
 from medicos.models.financeiro import MeioPagamento
 
 class NotaFiscalRecebimentoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Marca a instância para indicar que é um contexto de recebimento
+        # Isso será usado pelo modelo para pular certas validações
+        if self.instance:
+            self.instance._skip_value_validation = True
+        
+        for field in self.fields.values():
+            field.required = False
+        
+        # Campo val_liquido não deve ser editável no contexto de recebimento
+        if 'val_liquido' in self.fields:
+            self.fields['val_liquido'].disabled = True
+            self.fields['val_liquido'].widget.attrs['readonly'] = True
+        
+        # Filtrar meio de pagamento pela empresa da nota fiscal
+        if self.instance and self.instance.empresa_destinataria:
+            queryset = MeioPagamento.objects.filter(
+                empresa=self.instance.empresa_destinataria,
+                ativo=True
+            ).order_by('nome')
+            
+            self.fields['meio_pagamento'].queryset = queryset
+        else:
+            # Se não há instância ou empresa, não exibe nenhum meio de pagamento
+            self.fields['meio_pagamento'].queryset = MeioPagamento.objects.none()
+            
+        # Força o valor inicial do campo dtRecebimento no formato ISO para o input type=date
+        if 'dtRecebimento' in self.fields and self.instance and self.instance.dtRecebimento:
+            self.initial['dtRecebimento'] = self.instance.dtRecebimento.strftime('%Y-%m-%d')
+
     def clean(self):
         cleaned_data = super().clean()
         dtRecebimento = cleaned_data.get('dtRecebimento')
@@ -25,29 +57,10 @@ class NotaFiscalRecebimentoForm(forms.ModelForm):
         return cleaned_data
     class Meta:
         model = NotaFiscal
-        fields = ['meio_pagamento', 'dtRecebimento', 'status_recebimento']
+        fields = ['meio_pagamento', 'dtRecebimento', 'status_recebimento', 'val_liquido']
         widgets = {
             'dtRecebimento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'meio_pagamento': forms.Select(attrs={'class': 'form-control'}),
             'status_recebimento': forms.Select(attrs={'class': 'form-control'}),
+            'val_liquido': forms.HiddenInput(),  # Campo oculto para evitar erro de validação
         }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.required = False
-        
-        # Filtrar meio de pagamento pela empresa da nota fiscal
-        if self.instance and self.instance.empresa_destinataria:
-            queryset = MeioPagamento.objects.filter(
-                empresa=self.instance.empresa_destinataria,
-                ativo=True
-            ).order_by('nome')
-            
-            self.fields['meio_pagamento'].queryset = queryset
-        else:
-            # Se não há instância ou empresa, não exibe nenhum meio de pagamento
-            self.fields['meio_pagamento'].queryset = MeioPagamento.objects.none()
-            
-        # Força o valor inicial do campo dtRecebimento no formato ISO para o input type=date
-        if 'dtRecebimento' in self.fields and self.instance and self.instance.dtRecebimento:
-            self.initial['dtRecebimento'] = self.instance.dtRecebimento.strftime('%Y-%m-%d')
