@@ -1,5 +1,5 @@
 # Imports necessários
-from medicos.models.base import Empresa, Socio
+from medicos.models.base import Empresa, Socio, REGIME_TRIBUTACAO_COMPETENCIA, REGIME_TRIBUTACAO_CAIXA
 from medicos.models.despesas import DespesaSocio, DespesaRateada
 from medicos.models.fiscal import NotaFiscal, Aliquotas
 from medicos.models.financeiro import Financeiro
@@ -410,17 +410,27 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
     aliquota_iss = float(getattr(aliquota_obj, 'ISS', 0)) if aliquota_obj else 0
     
     for mes in range(1, 13):
-        # Notas para base de cálculo (data de emissão)
-        notas_mes = NotaFiscal.objects.filter(
-            empresa_destinataria=empresa,
-            dtEmissao__year=ano,
-            dtEmissao__month=mes
-        )
+        # Notas para base de cálculo considerando regime tributário da empresa
+        if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
+            # Regime de competência: considera data de emissão
+            notas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtEmissao__year=ano,
+                dtEmissao__month=mes
+            )
+        else:
+            # Regime de caixa: considera data de recebimento
+            notas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtRecebimento__year=ano,
+                dtRecebimento__month=mes,
+                dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
+            )
         valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
         valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
         
-        # Imposto retido considerando data de EMISSÃO da nota fiscal (mesma base do cálculo)
-        # Para ISSQN, tanto cálculo quanto retenção seguem data de emissão
+        # Imposto retido: usar o mesmo critério (regime tributário da empresa)
+        # Para ISSQN, tanto cálculo quanto retenção seguem o mesmo regime
         imposto_retido_nf = sum(float(nf.val_ISS or 0) for nf in notas_mes)
         
         total_iss += valor_iss

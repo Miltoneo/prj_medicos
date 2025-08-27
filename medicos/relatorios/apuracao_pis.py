@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.db.models import Sum
-from medicos.models.base import Empresa
+from medicos.models.base import Empresa, REGIME_TRIBUTACAO_COMPETENCIA, REGIME_TRIBUTACAO_CAIXA
 from medicos.models.fiscal import Aliquotas, NotaFiscal
 from medicos.models.relatorios_apuracao_pis import ApuracaoPIS
 
@@ -39,12 +39,22 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
     for mes in range(1, 13):
         competencia = f'{mes:02d}/{ano}'
         
-        # Notas para base de cálculo (data de emissão)
-        notas_mes = NotaFiscal.objects.filter(
-            empresa_destinataria=empresa,
-            dtEmissao__year=int(ano),
-            dtEmissao__month=mes
-        )
+        # Notas para base de cálculo considerando regime tributário da empresa
+        if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
+            # Regime de competência: considera data de emissão
+            notas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtEmissao__year=int(ano),
+                dtEmissao__month=mes
+            )
+        else:
+            # Regime de caixa: considera data de recebimento
+            notas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtRecebimento__year=int(ano),
+                dtRecebimento__month=mes,
+                dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
+            )
         base_calculo = sum(float(nf.val_bruto or 0) for nf in notas_mes)
         
         # Alíquota vigente
