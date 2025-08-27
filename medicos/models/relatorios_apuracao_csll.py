@@ -7,6 +7,8 @@ class ApuracaoCSLL(models.Model):
     receita_consultas = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     receita_outros = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     receita_bruta = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    base_calculo_consultas = models.DecimalField(max_digits=18, decimal_places=2, default=0)  # ADICIONADO
+    base_calculo_outros = models.DecimalField(max_digits=18, decimal_places=2, default=0)  # ADICIONADO
     base_calculo = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     rendimentos_aplicacoes = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     base_calculo_total = models.DecimalField(max_digits=18, decimal_places=2, default=0)

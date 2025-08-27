@@ -728,14 +728,18 @@ def relatorio_apuracao(request, empresa_id):
 
     # Relatório CSLL
     relatorio_csll = montar_relatorio_csll_persistente(empresa_id, ano)
+    # Obter alíquotas da empresa para exibir percentuais corretos
+    aliquotas_empresa = Aliquotas.obter_aliquota_vigente(empresa)
     linhas_csll = [
         {'descricao': 'Receita consultas', 'valores': [linha.get('receita_consultas', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Receita bruta', 'valores': [linha.get('receita_bruta', 0) for linha in relatorio_csll['linhas']]},
-        {'descricao': 'Base cálculo', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': f'Base consultas ({aliquotas_empresa.CSLL_PRESUNCAO_CONSULTA}%)', 'valores': [linha.get('base_calculo_consultas', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': f'Base outros ({aliquotas_empresa.CSLL_PRESUNCAO_OUTROS}%)', 'valores': [linha.get('base_calculo_outros', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': 'TOTAL BASE DE CALCULO', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Rendimentos aplicações', 'valores': [linha.get('rendimentos_aplicacoes', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Base cálculo total', 'valores': [linha.get('base_calculo_total', 0) for linha in relatorio_csll['linhas']]},
-        {'descricao': 'Imposto devido', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_csll['linhas']]},
+        {'descricao': f'Imposto devido ({aliquotas_empresa.CSLL_ALIQUOTA}%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Imposto retido NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_csll['linhas']]},
         {'descricao': 'Imposto a pagar', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_csll['linhas']]},
     ]
