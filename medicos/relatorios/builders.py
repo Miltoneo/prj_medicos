@@ -410,6 +410,7 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
     aliquota_iss = float(getattr(aliquota_obj, 'ISS', 0)) if aliquota_obj else 0
     
     for mes in range(1, 13):
+        # Notas para base de cálculo (data de emissão)
         notas_mes = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtEmissao__year=ano,
@@ -417,8 +418,11 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
         )
         valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
         valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
-        # Seguindo o padrão do COFINS/PIS: totalização real dos impostos retidos nas notas
+        
+        # Imposto retido considerando data de EMISSÃO da nota fiscal (mesma base do cálculo)
+        # Para ISSQN, tanto cálculo quanto retenção seguem data de emissão
         imposto_retido_nf = sum(float(nf.val_ISS or 0) for nf in notas_mes)
+        
         total_iss += valor_iss
         total_imposto_retido_nf += imposto_retido_nf
         linhas.append({

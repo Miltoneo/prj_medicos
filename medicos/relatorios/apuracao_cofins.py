@@ -37,19 +37,31 @@ def montar_relatorio_cofins_persistente(empresa_id, ano):
     saldo_acumulado = 0.0
     for mes in range(1, 13):
         competencia = f'{mes:02d}/{ano}'
+        
+        # Notas para base de cálculo (data de emissão)
         notas_mes = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtEmissao__year=int(ano),
             dtEmissao__month=mes
         )
         base_calculo = sum(float(nf.val_bruto or 0) for nf in notas_mes)
+        
+        # Alíquota vigente
         aliquota_obj = Aliquotas.objects.filter(
             empresa=empresa,
             data_vigencia_inicio__lte=f'{ano}-12-31',
         ).order_by('-data_vigencia_inicio').first()
         aliquota = float(getattr(aliquota_obj, 'COFINS', 0)) if aliquota_obj else 0
         imposto_devido = round(base_calculo * (aliquota / 100), 2)
-        imposto_retido_nf = sum(float(nf.val_COFINS or 0) for nf in notas_mes)
+        
+        # Imposto retido considerando data de RECEBIMENTO da nota fiscal
+        notas_recebidas_mes = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtRecebimento__year=int(ano),
+            dtRecebimento__month=mes
+        )
+        imposto_retido_nf = sum(float(nf.val_COFINS or 0) for nf in notas_recebidas_mes)
+        
         credito_mes_anterior = saldo_acumulado
         credito_mes_seguinte = 0
         imposto_a_pagar = round(imposto_devido - imposto_retido_nf + credito_mes_anterior - credito_mes_seguinte, 2)
