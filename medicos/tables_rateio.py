@@ -5,6 +5,11 @@ from django.urls import reverse
 class NotaFiscalRateioTable(tables.Table):
     numero = tables.Column(verbose_name="Número", orderable=True)
     dtEmissao = tables.DateColumn(verbose_name="Data Emissão", orderable=True, format="d/m/Y")
+    dtRecebimento = tables.DateColumn(
+        verbose_name="Data Recebimento", 
+        orderable=True, 
+        format="d/m/Y"
+    )
     tomador = tables.Column(verbose_name="Tomador", orderable=True)
     cnpj_tomador = tables.Column(verbose_name="CNPJ do Tomador", orderable=True)
     val_bruto = tables.Column(verbose_name="Valor Bruto (R$)", orderable=True)
@@ -44,7 +49,7 @@ class NotaFiscalRateioTable(tables.Table):
     class Meta:
         model = NotaFiscal
         template_name = "django_tables2/bootstrap5.html"
-        fields = ("numero", "dtEmissao", "tomador", "cnpj_tomador", "val_bruto", "total_rateado")
+        fields = ("numero", "dtEmissao", "dtRecebimento", "tomador", "cnpj_tomador", "val_bruto", "total_rateado")
         order_by = ("-dtEmissao",)  # Ordenação padrão por data de emissão (mais recente primeiro)
         row_attrs = {
             'class': lambda record: 'table-success' if record.rateio_completo else ''
@@ -53,6 +58,12 @@ class NotaFiscalRateioTable(tables.Table):
     def render_val_bruto(self, value):
         """Formatação personalizada para valor bruto"""
         return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    
+    def render_dtRecebimento(self, value):
+        """Formatação personalizada para data de recebimento"""
+        if value:
+            return value.strftime("%d/%m/%Y")
+        return "-"
 
 class RateioMedicoTable(tables.Table):
     medico = tables.Column(verbose_name="Médico")

@@ -47,20 +47,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="month" id="id_mes_ano_emissao" name="mes_ano_emissao" class="form-control" value="{{ mes_ano_emissao_default }}">
               </div>
               
+              <!-- Mês/Ano de Recebimento ao lado da emissão -->
+              <div class="col-auto">
+                <label for="id_mes_ano_recebimento" class="form-label mb-0">
+                  <i class="fas fa-calendar-check me-1"></i>Mês/Ano de Recebimento
+                </label>
+                <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ mes_ano_recebimento_default }}">
+              </div>
+              
               <!-- Número da NF -->
               <div class="col-auto">
                 <label for="id_numero" class="form-label mb-0">
                   <i class="fas fa-hashtag me-1"></i>Número NF
                 </label>
                 <input type="text" id="id_numero" name="numero" class="form-control" value="{{ request.GET.numero }}">
-              </div>
-              
-              <!-- Mês/Ano de Recebimento -->
-              <div class="col-auto">
-                <label for="id_mes_ano_recebimento" class="form-label mb-0">
-                  <i class="fas fa-calendar-check me-1"></i>Mês/Ano de Recebimento
-                </label>
-                <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ mes_ano_recebimento_default }}">
               </div>
               
               <!-- Status de Recebimento -->
@@ -110,6 +110,102 @@ document.addEventListener('DOMContentLoaded', function() {
             {% endif %}
           </form>
           <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-file-invoice-dollar me-1"></i>Notas fiscais</h5>
+          
+          <!-- Cards de Totais Financeiros -->
+          <div class="row mb-4">
+            <!-- Card Resumo Geral -->
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="card border-primary shadow-sm h-100">
+                <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+                  <span class="fw-bold"><i class="fas fa-chart-bar me-2"></i>Resumo Geral</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Total de Notas:</span>
+                    <span class="fw-bold text-primary">{{ status_count.total_notas }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Pendentes:</span>
+                    <span class="fw-bold text-warning">{{ status_count.pendentes }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Recebidas:</span>
+                    <span class="fw-bold text-success">{{ status_count.recebidas }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card Valores Principais -->
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="card border-success shadow-sm h-100">
+                <div class="card-header bg-success text-white d-flex align-items-center justify-content-between">
+                  <span class="fw-bold"><i class="fas fa-money-bill-wave me-2"></i>Valores Principais</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Valor Bruto:</span>
+                    <span class="fw-bold text-primary">R$ {{ totais.total_val_bruto|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Total Impostos:</span>
+                    <span class="fw-bold text-danger">R$ {{ totais.total_impostos|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Valor Líquido:</span>
+                    <span class="fw-bold text-success">R$ {{ totais.total_val_liquido|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card Impostos Federais -->
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="card border-warning shadow-sm h-100">
+                <div class="card-header bg-warning text-dark d-flex align-items-center justify-content-between">
+                  <span class="fw-bold"><i class="fas fa-receipt me-2"></i>Impostos Federais</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">PIS:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_PIS|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">COFINS:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_COFINS|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-muted">IRPJ:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_IR|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">CSLL:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_CSLL|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card Outros Impostos -->
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="card border-info shadow-sm h-100">
+                <div class="card-header bg-info text-white d-flex align-items-center justify-content-between">
+                  <span class="fw-bold"><i class="fas fa-percentage me-2"></i>Outros Impostos</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">ISS:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_ISS|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Outros:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_outros|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div class="table-responsive rounded shadow-sm p-3 bg-light">
             <div class="bg-white rounded-2 p-2">
               {% render_table table %}

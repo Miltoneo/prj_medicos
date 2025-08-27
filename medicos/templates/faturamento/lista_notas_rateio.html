@@ -51,8 +51,8 @@
           {% endif %}
 
           <div class="row">
-            <!-- Coluna esquerda: Lista de Notas Fiscais -->
-            <div class="col-lg-7 mb-4">
+            <!-- Coluna esquerda: Lista de Notas Fiscais (expandida) -->
+            <div class="col-lg-9 mb-4">
               <h5 class="fw-bold mb-3"><i class="fas fa-file-invoice-dollar me-1"></i>Notas Fiscais para Rateio</h5>
               
               <!-- Formulário de Filtro -->
@@ -66,9 +66,20 @@
                       </label>
                       {{ filter.form.mes_emissao }}
                     </div>
+                    
+                    <!-- Campo de mês de recebimento ao lado da emissão -->
+                    {% if filter.form.mes_recebimento %}
+                      <div class="col-auto">
+                        <label for="id_mes_recebimento" class="form-label mb-0">
+                          <i class="fas fa-calendar-check me-1"></i>Mês de Recebimento
+                        </label>
+                        {{ filter.form.mes_recebimento }}
+                      </div>
+                    {% endif %}
+                    
                     <!-- Demais campos -->
                     {% for field in filter.form.visible_fields %}
-                      {% if field.name != 'mes_emissao' %}
+                      {% if field.name != 'mes_emissao' and field.name != 'mes_recebimento' %}
                         <div class="col-auto">
                           <label for="id_{{ field.name }}" class="form-label mb-0">{{ field.label }}</label>
                           {{ field }}
@@ -88,23 +99,40 @@
                   </div>
                   
                   <!-- Indicador visual dos filtros ativos -->
-                  {% if filter.form.mes_emissao.value or filter.form.numero.value or filter.form.tomador.value or filter.form.cnpj_tomador.value %}
+                  {% if filter.form.mes_emissao.value or filter.form.mes_recebimento.value or filter.form.numero.value or filter.form.tomador.value or filter.form.cnpj_tomador.value %}
                     <div class="mt-2">
                       <small class="text-muted">
                         <i class="fas fa-filter me-1"></i>
                         Filtros ativos:
                         {% if filter.form.mes_emissao.value %}
-                          <strong>Mês: {{ filter.form.mes_emissao.value }}</strong>
+                          <strong>Mês emissão: {{ filter.form.mes_emissao.value }}</strong>
+                        {% endif %}
+                        {% if filter.form.mes_recebimento.value %}
+                          {% if filter.form.mes_emissao.value %} | {% endif %}
+                          <strong>Mês recebimento: {{ filter.form.mes_recebimento.value }}</strong>
                         {% endif %}
                         {% if filter.form.numero.value %}
+                          {% if filter.form.mes_emissao.value or filter.form.mes_recebimento.value %} | {% endif %}
                           <strong>Número: {{ filter.form.numero.value }}</strong>
                         {% endif %}
                         {% if filter.form.tomador.value %}
+                          {% if filter.form.mes_emissao.value or filter.form.mes_recebimento.value or filter.form.numero.value %} | {% endif %}
                           <strong>Tomador: {{ filter.form.tomador.value }}</strong>
                         {% endif %}
                         {% if filter.form.cnpj_tomador.value %}
+                          {% if filter.form.mes_emissao.value or filter.form.mes_recebimento.value or filter.form.numero.value or filter.form.tomador.value %} | {% endif %}
                           <strong>CNPJ: {{ filter.form.cnpj_tomador.value }}</strong>
                         {% endif %}
+                      </small>
+                    </div>
+                  {% else %}
+                    <!-- Indicador do filtro padrão quando não há filtros específicos -->
+                    <div class="mt-2">
+                      <small class="text-info">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Filtro padrão ativo:</strong> Exibindo apenas notas fiscais com rateio incompleto (diferente de 100%)
+                        <br>
+                        <em>Use os filtros acima para visualizar todas as notas ou aplicar filtros específicos.</em>
                       </small>
                     </div>
                   {% endif %}
@@ -132,8 +160,8 @@
               </div>
             </div>
 
-            <!-- Coluna direita: Rateio por Médico -->
-            <div class="col-lg-5 mb-4">
+            <!-- Coluna direita: Rateio por Médico (reduzida) -->
+            <div class="col-lg-3 mb-4">
               <h5 class="fw-bold mb-3"><i class="fas fa-user-md me-1"></i>Rateio por Médico</h5>
               
               <div class="rounded shadow-sm p-3 bg-light">
@@ -265,11 +293,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Auto-submit do formulário de filtro quando o mês de emissão for alterado
+  // Auto-submit do formulário de filtro quando o mês de emissão ou recebimento for alterado
   const mesEmissaoField = document.getElementById('id_mes_emissao');
+  const mesRecebimentoField = document.getElementById('id_mes_recebimento');
+  
   if (mesEmissaoField) {
     mesEmissaoField.addEventListener('change', function() {
-      // Submete o formulário automaticamente quando o mês é alterado
+      // Submete o formulário automaticamente quando o mês de emissão é alterado
+      this.closest('form').submit();
+    });
+  }
+  
+  if (mesRecebimentoField) {
+    mesRecebimentoField.addEventListener('change', function() {
+      // Submete o formulário automaticamente quando o mês de recebimento é alterado
       this.closest('form').submit();
     });
   }

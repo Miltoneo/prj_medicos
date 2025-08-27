@@ -6,6 +6,7 @@ from django_filters.views import FilterView
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
+from django.db import models
 from medicos.models.fiscal import NotaFiscal
 from .tables_recebimento_notafiscal import NotaFiscalRecebimentoTable
 from .filters_recebimento_notafiscal import NotaFiscalRecebimentoFilter
@@ -56,6 +57,7 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         return qs
 
     def get_context_data(self, **kwargs):
+        from django.db.models import Sum, Q
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Recebimento de Notas Fiscais'
         context['cenario_nome'] = 'Financeiro'
@@ -68,6 +70,52 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         # Define valor default para mes_ano_recebimento (mantém valor do GET se existir)
         mes_ano_recebimento = self.request.GET.get('mes_ano_recebimento', '')
         context['mes_ano_recebimento_default'] = mes_ano_recebimento
+        
+        # Calcula totais das notas fiscais filtradas
+        queryset_filtrado = self.get_queryset()
+        totais = queryset_filtrado.aggregate(
+            total_val_bruto=Sum('val_bruto'),
+            total_val_liquido=Sum('val_liquido'),
+            total_val_ISS=Sum('val_ISS'),
+            total_val_PIS=Sum('val_PIS'),
+            total_val_COFINS=Sum('val_COFINS'),
+            total_val_IR=Sum('val_IR'),
+            total_val_CSLL=Sum('val_CSLL'),
+            total_val_outros=Sum('val_outros')
+        )
+        
+        # Calcula quantidade de notas fiscais por status
+        status_count = queryset_filtrado.aggregate(
+            total_notas=models.Count('id'),
+            pendentes=models.Count('id', filter=Q(status_recebimento='pendente')),
+            recebidas=models.Count('id', filter=Q(status_recebimento='recebido'))
+        )
+        
+        # Adiciona totais ao contexto, garantindo que valores None sejam convertidos para 0
+        context['totais'] = {
+            'total_val_bruto': totais['total_val_bruto'] or 0,
+            'total_val_liquido': totais['total_val_liquido'] or 0,
+            'total_val_ISS': totais['total_val_ISS'] or 0,
+            'total_val_PIS': totais['total_val_PIS'] or 0,
+            'total_val_COFINS': totais['total_val_COFINS'] or 0,
+            'total_val_IR': totais['total_val_IR'] or 0,
+            'total_val_CSLL': totais['total_val_CSLL'] or 0,
+            'total_val_outros': totais['total_val_outros'] or 0,
+            'total_impostos': (
+                (totais['total_val_ISS'] or 0) +
+                (totais['total_val_PIS'] or 0) +
+                (totais['total_val_COFINS'] or 0) +
+                (totais['total_val_IR'] or 0) +
+                (totais['total_val_CSLL'] or 0) +
+                (totais['total_val_outros'] or 0)
+            )
+        }
+        
+        context['status_count'] = {
+            'total_notas': status_count['total_notas'] or 0,
+            'pendentes': status_count['pendentes'] or 0,
+            'recebidas': status_count['recebidas'] or 0
+        }
         
         return context
 
