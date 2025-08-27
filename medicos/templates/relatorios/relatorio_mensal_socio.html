@@ -111,13 +111,12 @@ document.addEventListener('DOMContentLoaded', function() {
                           <tr><th colspan="2">RECEITA BRUTA RECEBIDA* (=)</th><th>{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th></tr>
                           <tr><td>1</td><td>serviços de consultas e plantões</td><td>{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
                           <tr><td>2</td><td>Serviços de vacinação, exames, procedimentos</td><td>{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
-                          <tr class="linha-total"><th colspan="2">IMPOSTOS* (-)</th><th>{{ relatorio.impostos_total|floatformat:2 }}</th></tr>
+                          <tr class="linha-total"><th colspan="2">IMPOSTOS A PROVISIONAR*(-)</th><th>{{ relatorio.impostos_total|floatformat:2 }}</th></tr>
                           <tr><td>1</td><td>PIS</td><td>{{ relatorio.total_pis|floatformat:2 }}</td></tr>
                           <tr><td>2</td><td>COFINS</td><td>{{ relatorio.total_cofins|floatformat:2 }}</td></tr>
                           <tr><td>3</td><td>IRPJ</td><td>{{ relatorio.total_irpj|floatformat:2 }}</td></tr>
                           <tr><td>4</td><td>CSLL</td><td>{{ relatorio.total_csll|floatformat:2 }}</td></tr>
                           <tr><td>5</td><td>ISSQN</td><td>{{ relatorio.total_iss|floatformat:2 }}</td></tr>
-                          <tr><td>6</td><td>OUTROS</td><td>{{ relatorio.total_nf_outros|default:0|floatformat:2 }}</td></tr>
                           <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (=)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
                         </table>
                       </div>

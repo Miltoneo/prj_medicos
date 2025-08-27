@@ -205,6 +205,124 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     total_outros_socio = 0
     total_notas_liquido_socio = 0
     
+    # CORREÇÃO: Calcular impostos apurados seguindo as mesmas regras da Apuração de Impostos
+    # Os impostos do sócio são calculados aplicando o rateio aos impostos "a pagar" da empresa
+    # (calculados seguindo regime tributário), não usando valores individuais das notas fiscais
+    
+    # Obter alíquotas da empresa
+    try:
+        aliquota_obj = Aliquotas.objects.filter(
+            empresa=empresa,
+            data_vigencia_inicio__lte=f'{competencia.year}-12-31',
+        ).order_by('-data_vigencia_inicio').first()
+        
+        if aliquota_obj:
+            aliquota_pis = float(getattr(aliquota_obj, 'PIS', 0))
+            aliquota_cofins = float(getattr(aliquota_obj, 'COFINS', 0))
+            aliquota_csll = float(getattr(aliquota_obj, 'CSLL_ALIQUOTA', 0))
+            aliquota_irpj = float(getattr(aliquota_obj, 'IRPJ_ALIQUOTA', 0))
+            aliquota_iss = float(getattr(aliquota_obj, 'ISS', 0))
+        else:
+            aliquota_pis = aliquota_cofins = aliquota_csll = aliquota_irpj = aliquota_iss = 0
+    except:
+        aliquota_pis = aliquota_cofins = aliquota_csll = aliquota_irpj = aliquota_iss = 0
+    
+    # Calcular impostos a pagar do mês seguindo a mesma lógica da apuração
+    
+    # Base de cálculo: notas da empresa no mês (seguindo regime tributário)
+    if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
+        # Regime de competência: considera data de emissão
+        notas_base_calculo = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtEmissao__year=competencia.year,
+            dtEmissao__month=competencia.month
+        )
+    else:
+        # Regime de caixa: considera data de recebimento
+        notas_base_calculo = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtRecebimento__year=competencia.year,
+            dtRecebimento__month=competencia.month,
+            dtRecebimento__isnull=False
+        )
+    
+    base_calculo_empresa = sum(float(nf.val_bruto or 0) for nf in notas_base_calculo)
+    
+    # Imposto retido: sempre considera data de recebimento
+    notas_retidas = NotaFiscal.objects.filter(
+        empresa_destinataria=empresa,
+        dtRecebimento__year=competencia.year,
+        dtRecebimento__month=competencia.month,
+        dtRecebimento__isnull=False
+    )
+    
+    # Calcular impostos devidos da empresa
+    pis_devido = base_calculo_empresa * (aliquota_pis / 100) if aliquota_pis > 0 else 0
+    cofins_devido = base_calculo_empresa * (aliquota_cofins / 100) if aliquota_cofins > 0 else 0
+    
+    # Para CSLL e IRPJ: aplicar presunções de lucro
+    if aliquota_obj:
+        presuncao_consultas = float(getattr(aliquota_obj, 'CSLL_PRESUNCAO_CONSULTA', 32)) / 100
+        presuncao_outros = float(getattr(aliquota_obj, 'CSLL_PRESUNCAO_OUTROS', 8)) / 100
+        
+        # Separar por tipo de serviço
+        receita_consultas = sum(float(nf.val_bruto or 0) for nf in notas_base_calculo if nf.tipo_servico == NotaFiscal.TIPO_SERVICO_CONSULTAS)
+        receita_outros = sum(float(nf.val_bruto or 0) for nf in notas_base_calculo if nf.tipo_servico != NotaFiscal.TIPO_SERVICO_CONSULTAS)
+        
+        base_csll = (receita_consultas * presuncao_consultas) + (receita_outros * presuncao_outros)
+        base_irpj = base_csll  # Mesma base para IRPJ e CSLL
+        
+        csll_devido = base_csll * (aliquota_csll / 100) if aliquota_csll > 0 else 0
+        irpj_devido = base_irpj * (aliquota_irpj / 100) if aliquota_irpj > 0 else 0
+    else:
+        csll_devido = irpj_devido = 0
+    
+    # Para ISSQN: calcular valor devido (base * alíquota) - o ISS nas notas é apenas o valor retido
+    iss_devido = base_calculo_empresa * (aliquota_iss / 100) if aliquota_iss > 0 else 0
+    
+    # Impostos retidos
+    pis_retido = sum(float(nf.val_PIS or 0) for nf in notas_retidas)
+    cofins_retido = sum(float(nf.val_COFINS or 0) for nf in notas_retidas) 
+    csll_retido = sum(float(nf.val_CSLL or 0) for nf in notas_retidas)
+    irpj_retido = sum(float(nf.val_IR or 0) for nf in notas_retidas)
+    iss_retido = sum(float(nf.val_ISS or 0) for nf in notas_retidas)
+    
+    # Impostos a pagar da empresa
+    pis_a_pagar = max(0, pis_devido - pis_retido)
+    cofins_a_pagar = max(0, cofins_devido - cofins_retido)
+    csll_a_pagar = max(0, csll_devido - csll_retido)
+    irpj_a_pagar = max(0, irpj_devido - irpj_retido)
+    iss_a_pagar = max(0, iss_devido - iss_retido)
+    
+    # Aplicar rateio do sócio aos impostos a pagar da empresa
+    # Usar a mesma base de cálculo (seguindo regime tributário) para participação do sócio
+    if base_calculo_empresa > 0:
+        # Calcular receita do sócio seguindo o mesmo regime tributário usado para base de cálculo
+        if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
+            # Regime de competência: usar notas emitidas
+            receita_socio_periodo = 0
+            for nf in notas_base_calculo:
+                rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+                if rateio:
+                    receita_socio_periodo += float(rateio.valor_bruto_medico or 0)
+        else:
+            # Regime de caixa: usar notas recebidas (já calculado anteriormente)
+            receita_socio_periodo = receita_bruta_socio_recebida
+        
+        participacao_socio_impostos = receita_socio_periodo / base_calculo_empresa
+        
+        total_pis_socio = pis_a_pagar * participacao_socio_impostos
+        total_cofins_socio = cofins_a_pagar * participacao_socio_impostos  
+        total_irpj_socio = irpj_a_pagar * participacao_socio_impostos
+        total_csll_socio = csll_a_pagar * participacao_socio_impostos
+        total_iss_socio = iss_a_pagar * participacao_socio_impostos
+    else:
+        total_pis_socio = 0
+        total_cofins_socio = 0
+        total_irpj_socio = 0
+        total_csll_socio = 0
+        total_iss_socio = 0
+    
     # Separar faturamento por tipo de serviço
     faturamento_consultas = 0
     faturamento_plantao = 0  
@@ -245,12 +363,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
                 'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
                 'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
             })
-            # Acumular totais do sócio
-            total_iss_socio += float(rateio.valor_iss_medico or 0)
-            total_pis_socio += float(rateio.valor_pis_medico or 0)
-            total_cofins_socio += float(rateio.valor_cofins_medico or 0)
-            total_irpj_socio += float(rateio.valor_ir_medico or 0)
-            total_csll_socio += float(rateio.valor_csll_medico or 0)
+            # Acumular outros valores e valor líquido do sócio (mas não impostos - estes são calculados pela apuração)
             total_outros_socio += float(rateio.valor_outros_medico or 0)
             total_notas_liquido_socio += float(rateio.valor_liquido_medico or 0)
 
