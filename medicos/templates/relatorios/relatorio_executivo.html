@@ -58,13 +58,17 @@
             <table class="table table-striped table-hover mb-0">
                 <thead>
                     <tr class="table-success">
-                        <th style="width: 22%;">Sócio</th>
-                        <th style="width: 13%;" class="text-center">Receita bruta emitida</th>
-                        <th style="width: 13%;" class="text-center">Receita bruta recebida</th>
-                        <th style="width: 13%;" class="text-center">Imposto Devido</th>
-                        <th style="width: 13%;" class="text-center">Imposto Retido</th>
-                        <th style="width: 13%;" class="text-center">Imposto a Pagar</th>
-                        <th style="width: 13%;" class="text-center">Receita líquida</th>
+                        <th style="width: 14%;">Sócio</th>
+                        <th style="width: 8.5%;" class="text-center">Receita bruta emitida</th>
+                        <th style="width: 8.5%;" class="text-center">Receita bruta recebida</th>
+                        <th style="width: 8.5%;" class="text-center">Imposto Devido</th>
+                        <th style="width: 8.5%;" class="text-center">Imposto Retido</th>
+                        <th style="width: 8.5%;" class="text-center">Imposto a Pagar</th>
+                        <th style="width: 8.5%;" class="text-center">Receita líquida apurada</th>
+                        <th style="width: 8.5%;" class="text-center">Saldo financeiro</th>
+                        <th style="width: 8.5%;" class="text-center">Despesa com rateio</th>
+                        <th style="width: 8.5%;" class="text-center">Despesa sem rateio</th>
+                        <th style="width: 9.5%;" class="text-center">Saldo transferir</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,10 +96,22 @@
                         <td class="valor-monetario text-primary">
                             R$ {{ item.receita_liquida|floatformat:2 }}
                         </td>
+                        <td class="valor-monetario text-dark">
+                            R$ {{ item.saldo_financeiro|floatformat:2 }}
+                        </td>
+                        <td class="valor-monetario text-warning">
+                            R$ {{ item.despesa_com_rateio|floatformat:2 }}
+                        </td>
+                        <td class="valor-monetario text-secondary">
+                            R$ {{ item.despesa_sem_rateio|floatformat:2 }}
+                        </td>
+                        <td class="valor-monetario fw-bold text-success">
+                            R$ {{ item.saldo_transferir|floatformat:2 }}
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
+                        <td colspan="11" class="text-center text-muted py-4">
                             <i class="fas fa-info-circle me-2"></i>
                             Nenhum sócio encontrado para a competência selecionada.
                         </td>
@@ -124,6 +140,18 @@
                         <td class="valor-monetario">
                             R$ {{ totais_resumo.receita_liquida|floatformat:2 }}
                         </td>
+                        <td class="valor-monetario">
+                            R$ {{ totais_resumo.saldo_financeiro|floatformat:2 }}
+                        </td>
+                        <td class="valor-monetario">
+                            R$ {{ totais_resumo.despesa_com_rateio|floatformat:2 }}
+                        </td>
+                        <td class="valor-monetario">
+                            R$ {{ totais_resumo.despesa_sem_rateio|floatformat:2 }}
+                        </td>
+                        <td class="valor-monetario fw-bold text-success">
+                            R$ {{ totais_resumo.saldo_transferir|floatformat:2 }}
+                        </td>
                     </tr>
                 </tfoot>
                 {% endif %}
@@ -142,143 +170,11 @@
                 <li><strong>Imposto Devido:</strong> por data de emissão da nota (regime competência) / por data de recebimento (regime caixa)</li>
                 <li><strong>Imposto Retido:</strong> por data de recebimento da nota</li>
                 <li><strong>Imposto a Pagar:</strong> Diferença entre imposto devido e retido</li>
-                <li><strong>Receita líquida:</strong> Receita bruta recebida menos impostos a pagar</li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-<!-- Card Principal - Resumo Empresa -->
-<div class="card shadow border-0 mb-4">
-    <div class="card-header card-header-gradient text-white">
-        <div class="d-flex align-items-center">
-            <span class="fas fa-chart-line me-3 fs-4"></span>
-            <div>
-                <h4 class="mb-0 fw-bold">Movimentação de Notas Fiscais - {{ ano_atual }}</h4>
-                <small class="opacity-75">{{ empresa.name }} | CNPJ: {{ empresa.cnpj|default:"N/A" }}</small>
-            </div>
-        </div>
-    </div>
-    
-    <div class="card-body p-4">
-        <div class="table-responsive">
-            <table class="table table-striped table-hover mb-0">
-                <thead>
-                    <tr class="table-primary">
-                        <th style="width: 20%;">Descrição</th>
-                        <th style="width: 6.25%;" class="text-center">Jan</th>
-                        <th style="width: 6.25%;" class="text-center">Fev</th>
-                        <th style="width: 6.25%;" class="text-center">Mar</th>
-                        <th style="width: 6.25%;" class="text-center">Abr</th>
-                        <th style="width: 6.25%;" class="text-center">Mai</th>
-                        <th style="width: 6.25%;" class="text-center">Jun</th>
-                        <th style="width: 6.25%;" class="text-center">Jul</th>
-                        <th style="width: 6.25%;" class="text-center">Ago</th>
-                        <th style="width: 6.25%;" class="text-center">Set</th>
-                        <th style="width: 6.25%;" class="text-center">Out</th>
-                        <th style="width: 6.25%;" class="text-center">Nov</th>
-                        <th style="width: 6.25%;" class="text-center">Dez</th>
-                        <th style="width: 10%;" class="text-center">Total Anual</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Valor Total Notas Emitidas -->
-                    <tr>
-                        <td class="fw-semibold text-success">
-                            <i class="fas fa-arrow-up me-2"></i>
-                            Valor Total Notas Emitidas
-                        </td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.1|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.2|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.3|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.4|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.5|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.6|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.7|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.8|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.9|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.10|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.11|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_emitidas_mes.12|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario fw-bold text-success">R$ {{ total_emitidas|floatformat:2 }}</td>
-                    </tr>
-                    
-                    <!-- Valor Total Notas Recebidas -->
-                    <tr>
-                        <td class="fw-semibold text-primary">
-                            <i class="fas fa-arrow-down me-2"></i>
-                            Valor Total Notas Recebidas
-                        </td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.1|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.2|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.3|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.4|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.5|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.6|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.7|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.8|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.9|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.10|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.11|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_recebidas_mes.12|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario fw-bold text-primary">R$ {{ total_recebidas|floatformat:2 }}</td>
-                    </tr>
-                    
-                    <!-- Valor Total Notas Pendentes -->
-                    <tr>
-                        <td class="fw-semibold text-warning">
-                            <i class="fas fa-clock me-2"></i>
-                            Valor Total Notas Pendentes
-                        </td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.1|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.2|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.3|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.4|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.5|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.6|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.7|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.8|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.9|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.10|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.11|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ notas_pendentes_mes.12|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario fw-bold text-warning">R$ {{ total_pendentes|floatformat:2 }}</td>
-                    </tr>
-                    
-                    <!-- Valor Total Despesas Coletivas -->
-                    <tr>
-                        <td class="fw-semibold text-danger">
-                            <i class="fas fa-share-alt me-2"></i>
-                            Valor Total Despesas Coletivas
-                        </td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.1|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.2|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.3|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.4|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.5|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.6|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.7|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.8|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.9|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.10|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.11|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario">R$ {{ despesas_coletivas_mes.12|default:0|floatformat:2 }}</td>
-                        <td class="valor-monetario fw-bold text-danger">R$ {{ total_despesas_coletivas|floatformat:2 }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Observações -->
-        <div class="mt-4 p-3 bg-light rounded">
-            <h6 class="fw-bold mb-2">
-                <i class="fas fa-info-circle me-2 text-primary"></i>
-                Observações do Relatório:
-            </h6>
-            <ul class="mb-0 small text-muted">
-                <li><strong>Notas Emitidas:</strong> Considera a data de emissão da nota fiscal</li>
-                <li><strong>Notas Recebidas:</strong> Considera a data de recebimento da nota fiscal</li>
-                <li><strong>Notas Pendentes:</strong> Valores em aberto ou aguardando processamento</li>
+                <li><strong>Receita líquida apurada:</strong> Receita bruta recebida menos impostos a pagar</li>
+                <li><strong>Saldo financeiro:</strong> Saldo consolidado dos lançamentos financeiros do sócio</li>
+                <li><strong>Despesa com rateio:</strong> Despesas rateadas proporcionalmente ao sócio</li>
+                <li><strong>Despesa sem rateio:</strong> Despesas diretas e exclusivas do sócio</li>
+                <li><strong>Saldo transferir:</strong> Valor disponível para transferência (Saldo financeiro - Despesa com rateio - Despesa sem rateio)</li>
             </ul>
         </div>
     </div>

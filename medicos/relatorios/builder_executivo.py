@@ -4,12 +4,14 @@ Fonte: Simplificação da view complexa em views_relatorios.py
 """
 
 from django.db.models import Sum
+from django.db.models import Sum
 from datetime import datetime
 from decimal import Decimal
 
 from medicos.models.base import Empresa, Socio, REGIME_TRIBUTACAO_COMPETENCIA, REGIME_TRIBUTACAO_CAIXA
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico, Aliquotas
-from medicos.models.despesas import DespesaRateada
+from medicos.models.despesas import DespesaRateada, ItemDespesaRateioMensal, DespesaSocio
+from medicos.models.financeiro import Financeiro
 
 
 def montar_relatorio_executivo_anual(empresa_id, ano=None):
@@ -117,6 +119,10 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
     total_imposto_retido = Decimal('0')
     total_imposto_a_pagar = Decimal('0')
     total_receita_liquida = Decimal('0')
+    total_despesa_com_rateio = Decimal('0')
+    total_despesa_sem_rateio = Decimal('0')
+    total_saldo_financeiro = Decimal('0')
+    total_saldo_transferir = Decimal('0')
     
     for socio in socios:
         # Receita emitida do sócio no mês (sempre baseada em data de emissão)
@@ -230,6 +236,42 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         # Receita líquida = receita bruta - imposto a pagar
         receita_liquida = receita_bruta - imposto_a_pagar
         
+        # Despesas com rateio do sócio no mês
+        despesas_rateadas = DespesaRateada.objects.filter(
+            item_despesa__grupo_despesa__empresa=empresa,
+            data__year=ano,
+            data__month=mes
+        )
+        
+        despesa_com_rateio = Decimal('0')
+        for despesa in despesas_rateadas:
+            # Obter configuração de rateio para este sócio/item/mês
+            rateio = ItemDespesaRateioMensal.obter_rateio_para_despesa(
+                despesa.item_despesa, socio, despesa.data
+            )
+            if rateio and rateio.percentual_rateio:
+                valor_rateado = despesa.valor * (rateio.percentual_rateio / Decimal('100'))
+                despesa_com_rateio += valor_rateado
+        
+        # Despesas sem rateio do sócio no mês (despesas diretas do sócio)
+        despesas_socio = DespesaSocio.objects.filter(
+            socio=socio,
+            data__year=ano,
+            data__month=mes
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0')
+        
+        despesa_sem_rateio = despesas_socio
+        
+        # Saldo financeiro do sócio no mês (baseado na tabela Financeiro)
+        saldo_financeiro_data = Financeiro.obter_saldo_mensal(
+            socio=socio,
+            mes_referencia=datetime(ano, mes, 1).date()
+        )
+        saldo_financeiro = Decimal(str(saldo_financeiro_data.get('saldo_liquido', 0)))
+        
+        # Saldo transferir = Saldo financeiro - Despesa com rateio - Despesa sem rateio
+        saldo_transferir = saldo_financeiro - despesa_com_rateio - despesa_sem_rateio
+        
         # Acumular totais
         total_receita_emitida += receita_emitida
         total_receita_bruta += receita_bruta
@@ -237,6 +279,10 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         total_imposto_retido += imposto_retido
         total_imposto_a_pagar += imposto_a_pagar
         total_receita_liquida += receita_liquida
+        total_despesa_com_rateio += despesa_com_rateio
+        total_despesa_sem_rateio += despesa_sem_rateio
+        total_saldo_financeiro += saldo_financeiro
+        total_saldo_transferir += saldo_transferir
         
         resumo_socios.append({
             'socio': socio,
@@ -246,6 +292,10 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'imposto_retido': imposto_retido,
             'imposto_a_pagar': imposto_a_pagar,
             'receita_liquida': receita_liquida,
+            'saldo_financeiro': saldo_financeiro,
+            'despesa_com_rateio': despesa_com_rateio,
+            'despesa_sem_rateio': despesa_sem_rateio,
+            'saldo_transferir': saldo_transferir,
         })
     
     return {
@@ -257,6 +307,10 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'imposto_retido': total_imposto_retido,
             'imposto_a_pagar': total_imposto_a_pagar,
             'receita_liquida': total_receita_liquida,
+            'saldo_financeiro': total_saldo_financeiro,
+            'despesa_com_rateio': total_despesa_com_rateio,
+            'despesa_sem_rateio': total_despesa_sem_rateio,
+            'saldo_transferir': total_saldo_transferir,
         },
         'mes_ano_competencia': f"{ano:04d}-{mes:02d}",
         'mes_ano_display': f"{mes:02d}/{ano}",
