@@ -671,18 +671,20 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
                 dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
             )
         valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
-        valor_iss = sum(float(nf.val_ISS or 0) for nf in notas_mes)
         
-        # Imposto retido: usar o mesmo critério (regime tributário da empresa)
+        # Imposto devido: calculado sobre a base de cálculo (valor bruto)
+        imposto_devido = valor_bruto * aliquota_iss / 100
+        
+        # Imposto retido: valor efetivamente retido nas notas fiscais
         # Para ISSQN, tanto cálculo quanto retenção seguem o mesmo regime
         imposto_retido_nf = sum(float(nf.val_ISS or 0) for nf in notas_mes)
         
-        total_iss += valor_iss
+        total_iss += imposto_devido
         total_imposto_retido_nf += imposto_retido_nf
         linhas.append({
             'competencia': f'{mes:02d}/{ano}',
             'valor_bruto': valor_bruto,
-            'valor_iss': valor_iss,
+            'valor_iss': imposto_devido,  # Agora é o valor devido calculado
             'imposto_retido_nf': imposto_retido_nf,
             'aliquota': aliquota_iss,
         })
