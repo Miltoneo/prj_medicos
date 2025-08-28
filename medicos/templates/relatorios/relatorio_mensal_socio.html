@@ -114,11 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
                           <tr class="linha-total"><th colspan="2">IMPOSTO DEVIDO*(a)</th><th>{{ relatorio.impostos_devido_total|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">IMPOSTO RETIDO*(b)</th><th>{{ relatorio.impostos_retido_total|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">IMPOSTO A PROVISIONAR*(c=a-b)</th><th>{{ relatorio.impostos_total|floatformat:2 }}</th></tr>
-                          <tr><td>1</td><td>PIS</td><td>{{ relatorio.total_pis|floatformat:2 }}</td></tr>
-                          <tr><td>2</td><td>COFINS</td><td>{{ relatorio.total_cofins|floatformat:2 }}</td></tr>
-                          <tr><td>3</td><td>IRPJ</td><td>{{ relatorio.total_irpj|floatformat:2 }}</td></tr>
-                          <tr><td>4</td><td>CSLL</td><td>{{ relatorio.total_csll|floatformat:2 }}</td></tr>
-                          <tr><td>5</td><td>ISSQN</td><td>{{ relatorio.total_iss|floatformat:2 }}</td></tr>
                           <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (r-c)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
                         </table>
                       </div>
