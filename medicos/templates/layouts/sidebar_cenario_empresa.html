@@ -11,7 +11,7 @@
     <li class="nav-item"><a class="nav-link text-light" href="#"><i class="fas fa-chart-pie me-2 text-primary"></i>Dashboard</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_faturamento' %}"><i class="fas fa-receipt me-2 text-success"></i>Faturamento</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:recebimento_notas_fiscais' %}"><i class="fas fa-wallet me-2 text-warning"></i>Financeiro</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-credit-card me-2 text-danger"></i>Despesas</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:lista_despesas_empresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-credit-card me-2 text-danger"></i>Despesas</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_apuracao' empresa_id=request.session.empresa_id  %}"><i class="fas fa-exchange-alt me-2 text-warning"></i>Apuração</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:relatorio_mensal_socio' empresa_id=request.session.empresa_id %}"><i class="fas fa-file-alt me-2 text-info"></i>Demonstrativos</a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:cenario_cadastro' %}"><i class="fas fa-cogs me-2 text-light"></i><b>Cadastro</b></a></li>

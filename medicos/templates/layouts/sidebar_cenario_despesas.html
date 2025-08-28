@@ -10,9 +10,6 @@
       <a class="nav-link text-light" href="{% url 'medicos:startempresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-arrow-left me-2 text-secondary"></i>Voltar para Empresa</a>
     </li>
     <li class="nav-item mb-2">
-      <a class="nav-link text-light" href="{% url 'medicos:lista_consolidado_despesas' empresa_id=request.session.empresa_id %}"><i class="fas fa-chart-pie me-2 text-primary"></i>Consolidado de Despesas</a>
-    </li>
-    <li class="nav-item mb-2">
       <a class="nav-link text-light" href="{% url 'medicos:lista_despesas_empresa' empresa_id=request.session.empresa_id %}"><i class="fas fa-building me-2 text-warning"></i>Despesa Coletiva</a>
     </li>
     <li class="nav-item mb-2">
