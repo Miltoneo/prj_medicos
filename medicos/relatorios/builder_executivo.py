@@ -12,6 +12,7 @@ from medicos.models.base import Empresa, Socio, REGIME_TRIBUTACAO_COMPETENCIA, R
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico, Aliquotas
 from medicos.models.despesas import DespesaRateada, ItemDespesaRateioMensal, DespesaSocio
 from medicos.models.financeiro import Financeiro
+from medicos.models.relatorios import RelatorioMensalSocio
 
 
 def montar_relatorio_executivo_anual(empresa_id, ano=None):
@@ -123,6 +124,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
     total_despesa_sem_rateio = Decimal('0')
     total_saldo_financeiro = Decimal('0')
     total_saldo_transferir = Decimal('0')
+    total_imposto_provisionado_mes_anterior = Decimal('0')
     
     for socio in socios:
         # Receita emitida do sócio no mês (sempre baseada em data de emissão)
@@ -269,8 +271,24 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         )
         saldo_financeiro = Decimal(str(saldo_financeiro_data.get('saldo_liquido', 0)))
         
-        # Saldo transferir = Saldo financeiro - Despesa com rateio - Despesa sem rateio
-        saldo_transferir = saldo_financeiro - despesa_com_rateio - despesa_sem_rateio
+        # Buscar imposto provisionado do mês anterior para este sócio
+        if mes == 1:
+            mes_anterior = datetime(ano - 1, 12, 1)
+        else:
+            mes_anterior = datetime(ano, mes - 1, 1)
+        
+        try:
+            relatorio_anterior = RelatorioMensalSocio.objects.get(
+                empresa=empresa,
+                socio=socio,
+                competencia=mes_anterior
+            )
+            imposto_provisionado_mes_anterior = relatorio_anterior.impostos_total or Decimal('0')
+        except RelatorioMensalSocio.DoesNotExist:
+            imposto_provisionado_mes_anterior = Decimal('0')
+        
+        # Saldo transferir = Saldo financeiro - Despesa com rateio - Despesa sem rateio - Imposto Provisionado Mês Anterior
+        saldo_transferir = saldo_financeiro - despesa_com_rateio - despesa_sem_rateio - imposto_provisionado_mes_anterior
         
         # Acumular totais
         total_receita_emitida += receita_emitida
@@ -283,6 +301,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         total_despesa_sem_rateio += despesa_sem_rateio
         total_saldo_financeiro += saldo_financeiro
         total_saldo_transferir += saldo_transferir
+        total_imposto_provisionado_mes_anterior += imposto_provisionado_mes_anterior
         
         resumo_socios.append({
             'socio': socio,
@@ -295,6 +314,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'saldo_financeiro': saldo_financeiro,
             'despesa_com_rateio': despesa_com_rateio,
             'despesa_sem_rateio': despesa_sem_rateio,
+            'imposto_provisionado_mes_anterior': imposto_provisionado_mes_anterior,
             'saldo_transferir': saldo_transferir,
         })
     
@@ -310,6 +330,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'saldo_financeiro': total_saldo_financeiro,
             'despesa_com_rateio': total_despesa_com_rateio,
             'despesa_sem_rateio': total_despesa_sem_rateio,
+            'imposto_provisionado_mes_anterior': total_imposto_provisionado_mes_anterior,
             'saldo_transferir': total_saldo_transferir,
         },
         'mes_ano_competencia': f"{ano:04d}-{mes:02d}",

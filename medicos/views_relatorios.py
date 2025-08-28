@@ -251,6 +251,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'impostos_retido_total': getattr(relatorio_obj, 'impostos_retido_total', 0),
         'saldo_apurado': getattr(relatorio_obj, 'saldo_apurado', 0),
         'saldo_a_transferir': getattr(relatorio_obj, 'saldo_a_transferir', 0),
+        'imposto_provisionado_mes_anterior': getattr(relatorio_obj, 'imposto_provisionado_mes_anterior', 0),
         # Totais das notas fiscais do sócio (para linha de totais da tabela)
         'total_nf_valor_bruto': getattr(relatorio_obj, 'total_nf_valor_bruto', 0),
         'total_nf_iss': getattr(relatorio_obj, 'total_nf_iss', 0),

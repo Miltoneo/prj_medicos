@@ -70,6 +70,9 @@ class RelatorioMensalSocio(models.Model):
     saldo_apurado = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_movimentacao_financeira = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_a_transferir = models.DecimalField(max_digits=15, decimal_places=2)
+    
+    # Campos adicionais para cálculo do saldo
+    imposto_provisionado_mes_anterior = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Imposto Provisionado Mês Anterior", help_text="Valor dos impostos provisionados no mês anterior.")
 
     # Listas detalhadas (JSON)
     lista_despesas_sem_rateio = models.JSONField(default=list)

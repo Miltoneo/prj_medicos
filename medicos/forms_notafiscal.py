@@ -24,18 +24,28 @@ class NotaFiscalForm(forms.ModelForm):
                 self.fields[field].required = False
                 self.fields[field].widget.attrs.update({'class': 'form-control'})
         
+        # Tornar campos de recebimento sempre readonly
+        readonly_fields = ['meio_pagamento', 'status_recebimento', 'dtRecebimento']
+        for field_name in readonly_fields:
+            if field_name in self.fields:
+                self.fields[field_name].widget.attrs.update({
+                    'readonly': True,
+                    'style': 'background-color: #f8f9fa; cursor: not-allowed;',
+                    'class': 'form-control'
+                })
+                if field_name in ['meio_pagamento', 'status_recebimento']:
+                    self.fields[field_name].disabled = True
+
         if has_recebimento:
-            # Campos relacionados ao recebimento ficam readonly quando já existe recebimento
-            readonly_fields = ['dtRecebimento', 'val_liquido', 'meio_pagamento', 'status_recebimento']
-            for field_name in readonly_fields:
+            # Campos adicionais ficam readonly quando já existe recebimento
+            additional_readonly_fields = ['val_liquido']
+            for field_name in additional_readonly_fields:
                 if field_name in self.fields:
                     self.fields[field_name].widget.attrs.update({
                         'readonly': True,
                         'style': 'background-color: #f8f9fa; cursor: not-allowed;',
                         'class': 'form-control'
                     })
-                    if field_name in ['meio_pagamento', 'status_recebimento']:
-                        self.fields[field_name].disabled = True
         
         # Filtrar meio de pagamento pela empresa da nota fiscal
         if 'meio_pagamento' in self.fields:

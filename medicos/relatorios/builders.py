@@ -4,7 +4,7 @@ from medicos.models.despesas import DespesaSocio, DespesaRateada
 from medicos.models.fiscal import NotaFiscal, Aliquotas
 from medicos.models.financeiro import Financeiro
 from medicos.models.relatorios import RelatorioMensalSocio
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 
@@ -489,6 +489,22 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # Receita líquida = Receita bruta recebida - Impostos totais
     receita_liquida = receita_bruta_recebida - impostos_total
 
+    # Buscar impostos provisionados do mês anterior
+    if competencia.month == 1:
+        mes_anterior = competencia.replace(year=competencia.year - 1, month=12, day=1)
+    else:
+        mes_anterior = competencia.replace(month=competencia.month - 1, day=1)
+    
+    try:
+        relatorio_mes_anterior = RelatorioMensalSocio.objects.get(
+            empresa=empresa,
+            socio=socio_selecionado,
+            competencia=mes_anterior
+        )
+        imposto_provisionado_mes_anterior = relatorio_mes_anterior.impostos_total or Decimal('0')
+    except RelatorioMensalSocio.DoesNotExist:
+        imposto_provisionado_mes_anterior = Decimal('0')
+
     despesas_total = despesa_sem_rateio + despesa_com_rateio
     saldo_apurado = receita_liquida - despesas_total
     # Cálculo do saldo das movimentações financeiras do sócio no mês
@@ -508,8 +524,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         for m in movimentacoes_financeiras_qs
     ]
     # Corrigir o cálculo do saldo_a_transferir conforme fórmula solicitada:
-    # SALDO A TRANSFERIR = SALDO DAS MOVIMENTAÇÕES FINANCEIRAS - TOTAL DESPESAS - RATEIO MENSAL DO ADICIONAL DE IR
-    saldo_a_transferir = saldo_movimentacao_financeira - despesas_total - valor_adicional_socio
+    # SALDO A TRANSFERIR = SALDO DAS MOVIMENTAÇÕES FINANCEIRAS - TOTAL DESPESAS - RATEIO MENSAL DO ADICIONAL DE IR - IMPOSTO PROVISIONADO MÊS ANTERIOR
+    saldo_a_transferir = saldo_movimentacao_financeira - despesas_total - valor_adicional_socio - float(imposto_provisionado_mes_anterior)
 
     # Definir dados para salvar no modelo (apenas campos que existem)
     dados_modelo = {
@@ -566,6 +582,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'saldo_apurado': saldo_apurado,
         'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
         'saldo_a_transferir': saldo_a_transferir,
+        'imposto_provisionado_mes_anterior': float(imposto_provisionado_mes_anterior),
         'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
         'lista_despesas_com_rateio': lista_despesas_com_rateio,
         'lista_notas_fiscais': notas_fiscais,
