@@ -423,6 +423,41 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     total_nf_outros = sum(float(nf['outros'] or 0) for nf in notas_fiscais)
     total_nf_valor_liquido = sum(float(nf['valor_liquido'] or 0) for nf in notas_fiscais)
 
+    # Processar notas fiscais emitidas no mês (por data de emissão)
+    notas_fiscais_emitidas = []
+    for nf in notas_fiscais_emissao_qs:
+        nf.calcular_impostos()  # Atualiza campos de impostos no modelo
+        # Buscar o rateio do sócio para esta nota
+        rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+        if rateio:
+            notas_fiscais_emitidas.append({
+                'id': nf.id,
+                'numero': getattr(nf, 'numero', ''),
+                'tp_aliquota': nf.get_tipo_servico_display(),
+                'tomador': nf.tomador,
+                'percentual_rateio': float(rateio.percentual_participacao),  # Percentual de rateio do sócio
+                'valor_bruto': float(rateio.valor_bruto_medico),  # Valor bruto rateado para o sócio
+                'valor_liquido': float(rateio.valor_liquido_medico),
+                'iss': float(rateio.valor_iss_medico),
+                'pis': float(rateio.valor_pis_medico),
+                'cofins': float(rateio.valor_cofins_medico),
+                'irpj': float(rateio.valor_ir_medico),
+                'csll': float(rateio.valor_csll_medico),
+                'outros': float(rateio.valor_outros_medico),  # Usar propriedade padronizada do modelo
+                'data_emissao': nf.dtEmissao.strftime('%d/%m/%Y'),
+                'data_recebimento': nf.dtRecebimento.strftime('%d/%m/%Y') if nf.dtRecebimento else '',
+            })
+
+    # Totais dos campos das notas fiscais emitidas do sócio (para o template)
+    total_nf_emitidas_valor_bruto = sum(float(nf['valor_bruto'] or 0) for nf in notas_fiscais_emitidas)
+    total_nf_emitidas_iss = sum(float(nf['iss'] or 0) for nf in notas_fiscais_emitidas)
+    total_nf_emitidas_pis = sum(float(nf['pis'] or 0) for nf in notas_fiscais_emitidas)
+    total_nf_emitidas_cofins = sum(float(nf['cofins'] or 0) for nf in notas_fiscais_emitidas)
+    total_nf_emitidas_irpj = sum(float(nf['irpj'] or 0) for nf in notas_fiscais_emitidas)
+    total_nf_emitidas_csll = sum(float(nf['csll'] or 0) for nf in notas_fiscais_emitidas)
+    total_nf_emitidas_outros = sum(float(nf['outros'] or 0) for nf in notas_fiscais_emitidas)
+    total_nf_emitidas_valor_liquido = sum(float(nf['valor_liquido'] or 0) for nf in notas_fiscais_emitidas)
+
     # Total notas emitidas no mês: deve considerar apenas a parte rateada para o sócio específico
     # Somar apenas o valor rateado para o sócio de cada nota fiscal emitida no mês
     total_notas_emitidas_mes = 0
@@ -517,6 +552,14 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'total_nf_csll': total_nf_csll,
         'total_nf_outros': total_nf_outros,
         'total_nf_valor_liquido': total_nf_valor_liquido,
+        'total_nf_emitidas_valor_bruto': total_nf_emitidas_valor_bruto,
+        'total_nf_emitidas_iss': total_nf_emitidas_iss,
+        'total_nf_emitidas_pis': total_nf_emitidas_pis,
+        'total_nf_emitidas_cofins': total_nf_emitidas_cofins,
+        'total_nf_emitidas_irpj': total_nf_emitidas_irpj,
+        'total_nf_emitidas_csll': total_nf_emitidas_csll,
+        'total_nf_emitidas_outros': total_nf_emitidas_outros,
+        'total_nf_emitidas_valor_liquido': total_nf_emitidas_valor_liquido,
         'faturamento_consultas': faturamento_consultas,
         'faturamento_plantao': faturamento_plantao,
         'faturamento_outros': faturamento_outros,
@@ -526,6 +569,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
         'lista_despesas_com_rateio': lista_despesas_com_rateio,
         'lista_notas_fiscais': notas_fiscais,
+        'lista_notas_fiscais_emitidas': notas_fiscais_emitidas,
         'lista_movimentacoes_financeiras': movimentacoes_financeiras,
         'debug_ir_adicional': debug_ir_adicional_espelho,
     }

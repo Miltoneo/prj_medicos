@@ -269,44 +269,40 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
             </div>
           </div>
+          
+          <!-- Tabela: Notas Fiscais Emitidas no Mês -->
+          <div class="card shadow-sm border-info mb-4">
+            <div class="card-header bg-info bg-opacity-10 border-info fw-bold d-flex align-items-center">
+              <i class="fas fa-file-invoice text-info me-2"></i>
+              <span>Notas Fiscais Emitidas no Mês</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive rounded shadow-sm p-3 bg-light">
+                <div class="bg-white rounded-2 p-2">
+                  <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
+                    <tr><th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Tomador</th><th>% Rateio</th><th>Valor bruto</th><th>ISS</th><th>PIS</th><th>COFINS</th><th>IRPJ</th><th>CSLL</th><th>Outros</th><th>Valor líquido</th></tr>
+                    {% for nota in relatorio.notas_fiscais_emitidas %}
+                    <tr><td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.tomador }}</td><td>{{ nota.percentual_rateio|floatformat:2 }}%</td><td>{{ nota.valor_bruto|floatformat:2 }}</td><td>{{ nota.iss|floatformat:2 }}</td><td>{{ nota.pis|floatformat:2 }}</td><td>{{ nota.cofins|floatformat:2 }}</td><td>{{ nota.irpj|floatformat:2 }}</td><td>{{ nota.csll|floatformat:2 }}</td><td>{{ nota.outros|floatformat:2 }}</td><td>{{ nota.valor_liquido|floatformat:2 }}</td></tr>
+                    {% endfor %}
+                    <tr class="linha-total"><th colspan="7">Totais</th>
+                      <td>{{ relatorio.total_nf_emitidas_valor_bruto|floatformat:2 }}</td>
+                      <td>{{ relatorio.total_nf_emitidas_iss|floatformat:2 }}</td>
+                      <td>{{ relatorio.total_nf_emitidas_pis|floatformat:2 }}</td>
+                      <td>{{ relatorio.total_nf_emitidas_cofins|floatformat:2 }}</td>
+                      <td>{{ relatorio.total_nf_emitidas_irpj|floatformat:2 }}</td>
+                      <td>{{ relatorio.total_nf_emitidas_csll|floatformat:2 }}</td>
+                      <td>{{ relatorio.total_nf_emitidas_outros|floatformat:2 }}</td>
+                      <td>{{ relatorio.total_nf_emitidas_valor_liquido|floatformat:2 }}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
                     <footer class="text-center text-muted mt-5 mb-2" style="font-size:0.95rem;">Relatório gerado em {{ relatorio.data_geracao }}</footer>
           
           <!-- Seção de Informações Complementares integrada -->
           <div class="row g-3 mt-4">
-            <div class="col-md-6">
-              <div class="card shadow-sm border-info h-100">
-                <div class="card-header bg-info bg-opacity-10 border-info fw-bold">
-                  <span class="bi bi-info-circle-fill text-info me-2"></span>Notas Gerais
-                </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped table-hover mb-0" style="min-width:320px;max-width:600px;">
-                      <tr>
-                        <td class="text-start">Receita bruta recebida</td>
-                        <td>considera data de recebimento da nota</td>
-                      </tr>
-                      <tr>
-                        <td class="text-start">Impostos</td>
-                        <td>considera data de emissão da nota</td>
-                      </tr>
-                      <tr>
-                        <td class="text-start">Total notas emitidas no mês (sócio)</td>
-                        <td><b>R$ {{ relatorio.total_notas_emitidas_mes|floatformat:2 }}</b> (considera data de emissão da nota)</td>
-                      </tr>
-                      <tr>
-                        <td class="text-start">Total notas recebidas no mês (sócio)</td>
-                        <td><b>R$ {{ relatorio.receita_bruta_recebida|floatformat:2 }}</b> (considera data de recebimento da nota)</td>
-                      </tr>
-                      <tr>
-                        <td class="text-start">Adicional de IR mensal</td>
-                        <td>considera data de emissão das notas</td>
-                      </tr>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
             <div class="col-md-6">
               <!-- Espelho do Adicional de IR Mensal -->
               <div class="card border-warning shadow-sm h-100">
@@ -365,6 +361,70 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td colspan="2" class="text-start">Valor do adicional para o sócio: R$ {{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
                         <td class="text-end text-nowrap">R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</td>
                       </tr>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Nova seção: Espelho Cálculo de Impostos -->
+          <div class="row g-3 mt-4">
+            <div class="col-md-12">
+              <div class="card shadow-sm border-success h-100">
+                <div class="card-header bg-success bg-opacity-10 border-success fw-bold">
+                  <i class="fas fa-calculator text-success me-2"></i>
+                  <span>Espelho Cálculo de Impostos</span>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped table-hover mb-0" style="min-width:480px;max-width:600px;">
+                      <thead class="table-light">
+                        <tr>
+                          <th style="width: 25%;" class="text-center">Imposto</th>
+                          <th style="width: 25%;" class="text-center">Retido</th>
+                          <th style="width: 25%;" class="text-center">Devido</th>
+                          <th style="width: 25%;" class="text-center">A Pagar</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="fw-bold">PIS</td>
+                          <td class="text-end">R$ {{ relatorio.total_pis_retido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_pis_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_pis|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                          <td class="fw-bold">COFINS</td>
+                          <td class="text-end">R$ {{ relatorio.total_cofins_retido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_cofins_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_cofins|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                          <td class="fw-bold">IRPJ</td>
+                          <td class="text-end">R$ {{ relatorio.total_irpj_retido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_irpj_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_irpj|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                          <td class="fw-bold">CSLL</td>
+                          <td class="text-end">R$ {{ relatorio.total_csll_retido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_csll_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_csll|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                          <td class="fw-bold">ISSQN</td>
+                          <td class="text-end">R$ {{ relatorio.total_iss_retido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_iss_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_iss|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="table-primary fw-bold">
+                          <td class="fw-bold">TOTAL</td>
+                          <td class="text-end">R$ {{ relatorio.impostos_retido_total|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.impostos_devido_total|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.impostos_total|floatformat:2 }}</td>
+                        </tr>
+                      </tbody>
                     </table>
                   </div>
                 </div>

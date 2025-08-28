@@ -260,6 +260,16 @@ def relatorio_mensal_socio(request, empresa_id):
         'total_nf_csll': getattr(relatorio_obj, 'total_nf_csll', 0),
         'total_nf_outros': getattr(relatorio_obj, 'total_nf_outros', 0),
         'total_nf_valor_liquido': getattr(relatorio_obj, 'total_nf_valor_liquido', 0),
+        # Totais das notas fiscais emitidas do sócio (para linha de totais da tabela)
+        'notas_fiscais_emitidas': getattr(relatorio_obj, 'lista_notas_fiscais_emitidas', []),
+        'total_nf_emitidas_valor_bruto': getattr(relatorio_obj, 'total_nf_emitidas_valor_bruto', 0),
+        'total_nf_emitidas_iss': getattr(relatorio_obj, 'total_nf_emitidas_iss', 0),
+        'total_nf_emitidas_pis': getattr(relatorio_obj, 'total_nf_emitidas_pis', 0),
+        'total_nf_emitidas_cofins': getattr(relatorio_obj, 'total_nf_emitidas_cofins', 0),
+        'total_nf_emitidas_irpj': getattr(relatorio_obj, 'total_nf_emitidas_irpj', 0),
+        'total_nf_emitidas_csll': getattr(relatorio_obj, 'total_nf_emitidas_csll', 0),
+        'total_nf_emitidas_outros': getattr(relatorio_obj, 'total_nf_emitidas_outros', 0),
+        'total_nf_emitidas_valor_liquido': getattr(relatorio_obj, 'total_nf_emitidas_valor_liquido', 0),
         # Campos específicos para o cálculo de IRPJ utilizados no template
         'base_calculo_consultas': relatorio_dict.get('base_calculo_consultas', 0),
         'base_calculo_outros': relatorio_dict.get('base_calculo_outros', 0),

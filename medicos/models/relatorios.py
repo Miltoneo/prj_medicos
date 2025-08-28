@@ -75,8 +75,19 @@ class RelatorioMensalSocio(models.Model):
     lista_despesas_sem_rateio = models.JSONField(default=list)
     lista_despesas_com_rateio = models.JSONField(default=list)
     lista_notas_fiscais = models.JSONField(default=list)
+    lista_notas_fiscais_emitidas = models.JSONField(default=list)
     lista_movimentacoes_financeiras = models.JSONField(default=list)
     debug_ir_adicional = models.JSONField(default=list, blank=True, null=True, help_text="Espelho detalhado do cálculo do IR adicional por nota fiscal.")
+
+    # Totais das notas fiscais emitidas do sócio (para linha de totais da tabela)
+    total_nf_emitidas_valor_bruto = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_emitidas_iss = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_emitidas_pis = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_emitidas_cofins = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_emitidas_irpj = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_emitidas_csll = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_emitidas_outros = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_nf_emitidas_valor_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     class Meta:
         unique_together = ('empresa', 'socio', 'competencia')
