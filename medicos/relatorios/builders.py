@@ -311,17 +311,62 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         
         participacao_socio_impostos = receita_socio_periodo / base_calculo_empresa
         
-        total_pis_socio = pis_a_pagar * participacao_socio_impostos
-        total_cofins_socio = cofins_a_pagar * participacao_socio_impostos  
-        total_irpj_socio = irpj_a_pagar * participacao_socio_impostos
-        total_csll_socio = csll_a_pagar * participacao_socio_impostos
-        total_iss_socio = iss_a_pagar * participacao_socio_impostos
+        # Impostos devidos do sócio (calculados sobre a base proporcional)
+        total_pis_devido_socio = pis_devido * participacao_socio_impostos
+        total_cofins_devido_socio = cofins_devido * participacao_socio_impostos  
+        total_irpj_devido_socio = irpj_devido * participacao_socio_impostos
+        total_csll_devido_socio = csll_devido * participacao_socio_impostos
+        total_iss_devido_socio = iss_devido * participacao_socio_impostos
+        
+        # Impostos retidos do sócio (calculados com base nos valores reais das notas recebidas)
+        # CORREÇÃO: Usar valores proporcionais dos rateios das notas recebidas no mês
+        # Os impostos retidos devem considerar a data de recebimento da nota fiscal
+        # conforme documentado em medicos/templates/relatorios/relatorio_mensal_socio.html
+        notas_recebidas_socio = NotaFiscal.objects.filter(
+            empresa_destinataria=empresa,
+            dtRecebimento__year=competencia.year,
+            dtRecebimento__month=competencia.month,
+            dtRecebimento__isnull=False,
+            rateios_medicos__medico=socio_selecionado
+        ).distinct()
+        
+        total_pis_retido_socio = 0
+        total_cofins_retido_socio = 0
+        total_irpj_retido_socio = 0
+        total_csll_retido_socio = 0
+        total_iss_retido_socio = 0
+        
+        for nf in notas_recebidas_socio:
+            rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+            if rateio:
+                # Usar valores proporcionais calculados automaticamente no modelo NotaFiscalRateioMedico
+                total_pis_retido_socio += float(rateio.valor_pis_medico or 0)
+                total_cofins_retido_socio += float(rateio.valor_cofins_medico or 0)
+                total_irpj_retido_socio += float(rateio.valor_ir_medico or 0)
+                total_csll_retido_socio += float(rateio.valor_csll_medico or 0)
+                total_iss_retido_socio += float(rateio.valor_iss_medico or 0)
+        
+        # Impostos retidos do sócio já calculados acima
+        # (total_*_retido_socio já estão definidos)
+        
+        # Impostos devidos do sócio já calculados acima  
+        # (total_*_devido_socio já estão definidos)
+        
+        # Impostos a provisionar serão calculados no final: devido - retido
     else:
-        total_pis_socio = 0
-        total_cofins_socio = 0
-        total_irpj_socio = 0
-        total_csll_socio = 0
-        total_iss_socio = 0
+        total_pis_devido_socio = 0
+        total_cofins_devido_socio = 0
+        total_irpj_devido_socio = 0
+        total_csll_devido_socio = 0
+        total_iss_devido_socio = 0
+        
+        total_pis_retido_socio = 0
+        total_cofins_retido_socio = 0
+        total_irpj_retido_socio = 0
+        total_csll_retido_socio = 0
+        total_iss_retido_socio = 0
+        
+        # Impostos a provisionar serão calculados no final: devido - retido (todos serão 0)
     
     # Separar faturamento por tipo de serviço
     faturamento_consultas = 0
@@ -389,9 +434,22 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # Receita bruta e líquida do sócio - usar apenas a parte do sócio calculada anteriormente
     receita_bruta_recebida = receita_bruta_socio_recebida  # Usar valor correto (parte do sócio)
 
-    # Impostos agregados do sócio (incluindo o rateio mensal de adicional de IR)
-    # CORREÇÃO: Usar total_nf_outros em vez de total_outros_socio para consistência
-    impostos_total = total_iss_socio + total_pis_socio + total_cofins_socio + total_irpj_socio + total_csll_socio + total_nf_outros + valor_adicional_socio
+    # CORREÇÃO: Imposto a provisionar deve ser calculado como (devido - retido)
+    # Total dos impostos devidos do sócio (antes da dedução de impostos retidos)
+    impostos_devido_total = total_iss_devido_socio + total_pis_devido_socio + total_cofins_devido_socio + total_irpj_devido_socio + total_csll_devido_socio + valor_adicional_socio
+    
+    # Total dos impostos retidos do sócio
+    impostos_retido_total = total_iss_retido_socio + total_pis_retido_socio + total_cofins_retido_socio + total_irpj_retido_socio + total_csll_retido_socio
+    
+    # Imposto a provisionar = Imposto devido - Imposto retido (conforme fórmula c=a-b)
+    impostos_total = impostos_devido_total - impostos_retido_total
+    
+    # Valores individuais de impostos a provisionar (também seguem a fórmula devido - retido)
+    total_iss_socio = total_iss_devido_socio - total_iss_retido_socio
+    total_pis_socio = total_pis_devido_socio - total_pis_retido_socio
+    total_cofins_socio = total_cofins_devido_socio - total_cofins_retido_socio
+    total_irpj_socio = total_irpj_devido_socio - total_irpj_retido_socio
+    total_csll_socio = total_csll_devido_socio - total_csll_retido_socio
     
     # Receita líquida = Receita bruta recebida - Impostos totais
     receita_liquida = receita_bruta_recebida - impostos_total
@@ -430,12 +488,24 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'receita_bruta_recebida': receita_bruta_recebida,
         'receita_liquida': receita_liquida,
         'impostos_total': impostos_total,
+        'impostos_devido_total': impostos_devido_total,
+        'impostos_retido_total': impostos_retido_total,
         'total_iss': total_iss_socio,
         'total_pis': total_pis_socio,
         'total_cofins': total_cofins_socio,
         'total_irpj': total_irpj_socio,
         'total_irpj_adicional': valor_adicional_socio,
         'total_csll': total_csll_socio,
+        'total_iss_devido': total_iss_devido_socio,
+        'total_pis_devido': total_pis_devido_socio,
+        'total_cofins_devido': total_cofins_devido_socio,
+        'total_irpj_devido': total_irpj_devido_socio,
+        'total_csll_devido': total_csll_devido_socio,
+        'total_iss_retido': total_iss_retido_socio,
+        'total_pis_retido': total_pis_retido_socio,
+        'total_cofins_retido': total_cofins_retido_socio,
+        'total_irpj_retido': total_irpj_retido_socio,
+        'total_csll_retido': total_csll_retido_socio,
         'total_notas_bruto': total_notas_bruto_empresa,
         'total_notas_liquido': total_notas_liquido_socio,
         'total_notas_emitidas_mes': total_notas_emitidas_mes,
@@ -570,3 +640,15 @@ def montar_relatorio_outros(empresa_id, mes_ano):
     Retorna dict padronizado: {'relatorio': ...}
     """
     return {'relatorio': {}}
+
+def montar_relatorio_executivo_anual(empresa_id, ano=None):
+    """
+    Builder básico para relatório executivo anual.
+    Esta função será sobrescrita pelo builder dedicado em builder_executivo.py
+    """
+    return {
+        'ano_atual': ano or 2025,
+        'notas_emitidas_mes': {},
+        'total_emitidas': 0,
+        'total_recebidas': 0,
+    } 
