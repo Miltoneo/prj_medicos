@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django_filters.views import FilterView
 from django.shortcuts import get_object_or_404
+from django_tables2 import RequestConfig
 from .tables_rateio_medico import NotaFiscalRateioMedicoTable
 from .filters_rateio_medico import NotaFiscalRateioMedicoFilter
 from medicos.models.fiscal import NotaFiscalRateioMedico, NotaFiscal
@@ -82,6 +83,8 @@ class NotaFiscalRateioMedicoListView(FilterView):
             context['total_outros'] = 0
         else:
             table = self.table_class(self.get_queryset())
+            # Configurar a tabela para ordenação
+            RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
             context['table'] = table
             context['filter'] = getattr(self, 'filter', None)
             if self.nota_fiscal:

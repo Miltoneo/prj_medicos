@@ -115,6 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
                           <tr class="linha-total"><th colspan="2">IMPOSTO RETIDO*(b)</th><th>{{ relatorio.impostos_retido_total|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">IMPOSTO A PROVISIONAR*(c=a-b)</th><th>{{ relatorio.impostos_total|floatformat:2 }}</th></tr>
                           <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (r-a)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
+                          <tr><th colspan="2">DESPESAS (-)</th><th>{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
+                          <tr><td>1</td><td>Despesa com rateio</td><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+                          <tr><td>2</td><td>Despesa sem rateio</td><td>{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
+                          <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th>{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
+                          <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>{{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
                         </table>
                       </div>
                     </div>
@@ -123,18 +128,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-lg-6">
                   <div class="card shadow-sm border-success">
                     <div class="card-header bg-success bg-opacity-10 border-success fw-bold px-3 py-2">
-                      <span class="bi bi-calculator text-success me-2"></span> Saldo a transferir
+                      <span class="bi bi-calculator text-success me-2"></span> Resumo
                     </div>
                     <div class="card-body p-0">
                       <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
-                                                    <tr><th colspan="2">TOTAL RECEITAS (=)</th><th>{{ total_receitas|floatformat:2 }}</th></tr>
+                          <tr><th colspan="2">TOTAL RECEITAS (=)</th><th>{{ total_receitas|floatformat:2 }}</th></tr>
                           <tr><th colspan="2">TOTAL DESPESAS OUTROS (-)</th><th>{{ total_despesas_outros|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">TOTAL DESPESAS (-) >> NAO UTILIZADO</th><th>{{ relatorio.despesas_total|floatformat:2 }}</th></tr>
-                          <tr><td>1</td><td>Despesa com rateio</td><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
-                          <tr><td>2</td><td>Despesa sem rateio</td><td>{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
-                          <tr><th colspan="2">RATEIO MENSAL DO ADICIONAL DE IR (-)</th><th>{{ relatorio.total_irpj_adicional|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>{{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
                         </table>
                       </div>
                     </div>

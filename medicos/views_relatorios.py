@@ -217,6 +217,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'despesas_sem_rateio': getattr(relatorio_obj, 'lista_despesas_sem_rateio', []),
         'despesa_com_rateio': getattr(relatorio_obj, 'despesa_com_rateio', 0),
         'despesa_sem_rateio': getattr(relatorio_obj, 'despesa_sem_rateio', 0),
+        'despesa_geral': getattr(relatorio_obj, 'despesa_geral', 0),
         'despesas_total': getattr(relatorio_obj, 'despesas_total', 0),
         'movimentacoes_financeiras': lista_movimentacoes,
         'saldo_movimentacao_financeira': getattr(relatorio_obj, 'saldo_movimentacao_financeira', 0),

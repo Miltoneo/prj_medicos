@@ -536,14 +536,14 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         for m in movimentacoes_financeiras_qs
     ]
     
-    # Corrigir o cálculo do saldo_a_transferir conforme nova fórmula solicitada:
-    # SALDO A TRANSFERIR = TOTAL RECEITAS - TOTAL DESPESAS OUTROS - TOTAL DESPESAS - RATEIO MENSAL DO ADICIONAL DE IR
-    saldo_a_transferir = total_receitas - total_despesas_outros - despesas_total - valor_adicional_socio
+    # Corrigir o cálculo do saldo_a_transferir conforme estrutura do quadro "Receitas":
+    # SALDO A TRANSFERIR = RECEITA LÍQUIDA (r-a) - DESPESAS (-) + SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)
+    despesa_geral = despesa_sem_rateio + despesa_com_rateio
+    saldo_a_transferir = receita_liquida - despesa_geral + saldo_movimentacao_financeira
     print(f"DEBUG Builder: Novo cálculo saldo_a_transferir:")
-    print(f"  total_receitas: {total_receitas}")
-    print(f"  total_despesas_outros: {total_despesas_outros}")
-    print(f"  despesas_total: {despesas_total}")
-    print(f"  valor_adicional_socio: {valor_adicional_socio}")
+    print(f"  receita_liquida: {receita_liquida}")
+    print(f"  despesa_geral: {despesa_geral}")
+    print(f"  saldo_movimentacao_financeira: {saldo_movimentacao_financeira}")
     print(f"  saldo_a_transferir: {saldo_a_transferir}")
 
     # Definir dados para salvar no modelo (apenas campos que existem)
