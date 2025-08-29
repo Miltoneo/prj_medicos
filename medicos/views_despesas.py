@@ -112,14 +112,46 @@ class DespesaSocioCreateView(CreateView):
         return initial
 
     def form_valid(self, form):
+        from django.db import transaction
+        from medicos.models.base import Socio
+        from medicos.models.financeiro import Financeiro, DescricaoMovimentacaoFinanceira
+        
         socio_id = self.request.GET.get('socio')
         if not socio_id:
             from django.http import HttpResponseBadRequest
             return HttpResponseBadRequest('Sócio não informado')
-        from medicos.models.base import Socio
+        
         socio = Socio.objects.get(id=socio_id)
         form.instance.socio = socio
-        return super().form_valid(form)
+        
+        with transaction.atomic():
+            # Salvar a despesa
+            response = super().form_valid(form)
+            
+            # Criar lançamento financeiro automaticamente
+            despesa = form.instance
+            empresa = despesa.item_despesa.grupo_despesa.empresa
+            
+            # Criar ou obter descrição da movimentação financeira
+            descricao_texto = f"Débito - {despesa.item_despesa.descricao}"
+            descricao_movimentacao, created = DescricaoMovimentacaoFinanceira.objects.get_or_create(
+                empresa=empresa,
+                descricao=descricao_texto,
+                defaults={
+                    'created_by': self.request.user,
+                }
+            )
+            
+            # Criar lançamento financeiro (valor negativo para débito)
+            Financeiro.objects.create(
+                socio=socio,
+                descricao_movimentacao_financeira=descricao_movimentacao,
+                data_movimentacao=despesa.data,
+                valor=-despesa.valor,  # Valor negativo para débito
+                created_by=self.request.user,
+            )
+            
+            return response
 
     def get_success_url(self):
         empresa_id = self.kwargs.get('empresa_id')
