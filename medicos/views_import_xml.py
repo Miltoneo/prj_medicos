@@ -63,6 +63,9 @@ class NotaFiscalImportXMLView(View):
                     val_cofins_el = valores_servico.find('n:ValorCofins', ns) if valores_servico is not None else None
                     val_ir_el = valores_servico.find('n:ValorIr', ns) if valores_servico is not None else None
                     val_csll_el = valores_servico.find('n:ValorCsll', ns) if valores_servico is not None else None
+                    # Verificar se ISS foi retido (está no nível do Servico, não dentro de Valores)
+                    servico_el = root.find('.//n:CompNfse/n:Nfse/n:InfNfse/n:DeclaracaoPrestacaoServico/n:InfDeclaracaoPrestacaoServico/n:Servico', ns)
+                    iss_retido_el = servico_el.find('n:IssRetido', ns) if servico_el is not None else None
                     # Campos
                     numero = numero_el.text if numero_el is not None else None
                     tomador = tomador_el.text if tomador_el is not None else None
@@ -79,7 +82,37 @@ class NotaFiscalImportXMLView(View):
                         except Exception:
                             return Decimal('0.00')
                     val_bruto = to_decimal(val_bruto_el.text) if val_bruto_el is not None else Decimal('0.00')
-                    val_iss = to_decimal(val_iss_el.text) if val_iss_el is not None else Decimal('0.00')
+                    
+                    # Processar valor do ISS baseado na regra IssRetido
+                    val_iss = Decimal('0.00')
+                    if val_iss_el is not None:
+                        iss_retido = None
+                        if iss_retido_el is not None:
+                            try:
+                                iss_retido = int(iss_retido_el.text)
+                                print(f"DEBUG: IssRetido encontrado = {iss_retido}")
+                            except (ValueError, TypeError):
+                                iss_retido = None
+                                print(f"DEBUG: IssRetido inválido = {iss_retido_el.text}")
+                        else:
+                            print("DEBUG: IssRetido não encontrado no XML")
+                        
+                        # Aplicar regra do IssRetido
+                        if iss_retido == 1:
+                            # ISS foi retido - importar o valor
+                            val_iss = to_decimal(val_iss_el.text)
+                            print(f"DEBUG: IssRetido=1 - Importando ISS = R$ {val_iss}")
+                        elif iss_retido == 2:
+                            # ISS não foi retido - não considerar (valor = 0)
+                            val_iss = Decimal('0.00')
+                            print(f"DEBUG: IssRetido=2 - Zerando ISS = R$ {val_iss}")
+                        else:
+                            # Se IssRetido não está presente ou valor inválido, importar o valor normalmente
+                            val_iss = to_decimal(val_iss_el.text)
+                            print(f"DEBUG: IssRetido ausente/inválido - Importando ISS normalmente = R$ {val_iss}")
+                    else:
+                        print("DEBUG: ValorIss não encontrado no XML")
+                    
                     val_liquido = to_decimal(val_liquido_el.text) if val_liquido_el is not None else Decimal('0.00')
                     val_pis = to_decimal(val_pis_el.text) if val_pis_el is not None else Decimal('0.00')
                     val_cofins = to_decimal(val_cofins_el.text) if val_cofins_el is not None else Decimal('0.00')

@@ -65,6 +65,29 @@ class FinanceiroListView(SingleTableMixin, FilterView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Lançamentos de movimentações financeiras'
         context['cenario_nome'] = 'Financeiro'
+        
+        # Adiciona totalizações das movimentações filtradas
+        from django.db.models import Sum, Count
+        filterset = context['filter']
+        if filterset.qs:
+            totais = filterset.qs.aggregate(
+                total_movimentacoes=Count('id'),
+                total_creditos=Sum('valor', filter=models.Q(valor__gt=0)),
+                total_debitos=Sum('valor', filter=models.Q(valor__lt=0)),
+                saldo_total=Sum('valor')
+            )
+            
+            # Garante que valores None sejam convertidos para 0
+            context['total_movimentacoes'] = totais['total_movimentacoes'] or 0
+            context['total_creditos'] = totais['total_creditos'] or 0
+            context['total_debitos'] = totais['total_debitos'] or 0
+            context['saldo_total'] = totais['saldo_total'] or 0
+        else:
+            context['total_movimentacoes'] = 0
+            context['total_creditos'] = 0
+            context['total_debitos'] = 0
+            context['saldo_total'] = 0
+            
         return context
 
 
@@ -107,20 +130,9 @@ class FinanceiroCreateView(CreateView):
         return kwargs
 
     def get_context_data(self, **kwargs):
-        """
-        Adiciona informações sobre os filtros para debug/referência
-        """
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Nova Movimentação Financeira'
         context['cenario_nome'] = 'Financeiro'
-        
-        # Adiciona informações sobre os filtros para debug/referência
-        filtros_ativos = {}
-        for param in ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']:
-            if param in self.request.GET:
-                filtros_ativos[param] = self.request.GET[param]
-        context['filtros_originais'] = filtros_ativos
-        
         return context
 
 
@@ -174,20 +186,9 @@ class FinanceiroUpdateView(UpdateView):
         return kwargs
 
     def get_context_data(self, **kwargs):
-        """
-        Adiciona informações sobre os filtros para debug/referência
-        """
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Editar Movimentação Financeira'
         context['cenario_nome'] = 'Financeiro'
-        
-        # Adiciona informações sobre os filtros para debug/referência
-        filtros_ativos = {}
-        for param in ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']:
-            if param in self.request.GET:
-                filtros_ativos[param] = self.request.GET[param]
-        context['filtros_originais'] = filtros_ativos
-        
         return context
 
 class FinanceiroDeleteView(DeleteView):
@@ -224,12 +225,4 @@ class FinanceiroDeleteView(DeleteView):
         context['empresa_id'] = self.kwargs['empresa_id']
         context['titulo_pagina'] = 'Excluir Movimentação Financeira'
         context['cenario_nome'] = 'Financeiro'
-        
-        # Adiciona informações sobre os filtros para debug/referência
-        filtros_ativos = {}
-        for param in ['socio', 'descricao_movimentacao_financeira', 'data_movimentacao_mes']:
-            if param in self.request.GET:
-                filtros_ativos[param] = self.request.GET[param]
-        context['filtros_originais'] = filtros_ativos
-        
         return context

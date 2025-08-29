@@ -69,6 +69,7 @@ class RelatorioMensalSocio(models.Model):
 
     saldo_apurado = models.DecimalField(max_digits=15, decimal_places=2)
     saldo_movimentacao_financeira = models.DecimalField(max_digits=15, decimal_places=2)
+    total_receitas = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Total Receitas", help_text="Total das movimentações de crédito (valores positivos) do sócio no mês.")
     saldo_a_transferir = models.DecimalField(max_digits=15, decimal_places=2)
     
     # Campos adicionais para cálculo do saldo

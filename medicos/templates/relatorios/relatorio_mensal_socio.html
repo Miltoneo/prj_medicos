@@ -129,11 +129,11 @@ document.addEventListener('DOMContentLoaded', function() {
                       <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
                           <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (=)</th><th>{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
+                          <tr><th colspan="2">TOTAL RECEITAS (=)</th><th>{{ total_receitas|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">TOTAL DESPESAS (-)</th><th>{{ relatorio.despesas_total|floatformat:2 }}</th></tr>
                           <tr><td>1</td><td>Despesa com rateio</td><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
                           <tr><td>2</td><td>Despesa sem rateio</td><td>{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
                           <tr><th colspan="2">RATEIO MENSAL DO ADICIONAL DE IR (-)</th><th>{{ relatorio.total_irpj_adicional|floatformat:2 }}</th></tr>
-                          <tr><th colspan="2">IMPOSTO PROVISIONADO MÊS ANTERIOR (-)</th><th>{{ relatorio.imposto_provisionado_mes_anterior|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>{{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
                         </table>
                       </div>
