@@ -283,12 +283,16 @@ def relatorio_mensal_socio(request, empresa_id):
     
     # Montar contexto final
     context = _contexto_base(request, empresa=empresa, menu_nome='Demonstrativo', cenario_nome='Relatório Mensal Sócio')
+    print(f"DEBUG View: total_receitas do relatorio_dict = {relatorio_dict.get('total_receitas', 'NÃO ENCONTRADO')}")
+    print(f"DEBUG View: total_despesas_outros do relatorio_dict = {relatorio_dict.get('total_despesas_outros', 'NÃO ENCONTRADO')}")
     context.update({
         'relatorio': relatorio,
         'titulo_pagina': 'Relatório Mensal do Sócio',
         'valor_adicional_rateio': relatorio_dict.get('valor_adicional_rateio', 0),
         'participacao_socio_percentual': relatorio_dict.get('participacao_socio_percentual', 0),
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
+        'total_receitas': relatorio_dict.get('total_receitas', 0),
+        'total_despesas_outros': relatorio_dict.get('total_despesas_outros', 0),
     })
     
     # Adicionar contexto de alíquotas

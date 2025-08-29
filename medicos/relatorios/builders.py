@@ -517,6 +517,14 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     
     # Calcular total de receitas (movimentações de crédito)
     total_receitas = float(sum(m.valor for m in movimentacoes_financeiras_qs if m.valor > 0))
+    print(f"DEBUG Builder: total_receitas calculado = {total_receitas}")
+    print(f"DEBUG Builder: número de movimentações = {movimentacoes_financeiras_qs.count()}")
+    print(f"DEBUG Builder: movimentações positivas = {[m.valor for m in movimentacoes_financeiras_qs if m.valor > 0]}")
+    
+    # Calcular total de despesas outros (movimentações de débito)
+    total_despesas_outros = float(abs(sum(m.valor for m in movimentacoes_financeiras_qs if m.valor < 0)))
+    print(f"DEBUG Builder: total_despesas_outros calculado = {total_despesas_outros}")
+    print(f"DEBUG Builder: movimentações negativas = {[m.valor for m in movimentacoes_financeiras_qs if m.valor < 0]}")
     
     movimentacoes_financeiras = [
         {
@@ -527,9 +535,16 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         }
         for m in movimentacoes_financeiras_qs
     ]
-    # Corrigir o cálculo do saldo_a_transferir conforme fórmula solicitada:
-    # SALDO A TRANSFERIR = SALDO DAS MOVIMENTAÇÕES FINANCEIRAS - TOTAL DESPESAS - RATEIO MENSAL DO ADICIONAL DE IR
-    saldo_a_transferir = saldo_movimentacao_financeira - despesas_total - valor_adicional_socio
+    
+    # Corrigir o cálculo do saldo_a_transferir conforme nova fórmula solicitada:
+    # SALDO A TRANSFERIR = TOTAL RECEITAS - TOTAL DESPESAS OUTROS - TOTAL DESPESAS - RATEIO MENSAL DO ADICIONAL DE IR
+    saldo_a_transferir = total_receitas - total_despesas_outros - despesas_total - valor_adicional_socio
+    print(f"DEBUG Builder: Novo cálculo saldo_a_transferir:")
+    print(f"  total_receitas: {total_receitas}")
+    print(f"  total_despesas_outros: {total_despesas_outros}")
+    print(f"  despesas_total: {despesas_total}")
+    print(f"  valor_adicional_socio: {valor_adicional_socio}")
+    print(f"  saldo_a_transferir: {saldo_a_transferir}")
 
     # Definir dados para salvar no modelo (apenas campos que existem)
     dados_modelo = {
@@ -585,7 +600,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         'faturamento_outros': faturamento_outros,
         'saldo_apurado': saldo_apurado,
         'saldo_movimentacao_financeira': saldo_movimentacao_financeira,
-        'total_receitas': total_receitas,
         'saldo_a_transferir': saldo_a_transferir,
         'imposto_provisionado_mes_anterior': float(imposto_provisionado_mes_anterior),
         'lista_despesas_sem_rateio': lista_despesas_sem_rateio,
@@ -616,6 +630,12 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     
     # Campos auxiliares utilizados no template
     contexto['receita_bruta_socio'] = receita_bruta_socio_emitida  # Usar notas emitidas para cálculo de adicional de IR
+    
+    # Adicionar total_receitas diretamente no contexto (campo não existe no modelo ainda)
+    contexto['total_receitas'] = total_receitas
+    
+    # Adicionar total_despesas_outros diretamente no contexto (campo não existe no modelo ainda)
+    contexto['total_despesas_outros'] = total_despesas_outros
     
     # Adicionar campos calculados que não estão no modelo
     contexto['base_consultas_medicas'] = total_consultas
