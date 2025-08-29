@@ -183,6 +183,11 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         request_config.configure(table)
         nota_id = self.request.GET.get('nota_id')
         context['filter'] = getattr(self, 'filter', None)
+        
+        # Calcular totalizador de valor bruto das notas filtradas
+        from django.db.models import Sum
+        total_valor_bruto = queryset.aggregate(total=Sum('val_bruto'))['total'] or 0
+        
         nota_fiscal = None
         if nota_id:
             try:
@@ -221,6 +226,7 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             'titulo_pagina': 'Rateio de Notas Fiscais',
             'total_percentual_rateado': total_percentual_rateado,
             'mes_corrente': date.today().strftime('%Y-%m'),  # Para valor padrão do filtro
+            'total_valor_bruto': total_valor_bruto,  # Totalizador de valor bruto
         })
         return context
 

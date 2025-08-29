@@ -139,6 +139,27 @@
                 </form>
               {% endif %}
 
+              <!-- Totalizador de Valor Bruto -->
+              <div class="row mb-3">
+                <div class="col-12">
+                  <div class="card border-primary">
+                    <div class="card-body py-2">
+                      <div class="row align-items-center">
+                        <div class="col-auto">
+                          <i class="fas fa-calculator text-primary fs-4"></i>
+                        </div>
+                        <div class="col">
+                          <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark">Total Valor Bruto das Notas Filtradas:</span>
+                            <span class="fs-5 fw-bold text-primary">R$ {{ total_valor_bruto|floatformat:2 }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Legenda das cores -->
               <div class="rateio-legend">
                 <span class="badge bg-success">
