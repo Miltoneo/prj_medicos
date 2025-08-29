@@ -486,8 +486,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     total_irpj_socio = total_irpj_devido_socio - total_irpj_retido_socio
     total_csll_socio = total_csll_devido_socio - total_csll_retido_socio
     
-    # Receita líquida = Receita bruta recebida - Impostos totais
-    receita_liquida = receita_bruta_recebida - impostos_total
+    # Receita líquida = Receita bruta recebida - Impostos devido (conforme fórmula r-a)
+    receita_liquida = receita_bruta_recebida - impostos_devido_total
 
     # Buscar impostos provisionados do mês anterior
     if competencia.month == 1:

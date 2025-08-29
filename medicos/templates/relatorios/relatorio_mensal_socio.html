@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           <tr class="linha-total"><th colspan="2">IMPOSTO DEVIDO*(a)</th><th>{{ relatorio.impostos_devido_total|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">IMPOSTO RETIDO*(b)</th><th>{{ relatorio.impostos_retido_total|floatformat:2 }}</th></tr>
                           <tr class="linha-total"><th colspan="2">IMPOSTO A PROVISIONAR*(c=a-b)</th><th>{{ relatorio.impostos_total|floatformat:2 }}</th></tr>
-                          <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (r-c)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
+                          <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (r-a)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
                         </table>
                       </div>
                     </div>
@@ -376,46 +376,46 @@ document.addEventListener('DOMContentLoaded', function() {
                       <thead class="table-light">
                         <tr>
                           <th style="width: 25%;" class="text-center">Imposto</th>
-                          <th style="width: 25%;" class="text-center">Retido</th>
                           <th style="width: 25%;" class="text-center">Devido</th>
+                          <th style="width: 25%;" class="text-center">Retido</th>
                           <th style="width: 25%;" class="text-center">A Pagar</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
                           <td class="fw-bold">PIS</td>
-                          <td class="text-end">R$ {{ relatorio.total_pis_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_pis_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_pis_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_pis|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">COFINS</td>
-                          <td class="text-end">R$ {{ relatorio.total_cofins_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_cofins_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_cofins_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_cofins|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">IRPJ</td>
-                          <td class="text-end">R$ {{ relatorio.total_irpj_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_irpj_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_irpj_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_irpj|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">CSLL</td>
-                          <td class="text-end">R$ {{ relatorio.total_csll_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_csll_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_csll_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_csll|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">ISSQN</td>
-                          <td class="text-end">R$ {{ relatorio.total_iss_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_iss_devido|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.total_iss_retido|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.total_iss|floatformat:2 }}</td>
                         </tr>
                         <tr class="table-primary fw-bold">
                           <td class="fw-bold">TOTAL</td>
-                          <td class="text-end">R$ {{ relatorio.impostos_retido_total|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.impostos_devido_total|floatformat:2 }}</td>
+                          <td class="text-end">R$ {{ relatorio.impostos_retido_total|floatformat:2 }}</td>
                           <td class="text-end">R$ {{ relatorio.impostos_total|floatformat:2 }}</td>
                         </tr>
                       </tbody>

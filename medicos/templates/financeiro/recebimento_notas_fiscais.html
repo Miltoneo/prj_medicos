@@ -113,28 +113,6 @@ document.addEventListener('DOMContentLoaded', function() {
           
           <!-- Cards de Totais Financeiros -->
           <div class="row mb-4">
-            <!-- Card Resumo Geral -->
-            <div class="col-lg-3 col-md-6 mb-3">
-              <div class="card border-primary shadow-sm h-100">
-                <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
-                  <span class="fw-bold"><i class="fas fa-chart-bar me-2"></i>Resumo Geral</span>
-                </div>
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted">Total de Notas:</span>
-                    <span class="fw-bold text-primary">{{ status_count.total_notas }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted">Pendentes:</span>
-                    <span class="fw-bold text-warning">{{ status_count.pendentes }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted">Recebidas:</span>
-                    <span class="fw-bold text-success">{{ status_count.recebidas }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
             
             <!-- Card Valores Principais -->
             <div class="col-lg-3 col-md-6 mb-3">
@@ -144,15 +122,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="card-body">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted">Valor Bruto:</span>
+                    <span class="text-muted">Valor Bruto Recebido:</span>
                     <span class="fw-bold text-primary">R$ {{ totais.total_val_bruto|floatformat:2 }}</span>
                   </div>
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted">Total Impostos:</span>
+                    <span class="text-muted">Total Impostos Retidos:</span>
                     <span class="fw-bold text-danger">R$ {{ totais.total_impostos|floatformat:2 }}</span>
                   </div>
                   <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted">Valor Líquido:</span>
+                    <span class="text-muted">Valor Líquido Recebido:</span>
                     <span class="fw-bold text-success">R$ {{ totais.total_val_liquido|floatformat:2 }}</span>
                   </div>
                 </div>
