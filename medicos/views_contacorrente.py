@@ -37,6 +37,11 @@ class MovimentacaoContaCorrenteListView(SingleTableMixin, FilterView):
             return MovimentacaoContaCorrente.objects.filter(
                 models.Q(socio__empresa=empresa) |  # Através do sócio
                 models.Q(descricao_movimentacao__empresa=empresa)  # Através da descrição
+            ).select_related(
+                'socio__pessoa',  # Para exibir o nome do sócio
+                'nota_fiscal',    # Para exibir dados da nota fiscal
+                'descricao_movimentacao',  # Para exibir a descrição
+                'instrumento_bancario'     # Para exibir o instrumento bancário
             ).distinct().order_by('-data_movimentacao')
         return MovimentacaoContaCorrente.objects.none()
 
@@ -69,8 +74,8 @@ class MovimentacaoContaCorrenteListView(SingleTableMixin, FilterView):
         if filterset.qs:
             totais = filterset.qs.aggregate(
                 total_movimentacoes=Count('id'),
-                total_entradas=Sum('valor', filter=models.Q(valor__gt=0)),  # Débitos bancários (entradas)
-                total_saidas=Sum('valor', filter=models.Q(valor__lt=0)),   # Créditos bancários (saídas)
+                total_entradas=Sum('valor', filter=models.Q(valor__gt=0)),  # Entradas na conta
+                total_saidas=Sum('valor', filter=models.Q(valor__lt=0)),   # Saídas da conta
                 saldo_total=Sum('valor')
             )
             

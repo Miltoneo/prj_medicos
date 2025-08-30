@@ -16,9 +16,9 @@ class MovimentacaoContaCorrenteTable(tables.Table):
     
     def render_tipo_movimentacao(self, record):
         if record.valor > 0:
-            return mark_safe('<span class="badge bg-success">Débito Bancário (Entrada)</span>')
+            return mark_safe('<span class="badge bg-success">Entrada na conta</span>')
         else:
-            return mark_safe('<span class="badge bg-danger">Crédito Bancário (Saída)</span>')
+            return mark_safe('<span class="badge bg-danger">Saída da conta</span>')
     
     tipo_movimentacao = tables.Column(verbose_name='Tipo', orderable=False, empty_values=())
     data_movimentacao = tables.DateColumn(verbose_name='Data')
@@ -30,11 +30,25 @@ class MovimentacaoContaCorrenteTable(tables.Table):
             return mark_safe(f'<span style="color:red;">R$ {value:,.2f}</span>')
 
     valor = tables.Column(verbose_name='Valor (R$)', attrs={"td": {"class": "text-end"}}, orderable=True)
+    
+    def render_socio(self, record):
+        if record.socio:
+            return record.socio.pessoa.name if record.socio.pessoa else f"Sócio #{record.socio.pk}"
+        return mark_safe('<span class="text-muted">-</span>')
+    
+    socio = tables.Column(verbose_name='Médico/Sócio', orderable=False, empty_values=())
+    
+    def render_nota_fiscal(self, record):
+        if record.nota_fiscal:
+            return f"NF {record.nota_fiscal.numero} - {record.nota_fiscal.dtEmissao.strftime('%d/%m/%Y')}" if record.nota_fiscal.numero else f"NF #{record.nota_fiscal.pk}"
+        return mark_safe('<span class="text-muted">-</span>')
+    
+    nota_fiscal = tables.Column(verbose_name='Nota Fiscal', orderable=False, empty_values=())
     instrumento_bancario = tables.Column(verbose_name='Instrumento Bancário')
     created_at = tables.DateTimeColumn(verbose_name='Criado em')
 
     class Meta:
         model = MovimentacaoContaCorrente
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('tipo_movimentacao', 'descricao_movimentacao', 'data_movimentacao', 'valor', 'instrumento_bancario', 'created_at', 'acoes')
+        fields = ('tipo_movimentacao', 'descricao_movimentacao', 'data_movimentacao', 'valor', 'socio', 'nota_fiscal', 'instrumento_bancario', 'created_at', 'acoes')
         order_by = ('-data_movimentacao', '-created_at')
