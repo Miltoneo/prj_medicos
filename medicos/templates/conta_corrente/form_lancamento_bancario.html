@@ -1,32 +1,87 @@
 {% extends 'layouts/base_cenario_contacorrente.html' %}
 {% load crispy_forms_tags %}
 
+{% block extra_css %}
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #0f8a7f 0%, #32d56a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.form-label {
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border: 1px solid #bbdefb;
+    color: #1976d2;
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.text-muted {
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Configuração do campo de valor para aceitar apenas números
+    // Configuração do campo de valor para aceitar números positivos e negativos
     const valorField = document.getElementById('id_valor');
     if (valorField) {
+        valorField.classList.add('form-control');
+        valorField.setAttribute('placeholder', 'Ex: 1500.00 ou -800.50');
+        
         valorField.addEventListener('input', function(e) {
-            // Permite apenas números, ponto e vírgula
+            // Permite números, ponto, vírgula e sinal de menos
             let value = e.target.value.replace(/[^0-9.,-]/g, '');
             e.target.value = value;
         });
     }
     
-    // Informações sobre jargão bancário
-    const jargaoInfo = document.getElementById('jargao-info');
-    if (jargaoInfo) {
-        jargaoInfo.innerHTML = `
-            <div class="alert alert-info">
-                <h6><i class="fas fa-info-circle me-2"></i>Jargão Bancário</h6>
-                <ul class="mb-0">
-                    <li><strong>Débito Bancário:</strong> Entrada de dinheiro na conta (valor positivo)</li>
-                    <li><strong>Crédito Bancário:</strong> Saída de dinheiro da conta (valor negativo)</li>
-                    <li><strong>Instrumento Bancário:</strong> Meio utilizado (PIX, TED, DOC, Cheque, etc.)</li>
-                </ul>
-            </div>
-        `;
+    // Adiciona classes Bootstrap aos campos
+    const campos = ['id_data_movimentacao', 'id_descricao_movimentacao', 'id_socio', 'id_historico_complementar'];
+    campos.forEach(function(campoId) {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.classList.add('form-control');
+        }
+    });
+    
+    // Configuração do campo de histórico
+    const historicoField = document.getElementById('id_historico_complementar');
+    if (historicoField) {
+        historicoField.setAttribute('rows', '3');
+        historicoField.setAttribute('placeholder', 'Informações adicionais sobre este lançamento bancário...');
     }
 });
 </script>
@@ -36,95 +91,111 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold">
                         <i class="fas fa-university me-2"></i>
                         {% if form.instance.pk %}Editar Lançamento Bancário{% else %}Novo Lançamento Bancário{% endif %}
                     </h5>
                 </div>
-                <div class="card-body">
-                    <!-- Informações sobre jargão bancário -->
-                    <div id="jargao-info" class="mb-4"></div>
+                <div class="card-body p-4">
+                    <!-- Informação sobre terminologia bancária -->
+                    <div class="alert alert-info border-0 mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-3 fs-5"></i>
+                            <div>
+                                <h6 class="mb-1 fw-bold">Jargão Bancário</h6>
+                                <small class="mb-0">
+                                    <strong>Valor positivo:</strong> Entrada na conta (Débito Bancário) • 
+                                    <strong>Valor negativo:</strong> Saída da conta (Crédito Bancário)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
                     
                     <form method="post" novalidate>
                         {% csrf_token %}
                         
-                        <!-- Campo de Descrição da Movimentação -->
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                {{ form.descricao_movimentacao|as_crispy_field }}
+                        <!-- Linha 1: Data e Descrição -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="{{ form.data_movimentacao.id_for_label }}" class="form-label fw-bold text-dark">
+                                    <i class="fas fa-calendar me-2 text-primary"></i>Data do Lançamento*
+                                </label>
+                                {{ form.data_movimentacao }}
+                                {% if form.data_movimentacao.errors %}
+                                    <div class="text-danger small mt-1">{{ form.data_movimentacao.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <label for="{{ form.descricao_movimentacao.id_for_label }}" class="form-label fw-bold text-dark">
+                                    <i class="fas fa-tag me-2 text-success"></i>Descrição do Lançamento*
+                                </label>
+                                {{ form.descricao_movimentacao }}
+                                {% if form.descricao_movimentacao.errors %}
+                                    <div class="text-danger small mt-1">{{ form.descricao_movimentacao.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         
-                        <!-- Campos Data e Valor -->
-                        <div class="row mb-3">
+                        <!-- Linha 2: Médico/Sócio e Valor -->
+                        <div class="row mb-4">
                             <div class="col-md-6">
-                                {{ form.data_movimentacao|as_crispy_field }}
+                                <label for="{{ form.socio.id_for_label }}" class="form-label fw-bold text-dark">
+                                    <i class="fas fa-user-md me-2 text-info"></i>Médico/Sócio
+                                </label>
+                                {{ form.socio }}
+                                {% if form.socio.errors %}
+                                    <div class="text-danger small mt-1">{{ form.socio.errors.0 }}</div>
+                                {% endif %}
+                                <small class="text-muted">Campo opcional para vincular o lançamento a um médico/sócio</small>
                             </div>
                             <div class="col-md-6">
-                                {{ form.valor|as_crispy_field }}
+                                <label for="{{ form.valor.id_for_label }}" class="form-label fw-bold text-dark">
+                                    <i class="fas fa-dollar-sign me-2 text-warning"></i>Valor*
+                                </label>
+                                {{ form.valor }}
+                                {% if form.valor.errors %}
+                                    <div class="text-danger small mt-1">{{ form.valor.errors.0 }}</div>
+                                {% endif %}
                                 <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Use valor positivo para entradas (débito bancário) e negativo para saídas (crédito bancário)
+                                    <i class="fas fa-arrow-up text-success me-1"></i>Positivo = Entrada • 
+                                    <i class="fas fa-arrow-down text-danger me-1"></i>Negativo = Saída
                                 </small>
                             </div>
                         </div>
                         
-                        <!-- Instrumento Bancário e Documento -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.instrumento_bancario|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.numero_documento_bancario|as_crispy_field }}
-                            </div>
-                        </div>
-                        
-                        <!-- Relacionamentos Opcionais -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.socio|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.nota_fiscal|as_crispy_field }}
-                            </div>
-                        </div>
-                        
-                        <!-- Dados de Conciliação -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.conciliado|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.data_conciliacao|as_crispy_field }}
-                            </div>
-                        </div>
-                        
-                        <!-- Histórico Complementar -->
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                {{ form.historico_complementar|as_crispy_field }}
+                        <!-- Linha 3: Histórico Complementar -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.historico_complementar.id_for_label }}" class="form-label fw-bold text-dark">
+                                    <i class="fas fa-comment-alt me-2 text-secondary"></i>Histórico Complementar
+                                </label>
+                                {{ form.historico_complementar }}
+                                {% if form.historico_complementar.errors %}
+                                    <div class="text-danger small mt-1">{{ form.historico_complementar.errors.0 }}</div>
+                                {% endif %}
+                                <small class="text-muted">Informações adicionais sobre o lançamento bancário</small>
                             </div>
                         </div>
                         
                         <!-- Botões de Ação -->
                         <div class="row">
                             <div class="col-12">
-                                <div class="d-flex justify-content-between">
-                                    <a href="{% url 'medicos:contacorrente_lancamentos' empresa_id=empresa.id %}" class="btn btn-secondary">
-                                        <i class="fas fa-arrow-left me-1"></i>Voltar
+                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                    <a href="{% url 'medicos:contacorrente_lancamentos' empresa_id=empresa.id %}" class="btn btn-outline-secondary px-4">
+                                        <i class="fas fa-arrow-left me-2"></i>Voltar
                                     </a>
-                                    <div>
+                                    <div class="d-flex gap-2">
                                         {% if form.instance.pk %}
                                             <a href="{% url 'medicos:contacorrente_delete' empresa_id=empresa.id pk=form.instance.pk %}" 
-                                               class="btn btn-danger me-2"
+                                               class="btn btn-outline-danger px-4"
                                                onclick="return confirm('Tem certeza que deseja excluir este lançamento?')">
-                                                <i class="fas fa-trash me-1"></i>Excluir
+                                                <i class="fas fa-trash me-2"></i>Excluir
                                             </a>
                                         {% endif %}
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-save me-1"></i>
+                                        <button type="submit" class="btn btn-success px-4 fw-bold">
+                                            <i class="fas fa-save me-2"></i>
                                             {% if form.instance.pk %}Atualizar{% else %}Criar{% endif %} Lançamento
                                         </button>
                                     </div>
