@@ -89,8 +89,6 @@ class MeioPagamento(models.Model):
         return f"{self.nome} ({self.codigo})"
     
 
-
-
 """
 Modelos relacionados ao sistema financeiro manual
 
@@ -105,7 +103,6 @@ TIPO_MOVIMENTACAO_CONTA_DEBITO = 2     # retiradas, transferencia
 
 
 class DescricaoMovimentacaoFinanceira(models.Model):
-    # Removido método pode_ser_usada_para pois tipo_movimentacao foi excluído
     """
     Descrições de movimentação financeira cadastradas pelos usuários
     
@@ -122,8 +119,6 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         verbose_name_plural = "Descrições de Movimentação"
         indexes = []
 
-    # Removido campo conta: descrição agora é específica para empresa
-
     empresa = models.ForeignKey(
         Empresa,
         on_delete=models.CASCADE,
@@ -139,9 +134,6 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         help_text="Descrição completa sobre quando usar esta movimentação"
     )
     
-    # Removido bloco TIPOS_MOVIMENTACAO pois tipo_movimentacao foi excluído
-    
-    
     # Configurações contábeis/fiscais
     codigo_contabil = models.CharField(
         max_length=20,
@@ -149,8 +141,6 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         verbose_name="Código Contábil",
         help_text="Código contábil para classificação (plano de contas)"
     )
-    
-    
     
     # Auditoria
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
@@ -170,8 +160,6 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         help_text="Observações sobre o uso desta descrição"
     )
 
-    # Removido clean pois campos de retenção foram excluídos
-
     def __str__(self):
         return self.descricao or f"DescriçãoMovimentacaoFinanceira #{self.pk}"
     
@@ -180,10 +168,10 @@ class DescricaoMovimentacaoFinanceira(models.Model):
         """Verifica se a descrição está vigente na data atual"""
         hoje = timezone.now().date()
         
-        if self.data_inicio_vigencia and hoje < self.data_inicio_vigencia:
+        if hasattr(self, 'data_inicio_vigencia') and self.data_inicio_vigencia and hoje < self.data_inicio_vigencia:
             return False
         
-        if self.data_fim_vigencia and hoje > self.data_fim_vigencia:
+        if hasattr(self, 'data_fim_vigencia') and self.data_fim_vigencia and hoje > self.data_fim_vigencia:
             return False
         
         return True
@@ -191,20 +179,13 @@ class DescricaoMovimentacaoFinanceira(models.Model):
     @property
     def disponivel_para_uso(self):
         """Verifica se a descrição está disponível para uso"""
-        return self.ativa and self.esta_vigente
-    
-    # Removido calcular_retencao_ir pois campos de retenção foram excluídos
+        ativa = getattr(self, 'ativa', True)
+        return ativa and self.esta_vigente
     
     @classmethod
     def obter_ativas(cls, empresa):
         """Obtém todas as descrições para uma empresa"""
         return cls.objects.filter(empresa=empresa).order_by('descricao')
-    
-    # Removido obter_creditos pois tipo_movimentacao foi excluído
-    
-    # Removido obter_debitos pois tipo_movimentacao foi excluído
-    
-    # Removido obter_frequentes pois uso_frequente foi excluído
     
     @classmethod
     def criar_descricoes_padrao(cls, empresa, usuario=None):
@@ -231,7 +212,7 @@ class DescricaoMovimentacaoFinanceira(models.Model):
             ).exists():
                 descricao = cls.objects.create(
                     empresa=empresa,
-                    criada_por=usuario,
+                    created_by=usuario,
                     observacoes='Descrição criada automaticamente',
                     descricao=desc_data['descricao']
                 )
@@ -328,7 +309,7 @@ class AplicacaoFinanceira(models.Model):
 class Financeiro(models.Model):
     """
     Modelo principal para lançamentos financeiros manuais
-    sdf
+    
     Este modelo substitui e simplifica o antigo sistema de saldos mensais,
     permitindo lançamentos individuais que são consolidados dinamicamente
     conforme necessário para relatórios.
@@ -345,7 +326,6 @@ class Financeiro(models.Model):
         ordering = ['-data_movimentacao', '-created_at']
 
     # Relacionamentos principais
-    # campo conta removido
     nota_fiscal = models.ForeignKey(
         'medicos.NotaFiscal',
         on_delete=models.SET_NULL,
@@ -376,16 +356,12 @@ class Financeiro(models.Model):
         help_text="Data em que a movimentação foi realizada"
     )
     
-    # Campo 'tipo' removido: agora o lançamento não diferencia crédito/débito por campo específico
-    
     valor = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         verbose_name="Valor",
         help_text="Valor da movimentação em reais. Use valor positivo para crédito (entrada) e negativo para débito (saída)."
     )
-    
-
     
     # Auditoria
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
@@ -402,7 +378,7 @@ class Financeiro(models.Model):
     def clean(self):
         """Validações personalizadas"""
         super().clean()
-        # Permitir valor positivo ou negativo. Valor zero pode ser tratado conforme regra de negócio.
+        
         # Validação: data de movimentação não pode ser futura
         hoje = timezone.now().date()
         if self.data_movimentacao:
@@ -416,8 +392,6 @@ class Financeiro(models.Model):
 
     def __str__(self):
         return f"{self.socio.pessoa.name} - {self.data_movimentacao.strftime('%d/%m/%Y')} - R$ {self.valor:,.2f}"
-    
-    # Removido tipo_display_sinal pois campo tipo foi excluído
     
     @property
     def mes_referencia(self):
@@ -514,6 +488,3 @@ class Financeiro(models.Model):
                 'quantidade': categoria['quantidade']
             }
         return consolidado
-
-
-

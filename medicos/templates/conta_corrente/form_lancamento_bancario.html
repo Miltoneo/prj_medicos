@@ -1,0 +1,140 @@
+{% extends 'layouts/base_cenario_contacorrente.html' %}
+{% load crispy_forms_tags %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuração do campo de valor para aceitar apenas números
+    const valorField = document.getElementById('id_valor');
+    if (valorField) {
+        valorField.addEventListener('input', function(e) {
+            // Permite apenas números, ponto e vírgula
+            let value = e.target.value.replace(/[^0-9.,-]/g, '');
+            e.target.value = value;
+        });
+    }
+    
+    // Informações sobre jargão bancário
+    const jargaoInfo = document.getElementById('jargao-info');
+    if (jargaoInfo) {
+        jargaoInfo.innerHTML = `
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>Jargão Bancário</h6>
+                <ul class="mb-0">
+                    <li><strong>Débito Bancário:</strong> Entrada de dinheiro na conta (valor positivo)</li>
+                    <li><strong>Crédito Bancário:</strong> Saída de dinheiro da conta (valor negativo)</li>
+                    <li><strong>Instrumento Bancário:</strong> Meio utilizado (PIX, TED, DOC, Cheque, etc.)</li>
+                </ul>
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-university me-2"></i>
+                        {% if form.instance.pk %}Editar Lançamento Bancário{% else %}Novo Lançamento Bancário{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Informações sobre jargão bancário -->
+                    <div id="jargao-info" class="mb-4"></div>
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Campo de Descrição da Movimentação -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                {{ form.descricao_movimentacao|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Campos Data e Valor -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.data_movimentacao|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.valor|as_crispy_field }}
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Use valor positivo para entradas (débito bancário) e negativo para saídas (crédito bancário)
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- Instrumento Bancário e Documento -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.instrumento_bancario|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.numero_documento_bancario|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Relacionamentos Opcionais -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.socio|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.nota_fiscal|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Dados de Conciliação -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.conciliado|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.data_conciliacao|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Histórico Complementar -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                {{ form.historico_complementar|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Botões de Ação -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'medicos:contacorrente_lancamentos' empresa_id=empresa.id %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>Voltar
+                                    </a>
+                                    <div>
+                                        {% if form.instance.pk %}
+                                            <a href="{% url 'medicos:contacorrente_delete' empresa_id=empresa.id pk=form.instance.pk %}" 
+                                               class="btn btn-danger me-2"
+                                               onclick="return confirm('Tem certeza que deseja excluir este lançamento?')">
+                                                <i class="fas fa-trash me-1"></i>Excluir
+                                            </a>
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-save me-1"></i>
+                                            {% if form.instance.pk %}Atualizar{% else %}Criar{% endif %} Lançamento
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

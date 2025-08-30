@@ -1,0 +1,217 @@
+{% extends 'layouts/base_cenario_contacorrente.html' %}
+{% load render_table from django_tables2 %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit do formulário de filtro quando campos forem alterados
+  const formFields = document.querySelectorAll('#id_data_movimentacao_mes, #id_socio, #id_descricao_movimentacao, #id_instrumento_bancario, #id_conciliado');
+  formFields.forEach(function(field) {
+    if (field) {
+      field.addEventListener('change', function() {
+        // Submete o formulário automaticamente quando um campo é alterado
+        this.closest('form').submit();
+      });
+    }
+  });
+  
+  // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
+  const dataField = document.getElementById('id_data_movimentacao_mes');
+  if (dataField) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilterParams = urlParams.has('data_movimentacao_mes') || urlParams.has('socio') || 
+                           urlParams.has('descricao_movimentacao') || urlParams.has('instrumento_bancario') || 
+                           urlParams.has('conciliado');
+    
+    if (!hasFilterParams && !dataField.value) {
+      // Define o mês atual se não há valor
+      const today = new Date();
+      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+      dataField.value = currentMonth;
+      
+      // Submete automaticamente para aplicar o filtro do mês atual
+      setTimeout(() => {
+        dataField.closest('form').submit();
+      }, 100);
+    }
+  }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4 w-100" style="max-width:none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-university me-2"></i>
+            <span class="fw-bold">Lançamentos Bancários</span>
+          </div>
+          <a href="{% url 'medicos:contacorrente_create' empresa_id=empresa.id %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm">
+            <i class="fas fa-plus-circle me-1"></i> Novo Lançamento
+          </a>
+        </div>
+        <div class="card-body">
+          <form method="get" class="mb-3">
+            {% if filter.form.non_field_errors %}
+              <div class="alert alert-danger mb-2">
+                {{ filter.form.non_field_errors }}
+              </div>
+            {% endif %}
+            <div class="row g-2 align-items-end">
+              <!-- Campo de data em primeira posição -->
+              {% if filter.form.data_movimentacao_mes %}
+                <div class="col-auto">
+                  <label for="id_data_movimentacao_mes" class="form-label mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>{{ filter.form.data_movimentacao_mes.label }}
+                  </label>
+                  {{ filter.form.data_movimentacao_mes }}
+                </div>
+              {% endif %}
+              
+              <!-- Demais campos -->
+              {% for field in filter.form.visible_fields %}
+                {% if field.name != 'data_movimentacao_mes' %}
+                  <div class="col-auto">
+                    <label for="id_{{ field.name }}" class="form-label mb-0">
+                      {% if field.name == 'socio' %}
+                        <i class="fas fa-user me-1"></i>
+                      {% elif field.name == 'descricao_movimentacao' %}
+                        <i class="fas fa-file-alt me-1"></i>
+                      {% elif field.name == 'instrumento_bancario' %}
+                        <i class="fas fa-credit-card me-1"></i>
+                      {% elif field.name == 'conciliado' %}
+                        <i class="fas fa-check-square me-1"></i>
+                      {% endif %}
+                      {{ field.label }}
+                    </label>
+                    {{ field }}
+                  </div>
+                {% endif %}
+              {% endfor %}
+              
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fas fa-search me-1"></i>Filtrar
+                </button>
+              </div>
+              <div class="col-auto">
+                <a href="{% url 'medicos:contacorrente_lancamentos' empresa_id=empresa.id %}" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>Limpar
+                </a>
+              </div>
+            </div>
+            {% for hidden_field in filter.form.hidden_fields %}
+              {{ hidden_field }}
+            {% endfor %}
+          </form>
+          
+          <!-- Seção de Totalização Bancária -->
+          <div class="row mt-4 mb-3">
+            <div class="col-12">
+              <div class="card shadow-sm border-info">
+                <div class="card-header bg-info text-white">
+                  <h6 class="mb-0 fw-bold">
+                    <i class="fas fa-calculator me-2"></i>Posição Bancária
+                  </h6>
+                </div>
+                <div class="card-body bg-light">
+                  <div class="row text-center">
+                    <div class="col-md-2 col-6 mb-3">
+                      <div class="p-3 bg-white rounded shadow-sm">
+                        <div class="text-muted small mb-1">
+                          <i class="fas fa-list-ol me-1"></i>Total Lançamentos
+                        </div>
+                        <div class="h5 fw-bold text-primary mb-0">{{ total_movimentacoes }}</div>
+                      </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                      <div class="p-3 bg-white rounded shadow-sm">
+                        <div class="text-muted small mb-1">
+                          <i class="fas fa-arrow-up me-1 text-success"></i>Débitos Bancários
+                        </div>
+                        <div class="h5 fw-bold text-success mb-0">R$ {{ total_entradas|floatformat:2 }}</div>
+                        <small class="text-muted">(Entradas na conta)</small>
+                      </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                      <div class="p-3 bg-white rounded shadow-sm">
+                        <div class="text-muted small mb-1">
+                          <i class="fas fa-arrow-down me-1 text-danger"></i>Créditos Bancários
+                        </div>
+                        <div class="h5 fw-bold text-danger mb-0">R$ {{ total_saidas|floatformat:2 }}</div>
+                        <small class="text-muted">(Saídas da conta)</small>
+                      </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                      <div class="p-3 bg-white rounded shadow-sm border-info">
+                        <div class="text-muted small mb-1">
+                          <i class="fas fa-balance-scale me-1"></i>Saldo Líquido
+                        </div>
+                        <div class="h5 fw-bold {% if saldo_total >= 0 %}text-success{% else %}text-danger{% endif %} mb-0">
+                          R$ {{ saldo_total|floatformat:2 }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% if filter.form.data_movimentacao_mes.value or filter.form.tipo_valor.value or filter.form.descricao_movimentacao.value %}
+                    <div class="row mt-3">
+                      <div class="col-12">
+                        <small class="text-muted">
+                          <i class="fas fa-info-circle me-1"></i>
+                          <strong>Nota:</strong> Os totais consideram apenas os lançamentos que atendem aos filtros aplicados.
+                          <strong>Jargão Bancário:</strong> Débito = entrada na conta (+), Crédito = saída da conta (-).
+                        </small>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-list me-1"></i>Lançamentos bancários</h5>
+          <div class="table-responsive rounded shadow-sm p-3 bg-light">
+            <div class="bg-white rounded-2 p-2">
+              {% render_table table %}
+            </div>
+          </div>
+          {% if table.page and table.paginator %}
+            <nav aria-label="Paginação" class="mt-3">
+              <ul class="pagination justify-content-center">
+                {% if table.page.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% querystring page=table.page.previous_page_number %}" aria-label="Anterior">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+                {% for i in table.paginator.page_range %}
+                  {% if i == table.page.number %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                  {% else %}
+                    <li class="page-item"><a class="page-link" href="?{% querystring page=i %}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% if table.page.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% querystring page=table.page.next_page_number %}" aria-label="Próxima">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+              </ul>
+            </nav>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

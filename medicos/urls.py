@@ -156,6 +156,11 @@ path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView
     # Cenário Despesas
     path('despesas/', include('medicos.urls_despesas')),
 
+    # =====================
+    # Conta Corrente Views
+    # =====================
+    path('contacorrente/', include('medicos.urls_contacorrente')),
+
 # Grupos de Despesa
 path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa_cadastro.lista_grupos_despesa, name='lista_grupos_despesa'),
 path('empresas/<int:empresa_id>/grupos-despesa/<int:grupo_id>/editar/', views_despesa_cadastro.grupo_despesa_edit, name='grupo_despesa_edit'),

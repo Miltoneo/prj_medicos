@@ -3,6 +3,7 @@ from .base import *
 from .fiscal import *
 from .despesas import *
 from .financeiro import *
+from .conta_corrente import *
 from .auditoria import *
 
 from .relatorios import *
@@ -21,6 +22,9 @@ __all__ = [
     
     # Modelos Financeiros
     'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',
+    
+    # Modelos de Conta Corrente
+    'ContaCorrente', 'MovimentacaoContaCorrente',
 
     # Modelos de Apuração
     'ApuracaoCSLL', 'ApuracaoIRPJMensal',
