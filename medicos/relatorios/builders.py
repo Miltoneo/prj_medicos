@@ -1,6 +1,6 @@
 # Imports necessários
 from medicos.models.base import Empresa, Socio, REGIME_TRIBUTACAO_COMPETENCIA, REGIME_TRIBUTACAO_CAIXA
-from medicos.models.despesas import DespesaSocio, DespesaRateada
+from medicos.models.despesas import DespesaSocio, DespesaRateada, ItemDespesaRateioMensal
 from medicos.models.fiscal import NotaFiscal, Aliquotas
 from medicos.models.financeiro import Financeiro
 from medicos.models.relatorios import RelatorioMensalSocio
@@ -64,14 +64,35 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     ).select_related('item_despesa__grupo_despesa')
 
     lista_despesas_com_rateio = []
+    # DEBUG: quantas despesas com rateio foram encontradas e qual socio foi selecionado
+    try:
+        print(f"[DEBUG] despesas_com_rateio count = {despesas_com_rateio.count()}")
+    except Exception:
+        print("[DEBUG] despesas_com_rateio count unavailable")
+    try:
+        print(f"[DEBUG] socio_selecionado id = {getattr(socio_selecionado, 'id', None)}")
+    except Exception:
+        print("[DEBUG] socio_selecionado unavailable")
     for despesa in despesas_com_rateio:
-        rateio = None
-        for config in despesa.obter_configuracao_rateio():
-            if config.socio_id == socio_selecionado.id:
-                rateio = config
-                break
-        percentual = Decimal(rateio.percentual_rateio) if rateio else Decimal('0')
-        valor_socio = despesa.valor * (percentual / Decimal('100')) if rateio else Decimal('0')
+        # Garantir que exista um rateio para este item/sócio/mês (pode criar ou copiar do mês anterior)
+        try:
+            rateio = ItemDespesaRateioMensal.obter_rateio_para_despesa(
+                despesa.item_despesa,
+                socio_selecionado,
+                despesa.data
+            )
+        except Exception:
+            # Em caso de erro inesperado, pular esta despesa e logar para análise
+            print(f"[ERROR] Falha ao obter/criar rateio para despesa {despesa.id} e socio {socio_selecionado.id}")
+            continue
+
+        percentual = Decimal(rateio.percentual_rateio or 0)
+        valor_socio = despesa.valor * (percentual / Decimal('100')) if percentual > 0 else Decimal('0')
+
+        if percentual == 0:
+            # Log informativo: rateio criado/zerado para este sócio
+            print(f"[DEBUG] Percentual de rateio é 0 para socio_id={socio_selecionado.id} na despesa {despesa.id}")
+
         lista_despesas_com_rateio.append({
             'id': despesa.id,
             'data': despesa.data.strftime('%d/%m/%Y'),
@@ -739,4 +760,4 @@ def montar_relatorio_executivo_anual(empresa_id, ano=None):
         'notas_emitidas_mes': {},
         'total_emitidas': 0,
         'total_recebidas': 0,
-    } 
+    }
