@@ -204,6 +204,30 @@ def relatorio_mensal_socio(request, empresa_id):
     
     # Processar movimentações financeiras
     lista_movimentacoes = _processar_movimentacoes_financeiras(relatorio_obj)
+    # Obter movimentações da conta corrente (lançamentos bancários) diretamente do modelo
+    try:
+        from medicos.models.conta_corrente import MovimentacaoContaCorrente
+        ano_str, mes_str = mes_ano.split('-') if mes_ano and '-' in mes_ano else (None, None)
+        if ano_str and mes_str:
+            ano = int(ano_str)
+            mes = int(mes_str)
+            # Note: MovimentacaoContaCorrente model does not have an empresa FK.
+            # Filter by socio and data only. If multi-tenant filtering is required,
+            # it must be applied via a relationship (ex: conta_corrente.empresa) or
+            # by migrating the model to include empresa.
+            movimentacoes_conta_corrente_qs = MovimentacaoContaCorrente.objects.filter(
+                socio_id=socio_id,
+                data_movimentacao__year=ano,
+                data_movimentacao__month=mes,
+            ).select_related('descricao_movimentacao', 'socio', 'instrumento_bancario', 'nota_fiscal').order_by('data_movimentacao', 'id')
+            movimentacoes_conta_corrente = list(movimentacoes_conta_corrente_qs)
+            print(f"DEBUG View: MovimentacaoContaCorrente fetched {len(movimentacoes_conta_corrente)} records for socio_id={socio_id} mes_ano={mes_ano}")
+        else:
+            movimentacoes_conta_corrente = []
+    except Exception as exc:
+        # Don't silently swallow exceptions — log them to stdout for debugging during development
+        print(f"ERROR View: erro ao consultar MovimentacaoContaCorrente: {exc}")
+        movimentacoes_conta_corrente = []
     
     # Montar dicionário do relatório com todos os dados necessários
     relatorio = {
@@ -219,7 +243,8 @@ def relatorio_mensal_socio(request, empresa_id):
         'despesa_sem_rateio': getattr(relatorio_obj, 'despesa_sem_rateio', 0),
         'despesa_geral': getattr(relatorio_obj, 'despesa_geral', 0),
         'despesas_total': getattr(relatorio_obj, 'despesas_total', 0),
-        'movimentacoes_financeiras': lista_movimentacoes,
+    'movimentacoes_financeiras': lista_movimentacoes,
+    'movimentacoes_conta_corrente': movimentacoes_conta_corrente,
         'saldo_movimentacao_financeira': getattr(relatorio_obj, 'saldo_movimentacao_financeira', 0),
         'notas_fiscais': getattr(relatorio_obj, 'lista_notas_fiscais', []),
         # Totais da empresa

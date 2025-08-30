@@ -174,6 +174,61 @@ document.addEventListener('DOMContentLoaded', function() {
                   </div>
                 </div>
               </div>
+                <!-- Tabela de Movimentação Conta Corrente -->
+                <div class="row g-4 mb-4">
+                  <div class="col-12">
+                    <div class="card shadow-sm border-primary">
+                      <div class="card-header bg-primary bg-opacity-10 border-primary fw-bold d-flex align-items-center">
+                        <i class="fas fa-university text-primary me-2"></i>
+                        <span>Movimentação Conta Corrente</span>
+                      </div>
+                      <div class="card-body p-0">
+                        <div class="table-responsive">
+                          <table class="table table-sm table-bordered table-striped table-hover mb-0 table-movimentacoes-conta-corrente" style="width:auto;">
+                            <tr>
+                              <th>Id</th>
+                              <th>Data</th>
+                              <th>Descrição</th>
+                              <th>Sócio</th>
+                              <th>Valor</th>
+                              <th>Histórico</th>
+                              <th>Instrumento Bancário</th>
+                              <th>Nota Fiscal</th>
+                            </tr>
+                            {% for mov in relatorio.movimentacoes_conta_corrente %}
+                            <tr>
+                              <td>{{ mov.id }}</td>
+                              <td>{{ mov.data_movimentacao|date:"d/m/Y" }}</td>
+                              <td>{{ mov.descricao_movimentacao }}</td>
+                              <td>{{ mov.socio }}</td>
+                              <td>
+                                {% if mov.valor > 0 %}
+                                  <span class="text-success fw-bold">{{ mov.valor|floatformat:2 }}</span>
+                                {% else %}
+                                  <span class="text-danger fw-bold">{{ mov.valor|floatformat:2 }}</span>
+                                {% endif %}
+                              </td>
+                              <td>{{ mov.historico_complementar }}</td>
+                              <td>{{ mov.instrumento_bancario }}</td>
+                              <td>
+                                {% if mov.nota_fiscal %}
+                                  NF {{ mov.nota_fiscal.numero }}
+                                {% else %}
+                                  —
+                                {% endif %}
+                              </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                              <td colspan="8" class="text-center text-muted">Nenhuma movimentação encontrada.</td>
+                            </tr>
+                            {% endfor %}
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
             </div>
           </div>
           <div class="row g-4 mb-4">

@@ -24,7 +24,16 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         empresa_id = self.request.session.get('empresa_id')
         if not empresa_id:
             return NotaFiscal.objects.none()
-        qs = NotaFiscal.objects.filter(empresa_destinataria__id=int(empresa_id)).order_by('-dtEmissao')
+            
+        # Carregar relacionamentos necessários para as propriedades de rateio
+        qs = NotaFiscal.objects.filter(
+            empresa_destinataria__id=int(empresa_id)
+        ).select_related(
+            'empresa_destinataria', 
+            'meio_pagamento'
+        ).prefetch_related(
+            'rateios_medicos'  # Essencial para tem_rateio e rateio_completo
+        ).order_by('-dtEmissao')
         
         # Filtro por mês/ano de emissão - só aplica se explicitamente informado
         mes_ano_emissao = self.request.GET.get('mes_ano_emissao')
@@ -148,9 +157,58 @@ class NotaFiscalRecebimentoUpdateView(UpdateView):
         
         return url_base
 
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Valida se a nota fiscal pode ter o recebimento editado antes de qualquer processamento.
+        REGRA: Apenas notas com rateio COMPLETO podem ser editadas.
+        """
+        # Primeiro obtém o objeto usando o pk da URL
+        try:
+            pk = self.kwargs.get('pk')
+            nota_fiscal = NotaFiscal.objects.get(pk=pk)
+            
+            # NOVA REGRA: Apenas notas com rateio completo podem ser editadas
+            if not nota_fiscal.tem_rateio:
+                from django.core.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    f"Esta nota fiscal não pode ter o recebimento editado porque não possui rateio configurado. "
+                    f"Configure o rateio antes de editar o recebimento."
+                )
+            elif not nota_fiscal.rateio_completo:
+                from django.core.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    f"Esta nota fiscal não pode ter o recebimento editado porque o rateio está incompleto. "
+                    f"Atual: {nota_fiscal.percentual_total_rateado:.1f}% de 100%. "
+                    f"Complete o rateio antes de editar o recebimento."
+                )
+                
+        except NotaFiscal.DoesNotExist:
+            from django.http import Http404
+            raise Http404("Nota fiscal não encontrada")
+        
+        return super().dispatch(request, *args, **kwargs)
+
     def get_object(self):
-        """Garantir que temos acesso ao objeto antes de instanciar o formulário"""
+        """
+        Garantir que temos acesso ao objeto e validar se pode ser editado.
+        REGRA: Apenas notas com rateio COMPLETO podem ser editadas.
+        """
         obj = super().get_object()
+        
+        # NOVA REGRA: Apenas notas com rateio completo podem ser editadas
+        if not obj.tem_rateio:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied(
+                f"Esta nota fiscal não pode ter o recebimento editado porque não possui rateio configurado."
+            )
+        elif not obj.rateio_completo:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied(
+                f"Esta nota fiscal não pode ter o recebimento editado porque o rateio está incompleto. "
+                f"Atual: {obj.percentual_total_rateado:.1f}% de 100%. "
+                f"Complete o rateio antes de editar o recebimento."
+            )
+        
         return obj
 
     def get_form_kwargs(self):
