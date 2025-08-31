@@ -221,7 +221,6 @@ def relatorio_mensal_socio(request, empresa_id):
                 data_movimentacao__month=mes,
             ).select_related('descricao_movimentacao', 'socio', 'instrumento_bancario', 'nota_fiscal').order_by('data_movimentacao', 'id')
             movimentacoes_conta_corrente = list(movimentacoes_conta_corrente_qs)
-            print(f"DEBUG View: MovimentacaoContaCorrente fetched {len(movimentacoes_conta_corrente)} records for socio_id={socio_id} mes_ano={mes_ano}")
         else:
             movimentacoes_conta_corrente = []
     except Exception as exc:
@@ -306,6 +305,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'faturamento_plantao': getattr(relatorio_obj, 'faturamento_plantao', 0),
         'faturamento_outros': getattr(relatorio_obj, 'faturamento_outros', 0),
     }
+    # debug prints removed
     
     # Montar contexto final
     context = _contexto_base(request, empresa=empresa, menu_nome='Demonstrativo', cenario_nome='Relatório Mensal Sócio')

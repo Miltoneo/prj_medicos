@@ -48,12 +48,20 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
 
     lista_despesas_sem_rateio = []
     for despesa in despesas_sem_rateio:
+        # Incluir nome do sócio e campos adicionais para exibição no template
+        socio_nome = getattr(getattr(despesa, 'socio', None), 'pessoa', None)
+        socio_display = socio_nome.name if socio_nome else str(getattr(despesa, 'socio', ''))
         lista_despesas_sem_rateio.append({
             'id': despesa.id,
             'data': despesa.data.strftime('%d/%m/%Y'),
+            'socio': socio_display,
             'grupo': despesa.item_despesa.grupo_despesa.descricao,
             'descricao': despesa.item_despesa.descricao,
+            # manter chave 'valor' para compatibilidade com cálculo existente
             'valor': float(despesa.valor),
+            'valor_total': float(despesa.valor),
+            'taxa_rateio': '-',  # despesas sem rateio não têm taxa aplicada
+            'valor_apropriado': float(despesa.valor),
         })
 
     # Despesas com rateio
@@ -64,15 +72,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     ).select_related('item_despesa__grupo_despesa')
 
     lista_despesas_com_rateio = []
-    # DEBUG: quantas despesas com rateio foram encontradas e qual socio foi selecionado
-    try:
-        print(f"[DEBUG] despesas_com_rateio count = {despesas_com_rateio.count()}")
-    except Exception:
-        print("[DEBUG] despesas_com_rateio count unavailable")
-    try:
-        print(f"[DEBUG] socio_selecionado id = {getattr(socio_selecionado, 'id', None)}")
-    except Exception:
-        print("[DEBUG] socio_selecionado unavailable")
+    # (debug prints removed)
     for despesa in despesas_com_rateio:
         # Garantir que exista um rateio para este item/sócio/mês (pode criar ou copiar do mês anterior)
         try:
@@ -90,8 +90,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         valor_socio = despesa.valor * (percentual / Decimal('100')) if percentual > 0 else Decimal('0')
 
         if percentual == 0:
-            # Log informativo: rateio criado/zerado para este sócio
-            print(f"[DEBUG] Percentual de rateio é 0 para socio_id={socio_selecionado.id} na despesa {despesa.id}")
+            # rateio zerado para este sócio — sem log em produção
+            pass
 
         lista_despesas_com_rateio.append({
             'id': despesa.id,
