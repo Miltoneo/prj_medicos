@@ -1,0 +1,71 @@
+{
+  "count": 6,
+  "items": [
+    {
+      "id": 31,
+      "data": "2025-08-01",
+      "socio_id": 1,
+      "socio": "Maria Bonita",
+      "item_id": 14,
+      "descricao": "Pro-Labore",
+      "grupo_id": 10,
+      "grupo": "GRUPO DESPESA SOCIO",
+      "valor": 888.0
+    },
+    {
+      "id": 32,
+      "data": "2025-08-01",
+      "socio_id": 2,
+      "socio": "Pedro Cabral",
+      "item_id": 14,
+      "descricao": "Pro-Labore",
+      "grupo_id": 10,
+      "grupo": "GRUPO DESPESA SOCIO",
+      "valor": 8989.0
+    },
+    {
+      "id": 17,
+      "data": "2025-08-06",
+      "socio_id": 2,
+      "socio": "Pedro Cabral",
+      "item_id": 14,
+      "descricao": "Pro-Labore",
+      "grupo_id": 10,
+      "grupo": "GRUPO DESPESA SOCIO",
+      "valor": 89.0
+    },
+    {
+      "id": 46,
+      "data": "2025-08-13",
+      "socio_id": 5,
+      "socio": "ELIANY GONCALVES DA SILVA FERREIRA",
+      "item_id": 16,
+      "descricao": "Despesa Diretor Clinico",
+      "grupo_id": 10,
+      "grupo": "GRUPO DESPESA SOCIO",
+      "valor": 1.0
+    },
+    {
+      "id": 59,
+      "data": "2025-08-30",
+      "socio_id": 10,
+      "socio": "Antonio Conselheiro",
+      "item_id": 41,
+      "descricao": "Plano de Saude Cooparticipação",
+      "grupo_id": 10,
+      "grupo": "GRUPO DESPESA SOCIO",
+      "valor": 333.0
+    },
+    {
+      "id": 58,
+      "data": "2025-08-31",
+      "socio_id": 10,
+      "socio": "Antonio Conselheiro",
+      "item_id": 16,
+      "descricao": "Despesa Diretor Clinico",
+      "grupo_id": 10,
+      "grupo": "GRUPO DESPESA SOCIO",
+      "valor": 123.0
+    }
+  ]
+}

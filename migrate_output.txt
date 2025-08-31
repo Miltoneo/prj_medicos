@@ -1,0 +1,5 @@
+=== SIGNAL DESPESA SÓCIO DISPARADO ===
+Despesa Sócio: ID 58, Sócio: Antonio Conselheiro - Clinica de Todos
+Data: 2025-08-31, Valor: R$ 123.00
+Item: GD01 Despesa Diretor Clinico
+Condições para lançamento: data=True, valor=True, socio=True, item=True

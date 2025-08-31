@@ -229,15 +229,19 @@ def relatorio_mensal_socio(request, empresa_id):
         movimentacoes_conta_corrente = []
     
     # Montar dicionário do relatório com todos os dados necessários
+    # Preferir listas calculadas pelo builder (relatorio_dict) quando presentes
+    despesas_sem_rateio_lista = relatorio_dict.get('lista_despesas_sem_rateio') if isinstance(relatorio_dict, dict) else None
+    despesas_com_rateio_lista = relatorio_dict.get('lista_despesas_com_rateio') if isinstance(relatorio_dict, dict) else None
+
     relatorio = {
         'socios': list(socios),
         'socio_id': socio_id,
         'socio_nome': socio_selecionado.pessoa.name if socio_selecionado else '',
         'competencia': mes_ano,
         'data_geracao': timezone.now().strftime('%d/%m/%Y %H:%M'),
-        # Dados financeiros básicos
-        'despesas_com_rateio': getattr(relatorio_obj, 'lista_despesas_com_rateio', []),
-        'despesas_sem_rateio': getattr(relatorio_obj, 'lista_despesas_sem_rateio', []),
+        # Dados financeiros básicos: preferir valores diretos do builder quando disponíveis
+        'despesas_com_rateio': despesas_com_rateio_lista if despesas_com_rateio_lista is not None else getattr(relatorio_obj, 'lista_despesas_com_rateio', []),
+        'despesas_sem_rateio': despesas_sem_rateio_lista if despesas_sem_rateio_lista is not None else getattr(relatorio_obj, 'lista_despesas_sem_rateio', []),
         'despesa_com_rateio': getattr(relatorio_obj, 'despesa_com_rateio', 0),
         'despesa_sem_rateio': getattr(relatorio_obj, 'despesa_sem_rateio', 0),
         'despesa_geral': getattr(relatorio_obj, 'despesa_geral', 0),
@@ -313,12 +317,16 @@ def relatorio_mensal_socio(request, empresa_id):
     print(f"DEBUG View: total_despesas_outros do relatorio_dict = {relatorio_dict.get('total_despesas_outros', 'NÃO ENCONTRADO')}")
     context.update({
         'relatorio': relatorio,
-        'titulo_pagina': 'Relatório Mensal do Sócio',
+        # Regra do projeto: título deve ser passado via 'titulo_pagina'
+        'titulo_pagina': f"Relatório Mensal do Sócio - {socio_selecionado.pessoa.name if socio_selecionado else ''}",
         'valor_adicional_rateio': relatorio_dict.get('valor_adicional_rateio', 0),
         'participacao_socio_percentual': relatorio_dict.get('participacao_socio_percentual', 0),
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
         'total_receitas': relatorio_dict.get('total_receitas', 0),
         'total_despesas_outros': relatorio_dict.get('total_despesas_outros', 0),
+        # Expor chaves de compatibilidade diretamente no contexto para templates que esperam nomes antigos
+        'despesas_sem_rateio': relatorio.get('despesas_sem_rateio', []),
+        'despesas_com_rateio': relatorio.get('despesas_com_rateio', []),
     })
     
     # Adicionar contexto de alíquotas

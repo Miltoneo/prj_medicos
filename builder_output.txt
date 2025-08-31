@@ -1,0 +1,17 @@
+DEBUG Builder: total_receitas calculado = 10000.0
+DEBUG Builder: número de movimentações = 1
+DEBUG Builder: movimentações positivas = [Decimal('10000.00')]
+DEBUG Builder: total_despesas_outros calculado = 0.0
+DEBUG Builder: movimentações negativas = []
+DEBUG Builder: Novo cálculo saldo_a_transferir:
+  receita_liquida: 2671.44761
+  despesa_geral: 456.0
+  saldo_movimentacao_financeira: 10000.0
+  saldo_a_transferir: 12215.44761
+TYPE res: <class 'dict'>
+keys: ['relatorio', 'valor_adicional_rateio', 'participacao_socio_percentual', 'receita_bruta_socio', 'total_receitas', 'total_despesas_outros', 'base_consultas_medicas', 'base_outros_servicos', 'base_calculo_consultas_ir', 'base_calculo_outros_ir', 'base_calculo_ir_total', 'valor_base_adicional', 'excedente_adicional', 'aliquota_adicional']
+relatorio type: <class 'medicos.models.relatorios.RelatorioMensalSocio'>
+lista_despesas_sem_rateio (from rel): <class 'list'> len= 2
+lista_despesas_com_rateio (from rel): <class 'list'> len= 0
+lista_despesas_sem_rateio (top-level): <class 'NoneType'> len= N/A
+lista_despesas_com_rateio (top-level): <class 'NoneType'> len= N/A
