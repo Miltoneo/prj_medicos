@@ -104,6 +104,11 @@ class DespesaSocioCreateView(CreateView):
     form_class = DespesaSocioForm
     template_name = 'despesas/despesas_socio_form.html'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['empresa_id'] = self.kwargs.get('empresa_id')
+        return kwargs
+
     def get_initial(self):
         initial = super().get_initial()
         socio_id = self.request.GET.get('socio')
@@ -162,6 +167,11 @@ class DespesaSocioUpdateView(UpdateView):
     model = DespesaSocio
     form_class = DespesaSocioForm
     template_name = 'despesas/despesas_socio_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['empresa_id'] = self.kwargs.get('empresa_id')
+        return kwargs
 
     def get_success_url(self):
         empresa_id = self.kwargs.get('empresa_id')

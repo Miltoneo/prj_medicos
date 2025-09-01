@@ -97,3 +97,27 @@ class RelatorioMensalSocio(models.Model):
         unique_together = ('empresa', 'socio', 'competencia')
         verbose_name = "Relatório Mensal de Sócio"
         verbose_name_plural = "Relatórios Mensais de Sócio"
+
+    @property
+    def despesas_sem_rateio(self):
+        """
+        Retorna lista de objetos-like das despesas sem rateio para compatibilidade com template.
+        Converte JSONField para objetos acessíveis via dot notation.
+        """
+        if not self.lista_despesas_sem_rateio:
+            return []
+        
+        from types import SimpleNamespace
+        return [SimpleNamespace(**item) for item in self.lista_despesas_sem_rateio]
+
+    @property 
+    def despesas_com_rateio(self):
+        """
+        Retorna lista de objetos-like das despesas com rateio para compatibilidade com template.
+        Converte JSONField para objetos acessíveis via dot notation.
+        """
+        if not self.lista_despesas_com_rateio:
+            return []
+        
+        from types import SimpleNamespace
+        return [SimpleNamespace(**item) for item in self.lista_despesas_com_rateio]

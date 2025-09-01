@@ -1,0 +1,21 @@
+C:\Users\familia\AppData\Roaming\Python\Python312\site-packages\django\db\models\fields\__init__.py:1665: RuntimeWarning: DateTimeField RelatorioMensalSocio.data_geracao received a naive datetime (2025-09-01 07:50:22.439910) while time zone support is active.
+  warnings.warn(
+TESTE SIMPLES DO PROPERTY
+DEBUG Builder: total_receitas calculado = 10000.0
+DEBUG Builder: número de movimentações = 1
+DEBUG Builder: movimentações positivas = [Decimal('10000.00')]
+DEBUG Builder: total_despesas_outros calculado = 0.0
+DEBUG Builder: movimentações negativas = []
+DEBUG Builder: Novo cálculo saldo_a_transferir:
+  receita_liquida: 2671.44761
+  despesa_geral: 1110.0
+  saldo_movimentacao_financeira: 10000.0
+  saldo_a_transferir: 11561.44761
+Relatorio criado: RelatorioMensalSocio object (22)
+Lista JSON tem 4 itens
+Property retorna 4 despesas
+Despesa 1: 31/08/2025 - R$ 111.0 - Despesa Diretor Clinico
+Despesa 2: 24/08/2025 - R$ 222.0 - Plano de Saude Cooparticipação
+Despesa 3: 20/08/2025 - R$ 333.0 - ISSQN fora do municipio
+Despesa 4: 04/08/2025 - R$ 444.0 - Pro-Labore
+SUCESSO: Property funcionando!

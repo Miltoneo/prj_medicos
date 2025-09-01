@@ -668,6 +668,10 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     contexto['excedente_adicional'] = excedente_adicional
     contexto['aliquota_adicional'] = aliquota_adicional * 100  # Converter para percentual
     
+    # Incluir listas diretamente no contexto para uso imediato pela view
+    contexto['lista_despesas_sem_rateio'] = lista_despesas_sem_rateio
+    contexto['lista_despesas_com_rateio'] = lista_despesas_com_rateio
+    
     return contexto
 
 

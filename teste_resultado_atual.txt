@@ -1,0 +1,20 @@
+C:\Users\familia\AppData\Roaming\Python\Python312\site-packages\django\db\models\fields\__init__.py:1665: RuntimeWarning: DateTimeField RelatorioMensalSocio.data_geracao received a naive datetime (2025-09-01 07:28:24.272440) while time zone support is active.
+  warnings.warn(
+=== TESTE COMPLETO DO BUILDER ===
+DEBUG Builder: total_receitas calculado = 10000.0
+DEBUG Builder: número de movimentações = 1
+DEBUG Builder: movimentações positivas = [Decimal('10000.00')]
+DEBUG Builder: total_despesas_outros calculado = 0.0
+DEBUG Builder: movimentações negativas = []
+DEBUG Builder: Novo cálculo saldo_a_transferir:
+  receita_liquida: 2671.44761
+  despesa_geral: 666.0
+  saldo_movimentacao_financeira: 10000.0
+  saldo_a_transferir: 12005.44761
+Traceback (most recent call last):
+  File "f:\Projects\Django\prj_medicos\teste_final_builder.py", line 29, in <module>
+    print('\u274c ERRO: despesas_sem_rateio não encontrada no contexto')
+  File "F:\Program Files\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>

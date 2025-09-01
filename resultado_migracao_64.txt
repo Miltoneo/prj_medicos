@@ -1,0 +1,27 @@
+=== MIGRACAO DESPESA ID 64 ===
+Despesa ID 64 encontrada:
+  Data: 04/08/2025
+  Valor: R$ 444.00
+  Socio: Antonio Conselheiro
+  Item atual: GD01 Pro-Labore
+  Grupo atual: GD01
+  Empresa atual: 5
+
+=== CRIANDO/BUSCANDO EQUIVALENTES NA EMPRESA 5 ===
+Traceback (most recent call last):
+  File "f:\Projects\Django\prj_medicos\migrar_despesa_64.py", line 41, in <module>
+    print(f'\u2713 Grupo encontrado: {grupo_correto}')
+  File "F:\Program Files\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 0: character maps to <undefined>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "f:\Projects\Django\prj_medicos\migrar_despesa_64.py", line 72, in <module>
+    print(f'\u274c ERRO: {e}')
+  File "F:\Program Files\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>

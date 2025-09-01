@@ -1,0 +1,14 @@
+Consultando despesas do socio 10 em 2025-08...
+Total: 4
+ID 64: 04/08/2025 - R$ 444.00 - empresa=4
+ID 63: 20/08/2025 - R$ 333.00 - empresa=5
+ID 62: 24/08/2025 - R$ 222.00 - empresa=5
+ID 61: 31/08/2025 - R$ 111.00 - empresa=5
+
+Despesas empresa 5: 3
+Despesas outras empresas: 1
+
+PROBLEMA: Despesas em empresas erradas:
+  ID 64 -> empresa 4
+
+Necessaria migracao!

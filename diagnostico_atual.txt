@@ -1,0 +1,34 @@
+=== DIAGNÓSTICO ATUAL 2025-08 ===
+
+1. TODAS AS DESPESAS SÓCIO 10 em 2025-08:
+Total encontradas: 3
+  ID 63: 20/08/2025 - R$ 333.00 - ISSQN fora do municipio - empresa_grupo=4
+  ID 62: 24/08/2025 - R$ 222.00 - Plano de Saude Cooparticipação - empresa_grupo=4
+  ID 61: 31/08/2025 - R$ 111.00 - Despesa Diretor Clinico - empresa_grupo=4
+
+2. DESPESAS COM FILTRO EMPRESA=5:
+Total com empresa=5: 0
+
+3. TESTE BUILDER:
+Builder retornou: 0 despesas
+
+4. DESPESAS PROBLEMÁTICAS (empresa != 5):
+Total problemáticas: 3
+  ID 63: empresa_grupo=4 (deveria ser 5)
+    Data: 20/08/2025
+    Valor: R$ 333.00
+    Item: ISSQN fora do municipio
+    Grupo: GRUPO DESPESA SOCIO
+
+  ID 62: empresa_grupo=4 (deveria ser 5)
+    Data: 24/08/2025
+    Valor: R$ 222.00
+    Item: Plano de Saude Cooparticipação
+    Grupo: GRUPO DESPESA SOCIO
+
+  ID 61: empresa_grupo=4 (deveria ser 5)
+    Data: 31/08/2025
+    Valor: R$ 111.00
+    Item: Despesa Diretor Clinico
+    Grupo: GRUPO DESPESA SOCIO
+

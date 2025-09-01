@@ -6,10 +6,21 @@ from medicos.models.despesas import DespesaSocio, DespesaRateada, ItemDespesa, G
 # Formulário para Despesa de Sócio
 class DespesaSocioForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        empresa_id = kwargs.pop('empresa_id', None)
         super().__init__(*args, **kwargs)
-        self.fields['item_despesa'].queryset = ItemDespesa.objects.filter(
-            grupo_despesa__tipo_rateio=GrupoDespesa.Tipo_t.SEM_RATEIO
-        )
+        
+        # Filtrar itens apenas da empresa correta e sem rateio
+        if empresa_id:
+            self.fields['item_despesa'].queryset = ItemDespesa.objects.filter(
+                grupo_despesa__empresa_id=empresa_id,
+                grupo_despesa__tipo_rateio=GrupoDespesa.Tipo_t.SEM_RATEIO
+            )
+        else:
+            # Fallback: filtrar apenas por tipo_rateio se empresa_id não fornecida
+            self.fields['item_despesa'].queryset = ItemDespesa.objects.filter(
+                grupo_despesa__tipo_rateio=GrupoDespesa.Tipo_t.SEM_RATEIO
+            )
+        
         self.fields['item_despesa'].required = True
         # Não sobrescrever o widget após definir o queryset, mantendo o padrão do ModelForm
 
