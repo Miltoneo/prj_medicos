@@ -164,21 +164,21 @@
         
         <!-- Nova Tabela: Resumo Conta Corrente por Sócio -->
         <div class="mt-5">
-            <div class="card shadow-sm border-info">
-                <div class="card-header bg-info bg-opacity-10 border-info fw-bold d-flex align-items-center">
-                    <i class="fas fa-university text-info me-2"></i>
+            <div class="card shadow-sm">
+                <div class="card-header card-header-gradient text-white fw-bold d-flex align-items-center">
+                    <i class="fas fa-university text-white me-2"></i>
                     <span>Resumo Conta Corrente por Sócio</span>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body p-4">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover mb-0">
                             <thead>
-                                <tr class="table-info">
+                                <tr class="table-success">
                                     <th style="width: 30%;">Sócio</th>
                                     <th style="width: 17.5%;" class="text-center">(=) Saldo Anterior</th>
                                     <th style="width: 17.5%;" class="text-center">(+) Total Créditos</th>
                                     <th style="width: 17.5%;" class="text-center">(-) Total Débitos</th>
-                                    <th style="width: 17.5%;" class="text-center">(=) Saldo Conta Corrente</th>
+                                    <th style="width: 17.5%;" class="text-center col-financeira-destaque">(=) Saldo Conta Corrente</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,16 +188,16 @@
                                         <i class="fas fa-user-md text-primary me-2"></i>
                                         {{ item.socio.pessoa.name }}
                                     </td>
-                                    <td class="valor-monetario text-center">
+                                    <td class="valor-monetario text-dark">
                                         R$ {{ item.saldo_anterior_conta_corrente|default:0|floatformat:2 }}
                                     </td>
-                                    <td class="valor-monetario text-center text-success">
+                                    <td class="valor-monetario text-dark">
                                         R$ {{ item.total_creditos_conta_corrente|default:0|floatformat:2 }}
                                     </td>
-                                    <td class="valor-monetario text-center text-danger">
+                                    <td class="valor-monetario text-dark">
                                         R$ {{ item.total_debitos_conta_corrente|default:0|floatformat:2 }}
                                     </td>
-                                    <td class="valor-monetario text-center fw-bold">
+                                    <td class="valor-monetario text-dark">
                                         R$ {{ item.saldo_final_conta_corrente|default:0|floatformat:2 }}
                                     </td>
                                 </tr>
@@ -212,21 +212,21 @@
                             </tbody>
                             {% if resumo_socios %}
                             <tfoot>
-                                <tr class="total-row">
-                                    <td class="fw-bold">
+                                <tr class="table-dark fw-bold">
+                                    <td>
                                         <i class="fas fa-calculator me-2"></i>
                                         TOTAIS CONSOLIDADOS
                                     </td>
-                                    <td class="valor-monetario text-center">
+                                    <td class="valor-monetario">
                                         R$ {{ totais_conta_corrente.saldo_anterior|default:0|floatformat:2 }}
                                     </td>
-                                    <td class="valor-monetario text-center">
+                                    <td class="valor-monetario">
                                         R$ {{ totais_conta_corrente.total_creditos|default:0|floatformat:2 }}
                                     </td>
-                                    <td class="valor-monetario text-center">
+                                    <td class="valor-monetario">
                                         R$ {{ totais_conta_corrente.total_debitos|default:0|floatformat:2 }}
                                     </td>
-                                    <td class="valor-monetario text-center fw-bold">
+                                    <td class="valor-monetario fw-bold text-success">
                                         R$ {{ totais_conta_corrente.saldo_final|default:0|floatformat:2 }}
                                     </td>
                                 </tr>
