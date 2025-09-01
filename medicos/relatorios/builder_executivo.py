@@ -122,6 +122,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
     total_receita_liquida = Decimal('0')
     total_despesa_com_rateio = Decimal('0')
     total_despesa_sem_rateio = Decimal('0')
+    total_despesas = Decimal('0')
     total_saldo_financeiro = Decimal('0')
     total_saldo_transferir = Decimal('0')
     total_imposto_provisionado_mes_anterior = Decimal('0')
@@ -235,8 +236,8 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         # Imposto a pagar = devido - retido 
         imposto_a_pagar = max(imposto_devido - imposto_retido, Decimal('0'))
         
-        # Receita líquida = receita bruta - imposto a pagar
-        receita_liquida = receita_bruta - imposto_a_pagar
+        # Receita líquida apurada = receita bruta emitida - imposto devido
+        receita_liquida = receita_bruta - imposto_devido
         
         # Despesas com rateio do sócio no mês
         despesas_rateadas = DespesaRateada.objects.filter(
@@ -263,6 +264,9 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         ).aggregate(total=Sum('valor'))['total'] or Decimal('0')
         
         despesa_sem_rateio = despesas_socio
+        
+        # Total despesas = Despesa com rateio + Despesa sem rateio
+        total_despesas_socio = despesa_com_rateio + despesa_sem_rateio
         
         # Saldo financeiro do sócio no mês (baseado na tabela Financeiro)
         saldo_financeiro_data = Financeiro.obter_saldo_mensal(
@@ -299,6 +303,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         total_receita_liquida += receita_liquida
         total_despesa_com_rateio += despesa_com_rateio
         total_despesa_sem_rateio += despesa_sem_rateio
+        total_despesas += total_despesas_socio
         total_saldo_financeiro += saldo_financeiro
         total_saldo_transferir += saldo_transferir
         total_imposto_provisionado_mes_anterior += imposto_provisionado_mes_anterior
@@ -314,6 +319,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'saldo_financeiro': saldo_financeiro,
             'despesa_com_rateio': despesa_com_rateio,
             'despesa_sem_rateio': despesa_sem_rateio,
+            'total_despesas': total_despesas_socio,
             'imposto_provisionado_mes_anterior': imposto_provisionado_mes_anterior,
             'saldo_transferir': saldo_transferir,
         })
@@ -330,6 +336,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'saldo_financeiro': total_saldo_financeiro,
             'despesa_com_rateio': total_despesa_com_rateio,
             'despesa_sem_rateio': total_despesa_sem_rateio,
+            'total_despesas': total_despesas,
             'imposto_provisionado_mes_anterior': total_imposto_provisionado_mes_anterior,
             'saldo_transferir': total_saldo_transferir,
         },

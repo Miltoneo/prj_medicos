@@ -765,3 +765,218 @@ def montar_relatorio_executivo_anual(empresa_id, ano=None):
         'total_emitidas': 0,
         'total_recebidas': 0,
     }
+
+
+def processar_fechamento_mensal_conta_corrente(empresa_id, competencia):
+    """
+    Processa fechamento mensal da conta corrente para todos os sócios.
+    Implementa padrão bancário de fechamento com persistência de saldos.
+    
+    Args:
+        empresa_id: ID da empresa (multi-tenant)
+        competencia: date object do primeiro dia do mês (ex: date(2025, 8, 1))
+    
+    Returns:
+        dict: {'sucesso': bool, 'socios_processados': int, 'erros': list}
+    
+    Fonte: Práticas bancárias e padrões do projeto
+    """
+    from medicos.models.conta_corrente import MovimentacaoContaCorrente, SaldoMensalContaCorrente
+    from medicos.models.base import Socio, Empresa
+    from django.db import transaction
+    from django.utils import timezone
+    from datetime import date
+    import calendar
+    
+    # Validações iniciais
+    try:
+        empresa = Empresa.objects.get(id=empresa_id)
+    except Empresa.DoesNotExist:
+        return {'sucesso': False, 'erros': [f'Empresa {empresa_id} não encontrada']}
+    
+    if not isinstance(competencia, date):
+        return {'sucesso': False, 'erros': ['Competência deve ser um objeto date']}
+    
+    ano = competencia.year
+    mes = competencia.month
+    
+    # Primeiro e último dia do mês
+    primeiro_dia = date(ano, mes, 1)
+    ultimo_dia = date(ano, mes, calendar.monthrange(ano, mes)[1])
+    
+    # Determinar competência anterior
+    if mes == 1:
+        competencia_anterior = date(ano - 1, 12, 1)
+    else:
+        competencia_anterior = date(ano, mes - 1, 1)
+    
+    socios_processados = 0
+    erros = []
+    
+    # Processar em transação atômica (padrão bancário)
+    try:
+        with transaction.atomic():
+            # Buscar todos os sócios ativos da empresa
+            socios = Socio.objects.filter(
+                empresa_id=empresa_id,
+                ativo=True
+            ).order_by('pessoa__name')
+            
+            for socio in socios:
+                try:
+                    # 1. Buscar saldo anterior do mês passado
+                    try:
+                        saldo_mes_anterior = SaldoMensalContaCorrente.objects.get(
+                            empresa_id=empresa_id,
+                            socio=socio,
+                            competencia=competencia_anterior,
+                            fechado=True
+                        )
+                        saldo_anterior = saldo_mes_anterior.saldo_final
+                    except SaldoMensalContaCorrente.DoesNotExist:
+                        # Primeira vez: calcular acumulado até o mês anterior
+                        movs_anteriores = MovimentacaoContaCorrente.objects.filter(
+                            socio=socio,
+                            data_movimentacao__lt=primeiro_dia
+                        )
+                        saldo_anterior = sum(mov.valor for mov in movs_anteriores)
+                    
+                    # 2. Buscar movimentações do mês atual
+                    movs_mes_atual = MovimentacaoContaCorrente.objects.filter(
+                        socio=socio,
+                        data_movimentacao__range=[primeiro_dia, ultimo_dia]
+                    )
+                    
+                    # 3. Calcular totais do período
+                    total_creditos = sum(mov.valor for mov in movs_mes_atual if mov.valor > 0)
+                    total_debitos = abs(sum(mov.valor for mov in movs_mes_atual if mov.valor < 0))
+                    
+                    # 4. Criar ou atualizar saldo mensal
+                    saldo_mensal, created = SaldoMensalContaCorrente.objects.get_or_create(
+                        empresa_id=empresa_id,
+                        socio=socio,
+                        competencia=primeiro_dia,
+                        defaults={
+                            'saldo_anterior': saldo_anterior,
+                            'total_creditos': total_creditos,
+                            'total_debitos': total_debitos,
+                        }
+                    )
+                    
+                    if not created:
+                        # Atualizar registro existente
+                        saldo_mensal.saldo_anterior = saldo_anterior
+                        saldo_mensal.total_creditos = total_creditos
+                        saldo_mensal.total_debitos = total_debitos
+                    
+                    # 5. Calcular saldo final e salvar
+                    saldo_mensal.calcular_saldo_final()
+                    saldo_mensal.save()
+                    
+                    socios_processados += 1
+                    
+                except Exception as e:
+                    erros.append(f'Erro processando sócio {socio.pessoa.name}: {str(e)}')
+            
+            # Se chegou até aqui, todos os sócios foram processados com sucesso
+            return {
+                'sucesso': True,
+                'socios_processados': socios_processados,
+                'erros': erros,
+                'competencia': competencia.strftime('%m/%Y'),
+                'empresa': empresa.nome_fantasia
+            }
+            
+    except Exception as e:
+        return {
+            'sucesso': False,
+            'erros': [f'Erro na transação: {str(e)}'],
+            'socios_processados': 0
+        }
+
+
+def fechar_periodo_conta_corrente(empresa_id, competencia, usuario=None):
+    """
+    Fecha oficialmente o período da conta corrente para todos os sócios.
+    Marca como fechado e impede alterações futuras.
+    
+    Args:
+        empresa_id: ID da empresa
+        competencia: date object do primeiro dia do mês
+        usuario: Usuário responsável pelo fechamento
+    
+    Returns:
+        dict: Resultado do fechamento
+    """
+    from medicos.models.conta_corrente import SaldoMensalContaCorrente
+    from django.db import transaction
+    from django.utils import timezone
+    
+    try:
+        with transaction.atomic():
+            saldos = SaldoMensalContaCorrente.objects.filter(
+                empresa_id=empresa_id,
+                competencia=competencia,
+                fechado=False
+            )
+            
+            if not saldos.exists():
+                return {'sucesso': False, 'erros': ['Nenhum saldo encontrado para fechamento']}
+            
+            # Marcar todos como fechados
+            for saldo in saldos:
+                saldo.fechar_periodo(usuario)
+            
+            return {
+                'sucesso': True,
+                'saldos_fechados': saldos.count(),
+                'competencia': competencia.strftime('%m/%Y'),
+                'data_fechamento': timezone.now()
+            }
+            
+    except Exception as e:
+        return {'sucesso': False, 'erros': [str(e)]}
+
+
+def obter_saldo_anterior_conta_corrente(empresa_id, socio_id, competencia):
+    """
+    Obtém o saldo anterior da conta corrente para uma competência específica.
+    
+    Args:
+        empresa_id: ID da empresa
+        socio_id: ID do sócio
+        competencia: date object do primeiro dia do mês
+    
+    Returns:
+        Decimal: Saldo anterior ou 0 se não encontrado
+    """
+    from medicos.models.conta_corrente import SaldoMensalContaCorrente, MovimentacaoContaCorrente
+    from datetime import date
+    
+    # Determinar competência anterior
+    ano = competencia.year
+    mes = competencia.month
+    
+    if mes == 1:
+        competencia_anterior = date(ano - 1, 12, 1)
+    else:
+        competencia_anterior = date(ano, mes - 1, 1)
+    
+    try:
+        # Buscar saldo persistido do mês anterior
+        saldo_mes_anterior = SaldoMensalContaCorrente.objects.get(
+            empresa_id=empresa_id,
+            socio_id=socio_id,
+            competencia=competencia_anterior,
+            fechado=True
+        )
+        return saldo_mes_anterior.saldo_final
+        
+    except SaldoMensalContaCorrente.DoesNotExist:
+        # Calcular dinamicamente se não há saldo persistido
+        primeiro_dia_competencia = competencia
+        movs_anteriores = MovimentacaoContaCorrente.objects.filter(
+            socio_id=socio_id,
+            data_movimentacao__lt=primeiro_dia_competencia
+        )
+        return sum(mov.valor for mov in movs_anteriores)

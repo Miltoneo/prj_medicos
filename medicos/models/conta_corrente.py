@@ -569,3 +569,136 @@ class MovimentacaoContaCorrente(models.Model):
             }
         
         return consolidado
+
+
+class SaldoMensalContaCorrente(models.Model):
+    """
+    Modelo para persistir saldos mensais da conta corrente por sócio.
+    
+    Este modelo implementa o conceito bancário de fechamento mensal,
+    armazenando saldos de abertura, movimentações do período e saldo
+    de fechamento, garantindo propagação correta entre competências.
+    
+    PADRÃO BANCÁRIO IMPLEMENTADO:
+    - Saldo Anterior = Saldo de abertura do período
+    - Créditos = Entradas no período (valores positivos)
+    - Débitos = Saídas no período (valores negativos)
+    - Saldo Final = Saldo Anterior + Créditos - Débitos
+    
+    Este modelo evita recálculo completo do histórico e garante
+    integridade temporal dos saldos bancários.
+    """
+    
+    class Meta:
+        db_table = 'saldo_mensal_conta_corrente'
+        verbose_name = "Saldo Mensal Conta Corrente"
+        verbose_name_plural = "Saldos Mensais Conta Corrente"
+        unique_together = ('empresa', 'socio', 'competencia')
+        indexes = [
+            models.Index(fields=['empresa', 'competencia']),
+            models.Index(fields=['socio', 'competencia']),
+            models.Index(fields=['competencia', 'fechado']),
+        ]
+        ordering = ['-competencia', 'socio__pessoa__name']
+
+    # Relacionamentos principais
+    empresa = models.ForeignKey(
+        Empresa,
+        on_delete=models.CASCADE,
+        related_name='saldos_mensais_conta_corrente',
+        verbose_name="Empresa",
+        help_text="Empresa para isolamento multi-tenant"
+    )
+    
+    socio = models.ForeignKey(
+        Socio,
+        on_delete=models.CASCADE,
+        related_name='saldos_mensais_conta_corrente',
+        verbose_name="Médico/Sócio",
+        help_text="Sócio titular da conta corrente"
+    )
+
+    # Dados temporais
+    competencia = models.DateField(
+        verbose_name="Competência",
+        help_text="Primeiro dia do mês de referência (ex: 2025-08-01)"
+    )
+    
+    # Saldos bancários
+    saldo_anterior = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name="Saldo Anterior",
+        help_text="Saldo de abertura do período (final do mês anterior)"
+    )
+    
+    total_creditos = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name="Total de Créditos",
+        help_text="Soma dos valores positivos (entradas) do período"
+    )
+    
+    total_debitos = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name="Total de Débitos",
+        help_text="Soma dos valores negativos (saídas) do período"
+    )
+    
+    saldo_final = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name="Saldo Final",
+        help_text="Saldo de fechamento (Anterior + Créditos - Débitos)"
+    )
+    
+    # Controles de processamento
+    data_fechamento = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Data de Fechamento",
+        help_text="Timestamp do processamento do fechamento mensal"
+    )
+    
+    fechado = models.BooleanField(
+        default=False,
+        verbose_name="Fechado",
+        help_text="Indica se o período foi oficialmente fechado"
+    )
+    
+    observacoes = models.TextField(
+        blank=True,
+        verbose_name="Observações",
+        help_text="Observações sobre o fechamento mensal"
+    )
+    
+    # Auditoria
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def calcular_saldo_final(self):
+        """
+        Calcula o saldo final usando a fórmula bancária padrão.
+        Saldo Final = Saldo Anterior + Créditos - Débitos
+        """
+        self.saldo_final = self.saldo_anterior + self.total_creditos - self.total_debitos
+        return self.saldo_final
+    
+    def fechar_periodo(self, usuario=None):
+        """
+        Marca o período como fechado e registra timestamp.
+        """
+        from django.utils import timezone
+        self.fechado = True
+        self.data_fechamento = timezone.now()
+        if usuario:
+            self.observacoes += f"\nFechado por: {usuario} em {timezone.now()}"
+        self.save()
+    
+    def __str__(self):
+        return f"{self.socio.pessoa.name} - {self.competencia.strftime('%m/%Y')} - Saldo: R$ {self.saldo_final}"

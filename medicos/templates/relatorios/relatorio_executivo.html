@@ -69,9 +69,8 @@
                         <th style="width: 7.5%;" class="text-center">Imposto Retido</th>
                         <th style="width: 7.5%;" class="text-center">Imposto a Pagar</th>
                         <th style="width: 7.5%;" class="text-center">Receita líquida apurada</th>
-                        <th style="width: 7.5%;" class="text-center col-financeira-destaque">Saldo financeiro</th>
-                        <th style="width: 7.5%;" class="text-center col-financeira-destaque">Despesa com rateio</th>
-                        <th style="width: 7.5%;" class="text-center col-financeira-destaque">Despesa sem rateio</th>
+                        <th style="width: 7.5%;" class="text-center col-financeira-destaque">Saldo Movimentações</th>
+                        <th style="width: 7.5%;" class="text-center col-financeira-destaque">Total Despesas</th>
                         <th style="width: 7.5%;" class="text-center col-financeira-destaque">Imposto Provisionado Mês Anterior</th>
                         <th style="width: 8.5%;" class="text-center col-financeira-destaque">Saldo transferir</th>
                     </tr>
@@ -105,10 +104,7 @@
                             R$ {{ item.saldo_financeiro|floatformat:2 }}
                         </td>
                         <td class="valor-monetario text-dark">
-                            R$ {{ item.despesa_com_rateio|floatformat:2 }}
-                        </td>
-                        <td class="valor-monetario text-dark">
-                            R$ {{ item.despesa_sem_rateio|floatformat:2 }}
+                            R$ {{ item.total_despesas|floatformat:2 }}
                         </td>
                         <td class="valor-monetario text-dark">
                             R$ {{ item.imposto_provisionado_mes_anterior|floatformat:2 }}
@@ -119,7 +115,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="12" class="text-center text-muted py-4">
+                        <td colspan="11" class="text-center text-muted py-4">
                             <i class="fas fa-info-circle me-2"></i>
                             Nenhum sócio encontrado para a competência selecionada.
                         </td>
@@ -152,10 +148,7 @@
                             R$ {{ totais_resumo.saldo_financeiro|floatformat:2 }}
                         </td>
                         <td class="valor-monetario">
-                            R$ {{ totais_resumo.despesa_com_rateio|floatformat:2 }}
-                        </td>
-                        <td class="valor-monetario">
-                            R$ {{ totais_resumo.despesa_sem_rateio|floatformat:2 }}
+                            R$ {{ totais_resumo.total_despesas|floatformat:2 }}
                         </td>
                         <td class="valor-monetario">
                             R$ {{ totais_resumo.imposto_provisionado_mes_anterior|floatformat:2 }}
@@ -181,12 +174,11 @@
                 <li><strong>Imposto Devido:</strong> por data de emissão da nota (regime competência) / por data de recebimento (regime caixa)</li>
                 <li><strong>Imposto Retido:</strong> PIS/COFINS/CSLL por recebimento IR e ISSQN por emissao</li>
                 <li><strong>Imposto a Pagar:</strong> Diferença entre imposto devido e retido</li>
-                <li><strong>Receita líquida apurada:</strong> Receita bruta recebida menos impostos a pagar</li>
-                <li><strong>Saldo financeiro:</strong> Saldo consolidado dos lançamentos financeiros do sócio</li>
-                <li><strong>Despesa com rateio:</strong> Despesas rateadas proporcionalmente ao sócio</li>
-                <li><strong>Despesa sem rateio:</strong> Despesas diretas e exclusivas do sócio</li>
+                <li><strong>Receita líquida apurada:</strong> Receita bruta emitida menos imposto devido</li>
+                <li><strong>Saldo Movimentações:</strong> Saldo consolidado dos lançamentos financeiros do sócio</li>
+                <li><strong>Total Despesas:</strong> Soma das despesas com rateio e despesas sem rateio</li>
                 <li><strong>Imposto Provisionado Mês Anterior:</strong> Valor dos impostos a provisionar calculados no mês anterior</li>
-                <li><strong>Saldo transferir:</strong> Valor disponível para transferência (Saldo financeiro - Despesa com rateio - Despesa sem rateio - Imposto Provisionado Mês Anterior)</li>
+                <li><strong>Saldo transferir:</strong> Valor disponível para transferência (Saldo Movimentações - Total Despesas - Imposto Provisionado Mês Anterior)</li>
             </ul>
         </div>
     </div>

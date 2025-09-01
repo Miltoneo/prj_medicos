@@ -24,7 +24,7 @@ __all__ = [
     'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',
     
     # Modelos de Conta Corrente
-    'ContaCorrente', 'MovimentacaoContaCorrente',
+    'ContaCorrente', 'MovimentacaoContaCorrente', 'SaldoMensalContaCorrente',
 
     # Modelos de Apuração
     'ApuracaoCSLL', 'ApuracaoIRPJMensal',
