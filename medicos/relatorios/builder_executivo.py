@@ -304,8 +304,8 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         except RelatorioMensalSocio.DoesNotExist:
             imposto_provisionado_mes_anterior = Decimal('0')
         
-        # Saldo transferir = Saldo financeiro - Despesa com rateio - Despesa sem rateio - Imposto Provisionado Mês Anterior
-        saldo_transferir = saldo_financeiro - despesa_com_rateio - despesa_sem_rateio - imposto_provisionado_mes_anterior
+        # Saldo transferir = Receita líquida apurada + Saldo Movimentações - Total Despesas - Imposto Provisionado Mês Anterior
+        saldo_transferir = receita_liquida + saldo_financeiro - total_despesas_socio - imposto_provisionado_mes_anterior
         
         # Dados de conta corrente do sócio
         try:
