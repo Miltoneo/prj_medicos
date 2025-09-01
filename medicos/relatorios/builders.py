@@ -23,10 +23,22 @@ def montar_relatorio_mensal_empresa(empresa_id, mes_ano):
     return {'relatorio': {}}
 
 
-def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
+def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lancar_impostos=False, 
+                                 atualizar_lancamentos_existentes=True):
     """
-    Monta os dados do relatório mensal dos sócios.
-    Retorna dict padronizado: {'relatorio': ...}
+    Monta os dados do relatório mensal dos sócios com lançamento automático opcional de impostos.
+    
+    Args:
+        empresa_id: ID da empresa
+        mes_ano: String no formato "YYYY-MM"
+        socio_id: ID do sócio (opcional)
+        auto_lancar_impostos: Se True, cria/atualiza lançamentos automáticos de impostos
+        atualizar_lancamentos_existentes: Se True, atualiza lançamentos existentes (usado com auto_lancar_impostos)
+    
+    Retorna dict com:
+        - relatorio: objeto RelatorioMensalSocio
+        - resultado_lancamento_automatico: resultado do lançamento automático (se solicitado)
+        - outros campos de contexto
     """
     empresa = Empresa.objects.get(id=empresa_id)
     competencia = datetime.strptime(mes_ano, "%Y-%m")
@@ -703,6 +715,40 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     # Incluir listas diretamente no contexto para uso imediato pela view
     contexto['lista_despesas_sem_rateio'] = lista_despesas_sem_rateio
     contexto['lista_despesas_com_rateio'] = lista_despesas_com_rateio
+    
+    # Lançamento automático de impostos (se solicitado)
+    if auto_lancar_impostos and socio_selecionado:
+        try:
+            from medicos.services.lancamento_impostos import LancamentoImpostosService
+            
+            # Usar valores diretos das variáveis calculadas (mais seguro que acessar o objeto persistido)
+            valores_impostos = {
+                'PIS': total_pis_socio,
+                'COFINS': total_cofins_socio,
+                'IRPJ': total_irpj_socio + valor_adicional_socio,  # Incluir adicional de IRPJ
+                'CSLL': total_csll_socio,
+                'ISSQN': total_iss_socio,
+            }
+            
+            # Executar lançamento automático
+            service = LancamentoImpostosService()
+            resultado_lancamento = service.processar_impostos_automaticamente(
+                empresa=empresa,
+                socio=socio_selecionado,
+                mes=competencia.month,
+                ano=competencia.year,
+                valores_impostos=valores_impostos,
+                atualizar_existentes=atualizar_lancamentos_existentes
+            )
+            
+            contexto['resultado_lancamento_automatico'] = resultado_lancamento
+            
+        except Exception as e:
+            # Em caso de erro, incluir no contexto mas não interromper o relatório
+            contexto['resultado_lancamento_automatico'] = {
+                'success': False,
+                'error': f'Erro no lançamento automático: {str(e)}'
+            }
     
     return contexto
 

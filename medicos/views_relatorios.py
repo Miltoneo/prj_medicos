@@ -199,8 +199,18 @@ def relatorio_mensal_socio(request, empresa_id):
     socio_id_raw = request.GET.get('socio_id')
     socios, socio_selecionado, socio_id = _obter_socio_selecionado(empresa, socio_id_raw)
     
-    # Obter dados do relatório
-    relatorio_dict = montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=socio_id)
+    # Verificar se deve fazer lançamento automático de impostos
+    auto_lancar_impostos = request.GET.get('auto_lancar_impostos', 'false').lower() == 'true'
+    atualizar_lancamentos = request.GET.get('atualizar_lancamentos', 'true').lower() == 'true'
+    
+    # Obter dados do relatório com lançamento automático opcional
+    relatorio_dict = montar_relatorio_mensal_socio(
+        empresa_id, 
+        mes_ano, 
+        socio_id=socio_id,
+        auto_lancar_impostos=auto_lancar_impostos,
+        atualizar_lancamentos_existentes=atualizar_lancamentos
+    )
     relatorio_obj = relatorio_dict['relatorio']
     
     # Processar movimentações financeiras
@@ -386,6 +396,9 @@ def relatorio_mensal_socio(request, empresa_id):
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
         'total_receitas': relatorio_dict.get('total_receitas', 0),
         'total_despesas_outros': relatorio_dict.get('total_despesas_outros', 0),
+        # Resultado do lançamento automático de impostos (se solicitado)
+        'resultado_lancamento_automatico': relatorio_dict.get('resultado_lancamento_automatico'),
+        'auto_lancar_impostos': auto_lancar_impostos,
         # Expor chaves de compatibilidade diretamente no contexto para templates que esperam nomes antigos
         'despesas_sem_rateio': relatorio.get('despesas_sem_rateio', []),
         'despesas_com_rateio': relatorio.get('despesas_com_rateio', []),
@@ -400,6 +413,31 @@ def relatorio_mensal_socio(request, empresa_id):
     # Adicionar contexto de alíquotas
     base_calculo_ir = relatorio.get('base_calculo_ir_total', 0)
     context.update(_obter_contexto_aliquotas(empresa, base_calculo_ir))
+    
+    # Adicionar parâmetros de data para funcionalidade de lançamento de impostos
+    ano_str, mes_str = mes_ano.split('-') if mes_ano and '-' in mes_ano else (None, None)
+    if ano_str and mes_str:
+        try:
+            context.update({
+                'mes': int(mes_str),
+                'ano': int(ano_str),
+            })
+        except (ValueError, TypeError):
+            # Se há erro na conversão, usar data atual como fallback
+            from datetime import datetime
+            hoje = datetime.now()
+            context.update({
+                'mes': hoje.month,
+                'ano': hoje.year,
+            })
+    else:
+        # Se mes_ano está vazio, usar data atual
+        from datetime import datetime
+        hoje = datetime.now()
+        context.update({
+            'mes': hoje.month,
+            'ano': hoje.year,
+        })
     
     # Adicionar campos específicos do espelho de cálculo
     context.update({
