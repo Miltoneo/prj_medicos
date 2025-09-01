@@ -1,6 +1,64 @@
 {% extends "layouts/base_cenario_demonstrativo.html" %}
 {% block title %}Relatório Mensal do Sócio{% endblock %}
 
+{% block extra_css %}
+<style>
+    .valor-monetario {
+        font-family: 'Courier New', monospace !important;
+        font-weight: 500 !important;
+        text-align: right !important;
+    }
+    .valor-monetario-header {
+        font-family: 'Courier New', monospace !important;
+        font-weight: 500 !important;
+        text-align: right !important;
+        color: #1e3a5f !important;
+        font-size: 1rem;
+    }
+    .table-secondary th.valor-monetario-header,
+    .table-secondary th[style*="Courier"] {
+        font-family: 'Courier New', monospace !important;
+        font-weight: 500 !important;
+        text-align: right !important;
+        color: #1e3a5f !important;
+    }
+    /* Aplicar estilo Courier New a toda a terceira coluna da tabela de receitas */
+    .table td:nth-child(3),
+    .table th:nth-child(3) {
+        font-family: 'Courier New', monospace !important;
+        font-weight: 500 !important;
+        text-align: right !important;
+    }
+    .card-header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0,0,0,.02);
+    }
+    .card-estatistica {
+        transition: transform 0.2s;
+    }
+    .card-estatistica:hover {
+        transform: translateY(-2px);
+    }
+    .filtro-competencia {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        border: none !important;
+    }
+    .filtro-competencia h4,
+    .filtro-competencia span,
+    .filtro-competencia .text-white {
+        color: #ffffff !important;
+        opacity: 1 !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+    }
+    .col-financeira-destaque {
+        background: linear-gradient(135deg, #6f42c1 0%, #495057 100%) !important;
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -90,38 +148,85 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="bg-white rounded-2 p-2">
               <div class="row g-4 mb-4">
                 <div class="col-lg-6">
-                  <div class="card shadow-sm border-primary">
-                    <div class="card-header bg-primary bg-opacity-10 border-primary fw-bold px-3 py-2">
-                      <span class="bi bi-table text-primary me-2"></span> Receitas
+                  <div class="card shadow-sm">
+                    <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+                      <div class="d-flex align-items-center">
+                        <span class="bi bi-table me-2" style="color: #ffffff !important; font-size: 1.1em;"></span>
+                        <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Receitas</h4>
+                      </div>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card-body p-4">
                       <div class="table-responsive">
-                        <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
-                          <tr><th colspan="2">RECEITA BRUTA RECEBIDA* (r)</th><th>{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th></tr>
-                          <tr><td>1</td><td>serviços de consultas e plantões</td><td>{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
-                          <tr><td>2</td><td>Serviços de vacinação, exames, procedimentos</td><td>{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
-                          <tr class="linha-total"><th colspan="2">IMPOSTO DEVIDO*(a)</th><th>{{ relatorio.impostos_devido_total|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">IMPOSTO RETIDO*(b)</th><th>{{ relatorio.impostos_retido_total|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">IMPOSTO A PROVISIONAR*(c=a-b)</th><th>{{ relatorio.impostos_total|floatformat:2 }}</th></tr>
-                          <tr class="linha-liquido"><th colspan="2">RECEITA LÍQUIDA (r-a)</th><th>{{ relatorio.receita_liquida|floatformat:2 }}</th></tr>
-                          <tr><th colspan="2">DESPESAS (-)</th><th>{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
-                          <tr><td>1</td><td>Despesa com rateio</td><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
-                          <tr><td>2</td><td>Despesa sem rateio</td><td>{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
-                          <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th>{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">SALDO A TRANSFERIR (=)</th><th>{{ relatorio.saldo_a_transferir|floatformat:2 }}</th></tr>
+                        <table class="table table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
+                          <thead>
+                            <tr class="table-secondary">
+                              <th style="width: 8%;">#</th>
+                              <th style="width: 67%;">Descrição</th>
+                              <th style="width: 25%; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; color: #1e3a5f !important;">Valor</th>
+                            </tr>
+                          </thead>
+                          <thead>
+                            <tr class="table-success">
+                              <th colspan="2">RECEITA BRUTA RECEBIDA* (r)</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr><td>1</td><td>serviços de consultas e plantões</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
+                            <tr><td>2</td><td>Serviços de vacinação, exames, procedimentos</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
+                          </tbody>
+                          <thead>
+                            <tr class="table-success">
+                              <th colspan="2">IMPOSTO DEVIDO*(a)</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_devido_total|floatformat:2 }}</th>
+                            </tr>
+                          </thead>
+                          <thead>
+                            <tr class="table-success">
+                              <th colspan="2">IMPOSTO RETIDO*(b)</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_retido_total|floatformat:2 }}</th>
+                            </tr>
+                          </thead>
+                          <thead>
+                            <tr class="table-success">
+                              <th colspan="2">IMPOSTO A PROVISIONAR*(c=a-b)</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_total|floatformat:2 }}</th>
+                            </tr>
+                          </thead>
+                          <thead>
+                            <tr class="table-success">
+                              <th colspan="2">RECEITA LÍQUIDA (r-a)</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_liquida|floatformat:2 }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr><th colspan="2">DESPESAS (-)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
+                            <tr><td>1</td><td>Despesa com rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+                            <tr><td>2</td><td>Despesa sem rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
+                            <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
+                          </tbody>
+                          <thead>
+                            <tr style="background-color: #343a40 !important; color: white !important;">
+                              <th colspan="2" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">SALDO A TRANSFERIR (=)</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.saldo_a_transferir|floatformat:2 }}</th>
+                            </tr>
+                          </thead>
                         </table>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="col-lg-6">
-                  <div class="card shadow-sm border-success">
-                    <div class="card-header bg-success bg-opacity-10 border-success fw-bold px-3 py-2">
-                      <span class="bi bi-calculator text-success me-2"></span> Resumo Conta Corrente
+                  <div class="card shadow-sm">
+                    <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+                      <div class="d-flex align-items-center">
+                        <span class="bi bi-calculator me-2" style="color: #ffffff !important; font-size: 1.1em;"></span>
+                        <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Resumo Conta Corrente</h4>
+                      </div>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card-body p-4">
                       <div class="table-responsive">
-                        <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
+                        <table class="table table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
                           <tr><th colspan="2">SALDO ANTERIOR (=)</th><th>{{ saldo_anterior|floatformat:2 }}</th></tr>
                           <tr><th colspan="2">TOTAL CRÉDITOS (+)</th><th>{{ total_creditos_conta_corrente|floatformat:2 }}</th></tr>
                           <tr><th colspan="2">TOTAL DÉBITOS (-)</th><th>{{ total_debitos_conta_corrente|floatformat:2 }}</th></tr>
@@ -141,14 +246,16 @@ document.addEventListener('DOMContentLoaded', function() {
               <!-- Tabela de Movimentação Financeira posicionada abaixo do Demonstrativo -->
               <div class="row g-4 mb-4">
                 <div class="col-12">
-                  <div class="card shadow-sm border-secondary">
-                    <div class="card-header bg-secondary bg-opacity-10 border-secondary fw-bold d-flex align-items-center">
-                      <i class="fas fa-exchange-alt text-secondary me-2"></i>
-                      <span>Movimentações Financeiras</span>
+                  <div class="card shadow-sm">
+                    <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+                      <div class="d-flex align-items-center">
+                        <i class="fas fa-exchange-alt me-2" style="color: #ffffff !important; font-size: 1.1em;"></i>
+                        <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Movimentações Financeiras</h4>
+                      </div>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card-body p-4">
                       <div class="table-responsive">
-                        <table class="table table-sm table-bordered table-striped table-hover mb-0 table-movimentacoes-financeiras" style="width:auto;">
+                        <table class="table table-striped table-hover mb-0 table-movimentacoes-financeiras" style="width:auto;">
                           <tr>
                             <th style="min-width:28px;max-width:32px;width:32px;">Id</th>
                             <th style="min-width:50px;max-width:60px;width:60px;">Data</th>
@@ -173,14 +280,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 <!-- Tabela: Extrato Conta Corrente -->
                 <div class="row g-4 mb-4">
                   <div class="col-12">
-                    <div class="card shadow-sm border-primary">
-                      <div class="card-header bg-primary bg-opacity-10 border-primary fw-bold d-flex align-items-center">
-                        <i class="fas fa-university text-primary me-2"></i>
-                          <span>Extrato Conta Corrente</span>
+                    <div class="card shadow-sm">
+                      <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+                        <div class="d-flex align-items-center">
+                          <i class="fas fa-university me-2" style="color: #ffffff !important; font-size: 1.1em;"></i>
+                          <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Extrato Conta Corrente</h4>
+                        </div>
                       </div>
-                      <div class="card-body p-0">
+                      <div class="card-body p-4">
                         <div class="table-responsive">
-                          <table class="table table-sm table-bordered table-striped table-hover mb-0 table-movimentacoes-conta-corrente" style="width:auto;">
+                          <table class="table table-striped table-hover mb-0 table-movimentacoes-conta-corrente" style="width:auto;">
                             <tr>
                               <th>Id</th>
                               <th>Data</th>
@@ -225,15 +334,16 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="row g-4 mb-4">
             <div class="col-12">
-              <div class="card shadow-sm border-info mb-4">
-                <div class="card-header bg-info bg-opacity-10 border-info fw-bold d-flex align-items-center">
-                  <i class="fas fa-hand-holding-usd text-info me-2"></i>
-                  <span>Relação de Despesas com Rateio</span>
+              <div class="card shadow-sm mb-4">
+                <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-hand-holding-usd me-2" style="color: #ffffff !important; font-size: 1.1em;"></i>
+                    <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Relação de Despesas com Rateio</h4>
+                  </div>
                 </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive rounded shadow-sm p-3 bg-light">
-                    <div class="bg-white rounded-2 p-2">
-                      <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto table-despesas-com-rateio" style="width:100%;min-width:1200px;max-width:none;">
+                <div class="card-body p-4">
+                  <div class="table-responsive">
+                      <table class="table table-striped table-hover mb-0 w-auto table-despesas-com-rateio" style="width:100%;min-width:1200px;max-width:none;">
                         <tr>
                           <th style="min-width:110px;">Data</th>
                           <th style="min-width:180px;">Grupo da despesa</th>
@@ -263,15 +373,17 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="col-12">
               <!-- Tabela de Despesa sem Rateio -->
-              <div class="card shadow-sm border-warning mb-4">
-                <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold d-flex align-items-center">
-                  <i class="fas fa-user-minus text-warning me-2"></i>
-                  <span>Relação de Despesas sem Rateio</span>
+              <div class="card shadow-sm mb-4">
+                <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user-minus me-2" style="color: #ffffff !important; font-size: 1.1em;"></i>
+                    <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Relação de Despesas sem Rateio</h4>
+                  </div>
                 </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive rounded shadow-sm p-3 bg-light">
-                    <div class="bg-white rounded-2 p-2">
-                      <table class="table table-sm table-bordered table-striped table-hover mb-0 w-auto" style="min-width:600px;max-width:800px;">
+                </div>
+                <div class="card-body p-4">
+                  <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0 w-auto" style="min-width:600px;max-width:800px;">
                         <tr>
                           <th>Data</th>
                           <th>Grupo</th>
@@ -298,12 +410,14 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
             </div>
           </div>
-          <div class="card shadow-sm border-warning mb-4">
-            <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold d-flex align-items-center">
-              <i class="fas fa-file-invoice-dollar text-warning me-2"></i>
-              <span>Notas Fiscais Recebidas no Mês</span>
+          <div class="card shadow-sm mb-4">
+            <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-file-invoice-dollar me-2" style="color: #ffffff !important; font-size: 1.1em;"></i>
+                <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Notas Fiscais Recebidas no Mês</h4>
+              </div>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-4">
               <div class="table-responsive rounded shadow-sm p-3 bg-light">
                 <div class="bg-white rounded-2 p-2">
                   <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
@@ -328,15 +442,16 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           
           <!-- Tabela: Notas Fiscais Emitidas no Mês -->
-          <div class="card shadow-sm border-info mb-4">
-            <div class="card-header bg-info bg-opacity-10 border-info fw-bold d-flex align-items-center">
-              <i class="fas fa-file-invoice text-info me-2"></i>
-              <span>Notas Fiscais Emitidas no Mês</span>
+          <div class="card shadow-sm mb-4">
+            <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-file-invoice me-2" style="color: #ffffff !important; font-size: 1.1em;"></i>
+                <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Notas Fiscais Emitidas no Mês</h4>
+              </div>
             </div>
-            <div class="card-body p-0">
-              <div class="table-responsive rounded shadow-sm p-3 bg-light">
-                <div class="bg-white rounded-2 p-2">
-                  <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
+            <div class="card-body p-4">
+              <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
                     <tr><th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Tomador</th><th>% Rateio</th><th>Valor bruto</th><th>ISS</th><th>PIS</th><th>COFINS</th><th>IRPJ</th><th>CSLL</th><th>Outros</th><th>Valor líquido</th></tr>
                     {% for nota in relatorio.notas_fiscais_emitidas %}
                     <tr><td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.tomador }}</td><td>{{ nota.percentual_rateio|floatformat:2 }}%</td><td>{{ nota.valor_bruto|floatformat:2 }}</td><td>{{ nota.iss|floatformat:2 }}</td><td>{{ nota.pis|floatformat:2 }}</td><td>{{ nota.cofins|floatformat:2 }}</td><td>{{ nota.irpj|floatformat:2 }}</td><td>{{ nota.csll|floatformat:2 }}</td><td>{{ nota.outros|floatformat:2 }}</td><td>{{ nota.valor_liquido|floatformat:2 }}</td></tr>
@@ -352,11 +467,10 @@ document.addEventListener('DOMContentLoaded', function() {
                       <td>{{ relatorio.total_nf_emitidas_valor_liquido|floatformat:2 }}</td>
                     </tr>
                   </table>
-                </div>
               </div>
             </div>
           </div>
-                    <footer class="text-center text-muted mt-5 mb-2" style="font-size:0.95rem;">Relatório gerado em {{ relatorio.data_geracao }}</footer>
+          <footer class="text-center text-muted mt-5 mb-2" style="font-size:0.95rem;">Relatório gerado em {{ relatorio.data_geracao }}</footer>
           
           <!-- Seção de Informações Complementares integrada -->
           <div class="row g-3 mt-4">
