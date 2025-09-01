@@ -160,54 +160,53 @@ document.addEventListener('DOMContentLoaded', function() {
                         <table class="table table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
                           <thead>
                             <tr class="table-secondary">
-                              <th style="width: 8%;">#</th>
-                              <th style="width: 67%;">Descrição</th>
+                              <th style="width: 75%;">Descrição</th>
                               <th style="width: 25%; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; color: #1e3a5f !important;">Valor</th>
                             </tr>
                           </thead>
                           <thead>
                             <tr class="table-success">
-                              <th colspan="2">RECEITA BRUTA RECEBIDA* (r)</th>
+                              <th>RECEITA BRUTA RECEBIDA* (r)</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><td>1</td><td>serviços de consultas e plantões</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
-                            <tr><td>2</td><td>Serviços de vacinação, exames, procedimentos</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
+                            <tr><td>serviços de consultas e plantões</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
+                            <tr><td>Serviços de vacinação, exames, procedimentos</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
                           </tbody>
                           <thead>
                             <tr class="table-success">
-                              <th colspan="2">IMPOSTO DEVIDO*(a)</th>
+                              <th>IMPOSTO DEVIDO*(a)</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_devido_total|floatformat:2 }}</th>
                             </tr>
                           </thead>
                           <thead>
                             <tr class="table-success">
-                              <th colspan="2">IMPOSTO RETIDO*(b)</th>
+                              <th>IMPOSTO RETIDO*(b)</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_retido_total|floatformat:2 }}</th>
                             </tr>
                           </thead>
                           <thead>
                             <tr class="table-success">
-                              <th colspan="2">IMPOSTO A PROVISIONAR*(c=a-b)</th>
+                              <th>IMPOSTO A PROVISIONAR*(c=a-b)</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_total|floatformat:2 }}</th>
                             </tr>
                           </thead>
                           <thead>
                             <tr class="table-success">
-                              <th colspan="2">RECEITA LÍQUIDA (r-a)</th>
+                              <th>RECEITA LÍQUIDA (r-a)</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_liquida|floatformat:2 }}</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><th colspan="2">DESPESAS (-)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
-                            <tr><td>1</td><td>Despesa com rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
-                            <tr><td>2</td><td>Despesa sem rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
-                            <tr><th colspan="2">SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
+                            <tr><th>DESPESAS (-)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
+                            <tr><td>Despesa com rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+                            <tr><td>Despesa sem rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
+                            <tr><th>SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
                           </tbody>
                           <thead>
                             <tr style="background-color: #343a40 !important; color: white !important;">
-                              <th colspan="2" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">SALDO A TRANSFERIR (=)</th>
+                              <th style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">SALDO A TRANSFERIR (=)</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.saldo_a_transferir|floatformat:2 }}</th>
                             </tr>
                           </thead>
@@ -227,15 +226,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body p-4">
                       <div class="table-responsive">
                         <table class="table table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
-                          <tr><th colspan="2">SALDO ANTERIOR (=)</th><th>{{ saldo_anterior|floatformat:2 }}</th></tr>
-                          <tr><th colspan="2">TOTAL CRÉDITOS (+)</th><th>{{ total_creditos_conta_corrente|floatformat:2 }}</th></tr>
-                          <tr><th colspan="2">TOTAL DÉBITOS (-)</th><th>{{ total_debitos_conta_corrente|floatformat:2 }}</th></tr>
-                          <tr class="linha-total"><th colspan="2">SALDO CONTA CORRENTE (=)</th><th>{{ saldo_conta_corrente|floatformat:2 }}</th></tr>
-                          {% if mes_fechado %}
-                          <tr><th colspan="3" class="text-success text-center">✓ Período Fechado</th></tr>
-                          {% else %}
-                          <tr><th colspan="3" class="text-warning text-center">⚠ Período Não Fechado</th></tr>
-                          {% endif %}
+                          <thead>
+                            <tr class="table-success">
+                              <th>Descrição</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr><th>SALDO ANTERIOR (=)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ saldo_anterior|floatformat:2 }}</th></tr>
+                            <tr><th>TOTAL CRÉDITOS (+)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_creditos_conta_corrente|floatformat:2 }}</th></tr>
+                            <tr><th>TOTAL DÉBITOS (-)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_debitos_conta_corrente|floatformat:2 }}</th></tr>
+                            <tr style="background-color: #343a40 !important; color: white !important;"><th style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">SALDO CONTA CORRENTE (=)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ saldo_conta_corrente|floatformat:2 }}</th></tr>
+                            {% if mes_fechado %}
+                            <tr><th colspan="2" class="text-success text-center">✓ Período Fechado</th></tr>
+                            {% else %}
+                            <tr><th colspan="2" class="text-warning text-center">⚠ Período Não Fechado</th></tr>
+                            {% endif %}
+                          </tbody>
                         </table>
                       </div>
                     </div>
@@ -256,21 +263,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body p-4">
                       <div class="table-responsive">
                         <table class="table table-striped table-hover mb-0 table-movimentacoes-financeiras" style="width:auto;">
-                          <tr>
-                            <th style="min-width:28px;max-width:32px;width:32px;">Id</th>
-                            <th style="min-width:50px;max-width:60px;width:60px;">Data</th>
-                            <th style="min-width:220px;max-width:320px;width:320px;">Descrição</th>
-                            <th style="min-width:50px;max-width:60px;width:60px;">Valor total</th>
-                          </tr>
-                          {% for mov in relatorio.movimentacoes_financeiras %}
-                          <tr>
-                            <td>{{ mov.id }}</td>
-                            <td>{{ mov.data }}</td>
-                            <td>{{ mov.descricao }}</td>
-                            <td>{{ mov.valor|floatformat:2 }}</td>
-                          </tr>
-                          {% endfor %}
-                          <tr class="linha-total"><th colspan="3">Saldo</th><td>{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</td></tr>
+                          <thead>
+                            <tr class="table-success">
+                              <th style="min-width:28px;max-width:32px;width:32px;">Id</th>
+                              <th style="min-width:50px;max-width:60px;width:60px;">Data</th>
+                              <th style="min-width:220px;max-width:320px;width:320px;">Descrição</th>
+                              <th style="min-width:50px;max-width:60px;width:60px; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for mov in relatorio.movimentacoes_financeiras %}
+                            <tr>
+                              <td>{{ mov.id }}</td>
+                              <td>{{ mov.data }}</td>
+                              <td>{{ mov.descricao }}</td>
+                              <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ mov.valor|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr style="background-color: #343a40 !important; color: white !important;"><th colspan="3" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">Saldo</th><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</td></tr>
+                          </tbody>
                         </table>
                       </div>
                     </div>
@@ -290,40 +301,44 @@ document.addEventListener('DOMContentLoaded', function() {
                       <div class="card-body p-4">
                         <div class="table-responsive">
                           <table class="table table-striped table-hover mb-0 table-movimentacoes-conta-corrente" style="width:auto;">
-                            <tr>
-                              <th>Id</th>
-                              <th>Data</th>
-                              <th>Nota Fiscal</th>
-                              <th>Descrição</th>
-                              <th>Valor</th>
-                              <th>Instrumento Bancário</th>
-                            </tr>
-                            {% for mov in relatorio.movimentacoes_conta_corrente %}
-                            <tr>
-                              <td>{{ mov.id }}</td>
-                              <td>{{ mov.data_movimentacao|date:"d/m/Y" }}</td>
-                              <td>
-                                {% if mov.nota_fiscal %}
-                                  NF {{ mov.nota_fiscal.numero }}
-                                {% else %}
-                                  —
-                                {% endif %}
-                              </td>
-                              <td>{{ mov.descricao_movimentacao }}</td>
-                              <td>
-                                {% if mov.valor > 0 %}
-                                  <span class="text-success fw-bold">{{ mov.valor|floatformat:2 }}</span>
-                                {% else %}
-                                  <span class="text-danger fw-bold">{{ mov.valor|floatformat:2 }}</span>
-                                {% endif %}
-                              </td>
-                              <td>{{ mov.instrumento_bancario }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                              <td colspan="6" class="text-center text-muted">Nenhuma movimentação encontrada.</td>
-                            </tr>
-                            {% endfor %}
+                            <thead>
+                              <tr class="table-success">
+                                <th>Id</th>
+                                <th>Data</th>
+                                <th>Nota Fiscal</th>
+                                <th>Descrição</th>
+                                <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor</th>
+                                <th>Instrumento Bancário</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for mov in relatorio.movimentacoes_conta_corrente %}
+                              <tr>
+                                <td>{{ mov.id }}</td>
+                                <td>{{ mov.data_movimentacao|date:"d/m/Y" }}</td>
+                                <td>
+                                  {% if mov.nota_fiscal %}
+                                    NF {{ mov.nota_fiscal.numero }}
+                                  {% else %}
+                                    —
+                                  {% endif %}
+                                </td>
+                                <td>{{ mov.descricao_movimentacao }}</td>
+                                <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">
+                                  {% if mov.valor > 0 %}
+                                    <span class="text-success fw-bold">{{ mov.valor|floatformat:2 }}</span>
+                                  {% else %}
+                                    <span class="text-danger fw-bold">{{ mov.valor|floatformat:2 }}</span>
+                                  {% endif %}
+                                </td>
+                                <td>{{ mov.instrumento_bancario }}</td>
+                              </tr>
+                              {% empty %}
+                              <tr>
+                                <td colspan="6" class="text-center text-muted">Nenhuma movimentação encontrada.</td>
+                              </tr>
+                              {% endfor %}
+                            </tbody>
                           </table>
                         </div>
                       </div>
@@ -344,27 +359,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card-body p-4">
                   <div class="table-responsive">
                       <table class="table table-striped table-hover mb-0 w-auto table-despesas-com-rateio" style="width:100%;min-width:1200px;max-width:none;">
-                        <tr>
-                          <th style="min-width:110px;">Data</th>
-                          <th style="min-width:180px;">Grupo da despesa</th>
-                          <th style="min-width:260px;">Descrição</th>
-                          <th style="min-width:120px;">Valor Despesa</th>
-                          <th style="min-width:120px;">Percentual Rateio</th>
-                          <th style="min-width:120px;">Valor Total</th>
-                          <th style="min-width:120px;">Valor Sócio</th>
-                        </tr>
-                        {% for desp in relatorio.despesas_com_rateio|dictsort:"data" %}
-                        <tr>
-                          <td>{{ desp.data }}</td>
-                          <td>{{ desp.grupo }}</td>
-                          <td>{{ desp.descricao }}</td>
-                          <td>{{ desp.valor_total|floatformat:2 }}</td>
-                          <td>{{ desp.rateio_percentual|floatformat:2 }}%</td>
-                          <td>{{ desp.valor_total|floatformat:2 }}</td>
-                          <td>{{ desp.valor_socio|floatformat:2 }}</td>
-                        </tr>
-                        {% endfor %}
-                        <tr class="linha-total"><th colspan="6">Total Sócio</th><td>{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+                        <thead>
+                          <tr class="table-success">
+                            <th style="min-width:110px;">Data</th>
+                            <th style="min-width:180px;">Grupo da despesa</th>
+                            <th style="min-width:260px;">Descrição</th>
+                            <th style="min-width:120px; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor Despesa</th>
+                            <th style="min-width:120px; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Percentual Rateio</th>
+                            <th style="min-width:120px; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor Total</th>
+                            <th style="min-width:120px; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor Sócio</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for desp in relatorio.despesas_com_rateio|dictsort:"data" %}
+                          <tr>
+                            <td>{{ desp.data }}</td>
+                            <td>{{ desp.grupo }}</td>
+                            <td>{{ desp.descricao }}</td>
+                            <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ desp.valor_total|floatformat:2 }}</td>
+                            <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ desp.rateio_percentual|floatformat:2 }}%</td>
+                            <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ desp.valor_total|floatformat:2 }}</td>
+                            <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ desp.valor_socio|floatformat:2 }}</td>
+                          </tr>
+                          {% endfor %}
+                          <tr style="background-color: #343a40 !important; color: white !important;"><th colspan="6" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">Total Sócio</th><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
+                        </tbody>
                       </table>
                     </div>
                   </div>
@@ -380,32 +399,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Relação de Despesas sem Rateio</h4>
                   </div>
                 </div>
-                </div>
                 <div class="card-body p-4">
                   <div class="table-responsive">
                     <table class="table table-striped table-hover mb-0 w-auto" style="min-width:600px;max-width:800px;">
-                        <tr>
+                      <thead>
+                        <tr class="table-success">
                           <th>Data</th>
                           <th>Grupo</th>
                           <th>Descrição</th>
-                          <th>Valor Total (R$)</th>
+                          <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor Total</th>
                         </tr>
+                      </thead>
+                      <tbody>
                         {% for desp in relatorio.despesas_sem_rateio|dictsort:"data" %}
                         <tr>
                           <td>{{ desp.data }}</td>
                           <td>{{ desp.grupo }}</td>
                           <td>{{ desp.descricao }}</td>
-                          <td class="text-end">{{ desp.valor_total|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ desp.valor_total|floatformat:2 }}</td>
                         </tr>
                         {% empty %}
                         <tr>
                           <td colspan="4" class="text-center text-muted">Nenhuma despesa sem rateio encontrada para o sócio neste período.</td>
                         </tr>
                         {% endfor %}
-                        <tr class="linha-total"><th colspan="3">Total</th><td class="text-end">{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
-                      </table>
-                    </div>
+                        <tr style="background-color: #343a40 !important; color: white !important;"><th colspan="3" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">Total</th><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
+                      </tbody>
+                    </table>
                   </div>
+                </div>
                 </div>
               </div>
             </div>
@@ -421,20 +443,47 @@ document.addEventListener('DOMContentLoaded', function() {
               <div class="table-responsive rounded shadow-sm p-3 bg-light">
                 <div class="bg-white rounded-2 p-2">
                   <table class="table table-sm table-bordered table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
-                    <tr><th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Tomador</th><th>% Rateio</th><th>Valor bruto</th><th>ISS</th><th>PIS</th><th>COFINS</th><th>IRPJ</th><th>CSLL</th><th>Outros</th><th>Valor líquido</th></tr>
-                    {% for nota in relatorio.notas_fiscais %}
-                    <tr><td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.tomador }}</td><td>{{ nota.percentual_rateio|floatformat:2 }}%</td><td>{{ nota.valor_bruto|floatformat:2 }}</td><td>{{ nota.iss|floatformat:2 }}</td><td>{{ nota.pis|floatformat:2 }}</td><td>{{ nota.cofins|floatformat:2 }}</td><td>{{ nota.irpj|floatformat:2 }}</td><td>{{ nota.csll|floatformat:2 }}</td><td>{{ nota.outros|floatformat:2 }}</td><td>{{ nota.valor_liquido|floatformat:2 }}</td></tr>
-                    {% endfor %}
-                    <tr class="linha-total"><th colspan="7">Totais</th>
-                      <td>{{ relatorio.total_nf_valor_bruto|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_iss|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_pis|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_cofins|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_irpj|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_csll|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_outros|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_valor_liquido|floatformat:2 }}</td>
-                    </tr>
+                    <thead>
+                      <tr class="table-success">
+                        <th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Tomador</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">% Rateio</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor bruto</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">ISS</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">PIS</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">COFINS</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">IRPJ</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">CSLL</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Outros</th>
+                        <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor líquido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for nota in relatorio.notas_fiscais %}
+                      <tr>
+                        <td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.tomador }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.percentual_rateio|floatformat:2 }}%</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.valor_bruto|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.iss|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.pis|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.cofins|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.irpj|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.csll|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.outros|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.valor_liquido|floatformat:2 }}</td>
+                      </tr>
+                      {% endfor %}
+                      <tr style="background-color: #343a40 !important; color: white !important;">
+                        <th colspan="7" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">Totais</th>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_valor_bruto|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_iss|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_pis|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_cofins|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_irpj|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_csll|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_outros|floatformat:2 }}</td>
+                        <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_valor_liquido|floatformat:2 }}</td>
+                      </tr>
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -452,20 +501,47 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-body p-4">
               <div class="table-responsive">
                 <table class="table table-striped table-hover mb-0" style="width:100%;min-width:1200px;max-width:none;">
-                    <tr><th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Tomador</th><th>% Rateio</th><th>Valor bruto</th><th>ISS</th><th>PIS</th><th>COFINS</th><th>IRPJ</th><th>CSLL</th><th>Outros</th><th>Valor líquido</th></tr>
-                    {% for nota in relatorio.notas_fiscais_emitidas %}
-                    <tr><td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.tomador }}</td><td>{{ nota.percentual_rateio|floatformat:2 }}%</td><td>{{ nota.valor_bruto|floatformat:2 }}</td><td>{{ nota.iss|floatformat:2 }}</td><td>{{ nota.pis|floatformat:2 }}</td><td>{{ nota.cofins|floatformat:2 }}</td><td>{{ nota.irpj|floatformat:2 }}</td><td>{{ nota.csll|floatformat:2 }}</td><td>{{ nota.outros|floatformat:2 }}</td><td>{{ nota.valor_liquido|floatformat:2 }}</td></tr>
-                    {% endfor %}
-                    <tr class="linha-total"><th colspan="7">Totais</th>
-                      <td>{{ relatorio.total_nf_emitidas_valor_bruto|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_emitidas_iss|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_emitidas_pis|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_emitidas_cofins|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_emitidas_irpj|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_emitidas_csll|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_emitidas_outros|floatformat:2 }}</td>
-                      <td>{{ relatorio.total_nf_emitidas_valor_liquido|floatformat:2 }}</td>
+                  <thead>
+                    <tr class="table-success">
+                      <th>Id</th><th>Número</th><th>Tp aliquota</th><th>Data Emissão</th><th>Data Recebimento</th><th>Tomador</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">% Rateio</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor bruto</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">ISS</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">PIS</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">COFINS</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">IRPJ</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">CSLL</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Outros</th>
+                      <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor líquido</th>
                     </tr>
+                  </thead>
+                  <tbody>
+                    {% for nota in relatorio.notas_fiscais_emitidas %}
+                    <tr>
+                      <td>{{ nota.id }}</td><td>{{ nota.numero }}</td><td>{{ nota.tp_aliquota }}</td><td>{{ nota.data_emissao }}</td><td>{{ nota.data_recebimento }}</td><td>{{ nota.tomador }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.percentual_rateio|floatformat:2 }}%</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.valor_bruto|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.iss|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.pis|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.cofins|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.irpj|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.csll|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.outros|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ nota.valor_liquido|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background-color: #343a40 !important; color: white !important;">
+                      <th colspan="7" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">Totais</th>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_valor_bruto|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_iss|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_pis|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_cofins|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_irpj|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_csll|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_outros|floatformat:2 }}</td>
+                      <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.total_nf_emitidas_valor_liquido|floatformat:2 }}</td>
+                    </tr>
+                  </tbody>
                   </table>
               </div>
             </div>
@@ -548,50 +624,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card-body p-0">
                   <div class="table-responsive">
                     <table class="table table-sm table-bordered table-striped table-hover mb-0" style="min-width:480px;max-width:600px;">
-                      <thead class="table-light">
+                      <thead class="table-success">
                         <tr>
                           <th style="width: 25%;" class="text-center">Imposto</th>
-                          <th style="width: 25%;" class="text-center">Devido</th>
-                          <th style="width: 25%;" class="text-center">Retido</th>
-                          <th style="width: 25%;" class="text-center">A Pagar</th>
+                          <th style="width: 25%; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Devido</th>
+                          <th style="width: 25%; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Retido</th>
+                          <th style="width: 25%; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">A Pagar</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
                           <td class="fw-bold">PIS</td>
-                          <td class="text-end">R$ {{ relatorio.total_pis_devido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_pis_retido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_pis|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_pis_devido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_pis_retido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_pis|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">COFINS</td>
-                          <td class="text-end">R$ {{ relatorio.total_cofins_devido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_cofins_retido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_cofins|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_cofins_devido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_cofins_retido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_cofins|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">IRPJ</td>
-                          <td class="text-end">R$ {{ relatorio.total_irpj_devido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_irpj_retido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_irpj|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_devido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_retido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">CSLL</td>
-                          <td class="text-end">R$ {{ relatorio.total_csll_devido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_csll_retido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_csll|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_csll_devido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_csll_retido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_csll|floatformat:2 }}</td>
                         </tr>
                         <tr>
                           <td class="fw-bold">ISSQN</td>
-                          <td class="text-end">R$ {{ relatorio.total_iss_devido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_iss_retido|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.total_iss|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_iss_devido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_iss_retido|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_iss|floatformat:2 }}</td>
                         </tr>
-                        <tr class="table-primary fw-bold">
-                          <td class="fw-bold">TOTAL</td>
-                          <td class="text-end">R$ {{ relatorio.impostos_devido_total|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.impostos_retido_total|floatformat:2 }}</td>
-                          <td class="text-end">R$ {{ relatorio.impostos_total|floatformat:2 }}</td>
+                        <tr style="background-color: #343a40 !important; color: white !important;">
+                          <td class="fw-bold" style="background-color: #343a40 !important; color: white !important;">TOTAL</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.impostos_devido_total|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.impostos_retido_total|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.impostos_total|floatformat:2 }}</td>
                         </tr>
                       </tbody>
                     </table>
