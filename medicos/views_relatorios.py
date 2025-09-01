@@ -375,6 +375,8 @@ def relatorio_mensal_socio(request, empresa_id):
     context = _contexto_base(request, empresa=empresa, menu_nome='Demonstrativo', cenario_nome='Relatório Mensal Sócio')
     print(f"DEBUG View: total_receitas do relatorio_dict = {relatorio_dict.get('total_receitas', 'NÃO ENCONTRADO')}")
     print(f"DEBUG View: total_despesas_outros do relatorio_dict = {relatorio_dict.get('total_despesas_outros', 'NÃO ENCONTRADO')}")
+    print(f"DEBUG View: base_consultas_socio_regime = {relatorio_dict.get('base_consultas_socio_regime', 'NÃO ENCONTRADO')}")
+    print(f"DEBUG View: base_outros_socio_regime = {relatorio_dict.get('base_outros_socio_regime', 'NÃO ENCONTRADO')}")
     context.update({
         'relatorio': relatorio,
         # Regra do projeto: título deve ser passado via 'titulo_pagina'
@@ -405,9 +407,17 @@ def relatorio_mensal_socio(request, empresa_id):
         'base_calculo_outros_ir': relatorio_dict.get('base_calculo_outros_ir', 0),
         'base_consultas_medicas': relatorio_dict.get('base_consultas_medicas', 0),
         'base_outros_servicos': relatorio_dict.get('base_outros_servicos', 0),
+        'base_consultas_socio_regime': relatorio_dict.get('base_consultas_socio_regime', 0),
+        'base_outros_socio_regime': relatorio_dict.get('base_outros_socio_regime', 0),
         'valor_base_adicional': relatorio_dict.get('valor_base_adicional', 0),
         'excedente_adicional': relatorio_dict.get('excedente_adicional', 0),
         'aliquota_adicional': relatorio_dict.get('aliquota_adicional', 0),
+        # Alíquotas dos impostos
+        'aliquota_pis': relatorio_dict.get('aliquota_pis', 0),
+        'aliquota_cofins': relatorio_dict.get('aliquota_cofins', 0),
+        'aliquota_irpj': relatorio_dict.get('aliquota_irpj', 0),
+        'aliquota_csll': relatorio_dict.get('aliquota_csll', 0),
+        'aliquota_iss': relatorio_dict.get('aliquota_iss', 0),
     })
     
     return render(request, 'relatorios/relatorio_mensal_socio.html', context)

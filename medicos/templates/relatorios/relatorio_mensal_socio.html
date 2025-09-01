@@ -668,32 +668,44 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                       </thead>
                       <tbody>
+                        <tr class="table-info">
+                          <td class="fw-bold">Base Consultas Médicas</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ base_consultas_socio_regime|floatformat:2|default:"0,00" }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">-</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">-</td>
+                        </tr>
+                        <tr class="table-info">
+                          <td class="fw-bold">Base Outros Serviços</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ base_outros_socio_regime|floatformat:2|default:"0,00" }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">-</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">-</td>
+                        </tr>
                         <tr>
-                          <td class="fw-bold">PIS</td>
+                          <td class="fw-bold">PIS ({{ aliquota_pis|floatformat:2 }}%)</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_pis_devido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_pis_retido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_pis|floatformat:2 }}</td>
                         </tr>
                         <tr>
-                          <td class="fw-bold">COFINS</td>
+                          <td class="fw-bold">COFINS ({{ aliquota_cofins|floatformat:2 }}%)</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_cofins_devido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_cofins_retido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_cofins|floatformat:2 }}</td>
                         </tr>
                         <tr>
-                          <td class="fw-bold">IRPJ</td>
+                          <td class="fw-bold">IRPJ ({{ aliquota_irpj|floatformat:2 }}%)</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_devido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_retido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj|floatformat:2 }}</td>
                         </tr>
                         <tr>
-                          <td class="fw-bold">CSLL</td>
+                          <td class="fw-bold">CSLL ({{ aliquota_csll|floatformat:2 }}%)</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_csll_devido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_csll_retido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_csll|floatformat:2 }}</td>
                         </tr>
                         <tr>
-                          <td class="fw-bold">ISSQN</td>
+                          <td class="fw-bold">ISSQN ({{ aliquota_iss|floatformat:2 }}%)</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_iss_devido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_iss_retido|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_iss|floatformat:2 }}</td>
@@ -706,6 +718,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+                  <div class="px-3 py-2">
+                    <small class="text-muted fst-italic">* Cálculo imposto: por data de emissão da nota (regime competência) / por data de recebimento (regime caixa)</small>
                   </div>
                 </div>
               </div>

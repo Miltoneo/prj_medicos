@@ -269,6 +269,22 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     
     base_calculo_empresa = sum(float(nf.val_bruto or 0) for nf in notas_base_calculo)
     
+    # Calcular bases de consultas e outros serviços do sócio seguindo regime tributário
+    base_consultas_socio_regime = 0
+    base_outros_socio_regime = 0
+    
+    # Usar o mesmo queryset usado para base de cálculo dos impostos (notas_base_calculo)
+    # que já respeita o regime tributário da empresa
+    for nf in notas_base_calculo:
+        rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+        if rateio:
+            valor_bruto_rateio = float(rateio.valor_bruto_medico or 0)
+            # Classificar por tipo de serviço
+            if nf.tipo_servico == NotaFiscal.TIPO_SERVICO_CONSULTAS:
+                base_consultas_socio_regime += valor_bruto_rateio
+            else:
+                base_outros_socio_regime += valor_bruto_rateio
+    
     # Imposto retido: sempre considera data de recebimento
     notas_retidas = NotaFiscal.objects.filter(
         empresa_destinataria=empresa,
@@ -638,6 +654,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
         defaults=dados_modelo
     )
     relatorio_obj.save()  # Garantir persistência explícita
+    
     # Adicionar valor_adicional_rateio ao dicionário de contexto do template
     contexto = {'relatorio': relatorio_obj}
     contexto['valor_adicional_rateio'] = valor_adicional_rateio
@@ -667,6 +684,21 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None):
     contexto['valor_base_adicional'] = valor_base_adicional
     contexto['excedente_adicional'] = excedente_adicional
     contexto['aliquota_adicional'] = aliquota_adicional * 100  # Converter para percentual
+    
+    # Adicionar bases do sócio seguindo regime tributário
+    contexto['base_consultas_socio_regime'] = base_consultas_socio_regime
+    contexto['base_outros_socio_regime'] = base_outros_socio_regime
+    
+    # Adicionar alíquotas dos impostos para exibição no template
+    contexto['aliquota_pis'] = aliquota_pis
+    contexto['aliquota_cofins'] = aliquota_cofins
+    contexto['aliquota_irpj'] = aliquota_irpj
+    contexto['aliquota_csll'] = aliquota_csll
+    contexto['aliquota_iss'] = aliquota_iss
+    
+    # Debug para verificar valores
+    print(f"DEBUG Builder: base_consultas_socio_regime = {base_consultas_socio_regime}")
+    print(f"DEBUG Builder: base_outros_socio_regime = {base_outros_socio_regime}")
     
     # Incluir listas diretamente no contexto para uso imediato pela view
     contexto['lista_despesas_sem_rateio'] = lista_despesas_sem_rateio
