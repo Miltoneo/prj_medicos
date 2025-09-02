@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.financeiro import Financeiro, DescricaoMovimentacaoFinanceira
 from medicos.models.conta_corrente import MovimentacaoContaCorrente
-from medicos.models.despesas import DespesaSocio
+from medicos.models.despesas import DespesaSocio, DespesaRateada, ItemDespesaRateioMensal
 from django.conf import settings
 from django.utils import timezone
 
@@ -274,18 +274,21 @@ def criar_ou_atualizar_debito_despesa_socio(sender, instance, created, **kwargs)
           f"socio={bool(instance.socio)}, item={bool(instance.item_despesa)}")
     
     if condicoes_atendidas:
-        # Garantir que existe uma descrição específica para débito de despesa
+        # Criar descrição específica baseada no nome da despesa
+        descricao_despesa = instance.item_despesa.descricao if instance.item_despesa else "Despesa"
+        nome_descricao = f"Débito {descricao_despesa}"
+        
+        # Garantir que existe uma descrição específica para esta despesa
         descricao, _ = DescricaoMovimentacaoFinanceira.objects.get_or_create(
             empresa=instance.socio.empresa,
-            descricao='Débito - Despesa de Sócio',
+            descricao=nome_descricao,
             defaults={
                 'created_by': getattr(instance, 'created_by', None)
             }
         )
         
-        # Montar descrição detalhada conforme solicitado
-        descricao_despesa = instance.item_despesa.descricao if instance.item_despesa else "Despesa"
-        historico_detalhado = f"Débito - Despesa: {descricao_despesa} (Despesa Sócio ID: {instance.id})"
+        # Histórico complementar para identificação técnica
+        historico_detalhado = f"{nome_descricao} (Despesa Sócio ID: {instance.id})"
         
         # Dados do lançamento
         dados_lancamento = {
@@ -353,3 +356,245 @@ def remover_debito_despesa_socio(sender, instance, **kwargs):
         logger.info("ℹ️ Nenhum lançamento na conta corrente para remover")
     
     logger.info(f"=== REMOÇÃO DESPESA SÓCIO CONCLUÍDA ===")
+
+
+# =====================================================================================
+# SIGNALS PARA DESPESAS RATEADAS (DespesaRateada + ItemDespesaRateioMensal)
+# =====================================================================================
+
+@receiver(post_save, sender=DespesaRateada)
+def criar_ou_atualizar_debitos_despesa_rateada(sender, instance, created, **kwargs):
+    """
+    Signal disparado quando uma DespesaRateada é salva.
+    Cria ou atualiza lançamentos de débito na conta corrente para cada sócio com rateio.
+    
+    Regra: Toda despesa rateada gera lançamentos proporcionais na conta corrente
+    conforme o percentual de rateio configurado para cada sócio.
+    """
+    print(f"=== SIGNAL DESPESA RATEADA DISPARADO ===")
+    print(f"Despesa Rateada: ID {instance.id}")
+    print(f"Data: {instance.data}, Valor Total: R$ {instance.valor}")
+    print(f"Item: {instance.item_despesa}")
+    
+    logger.info(f"=== SIGNAL DESPESA RATEADA DISPARADO ===")
+    logger.info(f"Despesa Rateada: ID {instance.id}")
+    logger.info(f"Data: {instance.data}, Valor Total: R$ {instance.valor}")
+    logger.info(f"Item: {instance.item_despesa}")
+    
+    # VALIDAÇÃO: Despesa deve ter todos os dados necessários
+    condicoes_atendidas = (
+        instance.data and 
+        instance.valor and
+        instance.valor > 0 and
+        instance.item_despesa
+    )
+    
+    if not condicoes_atendidas:
+        print(f"❌ Condições não atendidas para processar despesa rateada")
+        logger.info(f"❌ Condições não atendidas para processar despesa rateada")
+        # Remover lançamentos existentes se despesa não tem dados completos
+        _remover_lancamentos_despesa_rateada(instance)
+        return
+    
+    # Calcular rateio para todos os sócios
+    rateios_calculados = instance.calcular_rateio_dinamico()
+    
+    if not rateios_calculados:
+        print(f"⚠️ Nenhum rateio configurado para esta despesa")
+        logger.info(f"⚠️ Nenhum rateio configurado para esta despesa")
+        # Remover lançamentos existentes se não há rateio
+        _remover_lancamentos_despesa_rateada(instance)
+        return
+    
+    print(f"📊 {len(rateios_calculados)} rateio(s) encontrado(s)")
+    logger.info(f"📊 {len(rateios_calculados)} rateio(s) encontrado(s)")
+    
+    # Processar cada rateio
+    for rateio in rateios_calculados:
+        socio = rateio['socio']
+        valor_apropriado = rateio['valor_rateio']
+        percentual = rateio['percentual']
+        
+        print(f"  → {socio}: {percentual}% = R$ {valor_apropriado:.2f}")
+        logger.info(f"  → {socio}: {percentual}% = R$ {valor_apropriado:.2f}")
+        
+        # Pular sócios com valor zero
+        if valor_apropriado <= 0:
+            continue
+            
+        # Buscar lançamento existente na conta corrente
+        historico_identificador = f'Despesa Rateada ID: {instance.id} - Sócio: {socio.id}'
+        lancamento_existente = MovimentacaoContaCorrente.objects.filter(
+            socio=socio,
+            historico_complementar__contains=historico_identificador
+        ).first()
+        
+        # Criar descrição específica baseada no nome da despesa
+        descricao_despesa = instance.item_despesa.descricao if instance.item_despesa else "Despesa"
+        nome_descricao = f"Débito {descricao_despesa}"
+        
+        # Garantir que existe uma descrição específica para esta despesa
+        descricao, _ = DescricaoMovimentacaoFinanceira.objects.get_or_create(
+            empresa=socio.empresa,
+            descricao=nome_descricao,
+            defaults={
+                'created_by': getattr(instance, 'created_by', None)
+            }
+        )
+        
+        # Montar descrição detalhada conforme padrão solicitado
+        historico_detalhado = f"{nome_descricao} (Rateio {percentual}% - {historico_identificador})"
+        
+        # Dados do lançamento
+        dados_lancamento = {
+            'descricao_movimentacao': descricao,
+            'socio': socio,
+            'data_movimentacao': instance.data,
+            'valor': -abs(valor_apropriado),  # Valor negativo = saída da conta (débito para o sócio)
+            'instrumento_bancario': None,
+            'numero_documento_bancario': '',
+            'historico_complementar': historico_detalhado,
+            'created_by': getattr(instance, 'created_by', None)
+        }
+        
+        if lancamento_existente:
+            # Atualizar lançamento existente
+            for campo, valor in dados_lancamento.items():
+                setattr(lancamento_existente, campo, valor)
+            lancamento_existente.save()
+            print(f"  ✅ Lançamento ATUALIZADO (ID: {lancamento_existente.id})")
+            logger.info(f"  ✅ Lançamento ATUALIZADO (ID: {lancamento_existente.id})")
+        else:
+            # Criar novo lançamento
+            novo_lancamento = MovimentacaoContaCorrente.objects.create(**dados_lancamento)
+            print(f"  ✅ Lançamento CRIADO (ID: {novo_lancamento.id})")
+            logger.info(f"  ✅ Lançamento CRIADO (ID: {novo_lancamento.id})")
+    
+    print(f"=== SIGNAL DESPESA RATEADA CONCLUÍDO ===")
+    logger.info(f"=== SIGNAL DESPESA RATEADA CONCLUÍDO ===")
+
+
+@receiver(pre_delete, sender=DespesaRateada)
+def remover_debitos_despesa_rateada(sender, instance, **kwargs):
+    """
+    Signal disparado ANTES de uma DespesaRateada ser excluída.
+    Remove automaticamente todos os lançamentos na conta corrente associados.
+    """
+    logger.info(f"=== REMOVENDO LANÇAMENTOS DESPESA RATEADA ===")
+    logger.info(f"Despesa Rateada: ID {instance.id}")
+    
+    _remover_lancamentos_despesa_rateada(instance)
+    
+    logger.info(f"=== REMOÇÃO DESPESA RATEADA CONCLUÍDA ===")
+
+
+def _remover_lancamentos_despesa_rateada(instance):
+    """
+    Função auxiliar para remover todos os lançamentos relacionados a uma despesa rateada.
+    """
+    historico_identificador = f'Despesa Rateada ID: {instance.id}'
+    lancamentos_cc = MovimentacaoContaCorrente.objects.filter(
+        historico_complementar__contains=historico_identificador
+    )
+    
+    count_lancamentos = lancamentos_cc.count()
+    if count_lancamentos > 0:
+        print(f"🗑️ Removendo {count_lancamentos} lançamento(s) da despesa rateada")
+        logger.info(f"Removendo {count_lancamentos} lançamento(s) na conta corrente")
+        for lancamento in lancamentos_cc:
+            logger.info(f"  - Lançamento ID: {lancamento.id}, Valor: R$ {lancamento.valor}, Data: {lancamento.data_movimentacao}")
+        
+        lancamentos_cc.delete()
+        print(f"✅ {count_lancamentos} lançamento(s) removido(s)")
+        logger.info(f"✅ {count_lancamentos} lançamento(s) conta corrente removido(s)")
+    else:
+        print(f"ℹ️ Nenhum lançamento para remover")
+        logger.info("ℹ️ Nenhum lançamento na conta corrente para remover")
+
+
+@receiver(post_save, sender=ItemDespesaRateioMensal)
+def atualizar_despesas_rateadas_por_mudanca_rateio(sender, instance, created, **kwargs):
+    """
+    Signal disparado quando um ItemDespesaRateioMensal é salvo.
+    Recalcula e atualiza todos os lançamentos de despesas rateadas afetados.
+    
+    Regra: Mudanças no percentual de rateio devem ser refletidas em todas as 
+    despesas rateadas do item no mês de referência.
+    """
+    print(f"=== SIGNAL RATEIO MENSAL DISPARADO ===")
+    print(f"Item: {instance.item_despesa}, Sócio: {instance.socio}")
+    print(f"Data Ref: {instance.data_referencia}, Percentual: {instance.percentual_rateio}%")
+    
+    logger.info(f"=== SIGNAL RATEIO MENSAL DISPARADO ===")
+    logger.info(f"Item: {instance.item_despesa}, Sócio: {instance.socio}")
+    logger.info(f"Data Ref: {instance.data_referencia}, Percentual: {instance.percentual_rateio}%")
+    
+    # Buscar todas as despesas rateadas do item no mês de referência
+    ano = instance.data_referencia.year
+    mes = instance.data_referencia.month
+    
+    despesas_afetadas = DespesaRateada.objects.filter(
+        item_despesa=instance.item_despesa,
+        data__year=ano,
+        data__month=mes
+    )
+    
+    count_despesas = despesas_afetadas.count()
+    print(f"📊 {count_despesas} despesa(s) rateada(s) afetada(s)")
+    logger.info(f"📊 {count_despesas} despesa(s) rateada(s) afetada(s)")
+    
+    # Reprocessar cada despesa afetada
+    for despesa in despesas_afetadas:
+        print(f"  → Reprocessando despesa ID {despesa.id}")
+        logger.info(f"  → Reprocessando despesa ID {despesa.id}")
+        
+        # Disparar signal de atualização da despesa rateada
+        criar_ou_atualizar_debitos_despesa_rateada(DespesaRateada, despesa, created=False)
+    
+    print(f"=== SIGNAL RATEIO MENSAL CONCLUÍDO ===")
+    logger.info(f"=== SIGNAL RATEIO MENSAL CONCLUÍDO ===")
+
+
+@receiver(pre_delete, sender=ItemDespesaRateioMensal)
+def atualizar_despesas_rateadas_por_remocao_rateio(sender, instance, **kwargs):
+    """
+    Signal disparado ANTES de um ItemDespesaRateioMensal ser excluído.
+    Remove os lançamentos do sócio afetado em todas as despesas rateadas do item no mês.
+    """
+    print(f"=== REMOVENDO RATEIO MENSAL ===")
+    print(f"Item: {instance.item_despesa}, Sócio: {instance.socio}")
+    print(f"Data Ref: {instance.data_referencia}")
+    
+    logger.info(f"=== REMOVENDO RATEIO MENSAL ===")
+    logger.info(f"Item: {instance.item_despesa}, Sócio: {instance.socio}")
+    logger.info(f"Data Ref: {instance.data_referencia}")
+    
+    # Buscar todas as despesas rateadas do item no mês de referência
+    ano = instance.data_referencia.year
+    mes = instance.data_referencia.month
+    
+    despesas_afetadas = DespesaRateada.objects.filter(
+        item_despesa=instance.item_despesa,
+        data__year=ano,
+        data__month=mes
+    )
+    
+    # Para cada despesa afetada, remover lançamentos específicos do sócio
+    for despesa in despesas_afetadas:
+        historico_identificador = f'Despesa Rateada ID: {despesa.id} - Sócio: {instance.socio.id}'
+        lancamentos_cc = MovimentacaoContaCorrente.objects.filter(
+            socio=instance.socio,
+            historico_complementar__contains=historico_identificador
+        )
+        
+        count_lancamentos = lancamentos_cc.count()
+        if count_lancamentos > 0:
+            print(f"  🗑️ Removendo {count_lancamentos} lançamento(s) do sócio {instance.socio}")
+            logger.info(f"  Removendo {count_lancamentos} lançamento(s) do sócio {instance.socio}")
+            
+            lancamentos_cc.delete()
+            print(f"  ✅ Lançamento(s) removido(s)")
+            logger.info(f"  ✅ Lançamento(s) removido(s)")
+    
+    print(f"=== REMOÇÃO RATEIO MENSAL CONCLUÍDA ===")
+    logger.info(f"=== REMOÇÃO RATEIO MENSAL CONCLUÍDA ===")

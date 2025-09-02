@@ -109,6 +109,57 @@ Fonte: .github/copilot-instructions.md, seção 4
 
 ### REGRA DE ANÁLISE GLOBAL DE IMPACTO
 Toda revisão ou implementação de código deve ser obrigatoriamente analisada em contexto global do projeto, considerando dependências, integrações e fluxos existentes, para eliminar qualquer possibilidade de efeito colateral em funcionalidades já implementadas e operacionais. A validação deve incluir modelos, views, forms, templates, URLs, context processors e regras de negócio documentadas. Sempre cite a fonte e o trecho utilizado para justificar decisões.
+
+## 5. REGRA CRÍTICA: Exclusões e Operações em Lote com Signals
+
+### PROIBIÇÃO DE EXCLUSÕES EM LOTE PARA MODELOS COM SIGNALS
+
+**NUNCA use `queryset.delete()` para modelos que possuem signals críticos de sincronização!**
+
+#### ❌ **OPERAÇÕES PROIBIDAS:**
+```python
+# ERRADO - NÃO dispara signals individuais
+MovimentacaoContaCorrente.objects.filter(...).delete()
+DespesaSocio.objects.filter(...).delete()
+DespesaRateada.objects.filter(...).delete()
+ItemDespesaRateioMensal.objects.filter(...).delete()
+```
+
+#### ✅ **OPERAÇÕES CORRETAS:**
+```python
+# CORRETO - Dispara signals para cada objeto
+for objeto in queryset:
+    objeto.delete()  # Dispara pre_delete e post_delete signals
+
+# OU usar script com método individual
+python script_apagar_debitos_sincronizado.py --metodo individual
+```
+
+#### 🎯 **CAUSA RAIZ:**
+- `QuerySet.delete()` é uma operação SQL em lote que NÃO dispara signals `pre_delete` e `post_delete` por objeto individual
+- Isso quebra a sincronização automática entre modelos relacionados (ex: despesas ↔ lançamentos bancários)
+- Resulta em dados "órfãos" e inconsistências que requerem correção manual
+
+#### 🔧 **MODELOS AFETADOS:**
+- `MovimentacaoContaCorrente` - Sincronizado com despesas via signals
+- `DespesaSocio` - Signal de sincronização com conta corrente
+- `DespesaRateada` - Signal de sincronização com conta corrente
+- `ItemDespesaRateioMensal` - Signal de recálculo automático de rateios
+- Qualquer modelo com `@receiver(pre_delete)` ou `@receiver(post_delete)`
+
+#### 📋 **PROTOCOLO OBRIGATÓRIO:**
+1. **Antes de qualquer exclusão em lote**: Verificar se o modelo possui signals críticos
+2. **Para operações grandes**: Usar scripts com opção `--metodo individual` 
+3. **Após exclusões em lote acidentais**: Executar `python corrigir_sincronizacao.py`
+4. **Em scripts de produção**: Sempre incluir aviso sobre método de exclusão
+
+#### 📚 **REFERÊNCIAS:**
+- `medicos/signals_financeiro.py` - Signals de sincronização implementados
+- `script_apagar_debitos_sincronizado.py` - Script correto com opções de sincronização
+- `corrigir_sincronizacao.py` - Script de correção para inconsistências
+
+**Fonte**: Correção aplicada em 02/09/2025 após identificação de inconsistências causadas por exclusão em lote no sistema de sincronização despesas ↔ conta corrente.
+
 ## 3. Fluxo assertivo para troubleshooting de dropdowns multi-tenant e filtrados
 
 Sempre que houver problema em dropdowns (ex: lista vazia, lista errada, filtro não aplicado), siga este fluxo:
@@ -224,6 +275,27 @@ Fonte: medicos/templates/layouts/base_cenario_financeiro.html, linhas 15-25; med
 - Data flows: User → Membership (ContaMembership) → Conta → Empresa → domain models (Despesas, Financeiro, etc.).
 - All business logic is enforced both in views and models; always check for duplicated/conflicting validation.
 
+## Sincronização Automática Despesas ↔ Conta Corrente
+
+### Funcionamento dos Signals Implementados:
+
+1. **DespesaSocio**: Toda despesa individual gera lançamento automático na conta corrente
+2. **DespesaRateada**: Toda despesa rateada gera lançamentos proporcionais para cada sócio
+3. **ItemDespesaRateioMensal**: Alterações no rateio recalculam automaticamente todos os lançamentos do mês
+
+### Scripts de Manutenção:
+
+- `corrigir_sincronizacao.py` - Remove lançamentos órfãos e recria os faltantes
+- `script_apagar_debitos_sincronizado.py` - Exclusão segura com opções de sincronização
+- `testar_sincronizacao_despesas.py` - Validação completa dos signals
+
+### Localização dos Signals:
+
+- Arquivo: `medicos/signals_financeiro.py`
+- Registrado em: `medicos/apps.py` método `ready()`
+- Logs em: `django_logs/` com level INFO
+
+**Fonte**: Implementação completa da sincronização aplicada em 02/09/2025 conforme seção 5 deste documento.
 
 ## Documentation & Examples
 

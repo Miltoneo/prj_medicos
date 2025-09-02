@@ -91,20 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 100);
     }
   }
-  
-  // Controlar exibição das opções avançadas de lançamento automático
-  const autoLancarCheckbox = document.getElementById('auto_lancar_impostos');
-  const opcoesAvancadas = document.getElementById('opcoes-avancadas');
-  
-  if (autoLancarCheckbox && opcoesAvancadas) {
-    autoLancarCheckbox.addEventListener('change', function() {
-      if (this.checked) {
-        opcoesAvancadas.style.display = 'block';
-      } else {
-        opcoesAvancadas.style.display = 'none';
-      }
-    });
-  }
 });
 </script>
 {% endblock %}
@@ -159,175 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
               
           </form>
           
-          <!-- Configurações de Lançamento Automático -->
-          {% if socio_selecionado %}
-          <div class="card mb-4 border-info">
-            <div class="card-header bg-info text-white">
-              <h5 class="mb-0"><i class="fas fa-university me-2"></i>Lançamento Automático na Conta Corrente</h5>
-            </div>
-            <div class="card-body">
-              <form method="get" id="form-lancamento-automatico">
-                <!-- Campos ocultos para manter filtros -->
-                <input type="hidden" name="socio_id" value="{{ request.GET.socio_id }}">
-                <input type="hidden" name="mes_ano" value="{{ request.GET.mes_ano }}">
-                
-                <div class="row align-items-center">
-                  <div class="col-md-8">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" 
-                             name="auto_lancar_impostos" value="true" 
-                             id="auto_lancar_impostos"
-                             {% if request.GET.auto_lancar_impostos == 'true' %}checked{% endif %}>
-                      <label class="form-check-label" for="auto_lancar_impostos">
-                        <strong>🤖 Lançar impostos automaticamente na conta corrente</strong>
-                      </label>
-                      <div class="form-text">
-                        Quando ativado, os impostos calculados serão automaticamente lançados como 
-                        débitos na conta corrente do sócio no mês seguinte (dia 15).
-                      </div>
-                    </div>
-                    
-                    <div class="form-check form-switch mt-2" id="opcoes-avancadas" 
-                         style="{% if request.GET.auto_lancar_impostos != 'true' %}display:none;{% endif %}">
-                      <input class="form-check-input" type="checkbox" 
-                             name="atualizar_lancamentos" value="true" 
-                             id="atualizar_lancamentos"
-                             {% if request.GET.atualizar_lancamentos != 'false' %}checked{% endif %}>
-                      <label class="form-check-label" for="atualizar_lancamentos">
-                        <strong>🔄 Atualizar lançamentos existentes</strong>
-                      </label>
-                      <div class="form-text">
-                        Se já existirem lançamentos para este período, eles serão atualizados com os novos valores.
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="col-md-4 text-end">
-                    <button type="submit" class="btn btn-info">
-                      <i class="fas fa-sync-alt me-1"></i>Atualizar Relatório
-                    </button>
-                  </div>
-                </div>
-              </form>
-              
-              <!-- Resultado do Lançamento Automático -->
-              {% if resultado_lancamento_automatico %}
-              <div class="mt-3">
-                {% if resultado_lancamento_automatico.success %}
-                <div class="alert alert-success">
-                  <h6><i class="fas fa-check-circle me-2"></i>Lançamentos Processados com Sucesso!</h6>
-                  <ul class="mb-0">
-                    {% if resultado_lancamento_automatico.lancamentos_criados > 0 %}
-                    <li><strong>{{ resultado_lancamento_automatico.lancamentos_criados }}</strong> lançamento(s) criado(s)</li>
-                    {% endif %}
-                    {% if resultado_lancamento_automatico.lancamentos_atualizados > 0 %}
-                    <li><strong>{{ resultado_lancamento_automatico.lancamentos_atualizados }}</strong> lançamento(s) atualizado(s)</li>
-                    {% endif %}
-                    {% if resultado_lancamento_automatico.lancamentos_removidos > 0 %}
-                    <li><strong>{{ resultado_lancamento_automatico.lancamentos_removidos }}</strong> lançamento(s) removido(s)</li>
-                    {% endif %}
-                    <li><strong>Total lançado:</strong> R$ {{ resultado_lancamento_automatico.total_lancado|floatformat:2 }}</li>
-                    <li><strong>Data de lançamento:</strong> {{ resultado_lancamento_automatico.data_lancamento|date:"d/m/Y" }}</li>
-                    <li><strong>Competência:</strong> {{ resultado_lancamento_automatico.competencia }}</li>
-                  </ul>
-                </div>
-                {% else %}
-                <div class="alert alert-danger">
-                  <h6><i class="fas fa-exclamation-triangle me-2"></i>Erro no Lançamento Automático</h6>
-                  <p class="mb-0">{{ resultado_lancamento_automatico.error }}</p>
-                </div>
-                {% endif %}
-              </div>
-              {% endif %}
-            </div>
-          </div>
-          {% endif %}
-          
-          <!-- Configurações de Lançamento Automático -->
-          <div class="card mb-4 border-primary">
-            <div class="card-header bg-primary text-white">
-              <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Configurações de Lançamento Automático</h5>
-            </div>
-            <div class="card-body">
-              <form method="get" id="form-lancamento-automatico">
-                <!-- Campos ocultos para manter filtros -->
-                <input type="hidden" name="socio_id" value="{{ request.GET.socio_id }}">
-                <input type="hidden" name="mes_ano" value="{{ request.GET.mes_ano }}">
-                
-                <div class="row align-items-center">
-                  <div class="col-md-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" 
-                             name="auto_lancar_impostos" value="true" 
-                             id="auto_lancar_impostos"
-                             {% if request.GET.auto_lancar_impostos == 'true' %}checked{% endif %}
-                             onchange="document.getElementById('form-lancamento-automatico').submit();">
-                      <label class="form-check-label" for="auto_lancar_impostos">
-                        <i class="fas fa-magic me-2 text-primary"></i>
-                        <strong>Lançar impostos automaticamente na conta corrente</strong>
-                      </label>
-                    </div>
-                    <small class="text-muted ms-4">
-                      Os impostos a provisionar serão lançados automaticamente no dia 15 do mês seguinte
-                    </small>
-                  </div>
-                  
-                  <div class="col-md-6">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" 
-                             name="atualizar_lancamentos" value="true" 
-                             id="atualizar_lancamentos"
-                             {% if request.GET.atualizar_lancamentos != 'false' %}checked{% endif %}
-                             {% if request.GET.auto_lancar_impostos != 'true' %}disabled{% endif %}>
-                      <label class="form-check-label" for="atualizar_lancamentos">
-                        <i class="fas fa-sync me-2 text-warning"></i>
-                        Atualizar lançamentos existentes
-                      </label>
-                    </div>
-                    <small class="text-muted ms-4">
-                      Se desmarcado, mantém lançamentos existentes inalterados
-                    </small>
-                  </div>
-                </div>
-                
-                <!-- Resultado do Lançamento Automático -->
-                {% if resultado_lancamento_automatico %}
-                <div class="mt-3">
-                  <div class="alert alert-{% if resultado_lancamento_automatico.success %}success{% else %}danger{% endif %} mb-0">
-                    {% if resultado_lancamento_automatico.success %}
-                      <h6 class="alert-heading mb-2">
-                        <i class="fas fa-check-circle me-2"></i>Lançamentos Processados com Sucesso!
-                      </h6>
-                      <div class="row">
-                        <div class="col-md-6">
-                          <ul class="mb-0">
-                            <li><strong>Criados:</strong> {{ resultado_lancamento_automatico.lancamentos_criados }}</li>
-                            <li><strong>Atualizados:</strong> {{ resultado_lancamento_automatico.lancamentos_atualizados }}</li>
-                            <li><strong>Removidos:</strong> {{ resultado_lancamento_automatico.lancamentos_removidos }}</li>
-                          </ul>
-                        </div>
-                        <div class="col-md-6">
-                          <ul class="mb-0">
-                            <li><strong>Total Lançado:</strong> R$ {{ resultado_lancamento_automatico.total_lancado|floatformat:2 }}</li>
-                            <li><strong>Data de Lançamento:</strong> {{ resultado_lancamento_automatico.data_lancamento|date:"d/m/Y" }}</li>
-                            <li><strong>Competência:</strong> {{ resultado_lancamento_automatico.competencia }}</li>
-                          </ul>
-                        </div>
-                      </div>
-                    {% else %}
-                      <h6 class="alert-heading mb-2">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Erro no Lançamento Automático
-                      </h6>
-                      <p class="mb-0">{{ resultado_lancamento_automatico.error }}</p>
-                    {% endif %}
-                  </div>
-                </div>
-                {% endif %}
-                
-              </form>
-            </div>
-          </div>
-          
           <div class="table-responsive rounded shadow-sm p-3 bg-light">
             <div class="bg-white rounded-2 p-2">
               <div class="row g-4 mb-4">
@@ -350,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           </thead>
                           <thead>
                             <tr class="table-success">
-                              <th>RECEITA BRUTA RECEBIDA* (r)</th>
+                              <th>(=) RECEITA BRUTA RECEBIDA</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th>
                             </tr>
                           </thead>
@@ -360,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           </tbody>
                           <thead>
                             <tr class="table-success">
-                              <th>IMPOSTO DEVIDO*(a)</th>
+                              <th>(-) IMPOSTO DEVIDO(a)</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_devido_total|floatformat:2 }}</th>
                             </tr>
                           </thead>
@@ -378,23 +195,29 @@ document.addEventListener('DOMContentLoaded', function() {
                           </thead>
                           <thead>
                             <tr class="table-success">
-                              <th>RECEITA LÍQUIDA (r-a)</th>
+                              <th>(=) RECEITA LÍQUIDA</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_liquida|floatformat:2 }}</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><th>DESPESAS (-)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
+                            <tr><th>(-) DESPESAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
                             <tr><td>Despesa com rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
                             <tr><td>Despesa sem rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
-                            <tr><th>SALDO DAS MOVIMENTAÇÕES FINANCEIRAS (+)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
+                            <tr><th>(+) SALDO DAS MOVIMENTAÇÕES FINANCEIRAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
                           </tbody>
                           <thead>
                             <tr style="background-color: #343a40 !important; color: white !important;">
-                              <th style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">SALDO A TRANSFERIR (=)</th>
+                              <th style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">(=) SALDO A TRANSFERIR</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.saldo_a_transferir|floatformat:2 }}</th>
                             </tr>
                           </thead>
                         </table>
+                      </div>
+                      <div class="mt-3">
+                        <div class="alert alert-info alert-sm mb-0" style="font-size: 0.875rem; padding: 0.5rem;">
+                          <i class="fas fa-info-circle me-2"></i>
+                          <strong>Nota:</strong> Os impostos a provisionar serão lançados automaticamente no dia 15 do mês seguinte conforme espelho de cálculo.
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -417,10 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><th>SALDO ANTERIOR (=)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ saldo_anterior|floatformat:2 }}</th></tr>
-                            <tr><th>TOTAL CRÉDITOS (+)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_creditos_conta_corrente|floatformat:2 }}</th></tr>
-                            <tr><th>TOTAL DÉBITOS (-)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_debitos_conta_corrente|floatformat:2 }}</th></tr>
-                            <tr style="background-color: #343a40 !important; color: white !important;"><th style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">SALDO CONTA CORRENTE (=)</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ saldo_conta_corrente|floatformat:2 }}</th></tr>
+                            <tr><th>(=) SALDO ANTERIOR</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ saldo_anterior|floatformat:2 }}</th></tr>
+                            <tr><th>(+) TOTAL CRÉDITOS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_creditos_conta_corrente|floatformat:2 }}</th></tr>
+                            <tr><th>(-) TOTAL DÉBITOS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_debitos_conta_corrente|floatformat:2 }}</th></tr>
+                            <tr style="background-color: #343a40 !important; color: white !important;"><th style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">(=) SALDO CONTA CORRENTE</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ saldo_conta_corrente|floatformat:2 }}</th></tr>
                             {% if mes_fechado %}
                             <tr><th colspan="2" class="text-success text-center">✓ Período Fechado</th></tr>
                             {% else %}
@@ -496,19 +319,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </thead>
                                 <tbody>
                                   <tr>
-                                    <td>SALDO ANTERIOR (=)</td>
+                                    <td>(=) SALDO ANTERIOR</td>
                                     <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ saldo_anterior|floatformat:2 }}</td>
                                   </tr>
                                   <tr>
-                                    <td>TOTAL CRÉDITOS (+)</td>
+                                    <td>(+) TOTAL CRÉDITOS</td>
                                     <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_creditos_conta_corrente|floatformat:2 }}</td>
                                   </tr>
                                   <tr>
-                                    <td>TOTAL DÉBITOS (-)</td>
+                                    <td>(-) TOTAL DÉBITOS</td>
                                     <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_debitos_conta_corrente|floatformat:2 }}</td>
                                   </tr>
                                   <tr style="background-color: #343a40 !important; color: white !important;">
-                                    <td style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">SALDO CONTA CORRENTE (=)</td>
+                                    <td style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">(=) SALDO CONTA CORRENTE</td>
                                     <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ saldo_conta_corrente|floatformat:2 }}</td>
                                   </tr>
                                 </tbody>
@@ -948,29 +771,6 @@ document.addEventListener('DOMContentLoaded', function() {
       allowClear: true,
       width: '100%',
       minimumInputLength: 1
-    });
-  });
-  
-  // JavaScript para controle do lançamento automático
-  document.addEventListener('DOMContentLoaded', function() {
-    const autoLancarCheckbox = document.getElementById('auto_lancar_impostos');
-    const atualizarCheckbox = document.getElementById('atualizar_lancamentos');
-    
-    // Controlar habilitação do checkbox de atualizar
-    autoLancarCheckbox.addEventListener('change', function() {
-      atualizarCheckbox.disabled = !this.checked;
-      if (!this.checked) {
-        atualizarCheckbox.checked = false;
-      } else {
-        atualizarCheckbox.checked = true;
-      }
-    });
-    
-    // Submeter formulário ao mudar o checkbox de atualizar
-    atualizarCheckbox.addEventListener('change', function() {
-      if (autoLancarCheckbox.checked) {
-        document.getElementById('form-lancamento-automatico').submit();
-      }
     });
   });
 </script>

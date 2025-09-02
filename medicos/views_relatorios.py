@@ -86,7 +86,7 @@ def relatorio_executivo(request, empresa_id):
     
     context = _contexto_base(request, empresa=empresa, menu_nome='Demonstrativo', cenario_nome='Relatório Executivo')
     context.update({
-        'titulo_pagina': 'Relatório Executivo Anual',
+        'titulo_pagina': 'Relatório Mensal Empresa',
         'mes_ano_selecionado': mes_ano,
         **dados_relatorio,  # Spread dos dados do builder
         **resumo_demonstrativo,  # Spread dos dados do resumo
@@ -199,11 +199,11 @@ def relatorio_mensal_socio(request, empresa_id):
     socio_id_raw = request.GET.get('socio_id')
     socios, socio_selecionado, socio_id = _obter_socio_selecionado(empresa, socio_id_raw)
     
-    # Verificar se deve fazer lançamento automático de impostos
-    auto_lancar_impostos = request.GET.get('auto_lancar_impostos', 'false').lower() == 'true'
-    atualizar_lancamentos = request.GET.get('atualizar_lancamentos', 'true').lower() == 'true'
+    # Lançamento automático sempre ativado (sem opções de configuração)
+    auto_lancar_impostos = True
+    atualizar_lancamentos = True
     
-    # Obter dados do relatório com lançamento automático opcional
+    # Obter dados do relatório com lançamento automático sempre ativado
     relatorio_dict = montar_relatorio_mensal_socio(
         empresa_id, 
         mes_ano, 
@@ -390,7 +390,7 @@ def relatorio_mensal_socio(request, empresa_id):
     context.update({
         'relatorio': relatorio,
         # Regra do projeto: título deve ser passado via 'titulo_pagina'
-        'titulo_pagina': f"Relatório Mensal do Sócio - {socio_selecionado.pessoa.name if socio_selecionado else ''}",
+        'titulo_pagina': 'Relatório Mensal do Sócio',
         'valor_adicional_rateio': relatorio_dict.get('valor_adicional_rateio', 0),
         'participacao_socio_percentual': relatorio_dict.get('participacao_socio_percentual', 0),
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
