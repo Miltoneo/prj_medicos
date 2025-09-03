@@ -17,6 +17,209 @@
     </div>
     
     <div class="card-body p-0">
+
+      <!-- Seção Notas Fiscais Emitidas -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-primary bg-opacity-10 border-start border-primary border-3">
+          <h5 class="mb-0 text-primary">
+            <span class="bi bi-file-earmark-text me-2"></span>
+            Notas Fiscais Emitidas
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:1400px;">
+              <thead class="table-primary">
+                <tr>
+                  <th rowspan="2" style="width: 20%;">Descrição</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T1</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T2</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T3</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T4</th>
+                </tr>
+                <tr class="table-light">
+                  <th class="text-center" style="width: 6.67%;">1</th>
+                  <th class="text-center" style="width: 6.67%;">2</th>
+                  <th class="text-center" style="width: 6.67%;">3</th>
+                  <th class="text-center" style="width: 6.67%;">4</th>
+                  <th class="text-center" style="width: 6.67%;">5</th>
+                  <th class="text-center" style="width: 6.67%;">6</th>
+                  <th class="text-center" style="width: 6.67%;">7</th>
+                  <th class="text-center" style="width: 6.67%;">8</th>
+                  <th class="text-center" style="width: 6.67%;">9</th>
+                  <th class="text-center" style="width: 6.67%;">10</th>
+                  <th class="text-center" style="width: 6.67%;">11</th>
+                  <th class="text-center" style="width: 6.67%;">12</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-medium">(+) Total Receita consultas/Plantão</td>
+                  {% for valor in notas_fiscais_emitidas.receita_consultas %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Total Receita outros</td>
+                  {% for valor in notas_fiscais_emitidas.receita_outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-light">
+                  <td class="fw-medium">(=) Total receita bruta</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.3|floatformat:2 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted fst-italic">* Valores por data de emissão da nota fiscal</small>
+        </div>
+      </div>
+
+      <!-- Seção Notas Fiscais Recebidas -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-warning bg-opacity-10 border-start border-warning border-3">
+          <h5 class="mb-0 text-warning">
+            <span class="bi bi-file-earmark-arrow-down me-2"></span>
+            Notas Fiscais Recebidas
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:1400px;">
+              <thead class="table-warning">
+                <tr>
+                  <th rowspan="2" style="width: 20%;">Descrição</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T1</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T2</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T3</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T4</th>
+                </tr>
+                <tr class="table-light">
+                  <th class="text-center" style="width: 6.67%;">1</th>
+                  <th class="text-center" style="width: 6.67%;">2</th>
+                  <th class="text-center" style="width: 6.67%;">3</th>
+                  <th class="text-center" style="width: 6.67%;">4</th>
+                  <th class="text-center" style="width: 6.67%;">5</th>
+                  <th class="text-center" style="width: 6.67%;">6</th>
+                  <th class="text-center" style="width: 6.67%;">7</th>
+                  <th class="text-center" style="width: 6.67%;">8</th>
+                  <th class="text-center" style="width: 6.67%;">9</th>
+                  <th class="text-center" style="width: 6.67%;">10</th>
+                  <th class="text-center" style="width: 6.67%;">11</th>
+                  <th class="text-center" style="width: 6.67%;">12</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-medium">(+) Total Receita consultas/Plantão</td>
+                  {% for valor in notas_fiscais_recebidas.receita_consultas %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Total Receita outros</td>
+                  {% for valor in notas_fiscais_recebidas.receita_outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-light">
+                  <td class="fw-medium">(=) Total receita bruta recebida</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.3|floatformat:2 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted fst-italic">* Valores por data de recebimento da nota fiscal</small>
+        </div>
+      </div>
+
+      <!-- Seção Impostos Retidos na Nota Fiscal -->
+      <div class="border-bottom">
+        <div class="px-4 py-3 bg-dark bg-opacity-10 border-start border-dark border-3">
+          <h5 class="mb-0 text-dark">
+            <span class="bi bi-receipt me-2"></span>
+            Impostos Retidos na Nota Fiscal
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:900px;">
+              <thead class="table-dark">
+                <tr>
+                  <th rowspan="2" style="width: 20%;">Total Retido</th>
+                  <th colspan="12" class="text-center" style="width: 80%;">MÊS</th>
+                </tr>
+                <tr class="table-light">
+                  <th class="text-center" style="width: 6.67%;">1</th>
+                  <th class="text-center" style="width: 6.67%;">2</th>
+                  <th class="text-center" style="width: 6.67%;">3</th>
+                  <th class="text-center" style="width: 6.67%;">4</th>
+                  <th class="text-center" style="width: 6.67%;">5</th>
+                  <th class="text-center" style="width: 6.67%;">6</th>
+                  <th class="text-center" style="width: 6.67%;">7</th>
+                  <th class="text-center" style="width: 6.67%;">8</th>
+                  <th class="text-center" style="width: 6.67%;">9</th>
+                  <th class="text-center" style="width: 6.67%;">10</th>
+                  <th class="text-center" style="width: 6.67%;">11</th>
+                  <th class="text-center" style="width: 6.67%;">12</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-medium">PIS</td>
+                  {% for valor in impostos_retidos.pis %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">COFINS</td>
+                  {% for valor in impostos_retidos.cofins %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">IRPJ</td>
+                  {% for valor in impostos_retidos.irpj %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">CSLL</td>
+                  {% for valor in impostos_retidos.csll %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">ISSQN</td>
+                  {% for valor in impostos_retidos.issqn %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">Outros</td>
+                  {% for valor in impostos_retidos.outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-dark text-white">
+                  <td class="fw-bold">Total Impostos Retidos</td>
+                  {% for valor in impostos_retidos.total %}
+                    <td class="text-end fw-bold">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted fst-italic">* Valores retidos por data de recebimento da nota fiscal</small>
+        </div>
+      </div>
       
       <!-- Seção PIS -->
       <div class="border-bottom">
@@ -253,81 +456,6 @@
         </div>
       </div>
 
-      <!-- Seção Espelho do Adicional -->
-      <div>
-        <div class="px-4 py-3 bg-warning bg-opacity-10 border-start border-warning border-3">
-          <h5 class="mb-0 text-warning">
-            <span class="bi bi-calculator me-2"></span>
-            ESPELHO DO ADICIONAL DE IR TRIMESTRAL
-          </h5>
-        </div>
-        <div class="p-3">
-          <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:900px;">
-              <thead class="table-warning">
-                <tr>
-                  <th style="width: 35%;">Descrição</th>
-                  <th class="text-center" style="width: 16.25%;">T1</th>
-                  <th class="text-center" style="width: 16.25%;">T2</th>
-                  <th class="text-center" style="width: 16.25%;">T3</th>
-                  <th class="text-center" style="width: 16.25%;">T4</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="table-primary">
-                  <td class="text-end fw-medium">Total Receita bruta emitida</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end">R$ {{ espelho.receita_bruta|floatformat:2 }}</td>
-                  {% endfor %}
-                </tr>
-                <tr>
-                  <td class="text-end">Base sobre notas fiscais emitidas do tipo "consultas médicas"</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end">{{ espelho.receita_consultas|floatformat:2 }} × 32% = R$ {{ espelho.base_calculo_consultas|floatformat:2 }}</td>
-                  {% endfor %}
-                </tr>
-                <tr>
-                  <td class="text-end">Base sobre notas fiscais emitidas do tipo "outros serviços"</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end">{{ espelho.receita_outros|floatformat:2 }} × 8% = R$ {{ espelho.base_calculo_outros|floatformat:2 }}</td>
-                  {% endfor %}
-                </tr>
-                <tr class="table-info">
-                  <td class="text-end fw-medium">Total Base de cálculo</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end">{{ espelho.base_calculo_consultas|floatformat:2 }} + {{ espelho.base_calculo_outros|floatformat:2 }} = R$ {{ espelho.base_calculo_total|floatformat:2 }}</td>
-                  {% endfor %}
-                </tr>
-                <tr class="table-secondary">
-                  <td class="text-end">Limite de isenção do adicional de IR:</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end">R$ {{ espelho.limite_isencao|floatformat:2 }}</td>
-                  {% endfor %}
-                </tr>
-                <tr class="table-warning">
-                  <td class="text-end fw-medium">Excedente sujeito ao adicional: (base cálculo - limite)</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end">{{ espelho.base_calculo_total|floatformat:2 }} - {{ espelho.limite_isencao|floatformat:2 }} = R$ {{ espelho.excedente|floatformat:2 }}</td>
-                  {% endfor %}
-                </tr>
-                <tr class="table-secondary">
-                  <td class="text-end">Alíquota do adicional de IR:</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end">{{ espelho.aliquota_adicional|floatformat:2 }}%</td>
-                  {% endfor %}
-                </tr>
-                <tr class="table-success">
-                  <td class="text-end fw-bold">Adicional de IR</td>
-                  {% for espelho in espelho_adicional_trimestral %}
-                    <td class="text-end fw-bold">{{ espelho.excedente|floatformat:2 }} × 10% = R$ {{ espelho.adicional_devido|floatformat:2 }}</td>
-                  {% endfor %}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
       <!-- Seção Apuração Trimestral IRPJ -->
       <div>
         <div class="px-4 py-3 bg-primary bg-opacity-10 border-start border-primary border-3">
@@ -456,6 +584,198 @@
                   <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.imposto_a_pagar.1|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.imposto_a_pagar.2|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.imposto_a_pagar.3|floatformat:2 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção Apuração Trimestral CSLL -->
+      <div>
+        <div class="px-4 py-3 bg-success bg-opacity-10 border-start border-success border-3">
+          <h5 class="mb-0 text-success">
+            <span class="bi bi-calendar4-range me-2"></span>
+            Apuração Trimestral - CSLL
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:1400px;">
+              <thead class="table-success">
+                <tr>
+                  <th rowspan="2" style="width: 20%;">Descrição</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T1</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T2</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T3</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T4</th>
+                </tr>
+                <tr class="table-light">
+                  <th class="text-center" style="width: 6.67%;">1</th>
+                  <th class="text-center" style="width: 6.67%;">2</th>
+                  <th class="text-center" style="width: 6.67%;">3</th>
+                  <th class="text-center" style="width: 6.67%;">4</th>
+                  <th class="text-center" style="width: 6.67%;">5</th>
+                  <th class="text-center" style="width: 6.67%;">6</th>
+                  <th class="text-center" style="width: 6.67%;">7</th>
+                  <th class="text-center" style="width: 6.67%;">8</th>
+                  <th class="text-center" style="width: 6.67%;">9</th>
+                  <th class="text-center" style="width: 6.67%;">10</th>
+                  <th class="text-center" style="width: 6.67%;">11</th>
+                  <th class="text-center" style="width: 6.67%;">12</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-medium">(+) Receita consultas</td>
+                  {% for valor in dados_csll_trimestral.receita_consultas %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Receita outros</td>
+                  {% for valor in dados_csll_trimestral.receita_outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-light">
+                  <td class="fw-medium">(=) Total receita bruta</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.receita_bruta.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.receita_bruta.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.receita_bruta.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.receita_bruta.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Base sobre receita do tipo "consultas médicas" ({{ aliquotas.CSLL_PRESUNCAO_CONSULTA }}%)</td>
+                  {% for valor in dados_csll_trimestral.base_consultas %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Base sobre receita do tipo "outros serviços" ({{ aliquotas.CSLL_PRESUNCAO_OUTROS }}%)</td>
+                  {% for valor in dados_csll_trimestral.base_outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-info">
+                  <td class="fw-medium">(=) Total base de cálculo</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Rendimentos aplicações</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.rendimentos_aplicacoes.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.rendimentos_aplicacoes.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.rendimentos_aplicacoes.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.rendimentos_aplicacoes.3|floatformat:2 }}</td>
+                </tr>
+                <tr class="table-warning">
+                  <td class="fw-medium">(=) Total base de cálculo apurada</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo_total.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo_total.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo_total.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.base_calculo_total.3|floatformat:2 }}</td>
+                </tr>
+                <tr class="table-success">
+                  <td class="fw-medium">(=) Total Imposto Devido ({{ aliquotas.CSLL_ALIQUOTA }}%)</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.total_imposto_devido.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.total_imposto_devido.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.total_imposto_devido.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.total_imposto_devido.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(-) Imposto retido NF</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.imposto_retido_nf.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.imposto_retido_nf.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.imposto_retido_nf.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais_csll.imposto_retido_nf.3|floatformat:2 }}</td>
+                </tr>
+                <tr class="table-dark text-white">
+                  <td class="fw-bold">(=) Total Imposto a pagar</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.imposto_a_pagar.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.imposto_a_pagar.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.imposto_a_pagar.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais_csll.imposto_a_pagar.3|floatformat:2 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted fst-italic mt-2">* Cálculo imposto: por data de emissão da nota (regime competência) / por data de recebimento (regime caixa)</small>
+          <br>
+          <small class="text-muted fst-italic">* Retenção do imposto: por data de recebimento da nota</small>
+        </div>
+      </div>
+
+      <!-- Seção Espelho do Adicional -->
+      <div>
+        <div class="px-4 py-3 bg-warning bg-opacity-10 border-start border-warning border-3">
+          <h5 class="mb-0 text-warning">
+            <span class="bi bi-calculator me-2"></span>
+            ESPELHO DO ADICIONAL DE IR TRIMESTRAL
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:900px;">
+              <thead class="table-warning">
+                <tr>
+                  <th style="width: 35%;">Descrição</th>
+                  <th class="text-center" style="width: 16.25%;">T1</th>
+                  <th class="text-center" style="width: 16.25%;">T2</th>
+                  <th class="text-center" style="width: 16.25%;">T3</th>
+                  <th class="text-center" style="width: 16.25%;">T4</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-primary">
+                  <td class="text-end fw-medium">Total Receita bruta emitida</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">R$ {{ espelho.receita_bruta|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="text-end">Base sobre notas fiscais emitidas do tipo "consultas médicas"</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.receita_consultas|floatformat:2 }} × 32% = R$ {{ espelho.base_calculo_consultas|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="text-end">Base sobre notas fiscais emitidas do tipo "outros serviços"</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.receita_outros|floatformat:2 }} × 8% = R$ {{ espelho.base_calculo_outros|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-info">
+                  <td class="text-end fw-medium">Total Base de cálculo</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.base_calculo_consultas|floatformat:2 }} + {{ espelho.base_calculo_outros|floatformat:2 }} = R$ {{ espelho.base_calculo_total|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-secondary">
+                  <td class="text-end">Limite de isenção do adicional de IR:</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">R$ {{ espelho.limite_isencao|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-warning">
+                  <td class="text-end fw-medium">Excedente sujeito ao adicional: (base cálculo - limite)</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.base_calculo_total|floatformat:2 }} - {{ espelho.limite_isencao|floatformat:2 }} = R$ {{ espelho.excedente|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-secondary">
+                  <td class="text-end">Alíquota do adicional de IR:</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end">{{ espelho.aliquota_adicional|floatformat:2 }}%</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-success">
+                  <td class="text-end fw-bold">Adicional de IR</td>
+                  {% for espelho in espelho_adicional_trimestral %}
+                    <td class="text-end fw-bold">{{ espelho.excedente|floatformat:2 }} × 10% = R$ {{ espelho.adicional_devido|floatformat:2 }}</td>
+                  {% endfor %}
                 </tr>
               </tbody>
             </table>

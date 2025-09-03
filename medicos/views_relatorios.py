@@ -634,12 +634,12 @@ def relatorio_apuracao(request, empresa_id):
     linhas_irpj_mensal = [
     {'descricao': 'Receita consultas', 'valores': [linha.get('receita_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Receita outros', 'valores': [linha.get('receita_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'Base consultas (32%)', 'valores': [linha.get('base_calculo_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'Base outros (8%)', 'valores': [linha.get('base_calculo_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': f'Base consultas ({aliquotas_empresa.IRPJ_PRESUNCAO_CONSULTA}%)', 'valores': [linha.get('base_calculo_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': f'Base outros ({aliquotas_empresa.IRPJ_PRESUNCAO_OUTROS}%)', 'valores': [linha.get('base_calculo_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'TOTAL BASE DE CALCULO', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'TOTAL IMPOSTO DEVIDO (15%)', 'valores': [linha.get('imposto_devido', 0) + linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': f'TOTAL IMPOSTO DEVIDO ({aliquotas_empresa.IRPJ_ALIQUOTA}%)', 'valores': [linha.get('imposto_devido', 0) + linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'IMPOSTO RETIDO NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'TOTAL IMPOSTO A PAGAR', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'TOTAL IMPOSTO A PAGAR', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]}
     ]
 
     # Espelho do Adicional de IR Mensal (sempre por data de emissão)
@@ -789,10 +789,12 @@ def relatorio_apuracao(request, empresa_id):
             imposto_retido_nf = linha_mes.get('imposto_retido_nf', 0)
             retencao_aplicacao = linha_mes.get('retencao_aplicacao_financeira', 0)
             
-            # Calcular valores derivados
+            # Calcular valores derivados usando alíquotas configuradas
             receita_bruta = receita_consultas + receita_outros
-            base_consultas = receita_consultas * Decimal('0.32')  # 32%
-            base_outros = receita_outros * Decimal('0.08')        # 8%
+            irpj_presuncao_consultas = aliquotas_empresa.IRPJ_PRESUNCAO_CONSULTA / Decimal('100')
+            irpj_presuncao_outros = aliquotas_empresa.IRPJ_PRESUNCAO_OUTROS / Decimal('100')
+            base_consultas = receita_consultas * irpj_presuncao_consultas
+            base_outros = receita_outros * irpj_presuncao_outros
             base_calculo_total = base_calculo + rendimentos_aplicacoes
             total_imposto_devido = imposto_devido + adicional
             imposto_a_pagar = total_imposto_devido - imposto_retido_nf - retencao_aplicacao
@@ -843,7 +845,250 @@ def relatorio_apuracao(request, empresa_id):
         for key in totais_trimestrais.keys():
             total_trim = sum(dados_irpj_trimestral[key][inicio_idx:fim_idx])
             totais_trimestrais[key].append(total_trim)
+
+    # Dados Apuração Trimestral CSLL (baseado nos MESMOS dados do IRPJ com alíquota diferente)
+    dados_csll_trimestral = {
+        'receita_consultas': [],
+        'receita_outros': [],
+        'receita_bruta': [],
+        'base_consultas': [],
+        'base_outros': [],
+        'base_calculo': [],
+        'rendimentos_aplicacoes': [],
+        'base_calculo_total': [],
+        'total_imposto_devido': [],
+        'imposto_retido_nf': [],
+        'imposto_a_pagar': [],
+    }
     
+    # Preparar dados mensais CSLL (12 meses) baseados nos MESMOS dados do IRPJ
+    for mes in range(1, 13):  # Meses 1-12
+        if mes <= len(relatorio_irpj_mensal['linhas']):
+            linha_mes = relatorio_irpj_mensal['linhas'][mes - 1]  # USAR IRPJ como source
+            
+            receita_consultas = linha_mes.get('receita_consultas', 0)
+            receita_outros = linha_mes.get('receita_outros', 0)
+            base_calculo = linha_mes.get('base_calculo', 0)
+            rendimentos_aplicacoes = linha_mes.get('rendimentos_aplicacoes', 0)
+            
+            # Calcular CSLL baseado nos dados do IRPJ usando alíquotas configuradas
+            # CSLL usa alíquota configurada (padrão 9% vs 15% do IRPJ)
+            csll_aliquota = aliquotas_empresa.CSLL_ALIQUOTA / Decimal('100')  # Converter % para decimal
+            imposto_devido_csll = base_calculo * csll_aliquota
+            
+            # Buscar retenção CSLL real das notas fiscais (usar o mesmo método da tabela CSLL - Trimestres)
+            # CORREÇÃO: Buscar CSLL retido real das notas fiscais do mês para consistência
+            from medicos.models import NotaFiscal
+            from django.db.models import Sum
+            
+            # Buscar CSLL retido sempre por data de recebimento (independente do regime)
+            notas_recebidas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria_id=empresa_id,
+                dtRecebimento__year=ano,
+                dtRecebimento__month=mes,
+                dtRecebimento__isnull=False
+            )
+            imposto_retido_nf_csll = notas_recebidas_mes.aggregate(
+                total=Sum('val_CSLL')
+            )['total'] or Decimal('0')
+            
+            # Calcular valores derivados usando alíquotas configuradas
+            receita_bruta = receita_consultas + receita_outros
+            csll_presuncao_consultas = aliquotas_empresa.CSLL_PRESUNCAO_CONSULTA / Decimal('100')
+            csll_presuncao_outros = aliquotas_empresa.CSLL_PRESUNCAO_OUTROS / Decimal('100')
+            base_consultas = receita_consultas * csll_presuncao_consultas
+            base_outros = receita_outros * csll_presuncao_outros
+            base_calculo_total = base_calculo + rendimentos_aplicacoes
+            total_imposto_devido = imposto_devido_csll  # Só imposto devido, sem adicional
+            imposto_a_pagar = total_imposto_devido - imposto_retido_nf_csll
+            
+            # Adicionar aos arrays
+            dados_csll_trimestral['receita_consultas'].append(receita_consultas)
+            dados_csll_trimestral['receita_outros'].append(receita_outros)
+            dados_csll_trimestral['receita_bruta'].append(receita_bruta)
+            dados_csll_trimestral['base_consultas'].append(base_consultas)
+            dados_csll_trimestral['base_outros'].append(base_outros)
+            dados_csll_trimestral['base_calculo'].append(base_calculo)
+            dados_csll_trimestral['rendimentos_aplicacoes'].append(rendimentos_aplicacoes)
+            dados_csll_trimestral['base_calculo_total'].append(base_calculo_total)
+            dados_csll_trimestral['total_imposto_devido'].append(total_imposto_devido)
+            dados_csll_trimestral['imposto_retido_nf'].append(imposto_retido_nf_csll)
+            dados_csll_trimestral['imposto_a_pagar'].append(imposto_a_pagar)
+        else:
+            # Preencher com zeros se não há dados para o mês
+            for key in dados_csll_trimestral.keys():
+                dados_csll_trimestral[key].append(Decimal('0'))
+    
+    # Calcular totais trimestrais CSLL
+    totais_trimestrais_csll = {
+        'receita_consultas': [],
+        'receita_outros': [],
+        'receita_bruta': [],
+        'base_consultas': [],
+        'base_outros': [],
+        'base_calculo': [],
+        'rendimentos_aplicacoes': [],
+        'base_calculo_total': [],
+        'total_imposto_devido': [],
+        'imposto_retido_nf': [],
+        'imposto_a_pagar': [],
+    }
+    
+    # Agrupar por trimestres CSLL (T1, T2, T3, T4)
+    for trimestre_num in range(4):  # 0, 1, 2, 3 para T1, T2, T3, T4
+        inicio_idx = trimestre_num * 3
+        fim_idx = inicio_idx + 3
+        
+        for key in totais_trimestrais_csll.keys():
+            total_trim = sum(dados_csll_trimestral[key][inicio_idx:fim_idx])
+            totais_trimestrais_csll[key].append(total_trim)
+    
+    # Calcular dados das notas fiscais recebidas mensalmente  
+    def calcular_notas_fiscais_recebidas():
+        from medicos.models import NotaFiscal
+        from django.db.models import Sum
+        
+        notas_recebidas = {
+            'receita_consultas': [],
+            'receita_outros': [],
+            'receita_bruta_mensal': [],
+            'receita_bruta_trimestral': []
+        }
+        
+        for mes in range(1, 13):
+            # Buscar notas fiscais recebidas no mês
+            notas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria_id=empresa_id,
+                dtRecebimento__year=ano,
+                dtRecebimento__month=mes,
+                dtRecebimento__isnull=False
+            )
+            
+            # Calcular receitas por tipo de serviço
+            receita_consultas = notas_mes.filter(
+                tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+            ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+            
+            receita_outros = notas_mes.exclude(
+                tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+            ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+            
+            receita_bruta_mensal = receita_consultas + receita_outros
+            
+            notas_recebidas['receita_consultas'].append(receita_consultas)
+            notas_recebidas['receita_outros'].append(receita_outros)
+            notas_recebidas['receita_bruta_mensal'].append(receita_bruta_mensal)
+        
+        # Calcular totais trimestrais
+        trimestres = [(1, [1,2,3]), (2, [4,5,6]), (3, [7,8,9]), (4, [10,11,12])]
+        for num_tri, meses in trimestres:
+            total_consultas_tri = sum(notas_recebidas['receita_consultas'][mes-1] for mes in meses)
+            total_outros_tri = sum(notas_recebidas['receita_outros'][mes-1] for mes in meses)
+            total_bruto_tri = total_consultas_tri + total_outros_tri
+            notas_recebidas['receita_bruta_trimestral'].append(total_bruto_tri)
+        
+        return notas_recebidas
+
+    # Calcular dados das notas fiscais recebidas
+    notas_fiscais_recebidas = calcular_notas_fiscais_recebidas()
+
+    # Calcular dados das notas fiscais emitidas mensalmente
+    def calcular_notas_fiscais_emitidas():
+        from medicos.models import NotaFiscal
+        from django.db.models import Sum
+        
+        notas_emitidas = {
+            'receita_consultas': [],
+            'receita_outros': [],
+            'receita_bruta_mensal': [],
+            'receita_bruta_trimestral': []
+        }
+        
+        for mes in range(1, 13):
+            # Buscar notas fiscais emitidas no mês
+            notas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria_id=empresa_id,
+                dtEmissao__year=ano,
+                dtEmissao__month=mes
+            )
+            
+            # Calcular receitas por tipo de serviço
+            receita_consultas = notas_mes.filter(
+                tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+            ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+            
+            receita_outros = notas_mes.exclude(
+                tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
+            ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+            
+            receita_bruta_mensal = receita_consultas + receita_outros
+            
+            notas_emitidas['receita_consultas'].append(receita_consultas)
+            notas_emitidas['receita_outros'].append(receita_outros)
+            notas_emitidas['receita_bruta_mensal'].append(receita_bruta_mensal)
+        
+        # Calcular totais trimestrais
+        trimestres = [(1, [1,2,3]), (2, [4,5,6]), (3, [7,8,9]), (4, [10,11,12])]
+        for num_tri, meses in trimestres:
+            total_consultas_tri = sum(notas_emitidas['receita_consultas'][mes-1] for mes in meses)
+            total_outros_tri = sum(notas_emitidas['receita_outros'][mes-1] for mes in meses)
+            total_bruto_tri = total_consultas_tri + total_outros_tri
+            notas_emitidas['receita_bruta_trimestral'].append(total_bruto_tri)
+        
+        return notas_emitidas
+
+    # Calcular dados das notas fiscais emitidas
+    notas_fiscais_emitidas = calcular_notas_fiscais_emitidas()
+
+    # Calcular impostos retidos mensais por nota fiscal
+    def calcular_impostos_retidos_mensais():
+        from medicos.models import NotaFiscal
+        from django.db.models import Sum
+        
+        impostos_retidos = {
+            'pis': [],
+            'cofins': [],
+            'irpj': [],
+            'csll': [],
+            'issqn': [],
+            'outros': [],
+            'total': []
+        }
+        
+        for mes in range(1, 13):
+            # Buscar notas fiscais recebidas no mês
+            notas_recebidas = NotaFiscal.objects.filter(
+                empresa_destinataria_id=empresa_id,
+                dtRecebimento__year=ano,
+                dtRecebimento__month=mes,
+                dtRecebimento__isnull=False
+            )
+            
+            # Somar valores retidos por tipo de imposto
+            pis_retido = notas_recebidas.aggregate(total=Sum('val_PIS'))['total'] or Decimal('0')
+            cofins_retido = notas_recebidas.aggregate(total=Sum('val_COFINS'))['total'] or Decimal('0')
+            irpj_retido = notas_recebidas.aggregate(total=Sum('val_IR'))['total'] or Decimal('0')
+            csll_retido = notas_recebidas.aggregate(total=Sum('val_CSLL'))['total'] or Decimal('0')
+            issqn_retido = notas_recebidas.aggregate(total=Sum('val_ISS'))['total'] or Decimal('0')
+            
+            # Calcular outros impostos (campos adicionais se houver)
+            outros_retido = Decimal('0')  # Pode ser expandido conforme necessário
+            
+            total_retido = pis_retido + cofins_retido + irpj_retido + csll_retido + issqn_retido + outros_retido
+            
+            impostos_retidos['pis'].append(pis_retido)
+            impostos_retidos['cofins'].append(cofins_retido)
+            impostos_retidos['irpj'].append(irpj_retido)
+            impostos_retidos['csll'].append(csll_retido)
+            impostos_retidos['issqn'].append(issqn_retido)
+            impostos_retidos['outros'].append(outros_retido)
+            impostos_retidos['total'].append(total_retido)
+        
+        return impostos_retidos
+
+    # Calcular dados dos impostos retidos
+    impostos_retidos = calcular_impostos_retidos_mensais()
+
     context = _contexto_base(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
         'ano': ano,
@@ -860,8 +1105,14 @@ def relatorio_apuracao(request, empresa_id):
         'linhas_csll': linhas_csll,
         'dados_irpj_trimestral': dados_irpj_trimestral,
         'totais_trimestrais': totais_trimestrais,
+        'dados_csll_trimestral': dados_csll_trimestral,
+        'totais_trimestrais_csll': totais_trimestrais_csll,
         'espelho_adicional_trimestral': espelho_adicional_trimestral,
         'espelho_adicional_mensal': espelho_adicional_mensal,
+        'aliquotas': aliquotas_empresa,
+        'notas_fiscais_recebidas': notas_fiscais_recebidas,
+        'notas_fiscais_emitidas': notas_fiscais_emitidas,
+        'impostos_retidos': impostos_retidos,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)
