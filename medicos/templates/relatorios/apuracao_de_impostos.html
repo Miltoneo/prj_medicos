@@ -170,58 +170,6 @@
         </div>
       </div>
 
-      <!-- Seção ESPELHO DO ADICIONAL DE IR MENSAL -->
-      <div class="border-bottom">
-        <div class="px-4 py-3 bg-info bg-opacity-10 border-start border-info border-3">
-          <h5 class="mb-0 text-info">
-            <span class="bi bi-calculator me-2"></span>
-            ESPELHO DO ADICIONAL DE IR MENSAL
-          </h5>
-        </div>
-        <div class="p-3">
-          <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:900px;">
-              <thead class="table-info">
-                <tr>
-                  <th class="text-center" style="width: 25%;">Descrição</th>
-                  <th class="text-center" style="width: 6.25%;">Jan</th>
-                  <th class="text-center" style="width: 6.25%;">Fev</th>
-                  <th class="text-center" style="width: 6.25%;">Mar</th>
-                  <th class="text-center" style="width: 6.25%;">Abr</th>
-                  <th class="text-center" style="width: 6.25%;">Mai</th>
-                  <th class="text-center" style="width: 6.25%;">Jun</th>
-                  <th class="text-center" style="width: 6.25%;">Jul</th>
-                  <th class="text-center" style="width: 6.25%;">Ago</th>
-                  <th class="text-center" style="width: 6.25%;">Set</th>
-                  <th class="text-center" style="width: 6.25%;">Out</th>
-                  <th class="text-center" style="width: 6.25%;">Nov</th>
-                  <th class="text-center" style="width: 6.25%;">Dez</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for linha in linhas_espelho_adicional_mensal %}
-                  {% if linha.descricao == 'Valor base para adicional' or linha.descricao == 'Total base de cálculo' or linha.descricao == 'Excedente' or linha.descricao == 'Alíquota de adicional de IR (10%)' or linha.descricao == 'Total Adicional de IR' %}
-                    <tr>
-                      <td class="fw-medium fst-italic">{{ linha.descricao }}</td>
-                      {% for valor in linha.valores %}
-                        <td class="text-end fst-italic">{{ valor|floatformat:2 }}</td>
-                      {% endfor %}
-                    </tr>
-                  {% else %}
-                    <tr>
-                      <td class="fw-medium">{{ linha.descricao }}</td>
-                      {% for valor in linha.valores %}
-                        <td class="text-end">{{ valor|floatformat:2 }}</td>
-                      {% endfor %}
-                    </tr>
-                  {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
       <!-- Seção IRPJ e CSLL Trimestral -->
       <div class="border-bottom">
         <div class="px-4 py-3 bg-secondary bg-opacity-10 border-start border-secondary border-3">
