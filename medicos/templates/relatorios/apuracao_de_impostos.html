@@ -511,13 +511,13 @@
                   <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.receita_bruta.3|floatformat:2 }}</td>
                 </tr>
                 <tr>
-                  <td class="fw-medium">(+) Base sobre receita do tipo "consultas médicas"</td>
+                  <td class="fw-medium">(+) Base sobre receita do tipo "consultas médicas" ({{ aliquotas.IRPJ_PRESUNCAO_CONSULTA }}%)</td>
                   {% for valor in dados_irpj_trimestral.base_consultas %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="fw-medium">(+) Base sobre receita do tipo "outros serviços"</td>
+                  <td class="fw-medium">(+) Base sobre receita do tipo "outros serviços" ({{ aliquotas.IRPJ_PRESUNCAO_OUTROS }}%)</td>
                   {% for valor in dados_irpj_trimestral.base_outros %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
