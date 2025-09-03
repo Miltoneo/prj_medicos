@@ -637,8 +637,7 @@ def relatorio_apuracao(request, empresa_id):
     {'descricao': 'Base consultas (32%)', 'valores': [linha.get('base_calculo_consultas', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'Base outros (8%)', 'valores': [linha.get('base_calculo_outros', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'TOTAL BASE DE CALCULO', 'valores': [linha.get('base_calculo', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'TOTAL IMPOSTO DEVIDO (15%)', 'valores': [linha.get('imposto_devido', 0) for linha in relatorio_irpj_mensal['linhas']]},
-    {'descricao': 'CALCULO DO ADICIONAL DE IR', 'valores': [linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
+    {'descricao': 'TOTAL IMPOSTO DEVIDO (15%)', 'valores': [linha.get('imposto_devido', 0) + linha.get('adicional', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'IMPOSTO RETIDO NF', 'valores': [linha.get('imposto_retido_nf', 0) for linha in relatorio_irpj_mensal['linhas']]},
     {'descricao': 'TOTAL IMPOSTO A PAGAR', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]},
     ]
