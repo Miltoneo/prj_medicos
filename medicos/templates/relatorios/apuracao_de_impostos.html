@@ -328,6 +328,141 @@
         </div>
       </div>
 
+      <!-- Seção Apuração Trimestral IRPJ -->
+      <div>
+        <div class="px-4 py-3 bg-primary bg-opacity-10 border-start border-primary border-3">
+          <h5 class="mb-0 text-primary">
+            <span class="bi bi-calendar4-range me-2"></span>
+            Apuração Trimestral - IRPJ
+          </h5>
+        </div>
+        <div class="p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:1400px;">
+              <thead class="table-primary">
+                <tr>
+                  <th rowspan="2" style="width: 20%;">Descrição</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T1</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T2</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T3</th>
+                  <th colspan="3" class="text-center" style="width: 20%;">T4</th>
+                </tr>
+                <tr class="table-light">
+                  <th class="text-center" style="width: 6.67%;">1</th>
+                  <th class="text-center" style="width: 6.67%;">2</th>
+                  <th class="text-center" style="width: 6.67%;">3</th>
+                  <th class="text-center" style="width: 6.67%;">4</th>
+                  <th class="text-center" style="width: 6.67%;">5</th>
+                  <th class="text-center" style="width: 6.67%;">6</th>
+                  <th class="text-center" style="width: 6.67%;">7</th>
+                  <th class="text-center" style="width: 6.67%;">8</th>
+                  <th class="text-center" style="width: 6.67%;">9</th>
+                  <th class="text-center" style="width: 6.67%;">10</th>
+                  <th class="text-center" style="width: 6.67%;">11</th>
+                  <th class="text-center" style="width: 6.67%;">12</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-medium">(+) Receita consultas</td>
+                  {% for valor in dados_irpj_trimestral.receita_consultas %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Receita outros</td>
+                  {% for valor in dados_irpj_trimestral.receita_outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-light">
+                  <td class="fw-medium">(=) Total receita bruta</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.receita_bruta.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.receita_bruta.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.receita_bruta.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.receita_bruta.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Base sobre receita do tipo "consultas médicas"</td>
+                  {% for valor in dados_irpj_trimestral.base_consultas %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Base sobre receita do tipo "outros serviços"</td>
+                  {% for valor in dados_irpj_trimestral.base_outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-info">
+                  <td class="fw-medium">(=) Total base de cálculo</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Rendimentos aplicações</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.rendimentos_aplicacoes.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.rendimentos_aplicacoes.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.rendimentos_aplicacoes.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.rendimentos_aplicacoes.3|floatformat:2 }}</td>
+                </tr>
+                <tr class="table-warning">
+                  <td class="fw-medium">(=) Total base de cálculo apurada</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo_total.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo_total.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo_total.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.base_calculo_total.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Imposto devido (15%)</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_devido_15.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_devido_15.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_devido_15.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_devido_15.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(+) Adicional de IR</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.adicional_ir.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.adicional_ir.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.adicional_ir.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.adicional_ir.3|floatformat:2 }}</td>
+                </tr>
+                <tr class="table-success">
+                  <td class="fw-medium">(=) Total Imposto Devido</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.total_imposto_devido.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.total_imposto_devido.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.total_imposto_devido.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.total_imposto_devido.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(-) Imposto retido NF</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_retido_nf.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_retido_nf.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_retido_nf.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_retido_nf.3|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td class="fw-medium">(-) Retenção aplicação financeira</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.retencao_aplicacao.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.retencao_aplicacao.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.retencao_aplicacao.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end">{{ totais_trimestrais.retencao_aplicacao.3|floatformat:2 }}</td>
+                </tr>
+                <tr class="table-dark text-white">
+                  <td class="fw-bold">(=) Total Imposto a pagar</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.imposto_a_pagar.0|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.imposto_a_pagar.1|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.imposto_a_pagar.2|floatformat:2 }}</td>
+                  <td colspan="3" class="text-end fw-bold">{{ totais_trimestrais.imposto_a_pagar.3|floatformat:2 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
 
     </div>
   </div>

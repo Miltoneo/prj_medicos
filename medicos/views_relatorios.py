@@ -755,6 +755,94 @@ def relatorio_apuracao(request, empresa_id):
                     'excedente': excedente_socio,
                     'adicional_devido': adicional_socio,
                 })
+
+    # Dados Apuração Trimestral IRPJ (consolidando 3 meses por trimestre)
+    # Estrutura: valores mensais + totais trimestrais conforme anexo
+    dados_irpj_trimestral = {
+        'receita_consultas': [],
+        'receita_outros': [],
+        'receita_bruta': [],
+        'base_consultas': [],
+        'base_outros': [],
+        'base_calculo': [],
+        'rendimentos_aplicacoes': [],
+        'base_calculo_total': [],
+        'imposto_devido_15': [],
+        'adicional_ir': [],
+        'total_imposto_devido': [],
+        'imposto_retido_nf': [],
+        'retencao_aplicacao': [],
+        'imposto_a_pagar': [],
+    }
+    
+    # Preparar dados mensais (12 meses) + totais trimestrais (4 trimestres)
+    for mes in range(1, 13):  # Meses 1-12
+        if mes <= len(relatorio_irpj_mensal['linhas']):
+            linha_mes = relatorio_irpj_mensal['linhas'][mes - 1]
+            
+            receita_consultas = linha_mes.get('receita_consultas', 0)
+            receita_outros = linha_mes.get('receita_outros', 0)
+            base_calculo = linha_mes.get('base_calculo', 0)
+            rendimentos_aplicacoes = linha_mes.get('rendimentos_aplicacoes', 0)
+            imposto_devido = linha_mes.get('imposto_devido', 0)
+            adicional = linha_mes.get('adicional', 0)
+            imposto_retido_nf = linha_mes.get('imposto_retido_nf', 0)
+            retencao_aplicacao = linha_mes.get('retencao_aplicacao_financeira', 0)
+            
+            # Calcular valores derivados
+            receita_bruta = receita_consultas + receita_outros
+            base_consultas = receita_consultas * Decimal('0.32')  # 32%
+            base_outros = receita_outros * Decimal('0.08')        # 8%
+            base_calculo_total = base_calculo + rendimentos_aplicacoes
+            total_imposto_devido = imposto_devido + adicional
+            imposto_a_pagar = total_imposto_devido - imposto_retido_nf - retencao_aplicacao
+            
+            # Adicionar aos arrays
+            dados_irpj_trimestral['receita_consultas'].append(receita_consultas)
+            dados_irpj_trimestral['receita_outros'].append(receita_outros)
+            dados_irpj_trimestral['receita_bruta'].append(receita_bruta)
+            dados_irpj_trimestral['base_consultas'].append(base_consultas)
+            dados_irpj_trimestral['base_outros'].append(base_outros)
+            dados_irpj_trimestral['base_calculo'].append(base_calculo)
+            dados_irpj_trimestral['rendimentos_aplicacoes'].append(rendimentos_aplicacoes)
+            dados_irpj_trimestral['base_calculo_total'].append(base_calculo_total)
+            dados_irpj_trimestral['imposto_devido_15'].append(imposto_devido)
+            dados_irpj_trimestral['adicional_ir'].append(adicional)
+            dados_irpj_trimestral['total_imposto_devido'].append(total_imposto_devido)
+            dados_irpj_trimestral['imposto_retido_nf'].append(imposto_retido_nf)
+            dados_irpj_trimestral['retencao_aplicacao'].append(retencao_aplicacao)
+            dados_irpj_trimestral['imposto_a_pagar'].append(imposto_a_pagar)
+        else:
+            # Preencher com zeros se não há dados para o mês
+            for key in dados_irpj_trimestral.keys():
+                dados_irpj_trimestral[key].append(Decimal('0'))
+    
+    # Calcular totais trimestrais
+    totais_trimestrais = {
+        'receita_consultas': [],
+        'receita_outros': [],
+        'receita_bruta': [],
+        'base_consultas': [],
+        'base_outros': [],
+        'base_calculo': [],
+        'rendimentos_aplicacoes': [],
+        'base_calculo_total': [],
+        'imposto_devido_15': [],
+        'adicional_ir': [],
+        'total_imposto_devido': [],
+        'imposto_retido_nf': [],
+        'retencao_aplicacao': [],
+        'imposto_a_pagar': [],
+    }
+    
+    # Agrupar por trimestres (T1, T2, T3, T4)
+    for trimestre_num in range(4):  # 0, 1, 2, 3 para T1, T2, T3, T4
+        inicio_idx = trimestre_num * 3
+        fim_idx = inicio_idx + 3
+        
+        for key in totais_trimestrais.keys():
+            total_trim = sum(dados_irpj_trimestral[key][inicio_idx:fim_idx])
+            totais_trimestrais[key].append(total_trim)
     
     context = _contexto_base(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
@@ -770,6 +858,8 @@ def relatorio_apuracao(request, empresa_id):
         'linhas_espelho_adicional_mensal': linhas_espelho_adicional_mensal,
         'linhas_irpj': linhas_irpj,
         'linhas_csll': linhas_csll,
+        'dados_irpj_trimestral': dados_irpj_trimestral,
+        'totais_trimestrais': totais_trimestrais,
         'espelho_adicional_trimestral': espelho_adicional_trimestral,
         'espelho_adicional_mensal': espelho_adicional_mensal,
         'titulo_pagina': 'Apuração de Impostos',
