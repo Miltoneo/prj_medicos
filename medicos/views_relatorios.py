@@ -392,7 +392,6 @@ def relatorio_mensal_socio(request, empresa_id):
         # Regra do projeto: título deve ser passado via 'titulo_pagina'
         'titulo_pagina': 'Relatório Mensal do Sócio',
         'valor_adicional_rateio': relatorio_dict.get('valor_adicional_rateio', 0),
-        'participacao_socio_percentual': relatorio_dict.get('participacao_socio_percentual', 0),
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
         'total_receitas': relatorio_dict.get('total_receitas', 0),
         'total_despesas_outros': relatorio_dict.get('total_despesas_outros', 0),
@@ -439,17 +438,12 @@ def relatorio_mensal_socio(request, empresa_id):
             'ano': hoje.year,
         })
     
-    # Adicionar campos específicos do espelho de cálculo
+    # Adicionar campos auxiliares para o template
     context.update({
-        'base_calculo_consultas_ir': relatorio_dict.get('base_calculo_consultas_ir', 0),
-        'base_calculo_outros_ir': relatorio_dict.get('base_calculo_outros_ir', 0),
         'base_consultas_medicas': relatorio_dict.get('base_consultas_medicas', 0),
         'base_outros_servicos': relatorio_dict.get('base_outros_servicos', 0),
         'base_consultas_socio_regime': relatorio_dict.get('base_consultas_socio_regime', 0),
         'base_outros_socio_regime': relatorio_dict.get('base_outros_socio_regime', 0),
-        'valor_base_adicional': relatorio_dict.get('valor_base_adicional', 0),
-        'excedente_adicional': relatorio_dict.get('excedente_adicional', 0),
-        'aliquota_adicional': relatorio_dict.get('aliquota_adicional', 0),
         # Alíquotas dos impostos
         'aliquota_pis': relatorio_dict.get('aliquota_pis', 0),
         'aliquota_cofins': relatorio_dict.get('aliquota_cofins', 0),

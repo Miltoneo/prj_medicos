@@ -675,13 +675,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     contexto = {'relatorio': relatorio_obj}
     contexto['adicional_ir_trimestral_empresa'] = adicional_ir_trimestral_empresa
     
-    # Percentual garantido (0.00 a 100.00) - garantir que seja exibido corretamente
-    if participacao_socio > 0:
-        percentual = participacao_socio * 100
-    else:
-        percentual = 0.0
-    contexto['participacao_socio_percentual'] = round(percentual, 2) if percentual else 0.0
-    
     # Campos auxiliares utilizados no template
     contexto['receita_bruta_socio'] = receita_bruta_socio_emitida  # Usar notas emitidas para cálculo de adicional de IR
     
@@ -694,12 +687,6 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     # Adicionar campos calculados que não estão no modelo
     contexto['base_consultas_medicas'] = total_consultas
     contexto['base_outros_servicos'] = total_outros
-    contexto['base_calculo_consultas_ir'] = base_consultas
-    contexto['base_calculo_outros_ir'] = base_outros
-    contexto['base_calculo_ir_total'] = base_calculo_ir
-    contexto['valor_base_adicional'] = valor_base_adicional
-    contexto['excedente_adicional'] = excedente_adicional
-    contexto['aliquota_adicional'] = aliquota_adicional * 100  # Converter para percentual
     
     # Adicionar bases do sócio seguindo regime tributário
     contexto['base_consultas_socio_regime'] = base_consultas_socio_regime
