@@ -1,9 +1,0 @@
-{
-  "grupo_id": 10,
-  "grupo_codigo": "GD01",
-  "grupo_descricao": "GRUPO DESPESA SOCIO",
-  "grupo_tipo_rateio": 2,
-  "empresa_id": 4,
-  "empresa_name": "CLINICA PULSAR LTDA.",
-  "empresa_nome_fantasia": ""
-}

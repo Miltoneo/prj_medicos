@@ -1,6 +1,0 @@
-=== TESTE COM AUTENTICAÇÃO ===
-
-Login realizado com usuário: None
-Status: 302
-Erro HTTP: 302
-Redirecionamento para: /medicos/auth/select-account/
