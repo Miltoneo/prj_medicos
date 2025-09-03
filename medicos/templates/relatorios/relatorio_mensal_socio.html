@@ -194,6 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                           </thead>
                           <thead>
+                            <tr class="table-warning">
+                              <th>(-) ADICIONAL DE IR TRIMESTRAL</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_adicional|floatformat:2 }}</th>
+                            </tr>
+                          </thead>
+                          <thead>
                             <tr class="table-success">
                               <th>(=) RECEITA LÍQUIDA</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_liquida|floatformat:2 }}</th>
@@ -592,69 +598,6 @@ document.addEventListener('DOMContentLoaded', function() {
           
           <!-- Seção de Informações Complementares integrada -->
           <div class="row g-3 mt-4">
-            <div class="col-md-6">
-              <!-- Espelho do Adicional de IR Mensal -->
-              <div class="card border-warning shadow-sm h-100">
-                <div class="card-header bg-warning bg-opacity-10 border-warning fw-bold">
-                  <i class="fas fa-calculator text-warning me-2"></i>
-                  ESPELHO DO ADICIONAL DE IR MENSAL
-                </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped table-hover mb-0" style="max-width: 700px; min-width: 600px;">
-                      <colgroup>
-                        <col style="width: 70%;">
-                        <col style="width: 30%; min-width: 120px;">
-                      </colgroup>
-                      <tr class="table-primary">
-                        <td colspan="2" class="text-start">Receita bruta de notas emitidas no mês (empresa):</td>
-                        <td class="text-end text-nowrap">R$ {{ relatorio.total_notas_bruto|floatformat:2 }}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="2" class="text-start">Base sobre notas emitidas tipo "consultas médicas": ({{ base_consultas_medicas|floatformat:2|default:"0,00" }} × 32,00%)</td>
-                        <td class="text-end text-nowrap">R$ {{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="2" class="text-start">Base sobre notas emitidas do tipo "outros serviços": ({{ base_outros_servicos|floatformat:2|default:"0,00" }} × 8,00%)</td>
-                        <td class="text-end text-nowrap">R$ {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }}</td>
-                      </tr>
-                      <tr class="table-info">
-                        <td colspan="2" class="text-start">Base de cálculo do IR (total): ({{ base_calculo_consultas_ir|floatformat:2|default:"0,00" }} + {{ base_calculo_outros_ir|floatformat:2|default:"0,00" }})</td>
-                        <td class="text-end text-nowrap">R$ {{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }}</td>
-                      </tr>
-                      <tr class="table-secondary">
-                        <td colspan="2" class="text-start">Limite de isenção do adicional de IR:</td>
-                        <td class="text-end text-nowrap">R$ {{ valor_base_adicional|floatformat:2 }}</td>
-                      </tr>
-                      <tr class="table-warning">
-                        <td colspan="2" class="text-start">Excedente sujeito ao adicional: ({{ relatorio.base_calculo_ir_total|floatformat:2|default:"0,00" }} - {{ valor_base_adicional|floatformat:2 }})</td>
-                        <td class="text-end text-nowrap">R$ {{ excedente_adicional|floatformat:2|default:"0,00" }}</td>
-                      </tr>
-                      <tr class="table-secondary">
-                        <td colspan="2" class="text-start">Alíquota do adicional de IR:</td>
-                        <td class="text-end text-nowrap">{{ aliquota_adicional|floatformat:2 }}%</td>
-                      </tr>
-                      <tr class="table-success">
-                        <td colspan="2" class="text-start">Adicional de IR devido pela empresa: {{ excedente_adicional|floatformat:2|default:"0,00" }} × {{ aliquota_adicional|floatformat:2 }}%</td>
-                        <td class="text-end text-nowrap">R$ {{ valor_adicional_rateio|floatformat:2|default:"0,00" }}</td>
-                      </tr>
-                      <tr class="table-primary">
-                        <td colspan="2" class="text-start">Receita bruta total de notas emitidas do sócio:</td>
-                        <td class="text-end text-nowrap">R$ {{ receita_bruta_socio|floatformat:2 }}</td>
-                      </tr>
-                      <tr class="table-secondary">
-                        <td colspan="2" class="text-start">% do sócio na receita bruta da empresa: ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
-                        <td class="text-end text-nowrap">{{ participacao_socio_percentual|floatformat:2 }}%</td>
-                      </tr>
-                      <tr class="table-danger">
-                        <td colspan="2" class="text-start">Valor do adicional para o sócio: R$ {{ valor_adicional_rateio|floatformat:2 }} x ({{ receita_bruta_socio|floatformat:2 }} ÷ {{ relatorio.total_notas_bruto|floatformat:2 }})</td>
-                        <td class="text-end text-nowrap">R$ {{ relatorio.total_irpj_adicional|floatformat:2 }}</td>
-                      </tr>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
             
             <div class="col-md-6">
               <!-- Espelho Cálculo de Impostos -->

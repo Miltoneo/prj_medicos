@@ -205,7 +205,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
         base_calculo_ir = 0
         excedente_adicional = 0
     
-    valor_adicional_rateio = excedente_adicional * aliquota_adicional
+    # ADICIONAL DE IR TRIMESTRAL: Calcular valor total da empresa para rateio entre sócios
+    adicional_ir_trimestral_empresa = excedente_adicional * aliquota_adicional
     
     # Receita bruta recebida do sócio no mês - usar notas por data de recebimento
     # para ser consistente com a tabela "Notas Fiscais Recebidas no Mês"
@@ -226,7 +227,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     # Calcular a participação do sócio na receita bruta da empresa (para adicional de IR)
     # Usar receita_bruta_socio_emitida para ser consistente com base do adicional (emissão)
     participacao_socio = receita_bruta_socio_emitida / total_notas_bruto_empresa if total_notas_bruto_empresa > 0 else 0
-    valor_adicional_socio = valor_adicional_rateio * participacao_socio if valor_adicional_rateio > 0 else 0
+    
+    # ADICIONAL DE IR TRIMESTRAL: Calcular a parte proporcional do sócio no adicional de IR trimestral
+    adicional_ir_trimestral_socio = adicional_ir_trimestral_empresa * participacao_socio if adicional_ir_trimestral_empresa > 0 else 0
     
     # Processar notas fiscais do sócio para exibição
     notas_fiscais = []
@@ -519,8 +522,8 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     receita_bruta_recebida = receita_bruta_socio_recebida  # Usar valor correto (parte do sócio)
 
     # CORREÇÃO: Imposto a provisionar deve ser calculado como (devido - retido)
-    # Total dos impostos devidos do sócio (antes da dedução de impostos retidos)
-    impostos_devido_total = total_iss_devido_socio + total_pis_devido_socio + total_cofins_devido_socio + total_irpj_devido_socio + total_csll_devido_socio + valor_adicional_socio
+    # Total dos impostos devidos do sócio (antes da dedução de impostos retidos) - SEM incluir adicional de IR
+    impostos_devido_total = total_iss_devido_socio + total_pis_devido_socio + total_cofins_devido_socio + total_irpj_devido_socio + total_csll_devido_socio
     
     # Total dos impostos retidos do sócio
     impostos_retido_total = total_iss_retido_socio + total_pis_retido_socio + total_cofins_retido_socio + total_irpj_retido_socio + total_csll_retido_socio
@@ -535,8 +538,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     total_irpj_socio = total_irpj_devido_socio - total_irpj_retido_socio
     total_csll_socio = total_csll_devido_socio - total_csll_retido_socio
     
-    # Receita líquida = Receita bruta recebida - Impostos devido (conforme fórmula r-a)
-    receita_liquida = receita_bruta_recebida - impostos_devido_total
+    # RECEITA LÍQUIDA: Fórmula corrigida conforme solicitação do usuário
+    # (=) RECEITA LÍQUIDA = receita bruta - impostos_devido_total - adicional de IR trimestral
+    receita_liquida = receita_bruta_recebida - impostos_devido_total - adicional_ir_trimestral_socio
 
     # Buscar impostos provisionados do mês anterior
     if competencia.month == 1:
@@ -613,7 +617,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
         'total_pis': total_pis_socio,
         'total_cofins': total_cofins_socio,
         'total_irpj': total_irpj_socio,
-        'total_irpj_adicional': valor_adicional_socio,
+        'total_irpj_adicional': adicional_ir_trimestral_socio,  # ADICIONAL DE IR TRIMESTRAL do sócio
         'total_csll': total_csll_socio,
         'total_iss_devido': total_iss_devido_socio,
         'total_pis_devido': total_pis_devido_socio,
@@ -667,9 +671,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     )
     relatorio_obj.save()  # Garantir persistência explícita
     
-    # Adicionar valor_adicional_rateio ao dicionário de contexto do template
+    # Adicionar adicional_ir_trimestral_empresa ao dicionário de contexto do template
     contexto = {'relatorio': relatorio_obj}
-    contexto['valor_adicional_rateio'] = valor_adicional_rateio
+    contexto['adicional_ir_trimestral_empresa'] = adicional_ir_trimestral_empresa
     
     # Percentual garantido (0.00 a 100.00) - garantir que seja exibido corretamente
     if participacao_socio > 0:
@@ -725,7 +729,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
             valores_impostos = {
                 'PIS': total_pis_socio,
                 'COFINS': total_cofins_socio,
-                'IRPJ': total_irpj_socio + valor_adicional_socio,  # Incluir adicional de IRPJ
+                'IRPJ': total_irpj_socio + adicional_ir_trimestral_socio,  # Incluir ADICIONAL DE IR TRIMESTRAL
                 'CSLL': total_csll_socio,
                 'ISSQN': total_iss_socio,
             }
