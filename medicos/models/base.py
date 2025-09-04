@@ -556,7 +556,7 @@ class Socio(models.Model):
         db_table = 'socio'
         verbose_name = "Sócio/Médico"
         verbose_name_plural = "Sócios/Médicos"
-        unique_together = ('conta', 'pessoa', 'empresa')
+        # Removido unique_together para permitir o mesmo CPF/pessoa em várias empresas
         indexes = [
             models.Index(fields=['conta', 'empresa', 'pessoa']),
             models.Index(fields=['ativo']),
