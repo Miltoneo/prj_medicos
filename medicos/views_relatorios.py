@@ -1086,6 +1086,55 @@ def relatorio_apuracao(request, empresa_id):
     # Calcular dados dos impostos retidos
     impostos_retidos = calcular_impostos_retidos_mensais()
 
+    # Calcular impostos retidos especificamente para notas fiscais emitidas
+    def calcular_impostos_retidos_emitidas():
+        from medicos.models import NotaFiscal
+        from django.db.models import Sum
+        
+        impostos_retidos_emitidas = {
+            'pis': [],
+            'cofins': [],
+            'irpj': [],
+            'csll': [],
+            'issqn': [],
+            'outros': [],
+            'total': []
+        }
+        
+        for mes in range(1, 13):
+            # Buscar notas fiscais emitidas no mês
+            # EXCLUDINDO notas fiscais canceladas de todos os cálculos
+            notas_emitidas = NotaFiscal.objects.filter(
+                empresa_destinataria_id=empresa_id,
+                dtEmissao__year=ano,
+                dtEmissao__month=mes
+            ).exclude(status_recebimento='cancelado')
+            
+            # Somar valores retidos por tipo de imposto nas notas emitidas
+            pis_retido = notas_emitidas.aggregate(total=Sum('val_PIS'))['total'] or Decimal('0')
+            cofins_retido = notas_emitidas.aggregate(total=Sum('val_COFINS'))['total'] or Decimal('0')
+            irpj_retido = notas_emitidas.aggregate(total=Sum('val_IR'))['total'] or Decimal('0')
+            csll_retido = notas_emitidas.aggregate(total=Sum('val_CSLL'))['total'] or Decimal('0')
+            issqn_retido = notas_emitidas.aggregate(total=Sum('val_ISS'))['total'] or Decimal('0')
+            
+            # Calcular outros impostos (campos adicionais se houver)
+            outros_retido = Decimal('0')  # Pode ser expandido conforme necessário
+            
+            total_retido = pis_retido + cofins_retido + irpj_retido + csll_retido + issqn_retido + outros_retido
+            
+            impostos_retidos_emitidas['pis'].append(pis_retido)
+            impostos_retidos_emitidas['cofins'].append(cofins_retido)
+            impostos_retidos_emitidas['irpj'].append(irpj_retido)
+            impostos_retidos_emitidas['csll'].append(csll_retido)
+            impostos_retidos_emitidas['issqn'].append(issqn_retido)
+            impostos_retidos_emitidas['outros'].append(outros_retido)
+            impostos_retidos_emitidas['total'].append(total_retido)
+        
+        return impostos_retidos_emitidas
+
+    # Calcular dados dos impostos retidos para notas emitidas
+    impostos_retidos_emitidas = calcular_impostos_retidos_emitidas()
+
     context = _contexto_base(request, empresa=empresa, menu_nome='Relatórios', cenario_nome='Apuração de Impostos')
     context.update({
         'ano': ano,
@@ -1110,6 +1159,7 @@ def relatorio_apuracao(request, empresa_id):
         'notas_fiscais_recebidas': notas_fiscais_recebidas,
         'notas_fiscais_emitidas': notas_fiscais_emitidas,
         'impostos_retidos': impostos_retidos,
+        'impostos_retidos_emitidas': impostos_retidos_emitidas,
         'titulo_pagina': 'Apuração de Impostos',
     })
     return render(request, 'relatorios/apuracao_de_impostos.html', context)

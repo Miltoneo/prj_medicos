@@ -18,12 +18,12 @@
     
     <div class="card-body p-0">
 
-      <!-- Seção Notas Fiscais Emitidas -->
+      <!-- Seção Notas Fiscais Emitidas e Impostos Retidos (Integrado) -->
       <div class="border-bottom">
         <div class="px-4 py-3 bg-primary bg-opacity-10 border-start border-primary border-3">
           <h5 class="mb-0 text-primary">
             <span class="bi bi-file-earmark-text me-2"></span>
-            Notas Fiscais Emitidas
+            Notas Fiscais Emitidas e Impostos Retidos
           </h5>
         </div>
         <div class="p-3">
@@ -53,40 +53,100 @@
                 </tr>
               </thead>
               <tbody>
+                <!-- Seção de Receitas -->
                 <tr>
-                  <td class="fw-medium">(+) Total Receita consultas/Plantão</td>
+                  <td class="fw-medium">(+) Total Receita Consultas/Plantão</td>
                   {% for valor in notas_fiscais_emitidas.receita_consultas %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="fw-medium">(+) Total Receita outros</td>
+                  <td class="fw-medium">(+) Total Receita Outros</td>
                   {% for valor in notas_fiscais_emitidas.receita_outros %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr class="table-light">
-                  <td class="fw-medium">(=) Total receita bruta</td>
+                  <td class="fw-medium">(=) Total Receita Bruta Mês</td>
+                  {% for valor in notas_fiscais_emitidas.receita_bruta_mensal %}
+                    <td class="text-end fw-bold">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-primary">
+                  <td class="fw-bold">(=) Total Receita Bruta Trimestre</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.0|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.1|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.2|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_emitidas.receita_bruta_trimestral.3|floatformat:2 }}</td>
                 </tr>
+                
+                <!-- Separador -->
+                <tr class="table-secondary">
+                  <td colspan="13" class="text-center fw-bold text-muted py-2">
+                    <i class="bi bi-receipt me-2"></i>Imposto Retido
+                  </td>
+                </tr>
+                
+                <!-- Seção de Impostos Retidos -->
+                <tr>
+                  <td class="fw-medium ps-3">PIS</td>
+                  {% for valor in impostos_retidos_emitidas.pis %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium ps-3">COFINS</td>
+                  {% for valor in impostos_retidos_emitidas.cofins %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium ps-3">IRPJ</td>
+                  {% for valor in impostos_retidos_emitidas.irpj %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium ps-3">CSLL</td>
+                  {% for valor in impostos_retidos_emitidas.csll %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium ps-3">ISSQN</td>
+                  {% for valor in impostos_retidos_emitidas.issqn %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  <td class="fw-medium ps-3">Outros</td>
+                  {% for valor in impostos_retidos_emitidas.outros %}
+                    <td class="text-end">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-dark">
+                  <td class="fw-bold">Total Impostos Retidos</td>
+                  {% for valor in impostos_retidos_emitidas.total %}
+                    <td class="text-end fw-bold text-white">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
               </tbody>
             </table>
           </div>
-          <small class="text-muted fst-italic">* Valores por data de emissão da nota fiscal</small>
+          <small class="text-muted fst-italic">* Receitas por data de emissão da nota fiscal</small>
+          <br>
+          <small class="text-muted fst-italic">* Impostos retidos considerando todas as notas fiscais emitidas</small>
           <br>
           <small class="text-warning fst-italic"><i class="bi bi-exclamation-triangle me-1"></i>Notas fiscais com status CANCELADO são excluídas de todos os cálculos</small>
         </div>
       </div>
 
-      <!-- Seção Notas Fiscais Recebidas -->
+      <!-- Seção Notas Fiscais Recebidas e Impostos Retidos (Integrado) -->
       <div class="border-bottom">
         <div class="px-4 py-3 bg-warning bg-opacity-10 border-start border-warning border-3">
           <h5 class="mb-0 text-warning">
             <span class="bi bi-file-earmark-arrow-down me-2"></span>
-            Notas Fiscais Recebidas
+            Notas Fiscais Recebidas e Impostos Retidos
           </h5>
         </div>
         <div class="p-3">
@@ -116,6 +176,7 @@
                 </tr>
               </thead>
               <tbody>
+                <!-- Seção de Receitas -->
                 <tr>
                   <td class="fw-medium">(+) Total Receita consultas/Plantão</td>
                   {% for valor in notas_fiscais_recebidas.receita_consultas %}
@@ -129,99 +190,77 @@
                   {% endfor %}
                 </tr>
                 <tr class="table-light">
-                  <td class="fw-medium">(=) Total receita bruta recebida</td>
+                  <td class="fw-medium">(=) Total Receita Bruta Mês</td>
+                  {% for valor in notas_fiscais_recebidas.receita_bruta_mensal %}
+                    <td class="text-end fw-bold">{{ valor|floatformat:2 }}</td>
+                  {% endfor %}
+                </tr>
+                <tr class="table-warning">
+                  <td class="fw-bold">(=) Total receita bruta recebida</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.0|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.1|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.2|floatformat:2 }}</td>
                   <td colspan="3" class="text-end fw-bold">{{ notas_fiscais_recebidas.receita_bruta_trimestral.3|floatformat:2 }}</td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
-          <small class="text-muted fst-italic">* Valores por data de recebimento da nota fiscal</small>
-          <br>
-          <small class="text-warning fst-italic"><i class="bi bi-exclamation-triangle me-1"></i>Notas fiscais com status CANCELADO são excluídas de todos os cálculos</small>
-        </div>
-      </div>
-
-      <!-- Seção Impostos Retidos na Nota Fiscal -->
-      <div class="border-bottom">
-        <div class="px-4 py-3 bg-dark bg-opacity-10 border-start border-dark border-3">
-          <h5 class="mb-0 text-dark">
-            <span class="bi bi-receipt me-2"></span>
-            Impostos Retidos na Nota Fiscal
-          </h5>
-        </div>
-        <div class="p-3">
-          <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover mb-0" style="min-width:900px;">
-              <thead class="table-dark">
-                <tr>
-                  <th rowspan="2" style="width: 20%;">Total Retido</th>
-                  <th colspan="12" class="text-center" style="width: 80%;">MÊS</th>
+                
+                <!-- Separador -->
+                <tr class="table-secondary">
+                  <td colspan="13" class="text-center fw-bold text-muted py-2">
+                    <i class="bi bi-receipt me-2"></i>Imposto Retido
+                  </td>
                 </tr>
-                <tr class="table-light">
-                  <th class="text-center" style="width: 6.67%;">1</th>
-                  <th class="text-center" style="width: 6.67%;">2</th>
-                  <th class="text-center" style="width: 6.67%;">3</th>
-                  <th class="text-center" style="width: 6.67%;">4</th>
-                  <th class="text-center" style="width: 6.67%;">5</th>
-                  <th class="text-center" style="width: 6.67%;">6</th>
-                  <th class="text-center" style="width: 6.67%;">7</th>
-                  <th class="text-center" style="width: 6.67%;">8</th>
-                  <th class="text-center" style="width: 6.67%;">9</th>
-                  <th class="text-center" style="width: 6.67%;">10</th>
-                  <th class="text-center" style="width: 6.67%;">11</th>
-                  <th class="text-center" style="width: 6.67%;">12</th>
-                </tr>
-              </thead>
-              <tbody>
+                
+                <!-- Seção de Impostos Retidos -->
                 <tr>
-                  <td class="fw-medium">PIS</td>
+                  <td class="fw-medium ps-3">PIS</td>
                   {% for valor in impostos_retidos.pis %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="fw-medium">COFINS</td>
+                  <td class="fw-medium ps-3">COFINS</td>
                   {% for valor in impostos_retidos.cofins %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="fw-medium">IRPJ</td>
+                  <td class="fw-medium ps-3">IRPJ</td>
                   {% for valor in impostos_retidos.irpj %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="fw-medium">CSLL</td>
+                  <td class="fw-medium ps-3">CSLL</td>
                   {% for valor in impostos_retidos.csll %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="fw-medium">ISSQN</td>
+                  <td class="fw-medium ps-3">ISSQN</td>
                   {% for valor in impostos_retidos.issqn %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
                 <tr>
-                  <td class="fw-medium">Outros</td>
+                  <td class="fw-medium ps-3">Outros</td>
                   {% for valor in impostos_retidos.outros %}
                     <td class="text-end">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
-                <tr class="table-dark text-white">
+                <tr class="table-dark">
                   <td class="fw-bold">Total Impostos Retidos</td>
                   {% for valor in impostos_retidos.total %}
-                    <td class="text-end fw-bold">{{ valor|floatformat:2 }}</td>
+                    <td class="text-end fw-bold text-white">{{ valor|floatformat:2 }}</td>
                   {% endfor %}
                 </tr>
               </tbody>
             </table>
           </div>
-          <small class="text-muted fst-italic">* Valores retidos por data de recebimento da nota fiscal</small>
+          <small class="text-muted fst-italic">* Receitas por data de recebimento da nota fiscal</small>
+          <br>
+          <small class="text-muted fst-italic">* Impostos retidos considerando todas as notas fiscais recebidas</small>
+          <br>
+          <small class="text-warning fst-italic"><i class="bi bi-exclamation-triangle me-1"></i>Notas fiscais com status CANCELADO são excluídas de todos os cálculos</small>
         </div>
       </div>
       
