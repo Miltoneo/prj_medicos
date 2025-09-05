@@ -233,7 +233,11 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     participacao_socio = receita_bruta_socio_emitida / total_notas_bruto_empresa if total_notas_bruto_empresa > 0 else 0
     
     # ADICIONAL DE IR TRIMESTRAL: Calcular a parte proporcional do sócio no adicional de IR trimestral
-    adicional_ir_trimestral_socio = adicional_ir_trimestral_empresa * participacao_socio if adicional_ir_trimestral_empresa > 0 else 0
+    # REGRA: Só aparece nos meses de fechamento de trimestre (3, 6, 9, 12)
+    if competencia.month in [3, 6, 9, 12]:
+        adicional_ir_trimestral_socio = adicional_ir_trimestral_empresa * participacao_socio if adicional_ir_trimestral_empresa > 0 else 0
+    else:
+        adicional_ir_trimestral_socio = 0
     
     # Processar notas fiscais do sócio para exibição
     notas_fiscais = []
