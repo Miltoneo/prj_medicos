@@ -147,8 +147,8 @@ class NotaFiscalRecebimentoUpdateView(UpdateView):
         # Captura os parâmetros de filtro da query string atual
         filtros = self.request.GET.copy()
         
-        # Remove parâmetros que não são filtros (se houver)
-        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento']
+        # Remove parâmetros que não são filtros (se houver) - inclui ordenação e paginação
+        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento', 'sort', 'order', 'page', 'per_page']
         filtros_limpos = QueryDict(mutable=True)
         
         for param in parametros_filtro:
@@ -275,10 +275,10 @@ class NotaFiscalRecebimentoCancelarView(View):
                 messages.success(request, f'Nota fiscal {nota_fiscal.numero} foi cancelada com sucesso.')
             nota_fiscal.save()
         
-        # Preservar todos os filtros originais da busca
+        # Preservar todos os filtros originais da busca incluindo ordenação e paginação
         from django.http import QueryDict
         filtros = request.GET.copy()
-        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento']
+        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento', 'sort', 'order', 'page', 'per_page']
         filtros_limpos = QueryDict(mutable=True)
         
         for param in parametros_filtro:
@@ -324,10 +324,10 @@ class NotaFiscalRecebimentoPendenteView(View):
             
             messages.success(request, f'Nota fiscal {nota_fiscal.numero} reativada e alterada para status pendente.')
         
-        # Preservar todos os filtros originais da busca
+        # Preservar todos os filtros originais da busca incluindo ordenação e paginação
         from django.http import QueryDict
         filtros = request.GET.copy()
-        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento']
+        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento', 'sort', 'order', 'page', 'per_page']
         filtros_limpos = QueryDict(mutable=True)
         
         for param in parametros_filtro:
