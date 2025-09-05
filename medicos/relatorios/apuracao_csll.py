@@ -65,7 +65,7 @@ def montar_relatorio_csll_persistente(empresa_id, ano):
             dtRecebimento__year=ano,
             dtRecebimento__month__in=meses,
             dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
-        )
+        ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
         imposto_retido_nf = notas_recebidas.aggregate(total=Sum('val_CSLL'))['total'] or Decimal('0')
         imposto_a_pagar = imposto_devido - imposto_retido_nf
         with transaction.atomic():

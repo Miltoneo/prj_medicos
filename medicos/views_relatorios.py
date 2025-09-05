@@ -470,7 +470,7 @@ def calcular_adicional_ir_mensal(empresa_id, ano):
             empresa_destinataria=empresa,
             dtEmissao__year=ano,
             dtEmissao__month=mes
-        )
+        ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
         
         # Receitas por tipo de serviço (sempre por data de emissão)
         receita_consultas = notas_adicional.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(
@@ -529,7 +529,7 @@ def calcular_adicional_ir_trimestral(empresa_id, ano):
             empresa_destinataria=empresa,
             dtEmissao__year=ano,
             dtEmissao__month__in=meses
-        )
+        ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
         
         # Receitas por tipo de serviço (sempre por data de emissão)
         receita_consultas = notas_adicional.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(
@@ -881,7 +881,7 @@ def relatorio_apuracao(request, empresa_id):
                 dtRecebimento__year=ano,
                 dtRecebimento__month=mes,
                 dtRecebimento__isnull=False
-            )
+            ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
             imposto_retido_nf_csll = notas_recebidas_mes.aggregate(
                 total=Sum('val_CSLL')
             )['total'] or Decimal('0')

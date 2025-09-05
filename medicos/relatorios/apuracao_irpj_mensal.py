@@ -59,7 +59,7 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
                 empresa_destinataria=empresa,
                 dtEmissao__year=ano,
                 dtEmissao__month=num_mes
-            )
+            ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
         else:
             # Regime de caixa: considera data de recebimento
             notas_irpj = NotaFiscal.objects.filter(
@@ -67,7 +67,7 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
                 dtRecebimento__year=ano,
                 dtRecebimento__month=num_mes,
                 dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
-            )
+            ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
         
         # ADICIONAL DE IR: SEMPRE considera data de emissão (independente do regime)
         # Lei 9.249/1995, Art. 3º, §1º - sempre por competência
@@ -75,7 +75,7 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
             empresa_destinataria=empresa,
             dtEmissao__year=ano,
             dtEmissao__month=num_mes
-        )
+        ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
         
         # Receitas por tipo de serviço (para IRPJ principal)
         receita_consultas = notas_irpj.filter(
