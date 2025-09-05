@@ -38,7 +38,7 @@
     <!-- Habilitado para notas canceladas ou recebidas -->
     <form method="post" action="{% url 'medicos:pendente_recebimento_nota_fiscal' pk=record.pk %}?{{ request.GET.urlencode }}" 
           style="display: inline;" 
-          onsubmit="return confirm('Confirma a alteração do status desta nota fiscal para PENDENTE?{% if record.status_recebimento == 'recebido' %} A data de recebimento será removida.{% endif %}');">
+          onsubmit="return confirm('Confirma a alteração do status desta nota fiscal para PENDENTE?');">
       {% csrf_token %}
       <button type="submit" class="btn btn-sm btn-warning me-1" title="Alterar para status pendente">
         <i class="fas fa-clock"></i>
@@ -59,9 +59,9 @@
     <!-- Habilitado para notas pendentes e recebidas -->
     <form method="post" action="{% url 'medicos:cancelar_recebimento_nota_fiscal' pk=record.pk %}?{{ request.GET.urlencode }}" 
           style="display: inline;" 
-          onsubmit="return confirm('Confirma o cancelamento desta nota fiscal?{% if record.status_recebimento == 'recebido' %} A data de recebimento será removida.{% endif %} Esta ação pode ser revertida alterando o status posteriormente.');">
+          onsubmit="return confirm('Confirma o cancelamento desta nota fiscal? Esta ação pode ser revertida alterando o status posteriormente.');">
       {% csrf_token %}
-      <button type="submit" class="btn btn-sm btn-danger me-1" title="Cancelar nota fiscal{% if record.status_recebimento == 'recebido' %} (removerá data de recebimento){% endif %}">
+      <button type="submit" class="btn btn-sm btn-danger me-1" title="Cancelar nota fiscal">
         <i class="fas fa-times-circle"></i>
       </button>
     </form>

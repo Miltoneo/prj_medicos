@@ -42,122 +42,132 @@ logger = logging.getLogger('medicos.signals_financeiro')
 #         logger.warning(f"Removendo lançamentos financeiros para NotaFiscal id={instance.id}")
 #         Financeiro.objects.filter(nota_fiscal=instance).delete()
 
-@receiver(post_save, sender=NotaFiscal)
-def criar_ou_atualizar_lancamento_conta_corrente(sender, instance, created, **kwargs):
-    """
-    Signal disparado quando uma NotaFiscal é salva.
-    Cria, atualiza ou remove lançamento na conta corrente baseado no status de recebimento.
-    
-    Regra: Toda nota fiscal recebida gera um lançamento de entrada na conta corrente.
-    Mudanças na data, status ou meio de pagamento são refletidas automaticamente.
-    """
-    print(f"=== SIGNAL CONTA CORRENTE DISPARADO ===")
-    print(f"Nota Fiscal: {instance.numero} (ID: {instance.id})")
-    print(f"Status: {instance.status_recebimento}, Data Recebimento: {instance.dtRecebimento}")
-    print(f"Rateio completo: {instance.rateio_completo if instance.tem_rateio else 'N/A (sem rateio)'}")
-    
-    logger.info(f"=== SIGNAL CONTA CORRENTE DISPARADO ===")
-    logger.info(f"Nota Fiscal: {instance.numero} (ID: {instance.id})")
-    logger.info(f"Status: {instance.status_recebimento}, Data Recebimento: {instance.dtRecebimento}")
-    logger.info(f"Rateio completo: {instance.rateio_completo if instance.tem_rateio else 'N/A (sem rateio)'}")
-    
-    # Buscar lançamento existente na conta corrente
-    lancamento_existente = MovimentacaoContaCorrente.objects.filter(nota_fiscal=instance).first()
-    
-    # VALIDAÇÃO: Nota deve estar recebida, ter data, meio de pagamento
-    # E se tem rateio, o rateio deve estar completo (100%)
-    condicoes_atendidas = (
-        instance.status_recebimento == 'recebido' and 
-        instance.dtRecebimento and 
-        instance.meio_pagamento and
-        (not instance.tem_rateio or instance.rateio_completo)  # Se tem rateio, deve estar completo
-    )
-    
-    print(f"Condições para lançamento: recebido={instance.status_recebimento == 'recebido'}, "
-          f"data={bool(instance.dtRecebimento)}, meio_pagamento={bool(instance.meio_pagamento)}, "
-          f"rateio_ok={not instance.tem_rateio or instance.rateio_completo}")
-    
-    if condicoes_atendidas:
-        # Criar ou atualizar lançamento na conta corrente
-        
-        # Garantir que existe uma descrição específica para crédito de nota fiscal
-        descricao, _ = DescricaoMovimentacaoFinanceira.objects.get_or_create(
-            empresa=instance.empresa_destinataria,
-            descricao='Credito de Nota Fiscal',
-            defaults={
-                'created_by': getattr(instance, 'updated_by', None)
-            }
-        )
-        
-        # Determinar o sócio (se houver rateio, usar o primeiro sócio)
-        socio = None
-        if hasattr(instance, 'rateios_medicos') and instance.rateios_medicos.exists():
-            socio = instance.rateios_medicos.first().medico
-        
-        # Dados do lançamento
-        dados_lancamento = {
-            'descricao_movimentacao': descricao,
-            'socio': socio,
-            'data_movimentacao': instance.dtRecebimento,
-            'valor': instance.val_liquido,  # Valor positivo = entrada na conta
-            'instrumento_bancario': instance.meio_pagamento,
-            'numero_documento_bancario': instance.numero,
-            'historico_complementar': f'Recebimento da Nota Fiscal nº {instance.numero}',
-            'created_by': getattr(instance, 'updated_by', None)
-        }
-        
-        if lancamento_existente:
-            # Atualizar lançamento existente
-            for campo, valor in dados_lancamento.items():
-                setattr(lancamento_existente, campo, valor)
-            lancamento_existente.save()
-            print(f"✅ Lançamento conta corrente ATUALIZADO (ID: {lancamento_existente.id})")
-            logger.info(f"✅ Lançamento conta corrente ATUALIZADO (ID: {lancamento_existente.id})")
-        else:
-            # Criar novo lançamento
-            dados_lancamento['nota_fiscal'] = instance
-            novo_lancamento = MovimentacaoContaCorrente.objects.create(**dados_lancamento)
-            print(f"✅ Lançamento conta corrente CRIADO (ID: {novo_lancamento.id})")
-            logger.info(f"✅ Lançamento conta corrente CRIADO (ID: {novo_lancamento.id})")
-            
-    else:
-        # Remover lançamento se nota não está recebida ou não tem dados completos
-        if lancamento_existente:
-            lancamento_existente.delete()
-            print(f"🗑️ Lançamento conta corrente REMOVIDO")
-            logger.info(f"🗑️ Lançamento conta corrente REMOVIDO")
-        else:
-            print(f"ℹ️ Nenhum lançamento para remover")
-            logger.info(f"ℹ️ Nenhum lançamento para remover")
-    
-    print(f"=== SIGNAL CONTA CORRENTE CONCLUÍDO ===")
-    logger.info(f"=== SIGNAL CONTA CORRENTE CONCLUÍDO ===")
+# SIGNAL DESABILITADO: Sincronização automática de notas fiscais com conta corrente removida
+# conforme solicitação para eliminar lançamentos automáticos no extrato da conta corrente
+
+# @receiver(post_save, sender=NotaFiscal)
+# def criar_ou_atualizar_lancamento_conta_corrente(sender, instance, created, **kwargs):
+#     """
+#     SIGNAL DESABILITADO: Fluxo automático de inserção de nota fiscal na conta corrente foi desfeito.
+#     
+#     Este signal criava automaticamente lançamentos na conta corrente quando uma nota fiscal era 
+#     marcada como recebida. Para reativar, descomente este código.
+#     
+#     Motivo da desabilitação: Cancelar comportamento de sincronização automática conforme solicitação
+#     em "não é para sincronizar o recebimento da nota com o extrato da conta corrente".
+#     """
+#     print(f"=== SIGNAL CONTA CORRENTE DISPARADO ===")
+#     print(f"Nota Fiscal: {instance.numero} (ID: {instance.id})")
+#     print(f"Status: {instance.status_recebimento}, Data Recebimento: {instance.dtRecebimento}")
+#     print(f"Rateio completo: {instance.rateio_completo if instance.tem_rateio else 'N/A (sem rateio)'}")
+#     
+#     logger.info(f"=== SIGNAL CONTA CORRENTE DISPARADO ===")
+#     logger.info(f"Nota Fiscal: {instance.numero} (ID: {instance.id})")
+#     logger.info(f"Status: {instance.status_recebimento}, Data Recebimento: {instance.dtRecebimento}")
+#     logger.info(f"Rateio completo: {instance.rateio_completo if instance.tem_rateio else 'N/A (sem rateio)'}")
+#     
+#     # Buscar lançamento existente na conta corrente
+#     lancamento_existente = MovimentacaoContaCorrente.objects.filter(nota_fiscal=instance).first()
+#     
+#     # VALIDAÇÃO: Nota deve estar recebida, ter data, meio de pagamento
+#     # E se tem rateio, o rateio deve estar completo (100%)
+#     condicoes_atendidas = (
+#         instance.status_recebimento == 'recebido' and 
+#         instance.dtRecebimento and 
+#         instance.meio_pagamento and
+#         (not instance.tem_rateio or instance.rateio_completo)  # Se tem rateio, deve estar completo
+#     )
+#     
+#     print(f"Condições para lançamento: recebido={instance.status_recebimento == 'recebido'}, "
+#           f"data={bool(instance.dtRecebimento)}, meio_pagamento={bool(instance.meio_pagamento)}, "
+#           f"rateio_ok={not instance.tem_rateio or instance.rateio_completo}")
+#     
+#     if condicoes_atendidas:
+#         # Criar ou atualizar lançamento na conta corrente
+#         
+#         # Garantir que existe uma descrição específica para crédito de nota fiscal
+#         descricao, _ = DescricaoMovimentacaoFinanceira.objects.get_or_create(
+#             empresa=instance.empresa_destinataria,
+#             descricao='Credito de Nota Fiscal',
+#             defaults={
+#                 'created_by': getattr(instance, 'updated_by', None)
+#             }
+#         )
+#         
+#         # Determinar o sócio (se houver rateio, usar o primeiro sócio)
+#         socio = None
+#         if hasattr(instance, 'rateios_medicos') and instance.rateios_medicos.exists():
+#             socio = instance.rateios_medicos.first().medico
+#         
+#         # Dados do lançamento
+#         dados_lancamento = {
+#             'descricao_movimentacao': descricao,
+#             'socio': socio,
+#             'data_movimentacao': instance.dtRecebimento,
+#             'valor': instance.val_liquido,  # Valor positivo = entrada na conta
+#             'instrumento_bancario': instance.meio_pagamento,
+#             'numero_documento_bancario': instance.numero,
+#             'historico_complementar': f'Recebimento da Nota Fiscal nº {instance.numero}',
+#             'created_by': getattr(instance, 'updated_by', None)
+#         }
+#         
+#         if lancamento_existente:
+#             # Atualizar lançamento existente
+#             for campo, valor in dados_lancamento.items():
+#                 setattr(lancamento_existente, campo, valor)
+#             lancamento_existente.save()
+#             print(f"✅ Lançamento conta corrente ATUALIZADO (ID: {lancamento_existente.id})")
+#             logger.info(f"✅ Lançamento conta corrente ATUALIZADO (ID: {lancamento_existente.id})")
+#         else:
+#             # Criar novo lançamento
+#             dados_lancamento['nota_fiscal'] = instance
+#             novo_lancamento = MovimentacaoContaCorrente.objects.create(**dados_lancamento)
+#             print(f"✅ Lançamento conta corrente CRIADO (ID: {novo_lancamento.id})")
+#             logger.info(f"✅ Lançamento conta corrente CRIADO (ID: {novo_lancamento.id})")
+#             
+#     else:
+#         # Remover lançamento se nota não está recebida ou não tem dados completos
+#         if lancamento_existente:
+#             lancamento_existente.delete()
+#             print(f"🗑️ Lançamento conta corrente REMOVIDO")
+#             logger.info(f"🗑️ Lançamento conta corrente REMOVIDO")
+#         else:
+#             print(f"ℹ️ Nenhum lançamento para remover")
+#             logger.info(f"ℹ️ Nenhum lançamento para remover")
+#     
+#     print(f"=== SIGNAL CONTA CORRENTE CONCLUÍDO ===")
+#     logger.info(f"=== SIGNAL CONTA CORRENTE CONCLUÍDO ===")
 
 
-@receiver(pre_delete, sender=NotaFiscal)
-def remover_lancamento_conta_corrente(sender, instance, **kwargs):
-    """
-    Signal disparado ANTES de uma NotaFiscal ser excluída.
-    Remove automaticamente o lançamento na conta corrente associado.
-    """
-    logger.info(f"=== REMOVENDO LANÇAMENTO CONTA CORRENTE ===")
-    logger.info(f"Nota Fiscal: {instance.numero} (ID: {instance.id})")
-    
-    # Buscar e remover lançamento na conta corrente
-    lancamentos_cc = MovimentacaoContaCorrente.objects.filter(nota_fiscal=instance)
-    count_lancamentos = lancamentos_cc.count()
-    
-    if count_lancamentos > 0:
-        logger.info(f"Removendo {count_lancamentos} lançamento(s) na conta corrente")
-        for lancamento in lancamentos_cc:
-            logger.info(f"  - Lançamento ID: {lancamento.id}, Valor: R$ {lancamento.valor}, Data: {lancamento.data_movimentacao}")
-        
-        lancamentos_cc.delete()
-        logger.info(f"✅ {count_lancamentos} lançamento(s) conta corrente removido(s)")
-    else:
-        logger.info("ℹ️ Nenhum lançamento na conta corrente para remover")
-    
-    logger.info(f"=== REMOÇÃO CONTA CORRENTE CONCLUÍDA ===")
+# SIGNAL DESABILITADO: Remoção automática de lançamentos na conta corrente removida
+# conforme solicitação para eliminar sincronização automática
+
+# @receiver(pre_delete, sender=NotaFiscal)
+# def remover_lancamento_conta_corrente(sender, instance, **kwargs):
+#     """
+#     SIGNAL DESABILITADO: Remoção automática de lançamentos na conta corrente foi desfeita.
+#     
+#     Este signal removia automaticamente lançamentos na conta corrente quando uma nota fiscal 
+#     era excluída. Para reativar, descomente este código.
+#     """
+#     logger.info(f"=== REMOVENDO LANÇAMENTO CONTA CORRENTE ===")
+#     logger.info(f"Nota Fiscal: {instance.numero} (ID: {instance.id})")
+#     
+#     # Buscar e remover lançamento na conta corrente
+#     lancamentos_cc = MovimentacaoContaCorrente.objects.filter(nota_fiscal=instance)
+#     count_lancamentos = lancamentos_cc.count()
+#     
+#     if count_lancamentos > 0:
+#         logger.info(f"Removendo {count_lancamentos} lançamento(s) na conta corrente")
+#         for lancamento in lancamentos_cc:
+#             logger.info(f"  - Lançamento ID: {lancamento.id}, Valor: R$ {lancamento.valor}, Data: {lancamento.data_movimentacao}")
+#         
+#         lancamentos_cc.delete()
+#         logger.info(f"✅ {count_lancamentos} lançamento(s) conta corrente removido(s)")
+#     else:
+#         logger.info("ℹ️ Nenhum lançamento na conta corrente para remover")
+#     
+#     logger.info(f"=== REMOÇÃO CONTA CORRENTE CONCLUÍDA ===")
 
 
 @receiver(pre_delete, sender=NotaFiscal)
