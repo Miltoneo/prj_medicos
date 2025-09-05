@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.views.generic import UpdateView
+from django.views.generic import UpdateView, View
 from django_tables2 import SingleTableMixin
 from django_filters.views import FilterView
 from django.urls import reverse_lazy
@@ -80,9 +80,11 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         mes_ano_recebimento = self.request.GET.get('mes_ano_recebimento', '')
         context['mes_ano_recebimento_default'] = mes_ano_recebimento
         
-        # Calcula totais das notas fiscais filtradas
+        # Calcula totais das notas fiscais filtradas EXCLUINDO notas canceladas
         queryset_filtrado = self.get_queryset()
-        totais = queryset_filtrado.aggregate(
+        queryset_para_totalizacao = queryset_filtrado.exclude(status_recebimento='cancelado')
+        
+        totais = queryset_para_totalizacao.aggregate(
             total_val_bruto=Sum('val_bruto'),
             total_val_liquido=Sum('val_liquido'),
             total_val_ISS=Sum('val_ISS'),
@@ -93,11 +95,12 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
             total_val_outros=Sum('val_outros')
         )
         
-        # Calcula quantidade de notas fiscais por status
+        # Calcula quantidade de notas fiscais por status (considera todas, incluindo canceladas)
         status_count = queryset_filtrado.aggregate(
             total_notas=models.Count('id'),
             pendentes=models.Count('id', filter=Q(status_recebimento='pendente')),
-            recebidas=models.Count('id', filter=Q(status_recebimento='recebido'))
+            recebidas=models.Count('id', filter=Q(status_recebimento='recebido')),
+            canceladas=models.Count('id', filter=Q(status_recebimento='cancelado'))
         )
         
         # Adiciona totais ao contexto, garantindo que valores None sejam convertidos para 0
@@ -123,7 +126,9 @@ class NotaFiscalRecebimentoListView(SingleTableMixin, FilterView):
         context['status_count'] = {
             'total_notas': status_count['total_notas'] or 0,
             'pendentes': status_count['pendentes'] or 0,
-            'recebidas': status_count['recebidas'] or 0
+            'recebidas': status_count['recebidas'] or 0,
+            'canceladas': status_count['canceladas'] or 0,
+            'notas_validas': (status_count['pendentes'] or 0) + (status_count['recebidas'] or 0)
         }
         
         return context
@@ -231,5 +236,106 @@ class NotaFiscalRecebimentoUpdateView(UpdateView):
         return context
 
     def form_valid(self, form):
+        # Definir status de recebimento automaticamente baseado na data de recebimento
+        if form.cleaned_data.get('dtRecebimento'):
+            form.instance.status_recebimento = 'recebido'
+        else:
+            form.instance.status_recebimento = 'pendente'
+            
         messages.success(self.request, 'Recebimento atualizado com sucesso!')
         return super().form_valid(form)
+
+
+@method_decorator(login_required, name='dispatch')
+class NotaFiscalRecebimentoCancelarView(View):
+    """
+    View para cancelar uma nota fiscal no contexto de recebimento
+    Altera o status do recebimento para 'cancelado'
+    """
+    
+    def post(self, request, pk):
+        empresa_id = request.session.get('empresa_id')
+        if not empresa_id:
+            messages.error(request, 'Empresa não selecionada.')
+            return redirect('medicos:recebimento_notas_fiscais')
+            
+        nota_fiscal = get_object_or_404(NotaFiscal, pk=pk, empresa_destinataria__id=int(empresa_id))
+        
+        # Verificar se a nota fiscal pode ser cancelada
+        if nota_fiscal.status_recebimento == 'cancelado':
+            messages.warning(request, 'Esta nota fiscal já está cancelada.')
+        else:
+            # Permitir cancelar qualquer nota (pendente ou recebida)
+            nota_fiscal.status_recebimento = 'cancelado'
+            if nota_fiscal.dtRecebimento:
+                # Se tinha data de recebimento, remove ao cancelar
+                nota_fiscal.dtRecebimento = None
+                messages.success(request, f'Nota fiscal {nota_fiscal.numero} foi cancelada com sucesso. Data de recebimento removida.')
+            else:
+                messages.success(request, f'Nota fiscal {nota_fiscal.numero} foi cancelada com sucesso.')
+            nota_fiscal.save()
+        
+        # Preservar todos os filtros originais da busca
+        from django.http import QueryDict
+        filtros = request.GET.copy()
+        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        url_base = reverse_lazy('medicos:recebimento_notas_fiscais')
+        if filtros_limpos:
+            return redirect(f"{url_base}?{filtros_limpos.urlencode()}")
+        
+        return redirect(url_base)
+
+
+@method_decorator(login_required, name='dispatch')
+class NotaFiscalRecebimentoPendenteView(View):
+    """
+    View para alterar o status de uma nota fiscal para 'pendente'
+    Útil para reverter cancelamentos ou status incorretos
+    """
+    
+    def post(self, request, pk):
+        empresa_id = request.session.get('empresa_id')
+        if not empresa_id:
+            messages.error(request, 'Empresa não selecionada.')
+            return redirect('medicos:recebimento_notas_fiscais')
+            
+        nota_fiscal = get_object_or_404(NotaFiscal, pk=pk, empresa_destinataria__id=int(empresa_id))
+        
+        # Verificar se a nota fiscal pode ter o status alterado para pendente
+        if nota_fiscal.status_recebimento == 'pendente':
+            messages.info(request, 'Esta nota fiscal já está com status pendente.')
+        elif nota_fiscal.status_recebimento == 'recebido':
+            # Permitir alterar de recebido para pendente (para correções)
+            nota_fiscal.status_recebimento = 'pendente'
+            nota_fiscal.dtRecebimento = None  # Remove a data de recebimento
+            nota_fiscal.save()
+            
+            messages.success(request, f'Nota fiscal {nota_fiscal.numero} alterada para status pendente. Data de recebimento removida.')
+        elif nota_fiscal.status_recebimento == 'cancelado':
+            # Permitir alterar de cancelado para pendente (reativar)
+            nota_fiscal.status_recebimento = 'pendente'
+            nota_fiscal.save()
+            
+            messages.success(request, f'Nota fiscal {nota_fiscal.numero} reativada e alterada para status pendente.')
+        
+        # Preservar todos os filtros originais da busca
+        from django.http import QueryDict
+        filtros = request.GET.copy()
+        parametros_filtro = ['numero', 'mes_ano_emissao', 'mes_ano_recebimento', 'status_recebimento']
+        filtros_limpos = QueryDict(mutable=True)
+        
+        for param in parametros_filtro:
+            if param in filtros:
+                filtros_limpos[param] = filtros[param]
+        
+        url_base = reverse_lazy('medicos:recebimento_notas_fiscais')
+        if filtros_limpos:
+            return redirect(f"{url_base}?{filtros_limpos.urlencode()}")
+        
+        return redirect(url_base)

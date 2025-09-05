@@ -23,45 +23,13 @@ class NotaFiscalRecebimentoTable(tables.Table):
     
     status_rateio = tables.Column(verbose_name='Rateio', orderable=False, empty_values=())
     
-    def render_actions(self, record):
-        """Renderiza ações condicionais baseadas no status do rateio"""
-        # Verificação das condições de rateio
-        tem_rateio = record.tem_rateio
-        rateio_completo = record.rateio_completo
-        percentual = record.percentual_total_rateado
-        
-        # REGRA: Apenas notas com rateio COMPLETO podem ser editadas
-        if tem_rateio and rateio_completo:
-            # Apenas notas com rateio completo (100%): permite edição
-            return mark_safe(f'''
-                <a href="/medicos/recebimento-notas/{record.pk}/editar/" 
-                   class="btn btn-sm btn-success" 
-                   title="Rateio completo - pode editar">
-                    <i class="fas fa-edit me-1"></i>Editar Recebimento
-                </a>
-            ''')
-        elif not tem_rateio:
-            # Notas sem rateio: bloqueia edição
-            return mark_safe(f'''
-                <button type="button" 
-                        class="btn btn-sm btn-warning" 
-                        disabled 
-                        title="Nota sem rateio - não pode editar">
-                    <i class="fas fa-ban me-1"></i>Sem Rateio
-                </button>
-            ''')
-        else:
-            # Notas com rateio incompleto: bloqueia edição
-            return mark_safe(f'''
-                <button type="button" 
-                        class="btn btn-sm btn-danger" 
-                        disabled 
-                        title="Rateio incompleto: {percentual:.1f}% de 100%">
-                    <i class="fas fa-lock me-1"></i>Rateio Incompleto ({percentual:.1f}%)
-                </button>
-            ''')
-    
-    actions = tables.Column(verbose_name='Ações', orderable=False, empty_values=())
+    # Usando TemplateColumn para renderizar as ações com CSRF token
+    actions = tables.TemplateColumn(
+        template_name='financeiro/col_acoes_recebimento_notafiscal.html',
+        verbose_name='Ações',
+        orderable=False,
+        attrs={"td": {"class": "text-center"}}
+    )
 
     def render_val_bruto(self, value):
         """Formata o valor bruto com símbolo da moeda"""
@@ -77,5 +45,5 @@ class NotaFiscalRecebimentoTable(tables.Table):
 
     class Meta:
         model = NotaFiscal
-        fields = ('numero', 'dtEmissao', 'tomador', 'val_bruto', 'val_liquido', 'status_rateio', 'meio_pagamento', 'dtRecebimento', 'status_recebimento')
+        fields = ('numero', 'dtEmissao', 'dtRecebimento', 'tomador', 'val_bruto', 'val_liquido', 'status_rateio', 'meio_pagamento', 'status_recebimento', 'actions')
         attrs = {'class': 'table table-striped'}

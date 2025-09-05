@@ -1,0 +1,68 @@
+<div class="d-flex justify-content-center gap-1">
+  {% if record.tem_rateio and record.rateio_completo %}
+    <!-- Nota com rateio completo: permite edição -->
+    <a href="{% url 'medicos:editar_recebimento_nota_fiscal' pk=record.pk %}?{{ request.GET.urlencode }}" 
+       class="btn btn-sm btn-success" 
+       title="Rateio completo - pode editar recebimento">
+      <i class="fas fa-chart-pie"></i>
+    </a>
+  {% elif not record.tem_rateio %}
+    <!-- Nota sem rateio: bloqueia edição -->
+    <button type="button" 
+            class="btn btn-sm btn-secondary" 
+            disabled 
+            title="Nota sem rateio - não pode editar recebimento">
+      <i class="fas fa-chart-pie"></i>
+    </button>
+  {% else %}
+    <!-- Nota com rateio incompleto: bloqueia edição -->
+    <button type="button" 
+            class="btn btn-sm btn-danger" 
+            disabled 
+            title="Rateio incompleto: {{ record.percentual_total_rateado|floatformat:1 }}% de 100% - não pode editar recebimento">
+      <i class="fas fa-chart-pie"></i>
+    </button>
+  {% endif %}
+  
+  <!-- Botão de cancelar: sempre visível, habilitado conforme regras -->
+  {% if record.status_recebimento == 'cancelado' %}
+    <!-- Desabilitado se já cancelado -->
+    <button type="button" 
+            class="btn btn-sm btn-warning me-1" 
+            disabled 
+            title="Nota já cancelada">
+      <i class="fas fa-times-circle"></i>
+    </button>
+  {% else %}
+    <!-- Habilitado para notas pendentes e recebidas -->
+    <form method="post" action="{% url 'medicos:cancelar_recebimento_nota_fiscal' pk=record.pk %}?{{ request.GET.urlencode }}" 
+          style="display: inline;" 
+          onsubmit="return confirm('Confirma o cancelamento desta nota fiscal?{% if record.status_recebimento == 'recebido' %} A data de recebimento será removida.{% endif %} Esta ação pode ser revertida alterando o status posteriormente.');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-warning me-1" title="Cancelar nota fiscal{% if record.status_recebimento == 'recebido' %} (removerá data de recebimento){% endif %}">
+        <i class="fas fa-times-circle"></i>
+      </button>
+    </form>
+  {% endif %}
+  
+  <!-- Botão para alterar para pendente: sempre visível, habilitado conforme regras -->
+  {% if record.status_recebimento == 'pendente' %}
+    <!-- Desabilitado se já pendente -->
+    <button type="button" 
+            class="btn btn-sm btn-info me-1" 
+            disabled 
+            title="Nota já está com status pendente">
+      <i class="fas fa-clock"></i>
+    </button>
+  {% else %}
+    <!-- Habilitado para notas canceladas ou recebidas -->
+    <form method="post" action="{% url 'medicos:pendente_recebimento_nota_fiscal' pk=record.pk %}?{{ request.GET.urlencode }}" 
+          style="display: inline;" 
+          onsubmit="return confirm('Confirma a alteração do status desta nota fiscal para PENDENTE?{% if record.status_recebimento == 'recebido' %} A data de recebimento será removida.{% endif %}');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-info me-1" title="Alterar para status pendente">
+        <i class="fas fa-clock"></i>
+      </button>
+    </form>
+  {% endif %}
+</div>

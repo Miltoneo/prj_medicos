@@ -122,17 +122,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="card-body">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted">Valor Bruto Recebido:</span>
+                    <span class="text-muted">Total Valor Bruto:</span>
                     <span class="fw-bold text-primary">R$ {{ totais.total_val_bruto|floatformat:2 }}</span>
                   </div>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted">Total Impostos Retidos:</span>
                     <span class="fw-bold text-danger">R$ {{ totais.total_impostos|floatformat:2 }}</span>
                   </div>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted">Valor Líquido Recebido:</span>
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">Total Valor Líquido:</span>
                     <span class="fw-bold text-success">R$ {{ totais.total_val_liquido|floatformat:2 }}</span>
                   </div>
+                  {% if status_count.canceladas > 0 %}
+                    <div class="text-center">
+                      <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>{{ status_count.notas_validas }} nota{{ status_count.notas_validas|pluralize }} válida{{ status_count.notas_validas|pluralize }}
+                        <br>{{ status_count.canceladas }} cancelada{{ status_count.canceladas|pluralize }} (excluída{{ status_count.canceladas|pluralize }} dos totais)
+                      </small>
+                    </div>
+                  {% else %}
+                    <div class="text-center">
+                      <small class="text-muted">
+                        <i class="fas fa-check-circle me-1"></i>{{ status_count.notas_validas }} nota{{ status_count.notas_validas|pluralize }} válida{{ status_count.notas_validas|pluralize }}
+                      </small>
+                    </div>
+                  {% endif %}
                 </div>
               </div>
             </div>

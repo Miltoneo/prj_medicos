@@ -29,7 +29,7 @@ from . import views_relatorios
 from . import views_empresa
 from . import views_faturamento
 from .views_import_xml import NotaFiscalImportXMLView
-from .views_recebimento_notafiscal import NotaFiscalRecebimentoListView, NotaFiscalRecebimentoUpdateView
+from .views_recebimento_notafiscal import NotaFiscalRecebimentoListView, NotaFiscalRecebimentoUpdateView, NotaFiscalRecebimentoCancelarView, NotaFiscalRecebimentoPendenteView
 from . import views_meio_pagamento
 from . import views_faturamento
 # from . import views_home_cenario  # Removido: arquivo não existe
@@ -139,6 +139,8 @@ path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView
     # Recebimento de Notas Fiscais (Fluxo Isolado do Financeiro)
     path('recebimento-notas/', NotaFiscalRecebimentoListView.as_view(), name='recebimento_notas_fiscais'),
     path('recebimento-notas/<int:pk>/editar/', NotaFiscalRecebimentoUpdateView.as_view(), name='editar_recebimento_nota_fiscal'),
+    path('recebimento-notas/<int:pk>/cancelar/', NotaFiscalRecebimentoCancelarView.as_view(), name='cancelar_recebimento_nota_fiscal'),
+    path('recebimento-notas/<int:pk>/pendente/', NotaFiscalRecebimentoPendenteView.as_view(), name='pendente_recebimento_nota_fiscal'),
 
     # =====================
     # Meios de Pagamento Views

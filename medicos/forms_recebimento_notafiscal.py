@@ -47,20 +47,24 @@ class NotaFiscalRecebimentoForm(forms.ModelForm):
         if (dtRecebimento and not meio_pagamento) or (meio_pagamento and not dtRecebimento):
             errors['meio_pagamento'] = 'Meio de pagamento e data de recebimento devem ser preenchidos juntos.'
             errors['dtRecebimento'] = 'Meio de pagamento e data de recebimento devem ser preenchidos juntos.'
-        status = cleaned_data.get('status_recebimento')
-        # Regra: se há data de recebimento, status deve ser RECEBIDO/completo
-        if dtRecebimento and status and status.lower() not in ['completo', 'recebido']:
-            errors['status_recebimento'] = 'Notas com data de recebimento devem ter o status de Recebido.'
+        
+        # Se há data de recebimento, automaticamente define status como "recebido"
+        if dtRecebimento:
+            cleaned_data['status_recebimento'] = 'recebido'
+        else:
+            # Se não há data de recebimento, mantém status como "pendente"
+            cleaned_data['status_recebimento'] = 'pendente'
+            
         if errors:
             from django.core.exceptions import ValidationError
             raise ValidationError(errors)
         return cleaned_data
+        
     class Meta:
         model = NotaFiscal
-        fields = ['meio_pagamento', 'dtRecebimento', 'status_recebimento', 'val_liquido']
+        fields = ['meio_pagamento', 'dtRecebimento', 'val_liquido']
         widgets = {
             'dtRecebimento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'meio_pagamento': forms.Select(attrs={'class': 'form-control'}),
-            'status_recebimento': forms.Select(attrs={'class': 'form-control'}),
             'val_liquido': forms.HiddenInput(),  # Campo oculto para evitar erro de validação
         }
