@@ -121,28 +121,31 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
 
     # Notas fiscais do sócio no mês
     # Para o cálculo de adicional de IR: considera data de emissão (conforme documentação)
+    # EXCLUDINDO notas fiscais canceladas
     notas_fiscais_emissao_qs = NotaFiscal.objects.filter(
         rateios_medicos__medico=socio_selecionado,
         empresa_destinataria=empresa,
         dtEmissao__year=competencia.year,
         dtEmissao__month=competencia.month
-    )
+    ).exclude(status_recebimento='cancelado')
     
     # Para a tabela "Notas Fiscais Recebidas no Mês": considera data de recebimento
+    # EXCLUDINDO notas fiscais canceladas
     notas_fiscais_qs = NotaFiscal.objects.filter(
         rateios_medicos__medico=socio_selecionado,
         empresa_destinataria=empresa,
         dtRecebimento__year=competencia.year,
         dtRecebimento__month=competencia.month,
         dtRecebimento__isnull=False  # Apenas notas que foram recebidas
-    )
+    ).exclude(status_recebimento='cancelado')
 
     # Notas fiscais da empresa no mês (para receita bruta total da empresa)
+    # EXCLUDINDO notas fiscais canceladas
     notas_empresa_qs = NotaFiscal.objects.filter(
         empresa_destinataria=empresa,
         dtEmissao__year=competencia.year,
         dtEmissao__month=competencia.month
-    )
+    ).exclude(status_recebimento='cancelado')
 
     total_notas_bruto_empresa = sum(float(nf.val_bruto or 0) for nf in notas_empresa_qs)
     
@@ -172,11 +175,12 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
             total_outros = 0
             
             # CORREÇÃO: Usar todas as notas EMITIDAS da empresa no mês (adicional sempre por emissão)
+            # EXCLUDINDO notas fiscais canceladas
             notas_emitidas_empresa = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtEmissao__year=competencia.year,
                 dtEmissao__month=competencia.month
-            )
+            ).exclude(status_recebimento='cancelado')
             
             for nf in notas_emitidas_empresa:
                 if nf.tipo_servico == nf.TIPO_SERVICO_CONSULTAS:
@@ -266,13 +270,14 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     # Calcular impostos a pagar do mês seguindo a mesma lógica da apuração
     
     # Base de cálculo: notas da empresa no mês (seguindo regime tributário)
+    # EXCLUDINDO notas fiscais canceladas
     if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
         # Regime de competência: considera data de emissão
         notas_base_calculo = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtEmissao__year=competencia.year,
             dtEmissao__month=competencia.month
-        )
+        ).exclude(status_recebimento='cancelado')
     else:
         # Regime de caixa: considera data de recebimento
         notas_base_calculo = NotaFiscal.objects.filter(
@@ -280,7 +285,7 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
             dtRecebimento__year=competencia.year,
             dtRecebimento__month=competencia.month,
             dtRecebimento__isnull=False
-        )
+        ).exclude(status_recebimento='cancelado')
     
     base_calculo_empresa = sum(float(nf.val_bruto or 0) for nf in notas_base_calculo)
     
@@ -301,12 +306,13 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
                 base_outros_socio_regime += valor_bruto_rateio
     
     # Imposto retido: sempre considera data de recebimento
+    # EXCLUDINDO notas fiscais canceladas
     notas_retidas = NotaFiscal.objects.filter(
         empresa_destinataria=empresa,
         dtRecebimento__year=competencia.year,
         dtRecebimento__month=competencia.month,
         dtRecebimento__isnull=False
-    )
+    ).exclude(status_recebimento='cancelado')
     
     # Calcular impostos devidos da empresa
     pis_devido = base_calculo_empresa * (aliquota_pis / 100) if aliquota_pis > 0 else 0
@@ -374,13 +380,14 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
         # CORREÇÃO: Usar valores proporcionais dos rateios das notas recebidas no mês
         # Os impostos retidos devem considerar a data de recebimento da nota fiscal
         # conforme documentado em medicos/templates/relatorios/relatorio_mensal_socio.html
+        # EXCLUDINDO notas fiscais canceladas
         notas_recebidas_socio = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtRecebimento__year=competencia.year,
             dtRecebimento__month=competencia.month,
             dtRecebimento__isnull=False,
             rateios_medicos__medico=socio_selecionado
-        ).distinct()
+        ).exclude(status_recebimento='cancelado').distinct()
         
         total_pis_retido_socio = 0
         total_cofins_retido_socio = 0
@@ -774,13 +781,14 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
     
     for mes in range(1, 13):
         # Notas para base de cálculo considerando regime tributário da empresa
+        # EXCLUDINDO notas fiscais canceladas de todos os cálculos
         if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
             # Regime de competência: considera data de emissão
             notas_mes = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtEmissao__year=ano,
                 dtEmissao__month=mes
-            )
+            ).exclude(status_recebimento='cancelado')
         else:
             # Regime de caixa: considera data de recebimento
             notas_mes = NotaFiscal.objects.filter(
@@ -788,7 +796,7 @@ def montar_relatorio_issqn(empresa_id, mes_ano):
                 dtRecebimento__year=ano,
                 dtRecebimento__month=mes,
                 dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
-            )
+            ).exclude(status_recebimento='cancelado')
         valor_bruto = sum(float(nf.val_bruto or 0) for nf in notas_mes)
         
         # Imposto devido: calculado sobre a base de cálculo (valor bruto)

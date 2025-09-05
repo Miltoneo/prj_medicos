@@ -21,13 +21,14 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
         competencia = f"T{num_tri}/{ano}"
         
         # 1. IRPJ PRINCIPAL: Verificar regime tributário da empresa
+        # EXCLUDINDO notas fiscais canceladas de todos os cálculos
         if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
             # Regime de competência: considera data de emissão
             notas_irpj = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtEmissao__year=ano,
                 dtEmissao__month__in=meses
-            )
+            ).exclude(status_recebimento='cancelado')
         else:
             # Regime de caixa: considera data de recebimento
             notas_irpj = NotaFiscal.objects.filter(
@@ -35,15 +36,16 @@ def montar_relatorio_irpj_persistente(empresa_id, ano):
                 dtRecebimento__year=ano,
                 dtRecebimento__month__in=meses,
                 dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
-            )
+            ).exclude(status_recebimento='cancelado')
         
         # 2. ADICIONAL DE IR: SEMPRE considera data de emissão (independente do regime)
         # Lei 9.249/1995, Art. 3º, §1º - sempre por competência
+        # EXCLUDINDO notas fiscais canceladas
         notas_adicional = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtEmissao__year=ano,
             dtEmissao__month__in=meses
-        )
+        ).exclude(status_recebimento='cancelado')
         
         # Cálculo das receitas para IRPJ principal (baseado no regime tributário)
         receita_consultas = notas_irpj.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')

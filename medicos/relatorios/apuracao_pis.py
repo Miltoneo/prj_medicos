@@ -40,13 +40,14 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
         competencia = f'{mes:02d}/{ano}'
         
         # Notas para base de cálculo considerando regime tributário da empresa
+        # EXCLUDINDO notas fiscais canceladas de todos os cálculos
         if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
             # Regime de competência: considera data de emissão
             notas_mes = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtEmissao__year=int(ano),
                 dtEmissao__month=mes
-            )
+            ).exclude(status_recebimento='cancelado')
         else:
             # Regime de caixa: considera data de recebimento
             notas_mes = NotaFiscal.objects.filter(
@@ -54,7 +55,7 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
                 dtRecebimento__year=int(ano),
                 dtRecebimento__month=mes,
                 dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
-            )
+            ).exclude(status_recebimento='cancelado')
         base_calculo = sum(float(nf.val_bruto or 0) for nf in notas_mes)
         
         # Alíquota vigente
@@ -66,11 +67,12 @@ def montar_relatorio_pis_persistente(empresa_id, ano):
         imposto_devido = round(base_calculo * (aliquota / 100), 2)
         
         # Imposto retido considerando data de RECEBIMENTO da nota fiscal
+        # EXCLUDINDO notas fiscais canceladas
         notas_recebidas_mes = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtRecebimento__year=int(ano),
             dtRecebimento__month=mes
-        )
+        ).exclude(status_recebimento='cancelado')
         imposto_retido_nf = sum(float(nf.val_PIS or 0) for nf in notas_recebidas_mes)
         
         credito_mes_anterior = saldo_acumulado

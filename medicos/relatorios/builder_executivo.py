@@ -42,30 +42,33 @@ def montar_relatorio_executivo_anual(empresa_id, ano=None):
     
     for mes in range(1, 13):
         # Notas emitidas (valor das notas fiscais emitidas)
+        # EXCLUDINDO notas fiscais canceladas
         emitidas = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtEmissao__year=ano_atual,
             dtEmissao__month=mes
-        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        ).exclude(status_recebimento='cancelado').aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         notas_emitidas_mes[mes] = emitidas
         
         # Notas recebidas (valor das notas fiscais efetivamente recebidas)
+        # EXCLUDINDO notas fiscais canceladas
         recebidas = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtRecebimento__year=ano_atual,
             dtRecebimento__month=mes,
             dtRecebimento__isnull=False,
             status_recebimento='recebido'
-        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        ).exclude(status_recebimento='cancelado').aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         notas_recebidas_mes[mes] = recebidas
         
         # Notas pendentes
+        # EXCLUDINDO notas fiscais canceladas
         pendentes = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtEmissao__year=ano_atual,
             dtEmissao__month=mes,
             status_recebimento__in=['pendente', 'parcial']
-        ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
+        ).exclude(status_recebimento='cancelado').aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         notas_pendentes_mes[mes] = pendentes
         
         # Despesas coletivas
@@ -142,12 +145,13 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
     
     for socio in socios:
         # Receita emitida do sócio no mês (sempre baseada em data de emissão)
+        # EXCLUDINDO notas fiscais canceladas
         notas_emitidas_socio = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             rateios_medicos__medico=socio,
             dtEmissao__year=ano,
             dtEmissao__month=mes
-        ).distinct()
+        ).exclude(status_recebimento='cancelado').distinct()
         
         receita_emitida = notas_emitidas_socio.aggregate(
             total_rateio=Sum('rateios_medicos__valor_bruto_medico')
@@ -155,6 +159,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         
         # CORREÇÃO: Considerar regime de tributação da empresa para base de cálculo do "Imposto Devido"
         # Competência: usa notas emitidas (dtEmissao) | Caixa: usa notas recebidas (dtRecebimento)
+        # EXCLUDINDO notas fiscais canceladas
         if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
             # Regime de competência: usar notas emitidas (data de emissão)
             notas_base_imposto_devido = NotaFiscal.objects.filter(
@@ -162,7 +167,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
                 rateios_medicos__medico=socio,
                 dtEmissao__year=ano,
                 dtEmissao__month=mes
-            ).distinct()
+            ).exclude(status_recebimento='cancelado').distinct()
             
             receita_base_imposto_devido = notas_base_imposto_devido.aggregate(
                 total_rateio=Sum('rateios_medicos__valor_bruto_medico')
@@ -176,13 +181,14 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
                 dtRecebimento__month=mes,
                 dtRecebimento__isnull=False,
                 status_recebimento='recebido'
-            ).distinct()
+            ).exclude(status_recebimento='cancelado').distinct()
             
             receita_base_imposto_devido = notas_base_imposto_devido.aggregate(
                 total_rateio=Sum('rateios_medicos__valor_bruto_medico')
             )['total_rateio'] or Decimal('0')
         
         # Nota fiscal recebida do sócio no mês (baseada em data de recebimento) - para "Receita Bruta"
+        # EXCLUDINDO notas fiscais canceladas
         notas_recebidas_socio = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             rateios_medicos__medico=socio,
@@ -190,7 +196,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             dtRecebimento__month=mes,
             dtRecebimento__isnull=False,
             status_recebimento='recebido'
-        ).distinct()
+        ).exclude(status_recebimento='cancelado').distinct()
         
         receita_bruta = notas_recebidas_socio.aggregate(
             total_rateio=Sum('rateios_medicos__valor_bruto_medico')

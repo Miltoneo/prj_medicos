@@ -951,12 +951,13 @@ def relatorio_apuracao(request, empresa_id):
         
         for mes in range(1, 13):
             # Buscar notas fiscais recebidas no mês
+            # EXCLUDINDO notas fiscais canceladas da lista de recebidas
             notas_mes = NotaFiscal.objects.filter(
                 empresa_destinataria_id=empresa_id,
                 dtRecebimento__year=ano,
                 dtRecebimento__month=mes,
                 dtRecebimento__isnull=False
-            )
+            ).exclude(status_recebimento='cancelado')
             
             # Calcular receitas por tipo de serviço
             receita_consultas = notas_mes.filter(
@@ -1000,11 +1001,12 @@ def relatorio_apuracao(request, empresa_id):
         
         for mes in range(1, 13):
             # Buscar notas fiscais emitidas no mês
+            # EXCLUDINDO notas fiscais canceladas da lista de emitidas
             notas_mes = NotaFiscal.objects.filter(
                 empresa_destinataria_id=empresa_id,
                 dtEmissao__year=ano,
                 dtEmissao__month=mes
-            )
+            ).exclude(status_recebimento='cancelado')
             
             # Calcular receitas por tipo de serviço
             receita_consultas = notas_mes.filter(
@@ -1051,12 +1053,13 @@ def relatorio_apuracao(request, empresa_id):
         
         for mes in range(1, 13):
             # Buscar notas fiscais recebidas no mês
+            # EXCLUDINDO notas fiscais canceladas de todos os cálculos
             notas_recebidas = NotaFiscal.objects.filter(
                 empresa_destinataria_id=empresa_id,
                 dtRecebimento__year=ano,
                 dtRecebimento__month=mes,
                 dtRecebimento__isnull=False
-            )
+            ).exclude(status_recebimento='cancelado')
             
             # Somar valores retidos por tipo de imposto
             pis_retido = notas_recebidas.aggregate(total=Sum('val_PIS'))['total'] or Decimal('0')
