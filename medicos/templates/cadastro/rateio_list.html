@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Restaura scroll para item selecionado na inicialização
+  restaurarScrollParaItemSelecionado();
+
   // Filtro de descrição em tempo real
   const filtroDescricao = document.getElementById('filtro_descricao');
   if (filtroDescricao) {
@@ -76,12 +79,50 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   }
+
+  // Função para restaurar scroll para o item selecionado
+  function restaurarScrollParaItemSelecionado() {
+    const itemAtivo = document.querySelector('.list-group-item.active');
+    const listaItens = document.getElementById('lista-itens-despesa');
+    
+    if (itemAtivo && listaItens) {
+      setTimeout(() => {
+        // Primeiro, tenta usar a posição armazenada no sessionStorage
+        const scrollPosition = sessionStorage.getItem('scrollPosition');
+        const selectedItemId = sessionStorage.getItem('selectedItemId');
+        
+        // Verifica se o item selecionado é o mesmo que foi clicado
+        const currentItemId = new URLSearchParams(window.location.search).get('item_despesa');
+        
+        if (scrollPosition && selectedItemId && selectedItemId === currentItemId) {
+          // Restaura a posição exata do scroll
+          listaItens.scrollTop = parseInt(scrollPosition);
+          // Limpa o storage após usar
+          sessionStorage.removeItem('scrollPosition');
+          sessionStorage.removeItem('selectedItemId');
+        } else {
+          // Fallback: rola para centralizar o item ativo
+          itemAtivo.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }, 150);
+    }
+  }
 });
 
-// Função para selecionar item preservando o filtro
+// Função para selecionar item preservando o filtro e posição do scroll
 function selecionarItem(itemId) {
   const form = document.getElementById('filtroForm');
   const filtroDescricao = document.getElementById('filtro_descricao');
+  const listaItens = document.getElementById('lista-itens-despesa');
+  
+  // Armazena a posição do scroll antes da submissão
+  if (listaItens) {
+    sessionStorage.setItem('scrollPosition', listaItens.scrollTop);
+    sessionStorage.setItem('selectedItemId', itemId);
+  }
   
   // Cria um campo hidden para o item selecionado
   let itemInput = document.getElementById('item_despesa_hidden');
@@ -156,9 +197,9 @@ function selecionarItem(itemId) {
                       </label>
                       <div class="rounded shadow-sm p-2 bg-light mt-2">
                         <div class="bg-white rounded-2 p-2">
-                          <div class="list-group" style="max-height: 320px; overflow-y: auto;">
+                          <div id="lista-itens-despesa" class="list-group" style="max-height: 320px; overflow-y: auto;">
                             {% for item in itens_despesa %}
-                              <button type="button" onclick="selecionarItem({{ item.id }})" class="list-group-item list-group-item-action {% if item.id == selected_item_id %}active{% endif %}{% if item.id in itens_com_rateio_ids %} list-group-item-info fw-bold{% endif %}">
+                              <button type="button" onclick="selecionarItem({{ item.id }})" data-item-id="{{ item.id }}" class="list-group-item list-group-item-action {% if item.id == selected_item_id %}active{% endif %}{% if item.id in itens_com_rateio_ids %} list-group-item-info fw-bold{% endif %}">
                                 {{ item.descricao|default:item|default:'(sem descrição)' }}
                                 {% if item.id in itens_com_rateio_ids %}<span class="badge bg-info text-dark ms-2">Com Rateio</span>{% endif %}
                               </button>
