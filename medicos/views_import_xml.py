@@ -72,6 +72,21 @@ class NotaFiscalImportXMLView(View):
                     # Buscar CNPJ do tomador
                     cnpj_tomador_el = root.find('.//n:CompNfse/n:Nfse/n:InfNfse/n:DeclaracaoPrestacaoServico/n:InfDeclaracaoPrestacaoServico/n:TomadorServico/n:IdentificacaoTomador/n:CpfCnpj/n:Cnpj', ns)
                     cnpj_tomador = cnpj_tomador_el.text if cnpj_tomador_el is not None else ''
+                    
+                    # CORREÇÃO: Buscar CNPJ do prestador e validar com a empresa selecionada
+                    cnpj_prestador_el = root.find('.//n:CompNfse/n:Nfse/n:InfNfse/n:DeclaracaoPrestacaoServico/n:InfDeclaracaoPrestacaoServico/n:Prestador/n:CpfCnpj/n:Cnpj', ns)
+                    cnpj_prestador = cnpj_prestador_el.text if cnpj_prestador_el is not None else ''
+                    
+                    # Validar se o CNPJ do prestador corresponde ao CNPJ da empresa selecionada
+                    if cnpj_prestador and empresa.cnpj:
+                        # Remover formatação para comparação
+                        cnpj_prestador_limpo = ''.join(filter(str.isdigit, cnpj_prestador))
+                        cnpj_empresa_limpo = ''.join(filter(str.isdigit, empresa.cnpj))
+                        
+                        if cnpj_prestador_limpo != cnpj_empresa_limpo:
+                            messages.error(request, f'Nota fiscal {numero or "sem número"} rejeitada: CNPJ do prestador ({cnpj_prestador}) não corresponde ao CNPJ da empresa selecionada ({empresa.cnpj}).')
+                            total_erros += 1
+                            continue
                     dtEmissao = data_emissao_el.text[:10] if data_emissao_el is not None else None
                     descricao_servicos = descr_el.text if descr_el is not None else ''
                     from decimal import Decimal
