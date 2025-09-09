@@ -397,21 +397,12 @@
               </thead>
               <tbody>
                 {% for linha in linhas_irpj_mensal %}
-                  {% if linha.descricao == 'Valor base para adicional' or linha.descricao == 'Total base de cálculo' or linha.descricao == 'Excedente' or linha.descricao == 'Alíquota de adicional de IR (10%)' or linha.descricao == 'Total Adicional de IR' %}
-                    <tr>
-                      <td class="fw-medium fst-italic">{{ linha.descricao }}</td>
-                      {% for valor in linha.valores %}
-                        <td class="text-end fst-italic">{{ valor|floatformat:2 }}</td>
-                      {% endfor %}
-                    </tr>
-                  {% else %}
-                    <tr>
-                      <td class="fw-medium">{{ linha.descricao }}</td>
-                      {% for valor in linha.valores %}
-                        <td class="text-end">{{ valor|floatformat:2 }}</td>
-                      {% endfor %}
-                    </tr>
-                  {% endif %}
+                  <tr>
+                    <td class="fw-medium">{{ linha.descricao }}</td>
+                    {% for valor in linha.valores %}
+                      <td class="text-end">{{ valor|floatformat:2 }}</td>
+                    {% endfor %}
+                  </tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -602,7 +593,7 @@
                   <td colspan="3" class="text-end">{{ totais_trimestrais.imposto_devido_15.3|floatformat:2 }}</td>
                 </tr>
                 <tr>
-                  <td class="fw-medium">(+) Adicional de IR</td>
+                  <td class="fw-medium">(+) Adicional de IR (base >60000,00)</td>
                   <td colspan="3" class="text-end">{{ totais_trimestrais.adicional_ir.0|floatformat:2 }}</td>
                   <td colspan="3" class="text-end">{{ totais_trimestrais.adicional_ir.1|floatformat:2 }}</td>
                   <td colspan="3" class="text-end">{{ totais_trimestrais.adicional_ir.2|floatformat:2 }}</td>

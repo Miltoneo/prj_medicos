@@ -164,18 +164,50 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
         valor_base_adicional = total_notas_bruto_empresa + 1  # Força adicional = 0
         aliquota_adicional = 0
     
-    # Cálculo do valor total do adicional a ser rateado (adicional IRPJ)
-    # A base de cálculo do IR deve considerar tipos de serviços separadamente
-    # CORREÇÃO: Usar notas EMITIDAS no mês conforme Lei 9.249/1995 (adicional sempre por emissão)
+    # CORREÇÃO: Adicional de IR TRIMESTRAL - Calcular com base trimestral
+    # Lei 9.249/1995, Art. 3º, §1º - limite trimestral de R$ 60.000,00
     try:
         aliquota = Aliquotas.objects.filter(empresa=empresa).first()
         if aliquota:
-            # Separar notas EMITIDAS por tipo de serviço para cálculo correto da base
+            # Determinar o trimestre atual
+            trimestre = (competencia.month - 1) // 3 + 1
+            meses_trimestre = {
+                1: [1, 2, 3],    # T1: Jan, Fev, Mar
+                2: [4, 5, 6],    # T2: Abr, Mai, Jun
+                3: [7, 8, 9],    # T3: Jul, Ago, Set
+                4: [10, 11, 12]  # T4: Out, Nov, Dez
+            }
+            
+            # Calcular base trimestral (soma dos 3 meses do trimestre)
+            total_consultas_trimestre = 0
+            total_outros_trimestre = 0
+            
+            for mes in meses_trimestre[trimestre]:
+                notas_mes = NotaFiscal.objects.filter(
+                    empresa_destinataria=empresa,
+                    dtEmissao__year=competencia.year,
+                    dtEmissao__month=mes
+                ).exclude(status_recebimento='cancelado')
+                
+                for nf in notas_mes:
+                    if nf.tipo_servico == nf.TIPO_SERVICO_CONSULTAS:
+                        total_consultas_trimestre += float(nf.val_bruto or 0)
+                    else:  # TIPO_SERVICO_OUTROS
+                        total_outros_trimestre += float(nf.val_bruto or 0)
+            
+            # Calcular base de cálculo trimestral
+            base_consultas_trimestre = total_consultas_trimestre * (float(aliquota.IRPJ_PRESUNCAO_CONSULTA) / 100)
+            base_outros_trimestre = total_outros_trimestre * (float(aliquota.IRPJ_PRESUNCAO_OUTROS) / 100)
+            base_calculo_ir_trimestre = base_consultas_trimestre + base_outros_trimestre
+            
+            # Aplicar limite trimestral de R$ 60.000,00
+            limite_trimestral = 60000.00  # Lei 9.249/1995, Art. 3º, §1º
+            excedente_adicional_trimestre = max(base_calculo_ir_trimestre - limite_trimestral, 0)
+            
+            # Para exibição no relatório mensal, usar dados do mês atual
             total_consultas = 0
             total_outros = 0
             
-            # CORREÇÃO: Usar todas as notas EMITIDAS da empresa no mês (adicional sempre por emissão)
-            # EXCLUDINDO notas fiscais canceladas
             notas_emitidas_empresa = NotaFiscal.objects.filter(
                 empresa_destinataria=empresa,
                 dtEmissao__year=competencia.year,
@@ -188,29 +220,29 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
                 else:  # TIPO_SERVICO_OUTROS
                     total_outros += float(nf.val_bruto or 0)
             
-            # Calcular bases de cálculo separadas
             base_consultas = total_consultas * (float(aliquota.IRPJ_PRESUNCAO_CONSULTA) / 100)
             base_outros = total_outros * (float(aliquota.IRPJ_PRESUNCAO_OUTROS) / 100)
             base_calculo_ir = base_consultas + base_outros
             
-            excedente_adicional = max(base_calculo_ir - valor_base_adicional, 0)
         else:
             total_consultas = 0
             total_outros = 0
             base_consultas = 0
             base_outros = 0
             base_calculo_ir = 0
-            excedente_adicional = 0
+            excedente_adicional_trimestre = 0
     except Exception as e:
         total_consultas = 0
         total_outros = 0
         base_consultas = 0
         base_outros = 0
         base_calculo_ir = 0
-        excedente_adicional = 0
+        excedente_adicional_trimestre = 0
     
     # ADICIONAL DE IR TRIMESTRAL: Calcular valor total da empresa para rateio entre sócios
-    adicional_ir_trimestral_empresa = excedente_adicional * aliquota_adicional
+    # Alíquota do adicional é sempre 10% conforme Lei 9.249/1995, Art. 3º, §1º
+    aliquota_adicional_fixa = 0.10  # 10% fixo por lei
+    adicional_ir_trimestral_empresa = excedente_adicional_trimestre * aliquota_adicional_fixa
     
     # Receita bruta recebida do sócio no mês - usar notas por data de recebimento
     # para ser consistente com a tabela "Notas Fiscais Recebidas no Mês"
@@ -229,8 +261,25 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
             receita_bruta_socio_emitida += float(rateio.valor_bruto_medico)
     
     # Calcular a participação do sócio na receita bruta da empresa (para adicional de IR)
-    # Usar receita_bruta_socio_emitida para ser consistente com base do adicional (emissão)
-    participacao_socio = receita_bruta_socio_emitida / total_notas_bruto_empresa if total_notas_bruto_empresa > 0 else 0
+    # Para adicional trimestral, usar receita trimestral da empresa
+    total_receita_trimestre = total_consultas_trimestre + total_outros_trimestre if 'total_consultas_trimestre' in locals() else total_notas_bruto_empresa
+    
+    # Calcular receita trimestral do sócio para participação correta
+    receita_bruta_socio_trimestre = 0
+    if 'meses_trimestre' in locals() and 'trimestre' in locals():
+        for mes in meses_trimestre[trimestre]:
+            notas_mes_socio = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtEmissao__year=competencia.year,
+                dtEmissao__month=mes
+            ).exclude(status_recebimento='cancelado')
+            
+            for nf in notas_mes_socio:
+                rateio = nf.rateios_medicos.filter(medico=socio_selecionado).first()
+                if rateio:
+                    receita_bruta_socio_trimestre += float(rateio.valor_bruto_medico)
+    
+    participacao_socio = receita_bruta_socio_trimestre / total_receita_trimestre if total_receita_trimestre > 0 else 0
     
     # ADICIONAL DE IR TRIMESTRAL: Calcular a parte proporcional do sócio no adicional de IR trimestral
     # REGRA: Só aparece nos meses de fechamento de trimestre (3, 6, 9, 12)

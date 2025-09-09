@@ -454,56 +454,6 @@ def relatorio_mensal_socio(request, empresa_id):
     
     return render(request, 'relatorios/relatorio_mensal_socio.html', context)
 
-def calcular_adicional_ir_mensal(empresa_id, ano):
-    """
-    Calcula o adicional de IR mensal sempre considerando data de emissão das notas.
-    Lei 9.249/1995, Art. 3º, §1º - adicional sempre por competência (data emissão).
-    """
-    empresa = Empresa.objects.get(id=empresa_id)
-    aliquotas = Aliquotas.obter_aliquota_vigente(empresa)
-    
-    resultado_mensal = []
-    
-    for mes in range(1, 13):
-        # ADICIONAL DE IR: SEMPRE considera data de emissão (independente do regime da empresa)
-        notas_adicional = NotaFiscal.objects.filter(
-            empresa_destinataria=empresa,
-            dtEmissao__year=ano,
-            dtEmissao__month=mes
-        ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
-        
-        # Receitas por tipo de serviço (sempre por data de emissão)
-        receita_consultas = notas_adicional.filter(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(
-            total=Sum('val_bruto')
-        )['total'] or Decimal('0')
-        
-        receita_outros = notas_adicional.exclude(tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS).aggregate(
-            total=Sum('val_bruto')
-        )['total'] or Decimal('0')
-        
-        # Base de cálculo aplicando presunções sobre receitas por data de emissão
-        base_consultas = receita_consultas * (aliquotas.IRPJ_PRESUNCAO_CONSULTA / Decimal('100'))
-        base_outros = receita_outros * (aliquotas.IRPJ_PRESUNCAO_OUTROS / Decimal('100'))
-        base_total = base_consultas + base_outros
-        
-        # Adicional mensal
-        limite_mensal = Decimal('20000.00')  # R$ 20.000,00/mês
-        excedente = max(Decimal('0'), base_total - limite_mensal)
-        adicional = excedente * Decimal('0.10')  # 10%
-        
-        resultado_mensal.append({
-            'mes': mes,
-            'receita_consultas': receita_consultas,
-            'receita_outros': receita_outros,
-            'base_consultas': base_consultas,
-            'base_outros': base_outros,
-            'base_total': base_total,
-            'limite_mensal': limite_mensal,
-            'excedente': excedente,
-            'adicional': adicional,
-        })
-    
-    return resultado_mensal
 
 def calcular_adicional_ir_trimestral(empresa_id, ano):
     """
@@ -636,21 +586,6 @@ def relatorio_apuracao(request, empresa_id):
     {'descricao': 'TOTAL IMPOSTO A PAGAR', 'valores': [linha.get('imposto_a_pagar', 0) for linha in relatorio_irpj_mensal['linhas']]}
     ]
 
-    # Espelho do Adicional de IR Mensal (sempre por data de emissão)
-    dados_adicional_mensal = calcular_adicional_ir_mensal(empresa_id, ano)
-    
-    linhas_espelho_adicional_mensal = [
-        {'descricao': 'Total notas fiscais emitidas: consultas médicas', 'valores': [dados['receita_consultas'] for dados in dados_adicional_mensal]},
-        {'descricao': 'Total notas fiscais emitidas: outros serviços', 'valores': [dados['receita_outros'] for dados in dados_adicional_mensal]},
-        {'descricao': 'Base sobre notas fiscais emitidas do tipo "consultas médicas"', 'valores': [dados['base_consultas'] for dados in dados_adicional_mensal]},
-        {'descricao': 'Base sobre notas fiscais emitidas do tipo "outros serviços"', 'valores': [dados['base_outros'] for dados in dados_adicional_mensal]},
-        {'descricao': 'Total base de cálculo', 'valores': [dados['base_total'] for dados in dados_adicional_mensal]},
-        {'descricao': 'Valor base para adicional', 'valores': [dados['limite_mensal'] for dados in dados_adicional_mensal]},
-        {'descricao': 'Excedente', 'valores': [dados['excedente'] for dados in dados_adicional_mensal]},
-        {'descricao': 'Alíquota de adicional de IR (10%)', 'valores': [Decimal('10.00') for _ in dados_adicional_mensal]},
-        {'descricao': 'Total Adicional de IR', 'valores': [dados['adicional'] for dados in dados_adicional_mensal]},
-    ]
-
     # Relatório IRPJ
     relatorio_irpj = montar_relatorio_irpj_persistente(empresa_id, ano)
     linhas_irpj = [
@@ -703,52 +638,6 @@ def relatorio_apuracao(request, empresa_id):
             'aliquota_adicional': Decimal('10.00'),
             'adicional_devido': dados['adicional'],
         })
-
-    # Espelho do Adicional de IR Mensal (baseado nos dados da tabela IRPJ Mensal)
-    # IMPORTANTE: Usa dados já calculados pelos builders que consideram regime de tributação
-    espelho_adicional_mensal = []
-    mes_exemplo = 7  # Julho (posição 6 no array, pois começa em 0)
-    
-    # Usar os dados já calculados do relatório IRPJ Mensal
-    if relatorio_irpj_mensal['linhas'] and len(relatorio_irpj_mensal['linhas']) > mes_exemplo - 1:
-        linha_julho = relatorio_irpj_mensal['linhas'][mes_exemplo - 1]  # Julho é o índice 6 (7-1)
-        
-        # Buscar sócios ativos da empresa para mostrar dados individuais baseados na empresa
-        socios_ativos = Socio.objects.filter(empresa=empresa, ativo=True).order_by('pessoa__name')
-        
-        # Para o espelho, vamos usar os dados da empresa e dividi-los proporcionalmente pelos sócios
-        # (ou usar dados individuais se existirem no relatório)
-        receita_consultas_total = linha_julho.get('receita_consultas', 0)
-        receita_outros_total = linha_julho.get('receita_outros', 0)
-        base_calculo_total = linha_julho.get('base_calculo', 0)
-        adicional_total = linha_julho.get('adicional', 0)
-        
-        # Se há sócios, distribuir proporcionalmente (simplificado para demonstração)
-        if socios_ativos.exists():
-            num_socios = socios_ativos.count()
-            aliquota_config = Aliquotas.objects.filter(empresa=empresa).first()
-            limite_adicional = Decimal(str(aliquota_config.IRPJ_VALOR_BASE_INICIAR_CAL_ADICIONAL)) if aliquota_config else Decimal('20000.00')
-            
-            for socio in socios_ativos:
-                # Dividir proporcionalmente pelos sócios (método simplificado)
-                receita_consultas_socio = receita_consultas_total / num_socios
-                receita_outros_socio = receita_outros_total / num_socios
-                base_calculo_socio = base_calculo_total / num_socios
-                
-                # Calcular excedente e adicional para cada sócio
-                excedente_socio = max(base_calculo_socio - limite_adicional, Decimal('0'))
-                adicional_socio = adicional_total / num_socios if adicional_total > 0 else Decimal('0')
-                
-                espelho_adicional_mensal.append({
-                    'socio_nome': socio.pessoa.name,
-                    'receita_consultas': receita_consultas_socio,
-                    'receita_outros': receita_outros_socio,
-                    'receita_total': receita_consultas_socio + receita_outros_socio,
-                    'base_total': base_calculo_socio,
-                    'limite_adicional': limite_adicional,
-                    'excedente': excedente_socio,
-                    'adicional_devido': adicional_socio,
-                })
 
     # Dados Apuração Trimestral IRPJ (consolidando 3 meses por trimestre)
     # Estrutura: valores mensais + totais trimestrais conforme anexo
@@ -837,8 +726,32 @@ def relatorio_apuracao(request, empresa_id):
         fim_idx = inicio_idx + 3
         
         for key in totais_trimestrais.keys():
-            total_trim = sum(dados_irpj_trimestral[key][inicio_idx:fim_idx])
-            totais_trimestrais[key].append(total_trim)
+            if key == 'adicional_ir':
+                # CORREÇÃO: Adicional de IR deve ser recalculado com base trimestral
+                # Não pode ser soma dos mensais pois o limite é trimestral (R$ 60.000,00)
+                base_calculo_total_trim = sum(dados_irpj_trimestral['base_calculo_total'][inicio_idx:fim_idx])
+                limite_trimestral = Decimal('60000.00')  # R$ 60.000,00/trimestre
+                excedente_trim = max(Decimal('0'), base_calculo_total_trim - limite_trimestral)
+                adicional_trim = excedente_trim * Decimal('0.10')  # 10%
+                totais_trimestrais[key].append(adicional_trim)
+            elif key == 'total_imposto_devido':
+                # CORREÇÃO: Total imposto devido deve ser recalculado considerando o adicional correto
+                imposto_devido_15_trim = sum(dados_irpj_trimestral['imposto_devido_15'][inicio_idx:fim_idx])
+                # Obter o adicional recalculado (último valor adicionado)
+                adicional_recalculado = totais_trimestrais['adicional_ir'][-1] if totais_trimestrais['adicional_ir'] else Decimal('0')
+                total_imposto_trim = imposto_devido_15_trim + adicional_recalculado
+                totais_trimestrais[key].append(total_imposto_trim)
+            elif key == 'imposto_a_pagar':
+                # CORREÇÃO: Imposto a pagar deve ser recalculado considerando o total correto
+                # Obter o total imposto devido recalculado (último valor adicionado)
+                total_imposto_recalculado = totais_trimestrais['total_imposto_devido'][-1] if totais_trimestrais['total_imposto_devido'] else Decimal('0')
+                imposto_retido_trim = sum(dados_irpj_trimestral['imposto_retido_nf'][inicio_idx:fim_idx])
+                retencao_aplicacao_trim = sum(dados_irpj_trimestral['retencao_aplicacao'][inicio_idx:fim_idx])
+                imposto_a_pagar_trim = total_imposto_recalculado - imposto_retido_trim - retencao_aplicacao_trim
+                totais_trimestrais[key].append(imposto_a_pagar_trim)
+            else:
+                total_trim = sum(dados_irpj_trimestral[key][inicio_idx:fim_idx])
+                totais_trimestrais[key].append(total_trim)
 
     # Dados Apuração Trimestral CSLL (baseado nos MESMOS dados do IRPJ com alíquota diferente)
     dados_csll_trimestral = {
@@ -1146,7 +1059,6 @@ def relatorio_apuracao(request, empresa_id):
         'linhas_cofins': linhas_cofins,
         'totais_cofins': relatorio_cofins.get('totais', {}),
         'linhas_irpj_mensal': linhas_irpj_mensal,
-        'linhas_espelho_adicional_mensal': linhas_espelho_adicional_mensal,
         'linhas_irpj': linhas_irpj,
         'linhas_csll': linhas_csll,
         'dados_irpj_trimestral': dados_irpj_trimestral,
@@ -1154,7 +1066,6 @@ def relatorio_apuracao(request, empresa_id):
         'dados_csll_trimestral': dados_csll_trimestral,
         'totais_trimestrais_csll': totais_trimestrais_csll,
         'espelho_adicional_trimestral': espelho_adicional_trimestral,
-        'espelho_adicional_mensal': espelho_adicional_mensal,
         'aliquotas': aliquotas_empresa,
         'notas_fiscais_recebidas': notas_fiscais_recebidas,
         'notas_fiscais_emitidas': notas_fiscais_emitidas,
