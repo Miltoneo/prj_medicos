@@ -424,3 +424,6 @@ class ApuracaoIRPJMensalAdmin(admin.ModelAdmin):
         if obj:  # Editando registro existente
             readonly.extend(['empresa', 'competencia'])
         return readonly
+
+# Import das configurações SaaS
+from . import admin_saas

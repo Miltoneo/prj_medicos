@@ -142,6 +142,302 @@ class Conta(models.Model):
         return self.name
 
 #--------------------------------------------------------------
+# PREFERÊNCIAS DA CONTA (customização por tenant)
+class ContaPreferencias(models.Model):
+    class Meta:
+        db_table = 'conta_preferencias'
+        verbose_name = "Preferências da Conta"
+        verbose_name_plural = "Preferências das Contas"
+
+    conta = models.OneToOneField(
+        Conta, 
+        on_delete=models.CASCADE, 
+        related_name='preferencias',
+        primary_key=True
+    )
+    
+    # Configurações de UI/UX
+    tema = models.CharField(
+        max_length=20, 
+        choices=[
+            ('claro', 'Tema Claro'),
+            ('escuro', 'Tema Escuro'),
+            ('auto', 'Automático')
+        ], 
+        default='claro',
+        verbose_name="Tema da Interface"
+    )
+    idioma = models.CharField(
+        max_length=5, 
+        choices=[
+            ('pt-br', 'Português (Brasil)'),
+            ('en', 'English'),
+            ('es', 'Español')
+        ], 
+        default='pt-br',
+        verbose_name="Idioma"
+    )
+    timezone = models.CharField(
+        max_length=50, 
+        default='America/Sao_Paulo',
+        verbose_name="Fuso Horário"
+    )
+    
+    # Configurações de relatórios
+    formato_data_padrao = models.CharField(
+        max_length=20,
+        choices=[
+            ('dd/mm/yyyy', 'DD/MM/AAAA'),
+            ('mm/dd/yyyy', 'MM/DD/AAAA'),
+            ('yyyy-mm-dd', 'AAAA-MM-DD')
+        ],
+        default='dd/mm/yyyy',
+        verbose_name="Formato de Data Padrão"
+    )
+    moeda_padrao = models.CharField(
+        max_length=3,
+        default='BRL',
+        verbose_name="Moeda Padrão"
+    )
+    decimais_valor = models.PositiveSmallIntegerField(
+        default=2,
+        verbose_name="Casas Decimais para Valores"
+    )
+    
+    # Configurações de notificações
+    notificacoes_email = models.BooleanField(
+        default=True,
+        verbose_name="Receber Notificações por Email"
+    )
+    notificacoes_vencimento = models.BooleanField(
+        default=True,
+        verbose_name="Alertas de Vencimento"
+    )
+    dias_antecedencia_vencimento = models.PositiveSmallIntegerField(
+        default=5,
+        verbose_name="Dias de Antecedência para Alertas"
+    )
+    
+    # Configurações de segurança
+    sessao_timeout_minutos = models.PositiveIntegerField(
+        default=120,
+        verbose_name="Timeout da Sessão (minutos)"
+    )
+    requerer_2fa = models.BooleanField(
+        default=False,
+        verbose_name="Exigir Autenticação Dupla (2FA)"
+    )
+    
+    # Configurações de backup/exportação
+    backup_automatico = models.BooleanField(
+        default=False,
+        verbose_name="Backup Automático"
+    )
+    frequencia_backup = models.CharField(
+        max_length=10,
+        choices=[
+            ('diario', 'Diário'),
+            ('semanal', 'Semanal'),
+            ('mensal', 'Mensal')
+        ],
+        default='semanal',
+        verbose_name="Frequência do Backup"
+    )
+    
+    # Metadados
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conta_preferencias_criadas',
+        verbose_name="Criado Por"
+    )
+
+    def __str__(self):
+        return f"Preferências - {self.conta.name}"
+
+#--------------------------------------------------------------
+# AUDITORIA DA CONTA (rastreamento de ações)
+class ContaAuditLog(models.Model):
+    class Meta:
+        db_table = 'conta_audit_log'
+        verbose_name = "Log de Auditoria da Conta"
+        verbose_name_plural = "Logs de Auditoria das Contas"
+        indexes = [
+            models.Index(fields=['conta', '-timestamp']),
+            models.Index(fields=['user', '-timestamp']),
+            models.Index(fields=['acao', '-timestamp']),
+        ]
+
+    conta = models.ForeignKey(
+        Conta, 
+        on_delete=models.CASCADE, 
+        related_name='audit_logs'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+        verbose_name="Usuário"
+    )
+    
+    # Dados da ação
+    acao = models.CharField(
+        max_length=50,
+        choices=[
+            ('login', 'Login'),
+            ('logout', 'Logout'),
+            ('create', 'Criação'),
+            ('update', 'Atualização'),
+            ('delete', 'Exclusão'),
+            ('export', 'Exportação'),
+            ('import', 'Importação'),
+            ('config_change', 'Mudança de Configuração'),
+            ('user_invite', 'Convite de Usuário'),
+            ('user_remove', 'Remoção de Usuário'),
+            ('backup', 'Backup'),
+            ('restore', 'Restauração'),
+        ],
+        verbose_name="Ação"
+    )
+    objeto_tipo = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="Tipo do Objeto"
+    )
+    objeto_id = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="ID do Objeto"
+    )
+    objeto_nome = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Nome do Objeto"
+    )
+    
+    # Detalhes da ação
+    descricao = models.TextField(
+        blank=True,
+        verbose_name="Descrição"
+    )
+    dados_anteriores = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="Dados Anteriores"
+    )
+    dados_novos = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="Dados Novos"
+    )
+    
+    # Metadados técnicos
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        verbose_name="Endereço IP"
+    )
+    user_agent = models.TextField(
+        blank=True,
+        verbose_name="User Agent"
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Data/Hora"
+    )
+    
+    def __str__(self):
+        user_info = self.user.email if self.user else 'Sistema'
+        return f"{self.timestamp.strftime('%d/%m/%Y %H:%M')} - {user_info} - {self.acao}"
+
+#--------------------------------------------------------------
+# MÉTRICAS DA CONTA (analytics e usage tracking)
+class ContaMetrics(models.Model):
+    class Meta:
+        db_table = 'conta_metrics'
+        verbose_name = "Métricas da Conta"
+        verbose_name_plural = "Métricas das Contas"
+        indexes = [
+            models.Index(fields=['conta', '-data']),
+            models.Index(fields=['metrica_tipo', '-data']),
+        ]
+
+    conta = models.ForeignKey(
+        Conta, 
+        on_delete=models.CASCADE, 
+        related_name='metrics'
+    )
+    
+    # Tipo da métrica
+    metrica_tipo = models.CharField(
+        max_length=50,
+        choices=[
+            ('usuarios_ativos', 'Usuários Ativos'),
+            ('logins_dia', 'Logins por Dia'),
+            ('relatorios_gerados', 'Relatórios Gerados'),
+            ('despesas_lancadas', 'Despesas Lançadas'),
+            ('receitas_lancadas', 'Receitas Lançadas'),
+            ('notas_fiscais', 'Notas Fiscais'),
+            ('backup_executado', 'Backup Executado'),
+            ('storage_usado', 'Armazenamento Usado (MB)'),
+            ('api_calls', 'Chamadas de API'),
+            ('tempo_sessao_medio', 'Tempo Médio de Sessão (min)'),
+        ],
+        verbose_name="Tipo de Métrica"
+    )
+    
+    # Dados da métrica
+    valor = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name="Valor"
+    )
+    unidade = models.CharField(
+        max_length=20,
+        default='quantidade',
+        verbose_name="Unidade"
+    )
+    
+    # Período
+    data = models.DateField(
+        verbose_name="Data"
+    )
+    periodo_tipo = models.CharField(
+        max_length=10,
+        choices=[
+            ('dia', 'Diário'),
+            ('semana', 'Semanal'),
+            ('mes', 'Mensal'),
+            ('ano', 'Anual')
+        ],
+        default='dia',
+        verbose_name="Tipo de Período"
+    )
+    
+    # Metadados adicionais
+    metadados = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="Metadados Adicionais"
+    )
+    
+    # Controle
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Criado em"
+    )
+    
+    def __str__(self):
+        return f"{self.conta.name} - {self.metrica_tipo} ({self.data}): {self.valor}"
+
+#--------------------------------------------------------------
 # MODELO DE LICENÇA (vinculado à Conta)
 class Licenca(models.Model):
     class Meta:
@@ -277,6 +573,7 @@ class Empresa(models.Model):
         db_table = 'empresa'
         verbose_name = "Empresa/Associação"
         verbose_name_plural = "Empresas/Associações"
+        unique_together = ('conta', 'cnpj')
 
     conta = models.ForeignKey(Conta, on_delete=models.CASCADE, related_name='empresas', null=False)
 
@@ -284,11 +581,6 @@ class Empresa(models.Model):
     name = models.CharField(max_length=255, verbose_name="Razão Social")
     nome_fantasia = models.CharField(max_length=255, blank=True, verbose_name="Nome Fantasia")
     cnpj = models.CharField(max_length=18, verbose_name="CNPJ")
-    class Meta:
-        db_table = 'empresa'
-        verbose_name = "Empresa/Associação"
-        verbose_name_plural = "Empresas/Associações"
-        unique_together = ('conta', 'cnpj')
     inscricao_estadual = models.CharField(max_length=20, blank=True, verbose_name="Inscrição Estadual")
     inscricao_municipal = models.CharField(max_length=20, blank=True, verbose_name="Inscrição Municipal")
 
@@ -772,11 +1064,10 @@ class Socio(models.Model):
         return vencimentos
 
 def ensure_conta_exists(conta_id, name=None):
-    from .models.base import Conta
     obj, created = Conta.objects.get_or_create(id=conta_id, defaults={
         'name': name or f'Conta {conta_id}',
         'cnpj': '',
     })
     return obj
 
-# Removido modelo Aliquota duplicado. Utilize o modelo Aliquotas de models/fiscal.py
+

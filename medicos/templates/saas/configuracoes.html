@@ -1,0 +1,269 @@
+{% extends 'layouts/base_cenario_home.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.config-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.config-section h5 {
+    color: #495057;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-switch {
+    padding-left: 2.5em;
+}
+
+.form-switch .form-check-input {
+    width: 2em;
+    margin-left: -2.5em;
+}
+
+.save-button {
+    position: sticky;
+    bottom: 20px;
+    z-index: 1000;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Ajustes para tema escuro do base cenário home */
+.config-section {
+    background: #2d3436;
+    border: 1px solid #495057;
+    color: #f8f9fa;
+}
+
+.config-section h5 {
+    color: #f8f9fa;
+    border-bottom: 2px solid #4e73df;
+}
+
+.form-label {
+    color: #f8f9fa;
+}
+
+.form-control, .form-select {
+    background-color: #343a40;
+    border: 1px solid #495057;
+    color: #f8f9fa;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #343a40;
+    border-color: #4e73df;
+    color: #f8f9fa;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.form-text {
+    color: #adb5bd;
+}
+
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #375a7f;
+    border-color: #375a7f;
+}
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Formulário de Configurações -->
+            <form method="post" id="configForm">
+                {% csrf_token %}
+                
+                <!-- Seção: Interface e Aparência -->
+                <div class="config-section">
+                    <h5><i class="fas fa-palette me-2"></i>Interface e Aparência</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="tema" class="form-label">Tema da Interface</label>
+                            <select class="form-select" id="tema" name="tema">
+                                <option value="claro" {% if preferences.tema == 'claro' %}selected{% endif %}>Tema Claro</option>
+                                <option value="escuro" {% if preferences.tema == 'escuro' %}selected{% endif %}>Tema Escuro</option>
+                                <option value="auto" {% if preferences.tema == 'auto' %}selected{% endif %}>Automático</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="idioma" class="form-label">Idioma</label>
+                            <select class="form-select" id="idioma" name="idioma">
+                                <option value="pt-br" {% if preferences.idioma == 'pt-br' %}selected{% endif %}>Português (Brasil)</option>
+                                <option value="en" {% if preferences.idioma == 'en' %}selected{% endif %}>English</option>
+                                <option value="es" {% if preferences.idioma == 'es' %}selected{% endif %}>Español</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="formato_data_padrao" class="form-label">Formato de Data</label>
+                            <select class="form-select" id="formato_data_padrao" name="formato_data_padrao">
+                                <option value="dd/mm/yyyy" {% if preferences.formato_data_padrao == 'dd/mm/yyyy' %}selected{% endif %}>DD/MM/AAAA</option>
+                                <option value="mm/dd/yyyy" {% if preferences.formato_data_padrao == 'mm/dd/yyyy' %}selected{% endif %}>MM/DD/AAAA</option>
+                                <option value="yyyy-mm-dd" {% if preferences.formato_data_padrao == 'yyyy-mm-dd' %}selected{% endif %}>AAAA-MM-DD</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção: Notificações -->
+                <div class="config-section">
+                    <h5><i class="fas fa-bell me-2"></i>Notificações</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="notificacoes_email" 
+                                       name="notificacoes_email" {% if preferences.notificacoes_email %}checked{% endif %}>
+                                <label class="form-check-label" for="notificacoes_email">
+                                    Receber Notificações por Email
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" id="notificacoes_vencimento" 
+                                       name="notificacoes_vencimento" {% if preferences.notificacoes_vencimento %}checked{% endif %}>
+                                <label class="form-check-label" for="notificacoes_vencimento">
+                                    Alertas de Vencimento
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="dias_antecedencia_vencimento" class="form-label">Dias de Antecedência para Alertas</label>
+                            <input type="number" class="form-control" id="dias_antecedencia_vencimento" 
+                                   name="dias_antecedencia_vencimento" value="{{ preferences.dias_antecedencia_vencimento }}" 
+                                   min="1" max="30">
+                            <div class="form-text">Entre 1 e 30 dias</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção: Segurança -->
+                <div class="config-section">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Segurança</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="sessao_timeout_minutos" class="form-label">Timeout da Sessão (minutos)</label>
+                            <input type="number" class="form-control" id="sessao_timeout_minutos" 
+                                   name="sessao_timeout_minutos" value="{{ preferences.sessao_timeout_minutos }}" 
+                                   min="30" max="480">
+                            <div class="form-text">Entre 30 e 480 minutos (8 horas)</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="requerer_2fa" 
+                                       name="requerer_2fa" {% if preferences.requerer_2fa %}checked{% endif %}>
+                                <label class="form-check-label" for="requerer_2fa">
+                                    Exigir Autenticação Dupla (2FA)
+                                </label>
+                                <div class="form-text">Recomendado para maior segurança</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção: Backup e Exportação -->
+                <div class="config-section">
+                    <h5><i class="fas fa-download me-2"></i>Backup e Exportação</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="backup_automatico" 
+                                       name="backup_automatico" {% if preferences.backup_automatico %}checked{% endif %}>
+                                <label class="form-check-label" for="backup_automatico">
+                                    Backup Automático
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="frequencia_backup" class="form-label">Frequência do Backup</label>
+                            <select class="form-select" id="frequencia_backup" name="frequencia_backup">
+                                <option value="diario" {% if preferences.frequencia_backup == 'diario' %}selected{% endif %}>Diário</option>
+                                <option value="semanal" {% if preferences.frequencia_backup == 'semanal' %}selected{% endif %}>Semanal</option>
+                                <option value="mensal" {% if preferences.frequencia_backup == 'mensal' %}selected{% endif %}>Mensal</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão de Salvar (Sticky) -->
+                <div class="save-button">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="fas fa-save me-2"></i>Salvar Configurações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Controle do backup automático
+    const backupAutomatico = document.getElementById('backup_automatico');
+    const frequenciaBackup = document.getElementById('frequencia_backup');
+    
+    function toggleFrequenciaBackup() {
+        frequenciaBackup.disabled = !backupAutomatico.checked;
+    }
+    
+    backupAutomatico.addEventListener('change', toggleFrequenciaBackup);
+    toggleFrequenciaBackup(); // Estado inicial
+    
+    // Controle das notificações de vencimento
+    const notificacoesVencimento = document.getElementById('notificacoes_vencimento');
+    const diasAntecedencia = document.getElementById('dias_antecedencia_vencimento');
+    
+    function toggleDiasAntecedencia() {
+        diasAntecedencia.disabled = !notificacoesVencimento.checked;
+    }
+    
+    notificacoesVencimento.addEventListener('change', toggleDiasAntecedencia);
+    toggleDiasAntecedencia(); // Estado inicial
+    
+    // Confirmação antes de enviar formulário
+    document.getElementById('configForm').addEventListener('submit', function(e) {
+        if (!confirm('Deseja salvar as configurações?')) {
+            e.preventDefault();
+        }
+    });
+    
+    // Auto-save (opcional - salvar automaticamente após mudanças)
+    // Descomente as linhas abaixo para ativar auto-save
+    /*
+    const inputs = document.querySelectorAll('#configForm input, #configForm select');
+    let autoSaveTimeout;
+    
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                document.getElementById('configForm').submit();
+            }, 2000); // Salva após 2 segundos de inatividade
+        });
+    });
+    */
+});
+</script>
+{% endblock %}

@@ -296,9 +296,75 @@ def relatorio_mensal_socio(request, empresa_id):
         movimentacoes_conta_corrente = []
     
     # Montar dicionário do relatório com todos os dados necessários
-    # Preferir listas calculadas pelo builder (relatorio_dict) quando presentes
-    despesas_sem_rateio_lista = relatorio_dict.get('lista_despesas_sem_rateio') if isinstance(relatorio_dict, dict) else None
-    despesas_com_rateio_lista = relatorio_dict.get('lista_despesas_com_rateio') if isinstance(relatorio_dict, dict) else None
+    # Carregar Despesas Apropriadas (mesmo código da view despesas_socio_lista)
+    from medicos.models.despesas import DespesaSocio, DespesaRateada, ItemDespesaRateioMensal
+    despesas_apropriadas = []
+    total_despesas_apropriadas = 0
+    if socio_id and mes_ano:
+        try:
+            ano_str, mes_str = mes_ano.split('-')
+            ano = int(ano_str)
+            mes = int(mes_str)
+            
+            # Despesas individuais do sócio
+            despesas_individuais = DespesaSocio.objects.filter(
+                socio_id=socio_id,
+                socio__empresa_id=empresa_id,
+                data__year=ano, 
+                data__month=mes
+            ).select_related('socio', 'item_despesa', 'item_despesa__grupo_despesa')
+
+            # Despesas rateadas do sócio
+            rateadas_qs = DespesaRateada.objects.filter(
+                item_despesa__grupo_despesa__empresa_id=empresa_id,
+                data__year=ano, data__month=mes
+            ).select_related('item_despesa', 'item_despesa__grupo_despesa')
+            
+            # Processar despesas rateadas
+            for despesa in rateadas_qs:
+                rateio = ItemDespesaRateioMensal.obter_rateio_para_despesa(
+                    despesa.item_despesa, Socio.objects.get(id=socio_id), despesa.data
+                )
+                if rateio is not None:
+                    valor_apropriado = despesa.valor * (rateio.percentual_rateio / 100)
+                    socio_obj = Socio.objects.get(id=socio_id)
+                    item_desc = getattr(despesa.item_despesa, 'descricao', None) or '-'
+                    grupo_obj = getattr(despesa.item_despesa, 'grupo_despesa', None)
+                    grupo_desc = getattr(grupo_obj, 'descricao', None) or '-'
+                    
+                    despesas_apropriadas.append({
+                        'data': despesa.data,
+                        'socio': socio_obj,
+                        'descricao': item_desc,
+                        'grupo': grupo_desc,
+                        'valor_total': despesa.valor,
+                        'taxa_rateio': rateio.percentual_rateio,
+                        'valor_apropriado': valor_apropriado,
+                        'id': None,  # Não permite editar/excluir no relatório
+                    })
+
+            # Processar despesas individuais
+            for d in despesas_individuais:
+                despesas_apropriadas.append({
+                    'data': d.data,
+                    'socio': d.socio,
+                    'descricao': getattr(d.item_despesa, 'descricao', '-'),
+                    'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'valor_total': d.valor,
+                    'taxa_rateio': '-',
+                    'valor_apropriado': d.valor,
+                    'id': d.id,
+                })
+                
+            total_despesas_apropriadas = sum([d.get('valor_apropriado', 0) or 0 for d in despesas_apropriadas])
+            
+            # Ordenar despesas apropriadas por grupo (crescente) e depois por data (decrescente)
+            despesas_apropriadas.sort(key=lambda x: (x['grupo'], -x['data'].toordinal() if x['data'] else 0))
+            
+        except Exception as e:
+            print(f"ERROR View: erro ao carregar despesas apropriadas: {e}")
+            despesas_apropriadas = []
+            total_despesas_apropriadas = 0
 
     relatorio = {
         'socios': list(socios),
@@ -306,13 +372,12 @@ def relatorio_mensal_socio(request, empresa_id):
         'socio_nome': socio_selecionado.pessoa.name if socio_selecionado else '',
         'competencia': mes_ano,
         'data_geracao': timezone.now().strftime('%d/%m/%Y %H:%M'),
-        # Dados financeiros básicos: preferir valores diretos do builder quando disponíveis
-        'despesas_com_rateio': despesas_com_rateio_lista if despesas_com_rateio_lista is not None else getattr(relatorio_obj, 'lista_despesas_com_rateio', []),
-        'despesas_sem_rateio': despesas_sem_rateio_lista if despesas_sem_rateio_lista is not None else getattr(relatorio_obj, 'lista_despesas_sem_rateio', []),
-        'despesa_com_rateio': getattr(relatorio_obj, 'despesa_com_rateio', 0),
-        'despesa_sem_rateio': getattr(relatorio_obj, 'despesa_sem_rateio', 0),
+        # Dados financeiros básicos
         'despesa_geral': getattr(relatorio_obj, 'despesa_geral', 0),
         'despesas_total': getattr(relatorio_obj, 'despesas_total', 0),
+        # Despesas Apropriadas (nova funcionalidade)
+        'despesas_apropriadas': despesas_apropriadas,
+        'total_despesas_apropriadas': total_despesas_apropriadas,
     'movimentacoes_financeiras': lista_movimentacoes,
     'movimentacoes_conta_corrente': movimentacoes_conta_corrente,
     'total_creditos_conta_corrente': total_creditos_conta_corrente,
@@ -398,9 +463,6 @@ def relatorio_mensal_socio(request, empresa_id):
         # Resultado do lançamento automático de impostos (se solicitado)
         'resultado_lancamento_automatico': relatorio_dict.get('resultado_lancamento_automatico'),
         'auto_lancar_impostos': auto_lancar_impostos,
-        # Expor chaves de compatibilidade diretamente no contexto para templates que esperam nomes antigos
-        'despesas_sem_rateio': relatorio.get('despesas_sem_rateio', []),
-        'despesas_com_rateio': relatorio.get('despesas_com_rateio', []),
         # Campos específicos para o quadro "Resumo Conta Corrente"
         'saldo_anterior': saldo_anterior,
         'total_creditos_conta_corrente': total_creditos_conta_corrente,

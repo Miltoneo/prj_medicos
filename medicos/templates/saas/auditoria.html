@@ -1,0 +1,359 @@
+{% extends 'layouts/base_cenario_home.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.audit-table {
+    font-size: 0.9rem;
+}
+
+.audit-table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    white-space: nowrap;
+}
+
+.audit-table .action-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.filter-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.user-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.timestamp {
+    font-size: 0.8rem;
+    color: #495057;
+}
+
+.description {
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.export-buttons {
+    margin-top: 1rem;
+}
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'medicos:home' %}">Home</a></li>
+                    <li class="breadcrumb-item active">Logs de Auditoria</li>
+                </ol>
+            </nav>
+
+            <!-- Mensagens -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Filtros -->
+            <div class="filter-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtros de Auditoria
+                </h5>
+                
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="acao" class="form-label">Ação</label>
+                        <select class="form-select" id="acao" name="acao">
+                            <option value="">Todas as ações</option>
+                            {% for acao in acoes_disponiveis %}
+                            <option value="{{ acao }}" {% if filtros.acao == acao %}selected{% endif %}>
+                                {{ acao|capfirst }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="user" class="form-label">Usuário</label>
+                        <input type="text" class="form-control" id="user" name="user" 
+                               value="{{ filtros.user }}" placeholder="Email do usuário">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="data_inicio" class="form-label">Data Início</label>
+                        <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
+                               value="{{ filtros.data_inicio }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="data_fim" class="form-label">Data Fim</label>
+                        <input type="date" class="form-control" id="data_fim" name="data_fim" 
+                               value="{{ filtros.data_fim }}">
+                    </div>
+                    
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="d-grid w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Botões de Exportação -->
+                <div class="export-buttons">
+                    <a href="{% url 'medicos:saas_export_data' empresa_id=empresa_id %}?type=audit" 
+                       class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-download me-1"></i>Exportar CSV
+                    </a>
+                    
+                    {% if filtros.acao or filtros.user or filtros.data_inicio or filtros.data_fim %}
+                    <a href="{% url 'medicos:saas_auditoria' empresa_id=empresa_id %}" 
+                       class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-times me-1"></i>Limpar Filtros
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tabela de Logs -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Logs de Auditoria
+                        {% if page_obj.paginator.count %}
+                        <span class="badge bg-secondary ms-2">{{ page_obj.paginator.count }} registros</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                
+                <div class="card-body p-0">
+                    {% if page_obj %}
+                    <div class="table-responsive">
+                        <table class="table table-hover audit-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th width="15%">Data/Hora</th>
+                                    <th width="15%">Usuário</th>
+                                    <th width="10%">Ação</th>
+                                    <th width="15%">Objeto</th>
+                                    <th width="25%">Descrição</th>
+                                    <th width="10%">IP</th>
+                                    <th width="10%">Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in page_obj %}
+                                <tr>
+                                    <td class="timestamp">
+                                        {{ log.timestamp|date:"d/m/Y H:i:s" }}
+                                    </td>
+                                    <td>
+                                        {% if log.user %}
+                                            <strong>{{ log.user.first_name|default:log.user.email }}</strong>
+                                            <div class="user-info">{{ log.user.email }}</div>
+                                        {% else %}
+                                            <em class="text-muted">Sistema</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.acao == 'login' %}
+                                            <span class="badge bg-success action-badge">{{ log.get_acao_display }}</span>
+                                        {% elif log.acao == 'logout' %}
+                                            <span class="badge bg-secondary action-badge">{{ log.get_acao_display }}</span>
+                                        {% elif log.acao == 'create' %}
+                                            <span class="badge bg-primary action-badge">{{ log.get_acao_display }}</span>
+                                        {% elif log.acao == 'update' %}
+                                            <span class="badge bg-warning action-badge">{{ log.get_acao_display }}</span>
+                                        {% elif log.acao == 'delete' %}
+                                            <span class="badge bg-danger action-badge">{{ log.get_acao_display }}</span>
+                                        {% elif log.acao == 'export' %}
+                                            <span class="badge bg-info action-badge">{{ log.get_acao_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark action-badge">{{ log.get_acao_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.objeto_tipo %}
+                                            <strong>{{ log.objeto_tipo }}</strong>
+                                            {% if log.objeto_nome %}
+                                                <div class="user-info">{{ log.objeto_nome|truncatechars:30 }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <em class="text-muted">-</em>
+                                        {% endif %}
+                                    </td>
+                                    <td class="description">
+                                        {% if log.descricao %}
+                                            {{ log.descricao|truncatechars:60 }}
+                                        {% else %}
+                                            <em class="text-muted">-</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.ip_address %}
+                                            <code>{{ log.ip_address }}</code>
+                                        {% else %}
+                                            <em class="text-muted">-</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                data-bs-toggle="modal" data-bs-target="#detailModal{{ log.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginação -->
+                    {% if page_obj.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-3 mb-3">
+                        <nav aria-label="Navegação dos logs">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.acao %}&acao={{ request.GET.acao }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}{% if request.GET.data_fim %}&data_fim={{ request.GET.data_fim }}{% endif %}">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.acao %}&acao={{ request.GET.acao }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}{% if request.GET.data_fim %}&data_fim={{ request.GET.data_fim }}{% endif %}">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                                </li>
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.acao %}&acao={{ request.GET.acao }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}{% if request.GET.data_fim %}&data_fim={{ request.GET.data_fim }}{% endif %}">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.acao %}&acao={{ request.GET.acao }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}{% if request.GET.data_fim %}&data_fim={{ request.GET.data_fim }}{% endif %}">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum log encontrado</h5>
+                        <p class="text-muted">Tente ajustar os filtros ou verificar um período diferente.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modais de Detalhes -->
+{% for log in page_obj %}
+<div class="modal fade" id="detailModal{{ log.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Log #{{ log.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Data/Hora:</dt>
+                    <dd class="col-sm-9">{{ log.timestamp|date:"d/m/Y H:i:s" }}</dd>
+                    
+                    <dt class="col-sm-3">Usuário:</dt>
+                    <dd class="col-sm-9">{{ log.user.email|default:"Sistema" }}</dd>
+                    
+                    <dt class="col-sm-3">Ação:</dt>
+                    <dd class="col-sm-9">{{ log.get_acao_display }}</dd>
+                    
+                    <dt class="col-sm-3">Objeto:</dt>
+                    <dd class="col-sm-9">{{ log.objeto_tipo|default:"-" }} - {{ log.objeto_nome|default:"-" }}</dd>
+                    
+                    <dt class="col-sm-3">IP:</dt>
+                    <dd class="col-sm-9">{{ log.ip_address|default:"-" }}</dd>
+                    
+                    <dt class="col-sm-3">User Agent:</dt>
+                    <dd class="col-sm-9">{{ log.user_agent|default:"-"|truncatechars:100 }}</dd>
+                    
+                    <dt class="col-sm-3">Descrição:</dt>
+                    <dd class="col-sm-9">{{ log.descricao|default:"-" }}</dd>
+                </dl>
+                
+                {% if log.dados_anteriores or log.dados_novos %}
+                <hr>
+                <h6>Dados da Modificação:</h6>
+                
+                {% if log.dados_anteriores %}
+                <div class="mb-3">
+                    <strong>Dados Anteriores:</strong>
+                    <pre class="bg-light p-2 rounded"><code>{{ log.dados_anteriores|pprint }}</code></pre>
+                </div>
+                {% endif %}
+                
+                {% if log.dados_novos %}
+                <div class="mb-3">
+                    <strong>Dados Novos:</strong>
+                    <pre class="bg-light p-2 rounded"><code>{{ log.dados_novos|pprint }}</code></pre>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when date inputs change
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Optional: auto-submit form on date change
+            // this.closest('form').submit();
+        });
+    });
+    
+    // Highlight current filters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.toString()) {
+        document.querySelector('.filter-card').style.borderLeft = '4px solid #007bff';
+    }
+});
+</script>
+{% endblock %}

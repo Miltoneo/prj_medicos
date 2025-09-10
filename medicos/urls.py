@@ -216,4 +216,9 @@ path('relatorio-issqn/<int:empresa_id>/', views_relatorios.relatorio_apuracao, n
 path('aplicacoes_financeiras/<int:empresa_id>/', AplicacaoFinanceiraListView.as_view(), name='aplicacoes_financeiras'),
 path('aplicacao_financeira_add/<int:empresa_id>/', AplicacaoFinanceiraCreateView.as_view(), name='aplicacao_financeira_add'),
 path('aplicacoes_financeiras_edit/<int:empresa_id>/<int:pk>/', AplicacaoFinanceiraUpdateView.as_view(), name='aplicacoes_financeiras_edit'),
+
+    # =====================
+    # Funcionalidades SaaS Avançadas
+    # =====================
+    path('', include('medicos.urls_saas')),
 ]

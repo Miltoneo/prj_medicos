@@ -13,7 +13,8 @@ from .relatorios_apuracao_irpj_mensal import *
 # Definir __all__ para controlar as importações
 __all__ = [
     # Modelos Base
-    'CustomUser', 'Conta', 'Licenca', 'ContaMembership', 'SaaSBaseModel', 
+    'CustomUser', 'Conta', 'ContaPreferencias', 'ContaAuditLog', 'ContaMetrics', 
+    'Licenca', 'ContaMembership', 'SaaSBaseModel', 
     'Pessoa', 'Empresa', 'Socio', 'ContaScopedManager',
     
     # Modelos Fiscais
