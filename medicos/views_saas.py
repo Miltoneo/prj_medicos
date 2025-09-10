@@ -63,6 +63,18 @@ def saas_configuracoes(request, conta_id):
                 updated_data['idioma'] = request.POST['idioma']
             if 'formato_data_padrao' in request.POST:
                 updated_data['formato_data_padrao'] = request.POST['formato_data_padrao']
+            if 'decimais_valor' in request.POST:
+                updated_data['decimais_valor'] = int(request.POST['decimais_valor'])
+            
+            # Campos de personalização de relatórios
+            if 'nome_customizado' in request.POST:
+                updated_data['nome_customizado'] = request.POST['nome_customizado']
+            if 'email_relatorios' in request.POST:
+                updated_data['email_relatorios'] = request.POST['email_relatorios']
+            if 'website' in request.POST:
+                updated_data['website'] = request.POST['website']
+            if 'telefone_contato' in request.POST:
+                updated_data['telefone_contato'] = request.POST['telefone_contato']
             
             # Campos de notificação
             updated_data['notificacoes_email'] = 'notificacoes_email' in request.POST

@@ -250,7 +250,7 @@
                         {% endfor %}
                         
                         <div class="text-center mt-3">
-                            <a href="{% url 'medicos:saas_auditoria' empresa_id=empresa_id %}" class="btn btn-outline-primary btn-sm">
+                            <a href="{% url 'medicos:saas_auditoria' conta_id=conta_id %}" class="btn btn-outline-primary btn-sm">
                                 Ver Todas as Atividades
                             </a>
                         </div>
@@ -264,17 +264,17 @@
                         </h5>
                         
                         <div class="d-grid gap-2">
-                            <a href="{% url 'medicos:saas_configuracoes' empresa_id=empresa_id %}" class="btn btn-outline-primary">
+                            <a href="{% url 'medicos:saas_configuracoes' conta_id=conta_id %}" class="btn btn-outline-primary">
                                 <i class="fas fa-cog me-2"></i>
                                 Configurações
                             </a>
                             
-                            <a href="{% url 'medicos:saas_export_data' empresa_id=empresa_id %}?type=audit" class="btn btn-outline-success">
+                            <a href="{% url 'medicos:saas_export_data' conta_id=conta_id %}?type=audit" class="btn btn-outline-success">
                                 <i class="fas fa-download me-2"></i>
                                 Exportar Auditoria
                             </a>
                             
-                            <a href="{% url 'medicos:saas_export_data' empresa_id=empresa_id %}?type=metrics" class="btn btn-outline-info">
+                            <a href="{% url 'medicos:saas_export_data' conta_id=conta_id %}?type=metrics" class="btn btn-outline-info">
                                 <i class="fas fa-chart-bar me-2"></i>
                                 Exportar Métricas
                             </a>
@@ -360,7 +360,7 @@ const activityChart = new Chart(ctx, {
 function collectTestMetric() {
     if (!confirm('Deseja registrar uma métrica de teste?')) return;
     
-    fetch('{% url "medicos:saas_collect_metric" empresa_id=empresa_id %}', {
+    fetch('{% url "medicos:saas_collect_metric" conta_id=conta_id %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

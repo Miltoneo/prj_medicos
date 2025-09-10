@@ -120,6 +120,55 @@
                     </div>
                 </div>
 
+                <!-- Seção: Personalização de Relatórios -->
+                <div class="config-section">
+                    <h5><i class="fas fa-file-alt me-2"></i>Personalização de Relatórios</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="nome_customizado" class="form-label">Nome Alternativo para Relatórios</label>
+                            <input type="text" class="form-control" id="nome_customizado" 
+                                   name="nome_customizado" value="{{ preferences.nome_customizado }}" 
+                                   maxlength="255" placeholder="Ex: Clínica São João">
+                            <div class="form-text">Nome personalizado que aparecerá nos cabeçalhos dos relatórios</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="email_relatorios" class="form-label">Email para Cabeçalhos</label>
+                            <input type="email" class="form-control" id="email_relatorios" 
+                                   name="email_relatorios" value="{{ preferences.email_relatorios }}" 
+                                   placeholder="contato@clinica.com.br">
+                            <div class="form-text">Email que aparecerá nos relatórios (se diferente do principal)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label for="website" class="form-label">Website/Portal da Conta</label>
+                            <input type="url" class="form-control" id="website" 
+                                   name="website" value="{{ preferences.website }}" 
+                                   placeholder="https://www.clinica.com.br">
+                            <div class="form-text">Website que aparecerá nos relatórios e documentos</div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="telefone_contato" class="form-label">Telefone para Relatórios</label>
+                            <input type="tel" class="form-control" id="telefone_contato" 
+                                   name="telefone_contato" value="{{ preferences.telefone_contato }}" 
+                                   maxlength="20" placeholder="(11) 99999-9999">
+                            <div class="form-text">Telefone de contato que aparecerá nos relatórios</div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="decimais_valor" class="form-label">Casas Decimais</label>
+                            <input type="number" class="form-control" id="decimais_valor" 
+                                   name="decimais_valor" value="{{ preferences.decimais_valor }}" 
+                                   min="0" max="4">
+                            <div class="form-text">Casas decimais para valores nos relatórios (0-4)</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Seção: Notificações -->
                 <div class="config-section">
                     <h5><i class="fas fa-bell me-2"></i>Notificações</h5>

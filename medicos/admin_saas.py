@@ -25,12 +25,10 @@ class ContaPreferenciasAdmin(admin.ModelAdmin):
     Administração para Preferências da Conta
     """
     list_display = [
-        'conta_nome', 'tema', 'idioma', 'notificacoes_email', 
-        'backup_automatico', 'requerer_2fa', 'updated_at'
+        'conta_nome', 'tema', 'idioma', 'notificacoes_email', 'updated_at'
     ]
     list_filter = [
-        'tema', 'idioma', 'notificacoes_email', 'backup_automatico', 
-        'requerer_2fa', 'frequencia_backup', 'created_at'
+        'tema', 'idioma', 'notificacoes_email', 'created_at'
     ]
     search_fields = ['conta__name', 'conta__cnpj']
     readonly_fields = ['created_at', 'updated_at']
@@ -40,23 +38,19 @@ class ContaPreferenciasAdmin(admin.ModelAdmin):
             'fields': ('conta',)
         }),
         ('Interface e Aparência', {
-            'fields': ('tema', 'idioma', 'timezone', 'formato_data_padrao', 'moeda_padrao', 'decimais_valor'),
+            'fields': ('tema', 'idioma', 'formato_data_padrao', 'decimais_valor'),
             'classes': ('collapse',)
         }),
         ('Notificações', {
             'fields': ('notificacoes_email', 'notificacoes_vencimento', 'dias_antecedencia_vencimento'),
             'classes': ('collapse',)
         }),
-        ('Segurança', {
-            'fields': ('sessao_timeout_minutos', 'requerer_2fa'),
-            'classes': ('collapse',)
-        }),
-        ('Backup e Exportação', {
-            'fields': ('backup_automatico', 'frequencia_backup'),
+        ('Sessão', {
+            'fields': ('sessao_timeout_minutos',),
             'classes': ('collapse',)
         }),
         ('Controle', {
-            'fields': ('created_by', 'created_at', 'updated_at'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
@@ -84,12 +78,11 @@ class ContaAuditLogAdmin(admin.ModelAdmin):
         'acao', 'timestamp', 'conta', 'user', 'objeto_tipo'
     ]
     search_fields = [
-        'conta__name', 'user__email', 'objeto_nome', 'descricao', 'ip_address'
+        'conta__name', 'user__email', 'descricao', 'ip_address'
     ]
     readonly_fields = [
         'conta', 'user', 'timestamp', 'acao', 'objeto_tipo', 'objeto_id', 
-        'objeto_nome', 'descricao', 'dados_anteriores', 'dados_novos', 
-        'ip_address', 'user_agent'
+        'descricao', 'ip_address'
     ]
     date_hierarchy = 'timestamp'
     ordering = ['-timestamp']
@@ -103,14 +96,10 @@ class ContaAuditLogAdmin(admin.ModelAdmin):
             'fields': ('timestamp', 'conta', 'user', 'acao')
         }),
         ('Objeto Afetado', {
-            'fields': ('objeto_tipo', 'objeto_id', 'objeto_nome', 'descricao')
-        }),
-        ('Dados da Modificação', {
-            'fields': ('dados_anteriores', 'dados_novos'),
-            'classes': ('collapse',)
+            'fields': ('objeto_tipo', 'objeto_id', 'descricao')
         }),
         ('Informações Técnicas', {
-            'fields': ('ip_address', 'user_agent'),
+            'fields': ('ip_address',),
             'classes': ('collapse',)
         }),
     )
@@ -151,10 +140,8 @@ class ContaAuditLogAdmin(admin.ModelAdmin):
     acao_formatted.admin_order_field = 'acao'
     
     def objeto_info(self, obj):
-        if obj.objeto_tipo and obj.objeto_nome:
-            return f"{obj.objeto_tipo}: {obj.objeto_nome}"
-        elif obj.objeto_tipo:
-            return obj.objeto_tipo
+        if obj.objeto_tipo:
+            return f"{obj.objeto_tipo} (ID: {obj.objeto_id})"
         return '-'
     objeto_info.short_description = 'Objeto'
     
@@ -181,11 +168,10 @@ class ContaMetricsAdmin(admin.ModelAdmin):
     Administração para Métricas da Conta
     """
     list_display = [
-        'data', 'conta_nome', 'metrica_tipo_formatted', 'valor_formatted', 
-        'periodo_tipo', 'created_at'
+        'data', 'conta_nome', 'metrica_tipo_formatted', 'valor_formatted', 'created_at'
     ]
     list_filter = [
-        'metrica_tipo', 'periodo_tipo', 'data', 'conta'
+        'metrica_tipo', 'data', 'conta'
     ]
     search_fields = ['conta__name', 'metrica_tipo']
     readonly_fields = ['created_at']
@@ -199,8 +185,8 @@ class ContaMetricsAdmin(admin.ModelAdmin):
         ('Informações Básicas', {
             'fields': ('conta', 'metrica_tipo', 'valor', 'unidade')
         }),
-        ('Período', {
-            'fields': ('data', 'periodo_tipo')
+        ('Data', {
+            'fields': ('data',)
         }),
         ('Dados Adicionais', {
             'fields': ('metadados',),

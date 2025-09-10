@@ -116,13 +116,13 @@
                 
                 <!-- Botões de Exportação -->
                 <div class="export-buttons">
-                    <a href="{% url 'medicos:saas_export_data' empresa_id=empresa_id %}?type=audit" 
+                    <a href="{% url 'medicos:saas_export_data' conta_id=conta_id %}?type=audit" 
                        class="btn btn-outline-success btn-sm">
                         <i class="fas fa-download me-1"></i>Exportar CSV
                     </a>
                     
                     {% if filtros.acao or filtros.user or filtros.data_inicio or filtros.data_fim %}
-                    <a href="{% url 'medicos:saas_auditoria' empresa_id=empresa_id %}" 
+                    <a href="{% url 'medicos:saas_auditoria' conta_id=conta_id %}" 
                        class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-times me-1"></i>Limpar Filtros
                     </a>

@@ -74,6 +74,36 @@ GRUPO_ITEM_COM_RATEIO = 1
 GRUPO_ITEM_SEM_RATEIO = 2
 
 #--------------------------------------------------------------
+# MIXINS PARA EVITAR REDUNDÂNCIAS
+#--------------------------------------------------------------
+class BaseTimestampMixin(models.Model):
+    """Mixin para campos de controle de timestamp"""
+    class Meta:
+        abstract = True
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+
+class BaseCreatedByMixin(models.Model):
+    """Mixin para campo created_by"""
+    class Meta:
+        abstract = True
+    
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='%(class)s_criados',
+        verbose_name="Criado Por"
+    )
+
+class BaseAuditMixin(BaseTimestampMixin, BaseCreatedByMixin):
+    """Mixin completo de auditoria"""
+    class Meta:
+        abstract = True
+
+#--------------------------------------------------------------
 # MANAGERS CUSTOMIZADOS PARA SAAS
 #--------------------------------------------------------------
 class ContaScopedManager(models.Manager):
@@ -121,29 +151,19 @@ class CustomUser(AbstractUser):
 
 #--------------------------------------------------------------
 # MODELO DE CONTA (substitui Organization)
-class Conta(models.Model):
+class Conta(BaseAuditMixin):
     class Meta:
         db_table = 'conta'
 
     name = models.CharField(max_length=255, unique=True)
     cnpj = models.CharField(max_length=32, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='contas_criadas',
-        verbose_name="Criado Por"
-    )
 
     def __str__(self):
         return self.name
 
 #--------------------------------------------------------------
 # PREFERÊNCIAS DA CONTA (customização por tenant)
-class ContaPreferencias(models.Model):
+class ContaPreferencias(BaseTimestampMixin):
     class Meta:
         db_table = 'conta_preferencias'
         verbose_name = "Preferências da Conta"
@@ -156,7 +176,7 @@ class ContaPreferencias(models.Model):
         primary_key=True
     )
     
-    # Configurações de UI/UX
+    # Configurações de UI/UX essenciais
     tema = models.CharField(
         max_length=20, 
         choices=[
@@ -177,13 +197,30 @@ class ContaPreferencias(models.Model):
         default='pt-br',
         verbose_name="Idioma"
     )
-    timezone = models.CharField(
-        max_length=50, 
-        default='America/Sao_Paulo',
-        verbose_name="Fuso Horário"
-    )
     
     # Configurações de relatórios
+    nome_customizado = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Nome Alternativo para Relatórios",
+        help_text="Nome personalizado que aparecerá nos cabeçalhos dos relatórios"
+    )
+    email_relatorios = models.EmailField(
+        blank=True,
+        verbose_name="Email Específico para Cabeçalhos",
+        help_text="Email que aparecerá nos relatórios (se diferente do email principal)"
+    )
+    website = models.URLField(
+        blank=True,
+        verbose_name="URL do Portal/Site da Conta",
+        help_text="Website que aparecerá nos relatórios e documentos"
+    )
+    telefone_contato = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Telefone para Contato nos Relatórios",
+        help_text="Telefone de contato que aparecerá nos relatórios"
+    )
     formato_data_padrao = models.CharField(
         max_length=20,
         choices=[
@@ -193,11 +230,6 @@ class ContaPreferencias(models.Model):
         ],
         default='dd/mm/yyyy',
         verbose_name="Formato de Data Padrão"
-    )
-    moeda_padrao = models.CharField(
-        max_length=3,
-        default='BRL',
-        verbose_name="Moeda Padrão"
     )
     decimais_valor = models.PositiveSmallIntegerField(
         default=2,
@@ -223,39 +255,7 @@ class ContaPreferencias(models.Model):
         default=120,
         verbose_name="Timeout da Sessão (minutos)"
     )
-    requerer_2fa = models.BooleanField(
-        default=False,
-        verbose_name="Exigir Autenticação Dupla (2FA)"
-    )
     
-    # Configurações de backup/exportação
-    backup_automatico = models.BooleanField(
-        default=False,
-        verbose_name="Backup Automático"
-    )
-    frequencia_backup = models.CharField(
-        max_length=10,
-        choices=[
-            ('diario', 'Diário'),
-            ('semanal', 'Semanal'),
-            ('mensal', 'Mensal')
-        ],
-        default='semanal',
-        verbose_name="Frequência do Backup"
-    )
-    
-    # Metadados
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='conta_preferencias_criadas',
-        verbose_name="Criado Por"
-    )
-
     def __str__(self):
         return f"Preferências - {self.conta.name}"
 
@@ -300,8 +300,6 @@ class ContaAuditLog(models.Model):
             ('config_change', 'Mudança de Configuração'),
             ('user_invite', 'Convite de Usuário'),
             ('user_remove', 'Remoção de Usuário'),
-            ('backup', 'Backup'),
-            ('restore', 'Restauração'),
         ],
         verbose_name="Ação"
     )
@@ -315,26 +313,11 @@ class ContaAuditLog(models.Model):
         blank=True,
         verbose_name="ID do Objeto"
     )
-    objeto_nome = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Nome do Objeto"
-    )
     
     # Detalhes da ação
     descricao = models.TextField(
         blank=True,
         verbose_name="Descrição"
-    )
-    dados_anteriores = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name="Dados Anteriores"
-    )
-    dados_novos = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name="Dados Novos"
     )
     
     # Metadados técnicos
@@ -342,10 +325,6 @@ class ContaAuditLog(models.Model):
         null=True,
         blank=True,
         verbose_name="Endereço IP"
-    )
-    user_agent = models.TextField(
-        blank=True,
-        verbose_name="User Agent"
     )
     timestamp = models.DateTimeField(
         auto_now_add=True,
@@ -357,7 +336,7 @@ class ContaAuditLog(models.Model):
         return f"{self.timestamp.strftime('%d/%m/%Y %H:%M')} - {user_info} - {self.acao}"
 
 #--------------------------------------------------------------
-# MÉTRICAS DA CONTA (analytics e usage tracking)
+# MÉTRICAS DA CONTA (analytics simplificado)
 class ContaMetrics(models.Model):
     class Meta:
         db_table = 'conta_metrics'
@@ -383,11 +362,7 @@ class ContaMetrics(models.Model):
             ('relatorios_gerados', 'Relatórios Gerados'),
             ('despesas_lancadas', 'Despesas Lançadas'),
             ('receitas_lancadas', 'Receitas Lançadas'),
-            ('notas_fiscais', 'Notas Fiscais'),
-            ('backup_executado', 'Backup Executado'),
             ('storage_usado', 'Armazenamento Usado (MB)'),
-            ('api_calls', 'Chamadas de API'),
-            ('tempo_sessao_medio', 'Tempo Médio de Sessão (min)'),
         ],
         verbose_name="Tipo de Métrica"
     )
@@ -399,33 +374,10 @@ class ContaMetrics(models.Model):
         default=0,
         verbose_name="Valor"
     )
-    unidade = models.CharField(
-        max_length=20,
-        default='quantidade',
-        verbose_name="Unidade"
-    )
     
     # Período
     data = models.DateField(
         verbose_name="Data"
-    )
-    periodo_tipo = models.CharField(
-        max_length=10,
-        choices=[
-            ('dia', 'Diário'),
-            ('semana', 'Semanal'),
-            ('mes', 'Mensal'),
-            ('ano', 'Anual')
-        ],
-        default='dia',
-        verbose_name="Tipo de Período"
-    )
-    
-    # Metadados adicionais
-    metadados = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name="Metadados Adicionais"
     )
     
     # Controle
@@ -439,7 +391,7 @@ class ContaMetrics(models.Model):
 
 #--------------------------------------------------------------
 # MODELO DE LICENÇA (vinculado à Conta)
-class Licenca(models.Model):
+class Licenca(BaseAuditMixin):
     class Meta:
         db_table = 'licenca'
 
@@ -449,16 +401,6 @@ class Licenca(models.Model):
     data_fim = models.DateField()
     ativa = models.BooleanField(default=True)
     limite_usuarios = models.PositiveIntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='licencas_criadas',
-        verbose_name="Criado Por"
-    )
 
     def is_valida(self):
         from django.utils import timezone
@@ -467,7 +409,7 @@ class Licenca(models.Model):
 
 #--------------------------------------------------------------
 # ASSOCIAÇÃO USUÁRIOS <-> CONTAS (com papéis)
-class ContaMembership(models.Model):
+class ContaMembership(BaseAuditMixin):
     class Meta:
         db_table = 'conta_membership'
         unique_together = ('conta', 'user')
@@ -484,16 +426,6 @@ class ContaMembership(models.Model):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='readonly')
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='conta_memberships_criadas',
-        verbose_name="Criado Por"
-    )
 
     def __str__(self):
         return f"{self.user.email} - {self.conta.name} ({self.role})"
