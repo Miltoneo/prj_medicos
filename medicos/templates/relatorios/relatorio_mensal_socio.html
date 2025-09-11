@@ -172,8 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><td>serviços de consultas e plantões</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
-                            <tr><td>Serviços de vacinação, exames, procedimentos</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
+                            <tr><td style="font-style: italic;">Serviços de consultas e plantões</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
+                            <tr><td style="font-style: italic;">Serviços de vacinação, exames, procedimentos</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
                           </tbody>
                           <thead>
                             <tr class="table-success">
@@ -181,6 +181,14 @@ document.addEventListener('DOMContentLoaded', function() {
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_devido_total|add:relatorio.total_irpj_adicional|floatformat:2 }}</th>
                             </tr>
                           </thead>
+                          <tbody>
+                            <tr><td style="font-style: italic;">PIS</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_pis_devido|floatformat:2 }}</td></tr>
+                            <tr><td style="font-style: italic;">COFINS</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_cofins_devido|floatformat:2 }}</td></tr>
+                            <tr><td style="font-style: italic;">IRPJ</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_irpj_devido|floatformat:2 }}</td></tr>
+                            <tr><td style="font-style: italic;">CSLL</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_csll_devido|floatformat:2 }}</td></tr>
+                            <tr><td style="font-style: italic;">ISSQN</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_iss_devido|floatformat:2 }}</td></tr>
+                            <tr><td style="font-style: italic;">ADICIONAL DE IR TRIMESTRAL</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_irpj_adicional|floatformat:2 }}</td></tr>
+                          </tbody>
                           <thead>
                             <tr class="table-success">
                               <th>(=) RECEITA LÍQUIDA</th>
