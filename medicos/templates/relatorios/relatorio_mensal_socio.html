@@ -195,8 +195,6 @@ document.addEventListener('DOMContentLoaded', function() {
                           </thead>
                           <tbody>
                             <tr><th>(-) DESPESAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
-                            <tr><td>Despesa com rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_com_rateio|floatformat:2 }}</td></tr>
-                            <tr><td>Despesa sem rateio</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_sem_rateio|floatformat:2 }}</td></tr>
                             <tr><th>(+) SALDO DAS MOVIMENTAÇÕES FINANCEIRAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
                           </tbody>
                           <thead>
