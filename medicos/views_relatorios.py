@@ -371,6 +371,7 @@ def relatorio_mensal_socio(request, empresa_id):
     context = _contexto_base(request, empresa=empresa, menu_nome='Demonstrativo', cenario_nome='Relatório Mensal Sócio')
     print(f"DEBUG View: total_receitas do relatorio_dict = {relatorio_dict.get('total_receitas', 'NÃO ENCONTRADO')}")
     print(f"DEBUG View: total_despesas_outros do relatorio_dict = {relatorio_dict.get('total_despesas_outros', 'NÃO ENCONTRADO')}")
+    print(f"DEBUG View: despesas_provisionadas do relatorio_dict = {relatorio_dict.get('despesas_provisionadas', 'NÃO ENCONTRADO')}")
     print(f"DEBUG View: base_consultas_socio_regime = {relatorio_dict.get('base_consultas_socio_regime', 'NÃO ENCONTRADO')}")
     print(f"DEBUG View: base_outros_socio_regime = {relatorio_dict.get('base_outros_socio_regime', 'NÃO ENCONTRADO')}")
     context.update({
@@ -381,6 +382,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'receita_bruta_socio': relatorio_dict.get('receita_bruta_socio', 0),
         'total_receitas': relatorio_dict.get('total_receitas', 0),
         'total_despesas_outros': relatorio_dict.get('total_despesas_outros', 0),
+        'despesas_provisionadas': relatorio_dict.get('despesas_provisionadas', 0),  # Adicionar despesas provisionadas
         # Resultado do lançamento automático de impostos (se solicitado)
         'resultado_lancamento_automatico': relatorio_dict.get('resultado_lancamento_automatico'),
         'auto_lancar_impostos': auto_lancar_impostos,

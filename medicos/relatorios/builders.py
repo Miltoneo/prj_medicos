@@ -5,6 +5,7 @@ from medicos.models.fiscal import NotaFiscal, Aliquotas
 from medicos.models.financeiro import Financeiro
 from medicos.models.relatorios import RelatorioMensalSocio
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 
@@ -659,6 +660,49 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     print(f"  saldo_movimentacao_financeira: {saldo_movimentacao_financeira}")
     print(f"  saldo_a_transferir: {saldo_a_transferir}")
 
+    # Calcular despesas provisionadas (despesas apropriadas do mês seguinte)
+    mes_seguinte = competencia + relativedelta(months=1)
+    
+    # Despesas sem rateio do mês seguinte
+    despesas_sem_rateio_mes_seguinte = DespesaSocio.objects.filter(
+        item_despesa__grupo_despesa__empresa=empresa,
+        socio=socio_selecionado,
+        data__year=mes_seguinte.year,
+        data__month=mes_seguinte.month
+    ).select_related('item_despesa__grupo_despesa')
+    
+    total_despesas_sem_rateio_mes_seguinte = sum(float(d.valor) for d in despesas_sem_rateio_mes_seguinte)
+    
+    # Despesas com rateio do mês seguinte
+    despesas_com_rateio_mes_seguinte = DespesaRateada.objects.filter(
+        item_despesa__grupo_despesa__empresa=empresa,
+        data__year=mes_seguinte.year,
+        data__month=mes_seguinte.month
+    ).select_related('item_despesa__grupo_despesa')
+    
+    total_despesas_com_rateio_mes_seguinte = 0
+    for despesa in despesas_com_rateio_mes_seguinte:
+        try:
+            rateio = ItemDespesaRateioMensal.obter_rateio_para_despesa(
+                despesa.item_despesa,
+                socio_selecionado,
+                despesa.data
+            )
+            percentual = Decimal(rateio.percentual_rateio or 0)
+            valor_socio = despesa.valor * (percentual / Decimal('100')) if percentual > 0 else Decimal('0')
+            total_despesas_com_rateio_mes_seguinte += float(valor_socio)
+        except Exception:
+            continue
+    
+    # Total de despesas provisionadas
+    despesas_provisionadas = total_despesas_sem_rateio_mes_seguinte + total_despesas_com_rateio_mes_seguinte
+    
+    print(f"DEBUG Builder: Despesas provisionadas calculadas:")
+    print(f"  Mês seguinte: {mes_seguinte.strftime('%Y-%m')}")
+    print(f"  Despesas sem rateio: {total_despesas_sem_rateio_mes_seguinte}")
+    print(f"  Despesas com rateio: {total_despesas_com_rateio_mes_seguinte}")
+    print(f"  Total despesas provisionadas: {despesas_provisionadas}")
+
     # Definir dados para salvar no modelo (apenas campos que existem)
     dados_modelo = {
         'data_geracao': datetime.now(),
@@ -743,6 +787,9 @@ def montar_relatorio_mensal_socio(empresa_id, mes_ano, socio_id=None, auto_lanca
     
     # Adicionar total_despesas_outros diretamente no contexto (campo não existe no modelo ainda)
     contexto['total_despesas_outros'] = total_despesas_outros
+    
+    # Adicionar despesas provisionadas ao contexto
+    contexto['despesas_provisionadas'] = despesas_provisionadas
     
     # Adicionar campos calculados que não estão no modelo
     contexto['base_consultas_medicas'] = total_consultas

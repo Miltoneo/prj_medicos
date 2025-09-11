@@ -17,6 +17,90 @@ from datetime import date
 import calendar
 
 
+def calcular_adicional_ir_trimestral_socio(empresa, socio, ano, mes):
+    """
+    Calcula o adicional de IR trimestral para um sócio específico.
+    Baseado na implementação do Relatório Mensal do Sócio.
+    
+    Retorna o valor do adicional de IR trimestral proporcional ao sócio.
+    """
+    # Só calcula nos meses de fechamento de trimestre (3, 6, 9, 12)
+    if mes not in [3, 6, 9, 12]:
+        return Decimal('0')
+    
+    try:
+        # Obter alíquotas da empresa
+        aliquota = Aliquotas.objects.filter(empresa=empresa).first()
+        if not aliquota:
+            return Decimal('0')
+        
+        # Determinar o trimestre atual
+        trimestre = (mes - 1) // 3 + 1
+        meses_trimestre = {
+            1: [1, 2, 3],    # T1: Jan, Fev, Mar
+            2: [4, 5, 6],    # T2: Abr, Mai, Jun
+            3: [7, 8, 9],    # T3: Jul, Ago, Set
+            4: [10, 11, 12]  # T4: Out, Nov, Dez
+        }
+        
+        # Calcular base trimestral da empresa (soma dos 3 meses do trimestre)
+        total_consultas_trimestre_empresa = Decimal('0')
+        total_outros_trimestre_empresa = Decimal('0')
+        
+        # Calcular receita trimestral do sócio para participação
+        receita_bruta_socio_trimestre = Decimal('0')
+        
+        for mes_trimestre in meses_trimestre[trimestre]:
+            # Notas da empresa no mês
+            notas_mes = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtEmissao__year=ano,
+                dtEmissao__month=mes_trimestre
+            ).exclude(status_recebimento='cancelado')
+            
+            for nf in notas_mes:
+                valor_nota = Decimal(str(nf.val_bruto or 0))
+                if nf.tipo_servico == nf.TIPO_SERVICO_CONSULTAS:
+                    total_consultas_trimestre_empresa += valor_nota
+                else:  # TIPO_SERVICO_OUTROS
+                    total_outros_trimestre_empresa += valor_nota
+                
+                # Calcular receita do sócio nesta nota
+                rateio = nf.rateios_medicos.filter(medico=socio).first()
+                if rateio:
+                    receita_bruta_socio_trimestre += Decimal(str(rateio.valor_bruto_medico or 0))
+        
+        # Calcular base de cálculo trimestral da empresa
+        presuncao_consultas = Decimal(str(aliquota.IRPJ_PRESUNCAO_CONSULTA)) / Decimal('100')
+        presuncao_outros = Decimal(str(aliquota.IRPJ_PRESUNCAO_OUTROS)) / Decimal('100')
+        
+        base_consultas_trimestre = total_consultas_trimestre_empresa * presuncao_consultas
+        base_outros_trimestre = total_outros_trimestre_empresa * presuncao_outros
+        base_calculo_ir_trimestre = base_consultas_trimestre + base_outros_trimestre
+        
+        # Aplicar limite trimestral de R$ 60.000,00
+        limite_trimestral = Decimal('60000.00')  # Lei 9.249/1995, Art. 3º, §1º
+        excedente_adicional_trimestre = max(base_calculo_ir_trimestre - limite_trimestral, Decimal('0'))
+        
+        # Calcular adicional total da empresa (10% sobre o excedente)
+        aliquota_adicional_fixa = Decimal('0.10')  # 10% fixo por lei
+        adicional_ir_trimestral_empresa = excedente_adicional_trimestre * aliquota_adicional_fixa
+        
+        # Calcular participação do sócio
+        total_receita_trimestre_empresa = total_consultas_trimestre_empresa + total_outros_trimestre_empresa
+        if total_receita_trimestre_empresa > 0:
+            participacao_socio = receita_bruta_socio_trimestre / total_receita_trimestre_empresa
+            adicional_ir_trimestral_socio = adicional_ir_trimestral_empresa * participacao_socio
+        else:
+            adicional_ir_trimestral_socio = Decimal('0')
+        
+        return adicional_ir_trimestral_socio
+        
+    except Exception as e:
+        print(f"Erro ao calcular adicional IR trimestral para sócio {socio.id}: {e}")
+        return Decimal('0')
+
+
 def montar_relatorio_executivo_anual(empresa_id, ano=None):
     """
     Builder simplificado para o relatório executivo anual.
@@ -122,6 +206,8 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
     total_receita_emitida = Decimal('0')
     total_receita_bruta = Decimal('0')
     total_imposto_devido = Decimal('0')
+    total_adicional_ir_trimestral = Decimal('0')
+    total_imposto_devido_com_adicional = Decimal('0')
     total_imposto_retido = Decimal('0')
     total_imposto_a_pagar = Decimal('0')
     total_receita_liquida = Decimal('0')
@@ -240,9 +326,27 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             ir_devido = base_calculo_ir * (aliquotas.IRPJ_ALIQUOTA / Decimal('100'))
             csll_devido = base_calculo_csll * (aliquotas.CSLL_ALIQUOTA / Decimal('100'))
             
-            imposto_devido = iss_devido + pis_devido + cofins_devido + ir_devido + csll_devido
+            # Calcular impostos devidos básicos
+            impostos_devido_total = iss_devido + pis_devido + cofins_devido + ir_devido + csll_devido
+            
+            # Calcular adicional de IR trimestral (separado do imposto devido)
+            adicional_ir_trimestral = calcular_adicional_ir_trimestral_socio(empresa, socio, ano, mes)
+            
+            # Debug - verificar valores
+            print(f"DEBUG Builder Executivo - Sócio {socio.pessoa.name}:")
+            print(f"  - Impostos devido básicos: {impostos_devido_total}")
+            print(f"  - Adicional IR trimestral: {adicional_ir_trimestral}")
+            print(f"  - Imposto devido (sem adicional): {impostos_devido_total}")
+            
+            # Imposto devido = apenas impostos básicos (sem adicional de IR trimestral)
+            imposto_devido = impostos_devido_total
         else:
+            # Se não há alíquotas, apenas calcular o adicional de IR trimestral
+            adicional_ir_trimestral = calcular_adicional_ir_trimestral_socio(empresa, socio, ano, mes)
             imposto_devido = Decimal('0')
+        
+        # Calcular imposto devido com adicional de IR (soma dos dois)
+        imposto_devido_com_adicional = imposto_devido + adicional_ir_trimestral
         
         # Imposto a pagar = devido - retido 
         imposto_a_pagar = max(imposto_devido - imposto_retido, Decimal('0'))
@@ -309,6 +413,8 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         total_receita_emitida += receita_emitida
         total_receita_bruta += receita_bruta
         total_imposto_devido += imposto_devido
+        total_adicional_ir_trimestral += adicional_ir_trimestral
+        total_imposto_devido_com_adicional += imposto_devido_com_adicional
         total_imposto_retido += imposto_retido
         total_imposto_a_pagar += imposto_a_pagar
         total_receita_liquida += receita_liquida
@@ -324,6 +430,8 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'receita_emitida': receita_emitida,
             'receita_bruta': receita_bruta,
             'imposto_devido': imposto_devido,
+            'adicional_ir_trimestral': adicional_ir_trimestral,
+            'imposto_devido_com_adicional': imposto_devido_com_adicional,
             'imposto_retido': imposto_retido,
             'imposto_a_pagar': imposto_a_pagar,
             'receita_liquida': receita_liquida,
@@ -341,6 +449,8 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'receita_emitida': total_receita_emitida,
             'receita_bruta': total_receita_bruta,
             'imposto_devido': total_imposto_devido,
+            'adicional_ir_trimestral': total_adicional_ir_trimestral,
+            'imposto_devido_com_adicional': total_imposto_devido_com_adicional,
             'imposto_retido': total_imposto_retido,
             'imposto_a_pagar': total_imposto_a_pagar,
             'receita_liquida': total_receita_liquida,

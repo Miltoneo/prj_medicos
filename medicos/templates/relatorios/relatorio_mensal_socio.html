@@ -188,7 +188,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><th>(-) DESPESAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
+                            <tr><th>(-) DESPESAS MES ATUAL</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
+                            <tr><th>(-) DESPESAS PROVISIONADAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ despesas_provisionadas|floatformat:2 }}</th></tr>
                             <tr><th>(+) SALDO DAS MOVIMENTAÇÕES FINANCEIRAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
                           </tbody>
                           <thead>
