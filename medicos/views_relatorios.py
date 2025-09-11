@@ -215,85 +215,9 @@ def relatorio_mensal_socio(request, empresa_id):
     
     # Processar movimentações financeiras
     lista_movimentacoes = _processar_movimentacoes_financeiras(relatorio_obj)
-    # Obter movimentações da conta corrente (lançamentos bancários) usando sistema de saldo anterior
-    try:
-        from medicos.models.conta_corrente import MovimentacaoContaCorrente, SaldoMensalContaCorrente
-        from medicos.relatorios.builders import obter_saldo_anterior_conta_corrente
-        
-        ano_str, mes_str = mes_ano.split('-') if mes_ano and '-' in mes_ano else (None, None)
-        if ano_str and mes_str:
-            ano = int(ano_str)
-            mes = int(mes_str)
-            competencia = date(ano, mes, 1)
-            
-            print(f"DEBUG View: Consultando conta corrente para socio_id={socio_id}, competencia={competencia}")
-            
-            # 1. Tentar buscar saldo mensal processado (preferencial)
-            try:
-                saldo_mensal = SaldoMensalContaCorrente.objects.get(
-                    empresa_id=empresa_id,
-                    socio_id=socio_id,
-                    competencia=competencia
-                )
-                
-                # Usar dados do fechamento mensal
-                saldo_anterior = saldo_mensal.saldo_anterior
-                total_creditos_conta_corrente = saldo_mensal.total_creditos
-                total_debitos_conta_corrente = saldo_mensal.total_debitos
-                saldo_conta_corrente = saldo_mensal.saldo_final
-                mes_fechado = saldo_mensal.fechado
-                
-                print(f"DEBUG View: Usando saldo mensal processado - fechado={mes_fechado}")
-                
-            except SaldoMensalContaCorrente.DoesNotExist:
-                # 2. Fallback: calcular dinamicamente (mês ainda não processado)
-                print("DEBUG View: Saldo mensal não encontrado, calculando dinamicamente")
-                
-                # Buscar saldo anterior usando builder
-                saldo_anterior = obter_saldo_anterior_conta_corrente(empresa_id, socio_id, competencia)
-                
-                # Movimentações do mês atual
-                primeiro_dia = competencia
-                ultimo_dia = date(ano, mes, calendar.monthrange(ano, mes)[1])
-                
-                movimentacoes_conta_corrente_qs = MovimentacaoContaCorrente.objects.filter(
-                    socio_id=socio_id,
-                    data_movimentacao__range=[primeiro_dia, ultimo_dia]
-                ).select_related('descricao_movimentacao', 'socio', 'instrumento_bancario', 'nota_fiscal').order_by('data_movimentacao', 'id')
-                
-                movimentacoes_conta_corrente = list(movimentacoes_conta_corrente_qs)
-                
-                # Calcular totais da conta corrente
-                total_creditos_conta_corrente = sum(mov.valor for mov in movimentacoes_conta_corrente_qs if mov.valor > 0)
-                total_debitos_conta_corrente = abs(sum(mov.valor for mov in movimentacoes_conta_corrente_qs if mov.valor < 0))
-                
-                # Calcular saldo da conta corrente: Saldo anterior + Créditos - Débitos
-                saldo_conta_corrente = float(saldo_anterior) + float(total_creditos_conta_corrente) - float(total_debitos_conta_corrente)
-                mes_fechado = False
-            
-            print(f"DEBUG View: saldo_anterior = {saldo_anterior}")
-            print(f"DEBUG View: total_creditos_conta_corrente = {total_creditos_conta_corrente}")
-            print(f"DEBUG View: total_debitos_conta_corrente = {total_debitos_conta_corrente}")
-            print(f"DEBUG View: saldo_conta_corrente calculado = {saldo_conta_corrente}")
-            
-        else:
-            print("DEBUG View: mes_ano inválido")
-            saldo_anterior = 0
-            total_creditos_conta_corrente = 0
-            total_debitos_conta_corrente = 0
-            saldo_conta_corrente = 0
-            mes_fechado = False
-            movimentacoes_conta_corrente = []
-            
-    except Exception as exc:
-        # Don't silently swallow exceptions — log them to stdout for debugging during development
-        print(f"ERROR View: erro ao consultar conta corrente: {exc}")
-        saldo_anterior = 0
-        total_creditos_conta_corrente = 0
-        total_debitos_conta_corrente = 0
-        saldo_conta_corrente = 0
-        mes_fechado = False
-        movimentacoes_conta_corrente = []
+    
+    # Extrato Conta Corrente removido conforme solicitado
+    mes_fechado = False
     
     # Montar dicionário do relatório com todos os dados necessários
     # Carregar Despesas Apropriadas (mesmo código da view despesas_socio_lista)
@@ -379,10 +303,6 @@ def relatorio_mensal_socio(request, empresa_id):
         'despesas_apropriadas': despesas_apropriadas,
         'total_despesas_apropriadas': total_despesas_apropriadas,
     'movimentacoes_financeiras': lista_movimentacoes,
-    'movimentacoes_conta_corrente': movimentacoes_conta_corrente,
-    'total_creditos_conta_corrente': total_creditos_conta_corrente,
-    'total_debitos_conta_corrente': total_debitos_conta_corrente,
-    'saldo_conta_corrente': saldo_conta_corrente,
         'saldo_movimentacao_financeira': getattr(relatorio_obj, 'saldo_movimentacao_financeira', 0),
         'notas_fiscais': getattr(relatorio_obj, 'lista_notas_fiscais', []),
         # Totais da empresa
@@ -415,6 +335,7 @@ def relatorio_mensal_socio(request, empresa_id):
         'impostos_retido_total': getattr(relatorio_obj, 'impostos_retido_total', 0),
         'saldo_apurado': getattr(relatorio_obj, 'saldo_apurado', 0),
         'saldo_a_transferir': getattr(relatorio_obj, 'saldo_a_transferir', 0),
+        'imposto_provisionado_mes_anterior': getattr(relatorio_obj, 'imposto_provisionado_mes_anterior', 0),
         'imposto_provisionado_mes_anterior': getattr(relatorio_obj, 'imposto_provisionado_mes_anterior', 0),
         # Totais das notas fiscais do sócio (para linha de totais da tabela)
         'total_nf_valor_bruto': getattr(relatorio_obj, 'total_nf_valor_bruto', 0),
@@ -463,11 +384,7 @@ def relatorio_mensal_socio(request, empresa_id):
         # Resultado do lançamento automático de impostos (se solicitado)
         'resultado_lancamento_automatico': relatorio_dict.get('resultado_lancamento_automatico'),
         'auto_lancar_impostos': auto_lancar_impostos,
-        # Campos específicos para o quadro "Resumo Conta Corrente"
-        'saldo_anterior': saldo_anterior,
-        'total_creditos_conta_corrente': total_creditos_conta_corrente,
-        'total_debitos_conta_corrente': total_debitos_conta_corrente,
-        'saldo_conta_corrente': saldo_conta_corrente,
+        # Quadro Resumo Conta Corrente removido
         'mes_fechado': mes_fechado,
     })
     

@@ -13,8 +13,6 @@ from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico, Aliquotas
 from medicos.models.despesas import DespesaRateada, ItemDespesaRateioMensal, DespesaSocio
 from medicos.models.financeiro import Financeiro
 from medicos.models.relatorios import RelatorioMensalSocio
-from medicos.models.conta_corrente import SaldoMensalContaCorrente, MovimentacaoContaCorrente
-from medicos.relatorios.builders import obter_saldo_anterior_conta_corrente
 from datetime import date
 import calendar
 
@@ -134,13 +132,7 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
     total_saldo_transferir = Decimal('0')
     total_imposto_provisionado_mes_anterior = Decimal('0')
     
-    # Totais de conta corrente
-    total_saldo_anterior_conta_corrente = Decimal('0')
-    total_creditos_conta_corrente = Decimal('0')
-    total_debitos_conta_corrente = Decimal('0')
-    total_saldo_final_conta_corrente = Decimal('0')
-    
-    # Competência para conta corrente
+    # Competência para cálculos de despesas
     competencia = date(ano, mes, 1)
     
     for socio in socios:
@@ -313,36 +305,6 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         # Saldo transferir = Receita líquida apurada + Saldo Movimentações - Total Despesas - Imposto Provisionado Mês Anterior
         saldo_transferir = receita_liquida + saldo_financeiro - total_despesas_socio - imposto_provisionado_mes_anterior
         
-        # Dados de conta corrente do sócio
-        try:
-            # 1. Tentar buscar saldo mensal processado (preferencial)
-            saldo_mensal = SaldoMensalContaCorrente.objects.get(
-                empresa_id=empresa_id,
-                socio_id=socio.id,
-                competencia=competencia
-            )
-            saldo_anterior_conta_corrente = saldo_mensal.saldo_anterior
-            total_creditos_cc = saldo_mensal.total_creditos
-            total_debitos_cc = saldo_mensal.total_debitos
-            saldo_final_conta_corrente = saldo_mensal.saldo_final
-            
-        except SaldoMensalContaCorrente.DoesNotExist:
-            # 2. Fallback: calcular dinamicamente (mês ainda não processado)
-            saldo_anterior_conta_corrente = obter_saldo_anterior_conta_corrente(empresa_id, socio.id, competencia)
-            
-            # Movimentações do mês atual
-            primeiro_dia = competencia
-            ultimo_dia = date(ano, mes, calendar.monthrange(ano, mes)[1])
-            
-            movimentacoes_conta_corrente_qs = MovimentacaoContaCorrente.objects.filter(
-                socio_id=socio.id,
-                data_movimentacao__range=[primeiro_dia, ultimo_dia]
-            )
-            
-            total_creditos_cc = sum(mov.valor for mov in movimentacoes_conta_corrente_qs if mov.valor > 0)
-            total_debitos_cc = abs(sum(mov.valor for mov in movimentacoes_conta_corrente_qs if mov.valor < 0))
-            saldo_final_conta_corrente = saldo_anterior_conta_corrente + total_creditos_cc - total_debitos_cc
-        
         # Acumular totais
         total_receita_emitida += receita_emitida
         total_receita_bruta += receita_bruta
@@ -356,12 +318,6 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
         total_saldo_financeiro += saldo_financeiro
         total_saldo_transferir += saldo_transferir
         total_imposto_provisionado_mes_anterior += imposto_provisionado_mes_anterior
-        
-        # Acumular totais de conta corrente
-        total_saldo_anterior_conta_corrente += saldo_anterior_conta_corrente
-        total_creditos_conta_corrente += total_creditos_cc
-        total_debitos_conta_corrente += total_debitos_cc
-        total_saldo_final_conta_corrente += saldo_final_conta_corrente
         
         resumo_socios.append({
             'socio': socio,
@@ -377,11 +333,6 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'total_despesas': total_despesas_socio,
             'imposto_provisionado_mes_anterior': imposto_provisionado_mes_anterior,
             'saldo_transferir': saldo_transferir,
-            # Dados de conta corrente
-            'saldo_anterior_conta_corrente': saldo_anterior_conta_corrente,
-            'total_creditos_conta_corrente': total_creditos_cc,
-            'total_debitos_conta_corrente': total_debitos_cc,
-            'saldo_final_conta_corrente': saldo_final_conta_corrente,
         })
     
     return {
@@ -399,12 +350,6 @@ def montar_resumo_demonstrativo_socios(empresa_id, mes_ano=None):
             'total_despesas': total_despesas,
             'imposto_provisionado_mes_anterior': total_imposto_provisionado_mes_anterior,
             'saldo_transferir': total_saldo_transferir,
-        },
-        'totais_conta_corrente': {
-            'saldo_anterior': total_saldo_anterior_conta_corrente,
-            'total_creditos': total_creditos_conta_corrente,
-            'total_debitos': total_debitos_conta_corrente,
-            'saldo_final': total_saldo_final_conta_corrente,
         },
         'mes_ano_competencia': f"{ano:04d}-{mes:02d}",
         'mes_ano_display': f"{mes:02d}/{ano}",

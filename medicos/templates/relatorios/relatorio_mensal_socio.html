@@ -182,18 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                           </thead>
                           <thead>
-                            <tr class="table-success">
-                              <th>IMPOSTO RETIDO*(b)</th>
-                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_retido_total|floatformat:2 }}</th>
-                            </tr>
-                          </thead>
-                          <thead>
-                            <tr class="table-success">
-                              <th>IMPOSTO A PROVISIONAR*(c=a-b)</th>
-                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_total|floatformat:2 }}</th>
-                            </tr>
-                          </thead>
-                          <thead>
                             <tr class="table-warning">
                               <th>(-) ADICIONAL DE IR TRIMESTRAL</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_adicional|floatformat:2 }}</th>
@@ -223,42 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="alert alert-info alert-sm mb-0" style="font-size: 0.875rem; padding: 0.5rem;">
                           <i class="fas fa-info-circle me-2"></i>
                           <strong>Notas:</strong><br>
-                          a) Impostos a provisionar: lançados automaticamente no dia 15 do mês seguinte no extrato conta corrente.<br>
-                          b) Ver abaixo a tabela: Espelho Cálculo de Impostos.
+                          a) Impostos a provisionar: lançados automaticamente no dia 15 do mês seguinte.<br>
+                          Ver abaixo a tabela: Espelho Cálculo de Impostos.
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6">
-                  <div class="card shadow-sm">
-                    <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
-                      <div class="d-flex align-items-center">
-                        <span class="bi bi-calculator me-2" style="color: #ffffff !important; font-size: 1.1em;"></span>
-                        <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Resumo Conta Corrente</h4>
-                      </div>
-                    </div>
-                    <div class="card-body p-4">
-                      <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0 w-auto" style="min-width:320px;max-width:430px;">
-                          <thead>
-                            <tr class="table-success">
-                              <th>Descrição</th>
-                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr><th>(=) SALDO ANTERIOR</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ saldo_anterior|floatformat:2 }}</th></tr>
-                            <tr><th>(+) TOTAL CRÉDITOS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_creditos_conta_corrente|floatformat:2 }}</th></tr>
-                            <tr><th>(-) TOTAL DÉBITOS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_debitos_conta_corrente|floatformat:2 }}</th></tr>
-                            <tr style="background-color: #343a40 !important; color: white !important;"><th style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">(=) SALDO CONTA CORRENTE</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ saldo_conta_corrente|floatformat:2 }}</th></tr>
-                            {% if mes_fechado %}
-                            <tr><th colspan="2" class="text-success text-center">✓ Período Fechado</th></tr>
-                            {% else %}
-                            <tr><th colspan="2" class="text-warning text-center">⚠ Período Não Fechado</th></tr>
-                            {% endif %}
-                          </tbody>
-                        </table>
                       </div>
                     </div>
                   </div>
@@ -303,98 +258,6 @@ document.addEventListener('DOMContentLoaded', function() {
                   </div>
                 </div>
               </div>
-                <!-- Tabela: Extrato Conta Corrente -->
-                <div class="row g-4 mb-4">
-                  <div class="col-12">
-                    <div class="card shadow-sm">
-                      <div class="card-header px-3 py-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important;">
-                        <div class="d-flex align-items-center">
-                          <i class="fas fa-university me-2" style="color: #ffffff !important; font-size: 1.1em;"></i>
-                          <h4 class="mb-0" style="color: #ffffff !important; font-weight: bold !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important; font-size: 1.1rem !important;">Extrato Conta Corrente</h4>
-                        </div>
-                      </div>
-                      <div class="card-body p-4">
-                        <!-- Resumo da Conta Corrente -->
-                        <div class="row mb-4">
-                          <div class="col-12">
-                            <div class="table-responsive">
-                              <table class="table table-sm table-bordered mb-3" style="max-width: 600px;">
-                                <thead>
-                                  <tr class="table-secondary">
-                                    <th style="width: 50%;">Descrição</th>
-                                    <th style="width: 50%; font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr>
-                                    <td>(=) SALDO ANTERIOR</td>
-                                    <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ saldo_anterior|floatformat:2 }}</td>
-                                  </tr>
-                                  <tr>
-                                    <td>(+) TOTAL CRÉDITOS</td>
-                                    <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_creditos_conta_corrente|floatformat:2 }}</td>
-                                  </tr>
-                                  <tr>
-                                    <td>(-) TOTAL DÉBITOS</td>
-                                    <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ total_debitos_conta_corrente|floatformat:2 }}</td>
-                                  </tr>
-                                  <tr style="background-color: #343a40 !important; color: white !important;">
-                                    <td style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">(=) SALDO CONTA CORRENTE</td>
-                                    <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ saldo_conta_corrente|floatformat:2 }}</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <!-- Extrato Detalhado -->
-                        <div class="table-responsive">
-                          <table class="table table-striped table-hover mb-0 table-movimentacoes-conta-corrente" style="width:auto;">
-                            <thead>
-                              <tr class="table-success">
-                                <th>Id</th>
-                                <th>Data</th>
-                                <th>Nota Fiscal</th>
-                                <th>Descrição</th>
-                                <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor</th>
-                                <th>Instrumento Bancário</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {% for mov in relatorio.movimentacoes_conta_corrente %}
-                              <tr>
-                                <td>{{ mov.id }}</td>
-                                <td>{{ mov.data_movimentacao|date:"d/m/Y" }}</td>
-                                <td>
-                                  {% if mov.nota_fiscal %}
-                                    NF {{ mov.nota_fiscal.numero }}
-                                  {% else %}
-                                    —
-                                  {% endif %}
-                                </td>
-                                <td>{{ mov.descricao_movimentacao }}</td>
-                                <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">
-                                  {% if mov.valor > 0 %}
-                                    <span class="text-success fw-bold">{{ mov.valor|floatformat:2 }}</span>
-                                  {% else %}
-                                    <span class="text-danger fw-bold">{{ mov.valor|floatformat:2 }}</span>
-                                  {% endif %}
-                                </td>
-                                <td>{{ mov.instrumento_bancario }}</td>
-                              </tr>
-                              {% empty %}
-                              <tr>
-                                <td colspan="6" class="text-center text-muted">Nenhuma movimentação encontrada.</td>
-                              </tr>
-                              {% endfor %}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
             </div>
           </div>
           <div class="row g-4 mb-4">
