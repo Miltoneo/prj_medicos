@@ -177,14 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
                           </tbody>
                           <thead>
                             <tr class="table-success">
-                              <th>(-) IMPOSTO DEVIDO(a)</th>
-                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_devido_total|floatformat:2 }}</th>
-                            </tr>
-                          </thead>
-                          <thead>
-                            <tr class="table-warning">
-                              <th>(-) ADICIONAL DE IR TRIMESTRAL</th>
-                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_adicional|floatformat:2 }}</th>
+                              <th>(-) IMPOSTO DEVIDO</th>
+                              <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_devido_total|add:relatorio.total_irpj_adicional|floatformat:2 }}</th>
                             </tr>
                           </thead>
                           <thead>
@@ -209,7 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="alert alert-info alert-sm mb-0" style="font-size: 0.875rem; padding: 0.5rem;">
                           <i class="fas fa-info-circle me-2"></i>
                           <strong>Notas:</strong><br>
-                          a) Impostos a provisionar: lançados automaticamente no dia 15 do mês seguinte.<br>
                           Ver abaixo a tabela: Espelho Cálculo de Impostos.
                         </div>
                       </div>
@@ -494,6 +487,18 @@ document.addEventListener('DOMContentLoaded', function() {
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.impostos_devido_total|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.impostos_retido_total|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">{{ relatorio.impostos_total|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="table-warning">
+                          <td class="fw-bold">(+) ADICIONAL DE IR TRIMESTRAL</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_adicional|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">-</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_irpj_adicional|floatformat:2 }}</td>
+                        </tr>
+                        <tr style="background-color: #198754 !important; color: white !important;">
+                          <td class="fw-bold" style="background-color: #198754 !important; color: white !important;">(=) TOTAL COM ADICIONAL</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #198754 !important; color: white !important;">{{ relatorio.impostos_devido_total|add:relatorio.total_irpj_adicional|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #198754 !important; color: white !important;">{{ relatorio.impostos_retido_total|floatformat:2 }}</td>
+                          <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #198754 !important; color: white !important;">{{ relatorio.impostos_total|add:relatorio.total_irpj_adicional|floatformat:2 }}</td>
                         </tr>
                       </tbody>
                     </table>
