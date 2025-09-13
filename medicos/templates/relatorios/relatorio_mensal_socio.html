@@ -171,24 +171,13 @@ document.addEventListener('DOMContentLoaded', function() {
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.receita_bruta_recebida|floatformat:2 }}</th>
                             </tr>
                           </thead>
-                          <tbody>
-                            <tr><td style="font-style: italic;">Serviços de consultas e plantões</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.faturamento_consultas|default:0|floatformat:2 }}</td></tr>
-                            <tr><td style="font-style: italic;">Serviços de vacinação, exames, procedimentos</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.faturamento_outros|default:0|floatformat:2 }}</td></tr>
-                          </tbody>
                           <thead>
                             <tr class="table-success">
                               <th>(-) IMPOSTO DEVIDO</th>
                               <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.impostos_devido_total|add:relatorio.total_irpj_adicional|floatformat:2 }}</th>
                             </tr>
                           </thead>
-                          <tbody>
-                            <tr><td style="font-style: italic;">PIS</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_pis_devido|floatformat:2 }}</td></tr>
-                            <tr><td style="font-style: italic;">COFINS</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_cofins_devido|floatformat:2 }}</td></tr>
-                            <tr><td style="font-style: italic;">IRPJ</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_irpj_devido|floatformat:2 }}</td></tr>
-                            <tr><td style="font-style: italic;">CSLL</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_csll_devido|floatformat:2 }}</td></tr>
-                            <tr><td style="font-style: italic;">ISSQN</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_iss_devido|floatformat:2 }}</td></tr>
-                            <tr><td style="font-style: italic;">ADICIONAL DE IR TRIMESTRAL</td><td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; font-style: italic;">{{ relatorio.total_irpj_adicional|floatformat:2 }}</td></tr>
-                          </tbody>
+
                           <thead>
                             <tr class="table-success">
                               <th>(=) RECEITA LÍQUIDA</th>
@@ -196,8 +185,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr><th>(-) DESPESAS MES ATUAL</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.despesa_geral|floatformat:2 }}</th></tr>
-                            <tr><th>(-) DESPESAS PROVISIONADAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ despesas_provisionadas|floatformat:2 }}</th></tr>
+                            <tr><th>(-) DESPESAS MES ATUAL</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_despesas_normal|floatformat:2 }}</th></tr>
+                            <tr><th>(-) DESPESAS PROVISIONADAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.total_despesas_provisionadas|floatformat:2 }}</th></tr>
                             <tr><th>(+) SALDO DAS MOVIMENTAÇÕES FINANCEIRAS</th><th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">{{ relatorio.saldo_movimentacao_financeira|floatformat:2 }}</th></tr>
                           </tbody>
                           <thead>
@@ -383,6 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           <th>Data</th>
                           <th>Descrição</th>
                           <th>Grupo</th>
+                          <th>Classificação</th>
                           <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor Total</th>
                           <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Taxa Rateio (%)</th>
                           <th style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">Valor Apropriado</th>
@@ -394,6 +384,15 @@ document.addEventListener('DOMContentLoaded', function() {
                           <td>{{ despesa.data|date:"d/m/Y" }}</td>
                           <td>{{ despesa.descricao }}</td>
                           <td>{{ despesa.grupo }}</td>
+                          <td>
+                            {% if despesa.tipo_classificacao == 1 %}
+                              <span class="badge bg-success">Normal</span>
+                            {% elif despesa.tipo_classificacao == 2 %}
+                              <span class="badge bg-warning text-dark">Provisionada</span>
+                            {% else %}
+                              <span class="badge bg-secondary">-</span>
+                            {% endif %}
+                          </td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">R$ {{ despesa.valor_total|floatformat:2 }}</td>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important;">
                             {% if despesa.taxa_rateio == '-' %}-{% else %}{{ despesa.taxa_rateio|floatformat:2 }}{% endif %}
@@ -402,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                         {% endfor %}
                         <tr style="background-color: #343a40 !important; color: white !important;">
-                          <th colspan="5" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">Total</th>
+                          <th colspan="6" style="background-color: #343a40 !important; color: white !important; font-weight: bold !important;">Total</th>
                           <td style="font-family: 'Courier New', monospace !important; font-weight: 500 !important; text-align: right !important; background-color: #343a40 !important; color: white !important;">R$ {{ relatorio.total_despesas_apropriadas|floatformat:2 }}</td>
                         </tr>
                       </tbody>

@@ -29,6 +29,11 @@
               <div style="max-width: 180px;">{{ form.valor }}</div>
               {% if form.valor.errors %}<div class="text-danger small">{{ form.valor.errors }}</div>{% endif %}
             </div>
+            <div class="mb-3">
+              <label for="id_tipo_classificacao" class="form-label">Classificação da Despesa</label>
+              <div style="max-width: 200px;">{{ form.tipo_classificacao }}</div>
+              {% if form.tipo_classificacao.errors %}<div class="text-danger small">{{ form.tipo_classificacao.errors }}</div>{% endif %}
+            </div>
             {% if competencia %}
               <input type="hidden" name="competencia" value="{{ competencia }}">
             {% elif request.GET.competencia %}

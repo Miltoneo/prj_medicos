@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from datetime import datetime, timedelta
+from django.utils import timezone
 # View para copiar despesas do mês anterior para o mês atual
 from .models.despesas import DespesaRateada, DespesaSocio, ItemDespesa
 from django.db import transaction
@@ -373,7 +374,7 @@ class ListaDespesasEmpresaView(View):
         competencia = request.GET.get('competencia') or request.session.get('mes_ano')
         despesas_qs = DespesaRateada.objects.filter(
             item_despesa__grupo_despesa__empresa_id=empresa_id
-        )
+        ).order_by('tipo_classificacao', '-data')  # Ordenação aplicada no queryset
         if competencia:
             try:
                 ano, mes = competencia.split('-')
@@ -492,6 +493,8 @@ class ListaDespesasSocioView(View):
                             valor_apropriado=valor_apropriado,
                             data=despesa.data
                         )
+                        # Adicionar campo tipo_classificacao
+                        fake.tipo_classificacao = getattr(despesa, 'tipo_classificacao', 1)
                         despesas_rateadas.append(fake)
             # Junta despesas individuais e rateadas, ambos como dicionários padronizados
             despesas = []
@@ -501,6 +504,7 @@ class ListaDespesasSocioView(View):
                     'socio': fake.socio,
                     'descricao': getattr(fake.item_despesa, 'descricao', '-'),
                     'grupo': getattr(getattr(fake.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'tipo_classificacao': getattr(fake, 'tipo_classificacao', 1),
                     'valor_total': fake.valor_total,
                     'taxa_rateio': fake.taxa_rateio,
                     'valor_apropriado': fake.valor_apropriado,
@@ -512,17 +516,25 @@ class ListaDespesasSocioView(View):
                     'socio': d.socio,
                     'descricao': getattr(d.item_despesa, 'descricao', '-'),
                     'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'tipo_classificacao': getattr(d, 'tipo_classificacao', 1),
                     'valor_total': getattr(d, 'valor', 0),
                     'taxa_rateio': '-',
                     'valor_apropriado': getattr(d, 'valor', 0),
                     'id': d.id
                 })
             total_despesas = sum([d.get('valor_apropriado', 0) or 0 for d in despesas])
+            
+            # Ordenar lista mista por classificação e data decrescente
+            from datetime import date
+            despesas.sort(key=lambda x: (
+                x.get('tipo_classificacao', 1), 
+                -(x.get('data') or date.today()).toordinal()
+            ))
         else:
             # Se não filtrar por sócio, mostra todas as despesas individuais
             despesas_qs = DespesaSocio.objects.filter(
                 socio__empresa_id=empresa_id
-            )
+            ).order_by('tipo_classificacao', '-data')  # Ordenação aplicada no queryset
             if competencia:
                 try:
                     ano, mes = competencia.split('-')
@@ -537,6 +549,7 @@ class ListaDespesasSocioView(View):
                     'socio': d.socio,
                     'descricao': getattr(d.item_despesa, 'descricao', '-'),
                     'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'tipo_classificacao': getattr(d, 'tipo_classificacao', 1),
                     'valor_total': getattr(d, 'valor', 0),
                     'taxa_rateio': '-',
                     'valor_apropriado': getattr(d, 'valor', 0),

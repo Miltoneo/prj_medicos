@@ -224,6 +224,7 @@ def relatorio_mensal_socio(request, empresa_id):
     from medicos.models.despesas import DespesaSocio, DespesaRateada, ItemDespesaRateioMensal
     despesas_apropriadas = []
     total_despesas_apropriadas = 0
+    total_despesas_provisionadas = 0
     if socio_id and mes_ano:
         try:
             ano_str, mes_str = mes_ano.split('-')
@@ -261,6 +262,7 @@ def relatorio_mensal_socio(request, empresa_id):
                         'socio': socio_obj,
                         'descricao': item_desc,
                         'grupo': grupo_desc,
+                        'tipo_classificacao': getattr(despesa, 'tipo_classificacao', 1),
                         'valor_total': despesa.valor,
                         'taxa_rateio': rateio.percentual_rateio,
                         'valor_apropriado': valor_apropriado,
@@ -274,16 +276,27 @@ def relatorio_mensal_socio(request, empresa_id):
                     'socio': d.socio,
                     'descricao': getattr(d.item_despesa, 'descricao', '-'),
                     'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'tipo_classificacao': getattr(d, 'tipo_classificacao', 1),
                     'valor_total': d.valor,
                     'taxa_rateio': '-',
                     'valor_apropriado': d.valor,
                     'id': d.id,
                 })
-                
+            # Calcular total de despesas classificação normal
+            total_despesas_normal = sum([
+                d.get('valor_apropriado', 0) or 0
+                for d in despesas_apropriadas
+                if d.get('tipo_classificacao', 1) == 1
+            ])
+            # Calcular total de despesas classificação provisionada
+            total_despesas_provisionadas = sum([
+                d.get('valor_apropriado', 0) or 0
+                for d in despesas_apropriadas
+                if d.get('tipo_classificacao', 1) == 2
+            ])
             total_despesas_apropriadas = sum([d.get('valor_apropriado', 0) or 0 for d in despesas_apropriadas])
-            
-            # Ordenar despesas apropriadas por grupo (crescente) e depois por data (decrescente)
-            despesas_apropriadas.sort(key=lambda x: (x['grupo'], -x['data'].toordinal() if x['data'] else 0))
+            # Ordenar despesas apropriadas por classificação (crescente) e depois por data (decrescente)
+            despesas_apropriadas.sort(key=lambda x: (x.get('tipo_classificacao', 1), -x['data'].toordinal() if x['data'] else 0))
             
         except Exception as e:
             print(f"ERROR View: erro ao carregar despesas apropriadas: {e}")
@@ -296,6 +309,8 @@ def relatorio_mensal_socio(request, empresa_id):
         'socio_nome': socio_selecionado.pessoa.name if socio_selecionado else '',
         'competencia': mes_ano,
         'data_geracao': timezone.now().strftime('%d/%m/%Y %H:%M'),
+            'total_despesas_normal': total_despesas_normal,
+            'total_despesas_provisionadas': total_despesas_provisionadas,
         # Dados financeiros básicos
         'despesa_geral': getattr(relatorio_obj, 'despesa_geral', 0),
         'despesas_total': getattr(relatorio_obj, 'despesas_total', 0),

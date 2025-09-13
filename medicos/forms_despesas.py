@@ -26,10 +26,11 @@ class DespesaSocioForm(forms.ModelForm):
 
     class Meta:
         model = DespesaSocio
-        fields = ['item_despesa', 'data', 'valor']
+        fields = ['item_despesa', 'data', 'valor', 'tipo_classificacao']
         widgets = {
             'data': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'tipo_classificacao': forms.Select(attrs={'class': 'form-control'}),
         }
 
 
@@ -43,10 +44,11 @@ class DespesaEmpresaForm(forms.ModelForm):
 
     class Meta:
         model = DespesaRateada
-        fields = ['item_despesa', 'data', 'valor']
+        fields = ['item_despesa', 'data', 'valor', 'tipo_classificacao']
         widgets = {
             'data': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'tipo_classificacao': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
