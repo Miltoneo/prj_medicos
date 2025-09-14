@@ -64,9 +64,13 @@ def cadastro_rateio_list(request):
         # Recupera filtros do POST (hidden ou session, se necessário)
         mes_competencia = request.POST.get('mes_competencia')
         selected_item_id = request.POST.get('item_despesa')
+        # Preserva o filtro de descrição do campo hidden
+        filtro_descricao = request.POST.get('filtro_descricao_hidden', '')
     else:
         mes_competencia = request.GET.get('mes_competencia')
         selected_item_id = request.GET.get('item_despesa')
+        # Preserva o filtro de descrição da URL
+        filtro_descricao = request.GET.get('filtro_descricao', '')
     from datetime import datetime
     if not mes_competencia:
         mes_competencia = default_mes
@@ -208,6 +212,8 @@ def cadastro_rateio_list(request):
                 # Após salvar, redireciona para GET com filtros (PRG pattern)
                 from django.urls import reverse
                 url = reverse('medicos:cadastro_rateio') + f'?mes_competencia={mes_competencia[:7]}&item_despesa={selected_item_id}'
+                if filtro_descricao:
+                    url += f'&filtro_descricao={filtro_descricao}'
                 return redirect(url)
             # Monta contexto para GET
             rateios_qs = ItemDespesaRateioMensal.objects.filter(item_despesa_id=selected_item_id, data_referencia=mes_competencia_date, ativo=True).select_related('socio__pessoa')

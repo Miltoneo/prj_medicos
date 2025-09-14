@@ -12,9 +12,14 @@
         <i class="fas fa-arrow-left me-2 text-secondary"></i>Voltar
       </a>
     </li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-list me-2 text-info"></i>Lançamentos</a></li>
-    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:recebimento_notas_fiscais' %}"><i class="fas fa-file-invoice me-2 text-success"></i>Recebimento de Notas Fiscais</a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:recebimento_notas_fiscais' %}"><i class="fas fa-file-invoice me-2 text-success"></i>Notas Fiscais: Recebimento </a></li>
+    <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:financeiro_lancamentos' %}"><i class="fas fa-list me-2 text-info"></i>Operações financeiras </a></li>
     <li class="nav-item"><a class="nav-link text-light" href="{% url 'medicos:aplicacoes_financeiras' empresa_id=request.session.empresa_id %}"><i class="fas fa-chart-line me-2 text-primary"></i>Aplicações Financeiras</a></li>
+    <li class="nav-item">
+      <a class="nav-link text-light" href="{% url 'medicos:contacorrente_lancamentos' empresa_id=request.session.empresa_id %}">
+        <i class="fas fa-university me-2 text-warning"></i>Conta Corrente
+      </a>
+    </li>
 
   </ul>
 </nav>

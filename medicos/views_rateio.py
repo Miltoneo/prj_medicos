@@ -8,6 +8,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django_tables2 import RequestConfig
 from django_filters.views import FilterView
 from datetime import date
+from django.db import models
 from medicos.models.fiscal import NotaFiscal, NotaFiscalRateioMedico
 from medicos.models.base import Empresa, Socio
 from .tables_rateio import NotaFiscalRateioTable
@@ -119,7 +120,7 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
     context_object_name = 'table'
     filterset_class = NotaFiscalRateioFilter
     table_class = NotaFiscalRateioTable
-    paginate_by = 20
+    paginate_by = 50  # Aumentado para reduzir paginação
 
     def get_queryset(self):
         # Sempre filtra por empresa da sessão
@@ -131,18 +132,30 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         # Filtrar notas com status cancelado - não exibir no rateio
         qs = qs.exclude(status_recebimento='cancelado')
         
+        # Otimizar carregamento dos rateios relacionados
+        qs = qs.prefetch_related('rateios_medicos__medico__pessoa')
+        
         # Aplica o filtro de busca
         filter_params = self.request.GET.copy()
         if 'page' in filter_params:
             filter_params.pop('page')
         if 'nota_id' in filter_params:
             filter_params.pop('nota_id')
+        
+        # Se não há filtros específicos, mostrar apenas notas com rateio incompleto (diferente de 100%)
+        has_filters = any(filter_params.get(field) for field in ['mes_emissao', 'mes_recebimento', 'numero', 'tomador', 'cnpj_tomador'])
+        
+        if not has_filters:
+            # Filtrar notas com rateio diferente de 100%
+            # Usar annotate com Sum para calcular o total rateado
+            from django.db.models import Sum, Case, When, Value
             
-        # Se não há filtros específicos, aplicar filtro do mês corrente por padrão
-        if not filter_params:
-            from datetime import date
-            mes_corrente = date.today().strftime('%Y-%m')
-            filter_params['mes_emissao'] = mes_corrente
+            qs = qs.annotate(
+                total_rateado=Sum('rateios_medicos__percentual_participacao')
+            ).filter(
+                models.Q(total_rateado__isnull=True) |  # Sem rateio
+                models.Q(total_rateado__lt=99.99)       # Rateio incompleto (menor que 100%)
+            )
             
         self.filter = self.filterset_class(filter_params, queryset=qs)
         # Aplica ordenação padrão por data de emissão descendente se não houver ordenação específica
@@ -170,6 +183,11 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
         request_config.configure(table)
         nota_id = self.request.GET.get('nota_id')
         context['filter'] = getattr(self, 'filter', None)
+        
+        # Calcular totalizador de valor bruto das notas filtradas
+        from django.db.models import Sum
+        total_valor_bruto = queryset.aggregate(total=Sum('val_bruto'))['total'] or 0
+        
         nota_fiscal = None
         if nota_id:
             try:
@@ -208,6 +226,7 @@ class NotaFiscalRateioListView(RateioContextMixin, FilterView):
             'titulo_pagina': 'Rateio de Notas Fiscais',
             'total_percentual_rateado': total_percentual_rateado,
             'mes_corrente': date.today().strftime('%Y-%m'),  # Para valor padrão do filtro
+            'total_valor_bruto': total_valor_bruto,  # Totalizador de valor bruto
         })
         return context
 

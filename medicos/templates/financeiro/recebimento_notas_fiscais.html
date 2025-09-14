@@ -14,25 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
-  
-  // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
-  const mesAnoEmissaoField = document.getElementById('id_mes_ano_emissao');
-  if (mesAnoEmissaoField) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasFilterParams = urlParams.has('numero') || urlParams.has('mes_ano_emissao') || urlParams.has('mes_ano_recebimento') || urlParams.has('status_recebimento');
-    
-    if (!hasFilterParams && !mesAnoEmissaoField.value) {
-      // Define o mês atual se não há valor
-      const today = new Date();
-      const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
-      mesAnoEmissaoField.value = currentMonth;
-      
-      // Submete automaticamente para aplicar o filtro do mês atual
-      setTimeout(() => {
-        mesAnoEmissaoField.closest('form').submit();
-      }, 100);
-    }
-  }
 });
 </script>
 {% endblock %}
@@ -66,20 +47,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="month" id="id_mes_ano_emissao" name="mes_ano_emissao" class="form-control" value="{{ mes_ano_emissao_default }}">
               </div>
               
+              <!-- Mês/Ano de Recebimento ao lado da emissão -->
+              <div class="col-auto">
+                <label for="id_mes_ano_recebimento" class="form-label mb-0">
+                  <i class="fas fa-calendar-check me-1"></i>Mês/Ano de Recebimento
+                </label>
+                <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ mes_ano_recebimento_default }}">
+              </div>
+              
               <!-- Número da NF -->
               <div class="col-auto">
                 <label for="id_numero" class="form-label mb-0">
                   <i class="fas fa-hashtag me-1"></i>Número NF
                 </label>
                 <input type="text" id="id_numero" name="numero" class="form-control" value="{{ request.GET.numero }}">
-              </div>
-              
-              <!-- Mês/Ano de Recebimento -->
-              <div class="col-auto">
-                <label for="id_mes_ano_recebimento" class="form-label mb-0">
-                  <i class="fas fa-calendar-check me-1"></i>Mês/Ano de Recebimento
-                </label>
-                <input type="month" id="id_mes_ano_recebimento" name="mes_ano_recebimento" class="form-control" value="{{ mes_ano_recebimento_default }}">
               </div>
               
               <!-- Status de Recebimento -->
@@ -106,17 +87,117 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
             </div>
             
-            <!-- Indicador visual do filtro ativo -->
-            {% if mes_ano_emissao_default %}
+            <!-- Indicador visual dos filtros ativos -->
+            {% if mes_ano_emissao_default or request.GET.numero or mes_ano_recebimento_default or request.GET.status_recebimento %}
               <div class="mt-2">
                 <small class="text-muted">
                   <i class="fas fa-filter me-1"></i>
-                  Exibindo notas de: <strong>{{ mes_ano_emissao_default }}</strong>
+                  Filtros ativos:
+                  {% if mes_ano_emissao_default %}
+                    <strong>Mês emissão: {{ mes_ano_emissao_default }}</strong>
+                  {% endif %}
+                  {% if request.GET.numero %}
+                    <strong>Número: {{ request.GET.numero }}</strong>
+                  {% endif %}
+                  {% if mes_ano_recebimento_default %}
+                    <strong>Mês recebimento: {{ mes_ano_recebimento_default }}</strong>
+                  {% endif %}
+                  {% if request.GET.status_recebimento %}
+                    <strong>Status: {{ request.GET.status_recebimento }}</strong>
+                  {% endif %}
                 </small>
               </div>
             {% endif %}
           </form>
           <h5 class="fw-bold mt-4 mb-2"><i class="fas fa-file-invoice-dollar me-1"></i>Notas fiscais</h5>
+          
+          <!-- Cards de Totais Financeiros -->
+          <div class="row mb-4">
+            
+            <!-- Card Valores Principais -->
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="card border-success shadow-sm h-100">
+                <div class="card-header bg-success text-white d-flex align-items-center justify-content-between">
+                  <span class="fw-bold"><i class="fas fa-money-bill-wave me-2"></i>Valores Principais</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Total Valor Bruto:</span>
+                    <span class="fw-bold text-primary">R$ {{ totais.total_val_bruto|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Total Impostos Retidos:</span>
+                    <span class="fw-bold text-danger">R$ {{ totais.total_impostos|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">Total Valor Líquido:</span>
+                    <span class="fw-bold text-success">R$ {{ totais.total_val_liquido|floatformat:2 }}</span>
+                  </div>
+                  {% if status_count.canceladas > 0 %}
+                    <div class="text-center">
+                      <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>{{ status_count.notas_validas }} nota{{ status_count.notas_validas|pluralize }} válida{{ status_count.notas_validas|pluralize }}
+                        <br>{{ status_count.canceladas }} cancelada{{ status_count.canceladas|pluralize }} (excluída{{ status_count.canceladas|pluralize }} dos totais)
+                      </small>
+                    </div>
+                  {% else %}
+                    <div class="text-center">
+                      <small class="text-muted">
+                        <i class="fas fa-check-circle me-1"></i>{{ status_count.notas_validas }} nota{{ status_count.notas_validas|pluralize }} válida{{ status_count.notas_validas|pluralize }}
+                      </small>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card Impostos Federais Retidos -->
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="card border-warning shadow-sm h-100">
+                <div class="card-header bg-warning text-dark d-flex align-items-center justify-content-between">
+                  <span class="fw-bold"><i class="fas fa-receipt me-2"></i>Impostos Federais Retidos</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">PIS:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_PIS|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">COFINS:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_COFINS|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-muted">IRPJ:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_IR|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">CSLL:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_CSLL|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card Outros Impostos Retidos -->
+            <div class="col-lg-3 col-md-6 mb-3">
+              <div class="card border-info shadow-sm h-100">
+                <div class="card-header bg-info text-white d-flex align-items-center justify-content-between">
+                  <span class="fw-bold"><i class="fas fa-percentage me-2"></i>Outros Impostos Retidos</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">ISS:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_ISS|floatformat:2 }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Outros:</span>
+                    <span class="fw-bold">R$ {{ totais.total_val_outros|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div class="table-responsive rounded shadow-sm p-3 bg-light">
             <div class="bg-white rounded-2 p-2">
               {% render_table table %}

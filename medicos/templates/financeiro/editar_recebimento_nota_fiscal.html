@@ -81,7 +81,7 @@
                 {% endif %}
               </div>
               
-              <div class="col-md-6">
+              <div class="col-12">
                 <label for="id_dtRecebimento" class="form-label mb-1">
                   <i class="fas fa-calendar-check me-1"></i>Data de Recebimento
                 </label>
@@ -89,16 +89,9 @@
                 {% if form.dtRecebimento.errors %}
                   <div class="text-danger small mt-1">{{ form.dtRecebimento.errors|join:', ' }}</div>
                 {% endif %}
-              </div>
-              
-              <div class="col-md-6">
-                <label for="id_status_recebimento" class="form-label mb-1">
-                  <i class="fas fa-check-circle me-1"></i>Status de Recebimento
-                </label>
-                {{ form.status_recebimento }}
-                {% if form.status_recebimento.errors %}
-                  <div class="text-danger small mt-1">{{ form.status_recebimento.errors|join:', ' }}</div>
-                {% endif %}
+                <small class="form-text text-muted">
+                  <i class="fas fa-info-circle me-1"></i>O status será automaticamente definido como "Recebido" ao informar a data de recebimento.
+                </small>
               </div>
             </div>
             

@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django_filters.views import FilterView
 from django.shortcuts import get_object_or_404
+from django_tables2 import RequestConfig
 from .tables_rateio_medico import NotaFiscalRateioMedicoTable
 from .filters_rateio_medico import NotaFiscalRateioMedicoFilter
 from medicos.models.fiscal import NotaFiscalRateioMedico, NotaFiscal
@@ -46,9 +47,12 @@ class NotaFiscalRateioMedicoListView(FilterView):
         # Remove parâmetros que não são de filtro
         if 'page' in filter_params:
             filter_params.pop('page')
+        
+        # Remove o parâmetro clear se existir (usado para detectar ação de limpar)
+        is_clear_action = filter_params.pop('clear', None) == ['1']
             
-        # Se não há filtros específicos, aplicar filtro do mês corrente por padrão
-        if not filter_params:
+        # Se não há filtros específicos E não é uma ação de limpar, aplicar filtro do mês corrente por padrão
+        if not filter_params and not is_clear_action:
             from datetime import date
             mes_corrente = date.today().strftime('%Y-%m')
             filter_params['competencia'] = mes_corrente
@@ -76,8 +80,11 @@ class NotaFiscalRateioMedicoListView(FilterView):
             context['total_cofins'] = 0
             context['total_ir'] = 0
             context['total_csll'] = 0
+            context['total_outros'] = 0
         else:
             table = self.table_class(self.get_queryset())
+            # Configurar a tabela para ordenação
+            RequestConfig(self.request, paginate={'per_page': self.paginate_by}).configure(table)
             context['table'] = table
             context['filter'] = getattr(self, 'filter', None)
             if self.nota_fiscal:
@@ -90,6 +97,15 @@ class NotaFiscalRateioMedicoListView(FilterView):
             context['total_cofins'] = sum(getattr(obj, 'valor_cofins_medico', 0) or 0 for obj in qs)
             context['total_ir'] = sum(getattr(obj, 'valor_ir_medico', 0) or 0 for obj in qs)
             context['total_csll'] = sum(getattr(obj, 'valor_csll_medico', 0) or 0 for obj in qs)
+            
+            # Calcular total de "outros" rateado
+            total_outros = 0
+            for obj in qs:
+                if obj.nota_fiscal and obj.nota_fiscal.val_outros and obj.nota_fiscal.val_bruto:
+                    proporcao = float(obj.valor_bruto_medico) / float(obj.nota_fiscal.val_bruto)
+                    valor_outros_rateado = float(obj.nota_fiscal.val_outros) * proporcao
+                    total_outros += valor_outros_rateado
+            context['total_outros'] = total_outros
         
         context['titulo_pagina'] = 'Notas Fiscais Rateadas por Médico'
         return context

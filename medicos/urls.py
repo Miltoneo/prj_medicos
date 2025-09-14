@@ -29,7 +29,7 @@ from . import views_relatorios
 from . import views_empresa
 from . import views_faturamento
 from .views_import_xml import NotaFiscalImportXMLView
-from .views_recebimento_notafiscal import NotaFiscalRecebimentoListView, NotaFiscalRecebimentoUpdateView
+from .views_recebimento_notafiscal import NotaFiscalRecebimentoListView, NotaFiscalRecebimentoUpdateView, NotaFiscalRecebimentoCancelarView, NotaFiscalRecebimentoPendenteView
 from . import views_meio_pagamento
 from . import views_faturamento
 # from . import views_home_cenario  # Removido: arquivo não existe
@@ -76,6 +76,7 @@ urlpatterns = [
 
     # =====================
     # Financeiro Views
+    path('relatorio-financeiro-empresa/<int:empresa_id>/', views_relatorios.relatorio_financeiro_empresa, name='relatorio_financeiro_empresa'),
     # =====================
     path('financeiro/lancamentos/', FinanceiroListView.as_view(), name='financeiro_lancamentos'),
     
@@ -138,6 +139,8 @@ path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView
     # Recebimento de Notas Fiscais (Fluxo Isolado do Financeiro)
     path('recebimento-notas/', NotaFiscalRecebimentoListView.as_view(), name='recebimento_notas_fiscais'),
     path('recebimento-notas/<int:pk>/editar/', NotaFiscalRecebimentoUpdateView.as_view(), name='editar_recebimento_nota_fiscal'),
+    path('recebimento-notas/<int:pk>/cancelar/', NotaFiscalRecebimentoCancelarView.as_view(), name='cancelar_recebimento_nota_fiscal'),
+    path('recebimento-notas/<int:pk>/pendente/', NotaFiscalRecebimentoPendenteView.as_view(), name='pendente_recebimento_nota_fiscal'),
 
     # =====================
     # Meios de Pagamento Views
@@ -154,6 +157,11 @@ path('usuarios/<int:conta_id>/<int:user_id>/excluir/', views_user.UserDeleteView
 
     # Cenário Despesas
     path('despesas/', include('medicos.urls_despesas')),
+
+    # =====================
+    # Conta Corrente Views
+    # =====================
+    path('contacorrente/', include('medicos.urls_contacorrente')),
 
 # Grupos de Despesa
 path('empresas/<int:empresa_id>/grupos-despesa/', views_despesa_cadastro.lista_grupos_despesa, name='lista_grupos_despesa'),
@@ -183,6 +191,7 @@ path('item_despesa_delete/<int:empresa_id>/<int:item_id>/', views_despesa_cadast
     # Cadastro e Cenário Views
     # =====================
     path('cenario_cadastro/', views_cenario.cenario_cadastro, name='cenario_cadastro'),
+    path('cenario_demonstrativo/', views_cenario.cenario_demonstrativo, name='cenario_demonstrativo'),
     path('', views_main.main, name='index'),
     path('dashboard/', views_main.main, name='dashboard'),
     path('home/', views_main.main, name='home'),
@@ -207,4 +216,9 @@ path('relatorio-issqn/<int:empresa_id>/', views_relatorios.relatorio_apuracao, n
 path('aplicacoes_financeiras/<int:empresa_id>/', AplicacaoFinanceiraListView.as_view(), name='aplicacoes_financeiras'),
 path('aplicacao_financeira_add/<int:empresa_id>/', AplicacaoFinanceiraCreateView.as_view(), name='aplicacao_financeira_add'),
 path('aplicacoes_financeiras_edit/<int:empresa_id>/<int:pk>/', AplicacaoFinanceiraUpdateView.as_view(), name='aplicacoes_financeiras_edit'),
+
+    # =====================
+    # Funcionalidades SaaS Avançadas
+    # =====================
+    path('', include('medicos.urls_saas')),
 ]

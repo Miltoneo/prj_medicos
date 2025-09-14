@@ -356,6 +356,50 @@ Este arquivo foca apenas em padrões técnicos, arquitetura, modularização, te
   ```
 - Fonte: docs/guia_desenvolvimento.md, linhas 202-215
 
+## 15. Organização de Scripts Temporários
+
+**Regra Obrigatória:** Todo script temporário para teste, debug, migração de dados, análise exploratória ou qualquer finalidade de desenvolvimento deve ser colocado na pasta `scripts/` na raiz do projeto.
+
+### **Estrutura da Pasta Scripts:**
+```
+scripts/
+├── debug/           # Scripts de debug e análise
+├── migration/       # Scripts de migração de dados
+├── test/           # Scripts de teste temporários
+├── cleanup/        # Scripts de limpeza e manutenção
+└── temp/           # Scripts diversos temporários
+```
+
+### **Nomenclatura dos Scripts:**
+- Use prefixos descritivos: `debug_`, `test_`, `migrate_`, `cleanup_`, `temp_`
+- Inclua data quando relevante: `migrate_despesas_20250830.py`
+- Use snake_case: `debug_relatorio_mensal.py`
+
+### **Exemplos:**
+```python
+# scripts/debug/debug_relatorio_mensal.py
+# scripts/migration/migrate_despesas_to_financeiro.py
+# scripts/test/test_calculo_impostos.py
+# scripts/cleanup/cleanup_orphaned_records.py
+# scripts/temp/temp_analysis_performance.py
+```
+
+### **Vantagens:**
+- ✅ Organização centralizada de scripts temporários
+- ✅ Facilita localização e reutilização
+- ✅ Evita scripts espalhados pelo projeto
+- ✅ Facilita limpeza periódica
+- ✅ Separação clara entre código de produção e scripts auxiliares
+
+### **Boas Práticas:**
+- Inclua comentários explicativos no início do script
+- Documente o propósito e como executar
+- Use `if __name__ == "__main__":` para scripts executáveis
+- Remova scripts obsoletos periodicamente
+- Nunca inclua scripts temporários em commits de produção
+
+**Regra:** Esta organização deve ser seguida obrigatoriamente para manter o projeto limpo e facilitar a manutenção e colaboração entre desenvolvedores.
+
 ---
 
 Este arquivo foi gerado a partir de docs/guia_desenvolvimento.md para servir como referência rápida e operacional para agentes e desenvolvedores.

@@ -21,9 +21,9 @@ class NotaFiscalListaTable(tables.Table):
     val_COFINS = tables.Column(verbose_name='Valor COFINS (R$)')
     val_IR = tables.Column(verbose_name='Valor IRPJ (R$)')
     val_CSLL = tables.Column(verbose_name='Valor CSLL (R$)')
+    val_outros = tables.Column(verbose_name='Valor Outros (R$)')
     val_liquido = tables.Column(verbose_name='Valor Líquido (R$)')
     status_recebimento = tables.Column(verbose_name='Status do Recebimento', accessor='get_status_recebimento_display')
-    meio_pagamento = tables.Column(verbose_name='Meio de Pagamento', accessor='meio_pagamento.nome')
 
     class Meta:
         model = NotaFiscal
@@ -40,8 +40,8 @@ class NotaFiscalListaTable(tables.Table):
             'val_COFINS',
             'val_IR',
             'val_CSLL',
+            'val_outros',
             'val_liquido',
             'status_recebimento',
-            'meio_pagamento',
             'acoes',
         )

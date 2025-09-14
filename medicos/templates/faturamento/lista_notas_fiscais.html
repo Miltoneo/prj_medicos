@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       <th>COFINS</th>
                       <th>IRPJ</th>
                       <th>CSLL</th>
+                      <th>Outros</th>
                       <th>Valor Líquido</th>
                     </tr>
                   </thead>
@@ -158,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       <td class="text-dark fw-bold">R$ {{ totais.total_cofins|floatformat:2|default:"0,00" }}</td>
                       <td class="text-dark fw-bold">R$ {{ totais.total_ir|floatformat:2|default:"0,00" }}</td>
                       <td class="text-dark fw-bold">R$ {{ totais.total_csll|floatformat:2|default:"0,00" }}</td>
+                      <td class="text-dark fw-bold">R$ {{ totais.total_outros|floatformat:2|default:"0,00" }}</td>
                       <td class="text-dark fw-bold">R$ {{ totais.total_liquido|floatformat:2|default:"0,00" }}</td>
                     </tr>
                   </tbody>

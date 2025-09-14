@@ -5,19 +5,55 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Auto-submit do formulário de filtro quando a competência for alterada
+  // Auto-submit do formulário de filtro quando a competência ou data de recebimento for alterada
   const competenciaField = document.getElementById('id_competencia');
+  const dataRecebimentoField = document.getElementById('id_data_recebimento');
+  
+  // Verificar se a página foi carregada através do botão limpar
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasFilterParams = urlParams.has('competencia') || urlParams.has('medico') || urlParams.has('nota_fiscal') || urlParams.has('data_recebimento');
+  const isFromClearButton = sessionStorage.getItem('clearButtonClicked') === 'true' || urlParams.has('clear');
+  
+  // Se veio do botão limpar, limpar explicitamente todos os campos
+  if (isFromClearButton) {
+    if (competenciaField) {
+      competenciaField.value = '';
+    }
+    if (dataRecebimentoField) {
+      dataRecebimentoField.value = '';
+    }
+    // Limpar outros campos do formulário
+    const allFormFields = document.querySelectorAll('#id_medico, #id_nota_fiscal');
+    allFormFields.forEach(field => {
+      if (field.tagName === 'SELECT') {
+        field.selectedIndex = 0;
+      } else {
+        field.value = '';
+      }
+    });
+  }
+  
+  // Limpar o flag após uso
+  if (sessionStorage.getItem('clearButtonClicked') === 'true') {
+    sessionStorage.removeItem('clearButtonClicked');
+  }
+  
+  // Se veio do botão limpar, remover o parâmetro clear da URL sem recarregar
+  if (urlParams.has('clear')) {
+    urlParams.delete('clear');
+    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+    window.history.replaceState({}, '', newUrl);
+  }
+  
   if (competenciaField) {
     competenciaField.addEventListener('change', function() {
       // Submete o formulário automaticamente quando a competência é alterada
       this.closest('form').submit();
     });
     
-    // Se a página foi carregada sem parâmetros de filtro, garantir que o mês atual esteja selecionado
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasFilterParams = urlParams.has('competencia') || urlParams.has('medico') || urlParams.has('nota_fiscal');
-    
-    if (!hasFilterParams && !competenciaField.value) {
+    // Se a página foi carregada sem parâmetros de filtro E não foi através do botão limpar, 
+    // garantir que o mês atual esteja selecionado
+    if (!hasFilterParams && !competenciaField.value && !isFromClearButton) {
       // Define o mês atual se não há valor
       const today = new Date();
       const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
@@ -28,6 +64,22 @@ document.addEventListener('DOMContentLoaded', function() {
         competenciaField.closest('form').submit();
       }, 100);
     }
+  }
+  
+  if (dataRecebimentoField) {
+    dataRecebimentoField.addEventListener('change', function() {
+      // Submete o formulário automaticamente quando a data de recebimento é alterada
+      this.closest('form').submit();
+    });
+  }
+  
+  // Adicionar evento no botão limpar para marcar que foi clicado
+  const clearButton = document.querySelector('.btn-outline-secondary');
+  if (clearButton && clearButton.textContent.includes('Limpar')) {
+    clearButton.addEventListener('click', function() {
+      // Marcar que o botão limpar foi clicado
+      sessionStorage.setItem('clearButtonClicked', 'true');
+    });
   }
 });
 </script>
@@ -64,9 +116,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
               {% endif %}
               
+              <!-- Campo de data de recebimento -->
+              {% if filter.form.data_recebimento %}
+                <div class="col-auto">
+                  <label for="id_data_recebimento" class="form-label mb-0">
+                    <i class="fas fa-calendar-check me-1"></i>{{ filter.form.data_recebimento.label }}
+                  </label>
+                  {{ filter.form.data_recebimento }}
+                </div>
+              {% endif %}
+              
               <!-- Demais campos -->
               {% for field in filter.form.visible_fields %}
-                {% if field.name != 'competencia' %}
+                {% if field.name != 'competencia' and field.name != 'data_recebimento' %}
                   <div class="col-auto">
                     <label for="id_{{ field.name }}" class="form-label mb-0">{{ field.label }}</label>
                     {{ field }}
@@ -80,18 +142,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
               </div>
               <div class="col-auto">
-                <a href="{% url 'medicos:lista_notas_rateio_medicos' %}" class="btn btn-outline-secondary">
+                <a href="{% url 'medicos:lista_notas_rateio_medicos' %}?clear=1" class="btn btn-outline-secondary">
                   <i class="fas fa-times me-1"></i>Limpar
                 </a>
               </div>
             </div>
             
             <!-- Indicador visual do filtro ativo -->
-            {% if filter.form.competencia.value %}
+            {% if filter.form.competencia.value or filter.form.data_recebimento.value %}
               <div class="mt-2">
                 <small class="text-muted">
                   <i class="fas fa-filter me-1"></i>
-                  Exibindo rateios de: <strong>{{ filter.form.competencia.value }}</strong>
+                  Filtros ativos:
+                  {% if filter.form.competencia.value %}
+                    <strong>Competência: {{ filter.form.competencia.value }}</strong>
+                  {% endif %}
+                  {% if filter.form.data_recebimento.value %}
+                    {% if filter.form.competencia.value %} | {% endif %}
+                    <strong>Recebimento: {{ filter.form.data_recebimento.value }}</strong>
+                  {% endif %}
                 </small>
               </div>
             {% endif %}
@@ -110,6 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <th>Total COFINS</th>
                     <th>Total IR</th>
                     <th>Total CSLL</th>
+                    <th>Total Outros</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -122,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td class="text-dark">R$ {{ total_cofins|floatformat:2 }}</td>
                     <td class="text-dark">R$ {{ total_ir|floatformat:2 }}</td>
                     <td class="text-dark">R$ {{ total_csll|floatformat:2 }}</td>
+                    <td class="text-dark">R$ {{ total_outros|floatformat:2 }}</td>
                   </tr>
                 </tbody>
               </table>

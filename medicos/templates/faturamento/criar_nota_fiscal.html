@@ -50,7 +50,18 @@
                 {% if field.name != 'numero' and field.name != 'tipo_servico' %}
                   <div class="col-md-6">
                     <label class="form-label fw-bold">{{ field.label }}</label>
-                    {{ field }}
+                    {% if field.name == 'meio_pagamento' or field.name == 'status_recebimento' or field.name == 'dtRecebimento' %}
+                      <!-- Campos apenas para leitura -->
+                      <input type="text" class="form-control" readonly 
+                             value="{% if field.name == 'meio_pagamento' %}{{ field.value|default:'-' }}{% elif field.name == 'status_recebimento' %}{{ field.value|default:'Pendente' }}{% elif field.name == 'dtRecebimento' %}{{ field.value|default:'-' }}{% endif %}" 
+                             style="background-color: #f8f9fa; cursor: not-allowed;">
+                      <!-- Campo hidden para manter o valor no POST -->
+                      {% if field.value %}
+                        <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                      {% endif %}
+                    {% else %}
+                      {{ field }}
+                    {% endif %}
                     {% if field.help_text %}
                       <small class="form-text text-muted">{{ field.help_text }}</small>
                     {% endif %}
@@ -71,10 +82,8 @@
                 <tr><th>ISS (%)</th><td>{{ aliquota_ISS|default_if_none:0|floatformat:2 }}</td></tr>
                 <tr><th>PIS (%)</th><td>{{ aliquota_PIS|default_if_none:0|floatformat:2 }}</td></tr>
                 <tr><th>COFINS (%)</th><td>{{ aliquota_COFINS|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>IRPJ Base (%)</th><td>{{ aliquota_IR_BASE|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>IRPJ (%)</th><td>{{ aliquota_IR|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>CSLL Base (%)</th><td>{{ aliquota_CSLL_BASE|default_if_none:0|floatformat:2 }}</td></tr>
-                <tr><th>CSLL (%)</th><td>{{ aliquota_CSLL|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>IRPJ - Retenção na Fonte (%)</th><td>{{ aliquota_IR|default_if_none:0|floatformat:2 }}</td></tr>
+                <tr><th>CSLL - Retenção na Fonte (%)</th><td>{{ aliquota_CSLL|default_if_none:0|floatformat:2 }}</td></tr>
               </table>
             </div>
           </form>
@@ -100,13 +109,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const valCOFINSInput = getInput('val_COFINS');
   const valIRInput = getInput('val_IR');
   const valCSLLInput = getInput('val_CSLL');
+  const valOutrosInput = getInput('val_outros');
 
   const aliquotaISS = Number('{{ aliquota_ISS|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaPIS = Number('{{ aliquota_PIS|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaCOFINS = Number('{{ aliquota_COFINS|default:0|floatformat:2 }}'.replace(',', '.'));
-  const aliquotaIRBase = Number('{{ aliquota_IR_BASE|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaIR = Number('{{ aliquota_IR|default:0|floatformat:2 }}'.replace(',', '.'));
-  const aliquotaCSLLBase = Number('{{ aliquota_CSLL_BASE|default:0|floatformat:2 }}'.replace(',', '.'));
   const aliquotaCSLL = Number('{{ aliquota_CSLL|default:0|floatformat:2 }}'.replace(',', '.'));
 
   function setFieldValue(field, value) {
@@ -116,22 +124,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function calcularCampos() {
     let bruto = 0;
+    let outros = 0;
     if (valBrutoInput) {
       bruto = parseFloat(valBrutoInput.value.replace(',', '.')) || 0;
+    }
+    if (valOutrosInput) {
+      outros = parseFloat(valOutrosInput.value.replace(',', '.')) || 0;
     }
     const valorISS = bruto * (aliquotaISS/100);
     const valorPIS = bruto * (aliquotaPIS/100);
     const valorCOFINS = bruto * (aliquotaCOFINS/100);
-    const valorIR = (bruto * (aliquotaIRBase/100)) * (aliquotaIR/100);
-    const valorCSLL = (bruto * (aliquotaCSLLBase/100)) * (aliquotaCSLL/100);
+    const valorIR = bruto * (aliquotaIR/100);
+    const valorCSLL = bruto * (aliquotaCSLL/100);
     const totalImpostos = valorISS + valorPIS + valorCOFINS + valorIR + valorCSLL;
-    const liquido = bruto - totalImpostos;
+    const liquido = bruto - totalImpostos - outros;
 
     setFieldValue(valISSInput, valorISS.toFixed(2));
     setFieldValue(valPISInput, valorPIS.toFixed(2));
     setFieldValue(valCOFINSInput, valorCOFINS.toFixed(2));
     setFieldValue(valIRInput, valorIR.toFixed(2));
     setFieldValue(valCSLLInput, valorCSLL.toFixed(2));
+    setFieldValue(valLiquidoInput, liquido.toFixed(2));
+  }
+
+  function calcularLiquido() {
+    let bruto = 0;
+    let outros = 0;
+    let valorISS = 0, valorPIS = 0, valorCOFINS = 0, valorIR = 0, valorCSLL = 0;
+    
+    if (valBrutoInput) {
+      bruto = parseFloat(valBrutoInput.value.replace(',', '.')) || 0;
+    }
+    if (valOutrosInput) {
+      outros = parseFloat(valOutrosInput.value.replace(',', '.')) || 0;
+    }
+    if (valISSInput) {
+      valorISS = parseFloat(valISSInput.value.replace(',', '.')) || 0;
+    }
+    if (valPISInput) {
+      valorPIS = parseFloat(valPISInput.value.replace(',', '.')) || 0;
+    }
+    if (valCOFINSInput) {
+      valorCOFINS = parseFloat(valCOFINSInput.value.replace(',', '.')) || 0;
+    }
+    if (valIRInput) {
+      valorIR = parseFloat(valIRInput.value.replace(',', '.')) || 0;
+    }
+    if (valCSLLInput) {
+      valorCSLL = parseFloat(valCSLLInput.value.replace(',', '.')) || 0;
+    }
+    
+    const totalImpostos = valorISS + valorPIS + valorCOFINS + valorIR + valorCSLL;
+    const liquido = bruto - totalImpostos - outros;
     setFieldValue(valLiquidoInput, liquido.toFixed(2));
   }
 
@@ -143,6 +187,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Se não encontrar o campo, mostra erro no console
     console.error('Campo "Valor Bruto" não encontrado. Verifique o nome/id do campo no template.');
   }
+
+  // Adicionar listener para val_outros
+  if (valOutrosInput) {
+    valOutrosInput.addEventListener('input', calcularCampos);
+    valOutrosInput.addEventListener('change', calcularCampos);
+  }
+
+  // Adicionar listeners para os campos de tributos (apenas para recalcular o líquido)
+  [valISSInput, valPISInput, valCOFINSInput, valIRInput, valCSLLInput].forEach(function(field) {
+    if (field) {
+      field.addEventListener('input', calcularLiquido);
+      field.addEventListener('change', calcularLiquido);
+    }
+  });
 });
 </script>
 {% endblock %}

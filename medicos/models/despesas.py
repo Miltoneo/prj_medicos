@@ -32,6 +32,10 @@ TIPO_DESPESA_SEM_RATEIO = 2
 GRUPO_ITEM_COM_RATEIO = 1
 GRUPO_ITEM_SEM_RATEIO = 2
 
+# Constantes para classificação de despesas
+CLASSIFICACAO_NORMAL = 1
+CLASSIFICACAO_PROVISIONADA = 2
+
 
 class GrupoDespesa(AuditoriaModel):
     empresa = models.ForeignKey(
@@ -471,6 +475,11 @@ class ItemDespesaRateioMensal(AuditoriaModel):
 
 class DespesaBase(AuditoriaModel):
     """Base abstrata para despesas"""
+    
+    class TipoClassificacao(models.IntegerChoices):
+        NORMAL = CLASSIFICACAO_NORMAL, "Normal"
+        PROVISIONADA = CLASSIFICACAO_PROVISIONADA, "Provisionada"
+    
     item_despesa = models.ForeignKey(
         'ItemDespesa',
         on_delete=models.PROTECT,
@@ -488,6 +497,12 @@ class DespesaBase(AuditoriaModel):
         null=False,
         verbose_name="Valor da Despesa",
         help_text="Valor total da despesa"
+    )
+    tipo_classificacao = models.PositiveSmallIntegerField(
+        choices=TipoClassificacao.choices,
+        default=TipoClassificacao.NORMAL,
+        verbose_name="Classificação da Despesa",
+        help_text="Classifica a despesa como Normal (já realizada) ou Provisionada (estimada/futura)"
     )
     possui_rateio = models.BooleanField(
         default=False,

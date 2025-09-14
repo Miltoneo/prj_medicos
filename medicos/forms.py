@@ -44,8 +44,15 @@ class NotaFiscalRateioFilter(django_filters.FilterSet):
         method='filter_mes_emissao',
         widget=forms.DateInput(attrs={
             'type': 'month',
-            'class': 'form-control',
-            'value': date.today().strftime('%Y-%m')  # Valor padrão: mês corrente
+            'class': 'form-control'
+        })
+    )
+    mes_recebimento = django_filters.CharFilter(
+        label='Mês de Recebimento',
+        method='filter_mes_recebimento',
+        widget=forms.DateInput(attrs={
+            'type': 'month',
+            'class': 'form-control'
         })
     )
     numero = django_filters.CharFilter(field_name="numero", lookup_expr="icontains", label="Nº NF")
@@ -66,9 +73,23 @@ class NotaFiscalRateioFilter(django_filters.FilterSet):
                 pass
         return queryset
     
+    def filter_mes_recebimento(self, queryset, name, value):
+        """Filtrar por mês/ano de recebimento"""
+        if value:
+            try:
+                # value vem no formato YYYY-MM
+                ano, mes = value.split('-')
+                return queryset.filter(
+                    dtRecebimento__year=int(ano),
+                    dtRecebimento__month=int(mes)
+                )
+            except (ValueError, AttributeError):
+                pass
+        return queryset
+    
     class Meta:
         model = NotaFiscal
-        fields = ['mes_emissao', 'numero', 'tomador', 'cnpj_tomador']
+        fields = ['mes_emissao', 'mes_recebimento', 'numero', 'tomador', 'cnpj_tomador']
 
 # Filter para rateio de nota fiscal por médico
 class NotaFiscalRateioMedicoFilter(django_filters.FilterSet):

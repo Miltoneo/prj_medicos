@@ -13,14 +13,30 @@ class DespesaSocioTable(tables.Table):
     socio = tables.Column(verbose_name='Sócio', attrs={"td": {"style": "min-width: 160px; max-width: 240px; white-space: nowrap;"}})
     descricao = tables.Column(verbose_name='Descrição', attrs={"td": {"style": "min-width: 220px; max-width: 400px; white-space: normal;"}})
     grupo = tables.Column(verbose_name='Grupo', attrs={"td": {"style": "min-width: 200px; max-width: 340px; white-space: nowrap;"}})
+    tipo_classificacao = tables.TemplateColumn(
+        template_code='''
+        {% if record.tipo_classificacao == 1 %}
+            <span class="badge bg-success">Normal</span>
+        {% elif record.tipo_classificacao == 2 %}
+            <span class="badge bg-warning text-dark">Provisionada</span>
+        {% else %}
+            <span class="badge bg-secondary">-</span>
+        {% endif %}
+        ''',
+        verbose_name='Classificação', 
+        attrs={"td": {"style": "min-width: 100px; max-width: 120px; white-space: nowrap;"}},
+        accessor='tipo_classificacao',
+        orderable=True
+    )
     valor_total = tables.Column(verbose_name='Valor Total (R$)', attrs={"td": {"style": "min-width: 120px; max-width: 180px; white-space: nowrap; text-align: right;"}})
     taxa_rateio = tables.Column(verbose_name='Taxa de Rateio (%)')
     valor_apropriado = tables.Column(verbose_name='Valor Apropriado (R$)')
 
     class Meta:
         template_name = 'django_tables2/bootstrap5.html'
-        fields = ('data', 'socio', 'descricao', 'grupo', 'valor_total', 'taxa_rateio', 'valor_apropriado', 'acoes')
-        sequence = ('data', 'socio', 'descricao', 'grupo', 'valor_total', 'taxa_rateio', 'valor_apropriado', 'acoes')
+        fields = ('data', 'socio', 'descricao', 'grupo', 'tipo_classificacao', 'valor_total', 'taxa_rateio', 'valor_apropriado', 'acoes')
+        sequence = ('data', 'socio', 'descricao', 'grupo', 'tipo_classificacao', 'valor_total', 'taxa_rateio', 'valor_apropriado', 'acoes')
+        order_by = ('tipo_classificacao', '-data')  # Classificação crescente, depois data decrescente
     acoes = tables.TemplateColumn(
         template_code='''
         {% if record.id %}
@@ -76,20 +92,31 @@ class DespesaSocioTable(tables.Table):
         except Exception:
             return '-'
 
-    class Meta:
-        template_name = 'django_tables2/bootstrap5.html'
-        fields = ('socio', 'descricao', 'grupo', 'valor_total', 'taxa_rateio', 'valor_apropriado', 'acoes')
-
 # Tabela para lista de despesas da empresa
 class DespesaEmpresaTable(tables.Table):
     data = tables.DateColumn(verbose_name='Data', accessor='data', format='d/m/Y', attrs={"td": {"style": "min-width: 110px; max-width: 120px; white-space: nowrap;"}})
     descricao = tables.Column(accessor='item_despesa.descricao', verbose_name='Descrição')
     grupo = tables.Column(accessor='item_despesa.grupo_despesa.descricao', verbose_name='Grupo')
+    tipo_classificacao = tables.TemplateColumn(
+        template_code='''
+        {% if record.tipo_classificacao == 1 %}
+            <span class="badge bg-success">Normal</span>
+        {% elif record.tipo_classificacao == 2 %}
+            <span class="badge bg-warning text-dark">Provisionada</span>
+        {% else %}
+            <span class="badge bg-secondary">-</span>
+        {% endif %}
+        ''',
+        verbose_name='Classificação', 
+        attrs={"td": {"style": "min-width: 100px; max-width: 120px; white-space: nowrap;"}},
+        accessor='tipo_classificacao',
+        orderable=True
+    )
     valor = tables.Column(verbose_name='Valor Total', attrs={"td": {"class": "text-end"}})
 
     def render_valor(self, value):
         return f'R$ {value:,.2f}'
-
+    
     acoes = tables.TemplateColumn(
         template_name='despesas/col_acoes_empresa.html',
         orderable=False,
@@ -100,5 +127,6 @@ class DespesaEmpresaTable(tables.Table):
     class Meta:
         model = DespesaRateada
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('data', 'descricao', 'grupo', 'valor', 'acoes')
-        sequence = ('data', 'descricao', 'grupo', 'valor', 'acoes')
+        fields = ('data', 'descricao', 'grupo', 'tipo_classificacao', 'valor', 'acoes')
+        sequence = ('data', 'descricao', 'grupo', 'tipo_classificacao', 'valor', 'acoes')
+        order_by = ('tipo_classificacao', '-data')  # Classificação crescente, depois data decrescente

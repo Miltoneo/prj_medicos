@@ -1,0 +1,396 @@
+{% extends 'layouts/base_cenario_home.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.metric-card.success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+}
+
+.metric-card.warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.metric-card.info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.activity-item {
+    padding: 0.75rem;
+    border-left: 4px solid #007bff;
+    background: #f8f9fa;
+    margin-bottom: 0.5rem;
+    border-radius: 0 8px 8px 0;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.filter-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'medicos:home' %}">Home</a></li>
+                    <li class="breadcrumb-item active">Dashboard de Métricas</li>
+                </ol>
+            </nav>
+
+            <!-- Filtros -->
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="mb-0">Período de Análise</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="get" class="d-flex gap-2">
+                            <select name="periodo" class="form-select" onchange="this.form.submit()">
+                                <option value="7" {% if periodo_dias == 7 %}selected{% endif %}>Últimos 7 dias</option>
+                                <option value="30" {% if periodo_dias == 30 %}selected{% endif %}>Últimos 30 dias</option>
+                                <option value="90" {% if periodo_dias == 90 %}selected{% endif %}>Últimos 90 dias</option>
+                                <option value="365" {% if periodo_dias == 365 %}selected{% endif %}>Último ano</option>
+                            </select>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards de Métricas Principais -->
+            <div class="row">
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card success">
+                        <div class="metric-value">{{ total_users }}</div>
+                        <div class="metric-label">
+                            <i class="fas fa-users me-1"></i>
+                            Usuários Ativos
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card info">
+                        <div class="metric-value">{{ total_empresas }}</div>
+                        <div class="metric-label">
+                            <i class="fas fa-building me-1"></i>
+                            Empresas Cadastradas
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card warning">
+                        <div class="metric-value">{{ metrics_summary.logins_dia.total|default:0 }}</div>
+                        <div class="metric-label">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Logins ({{ periodo_dias }} dias)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card">
+                        <div class="metric-value">{{ metrics_summary.relatorios_gerados.total|default:0 }}</div>
+                        <div class="metric-label">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            Relatórios Gerados
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos e Detalhes -->
+            <div class="row">
+                <!-- Gráfico de Atividade -->
+                <div class="col-lg-8">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Atividade dos Últimos 7 Dias
+                        </h5>
+                        <canvas id="activityChart" height="300"></canvas>
+                    </div>
+                    
+                    <!-- Resumo Detalhado de Métricas -->
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-list me-2"></i>
+                            Resumo Detalhado ({{ periodo_dias }} dias)
+                        </h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Métrica</th>
+                                        <th class="text-center">Total</th>
+                                        <th class="text-center">Média/Dia</th>
+                                        <th class="text-center">Máximo</th>
+                                        <th class="text-center">Registros</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for metrica, data in metrics_summary.items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ metrica|title|replace:"_"," " }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if data.error %}
+                                                <span class="text-danger">Erro</span>
+                                            {% else %}
+                                                {{ data.total|floatformat:0 }}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if not data.error %}
+                                                {{ data.media|floatformat:1 }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if not data.error %}
+                                                {{ data.maximo|floatformat:0 }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if not data.error %}
+                                                {{ data.total_registros }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Atividades Recentes -->
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-clock me-2"></i>
+                            Atividades Recentes
+                        </h5>
+                        
+                        {% for activity in recent_activities %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ activity.get_acao_display }}</strong>
+                                <span class="activity-time">
+                                    {{ activity.timestamp|date:"d/m H:i" }}
+                                </span>
+                            </div>
+                            <div class="text-muted">
+                                {% if activity.user %}
+                                    {{ activity.user.email }}
+                                {% else %}
+                                    Sistema
+                                {% endif %}
+                                {% if activity.objeto_nome %}
+                                    - {{ activity.objeto_nome }}
+                                {% endif %}
+                            </div>
+                            {% if activity.descricao %}
+                            <small class="text-muted">{{ activity.descricao|truncatechars:60 }}</small>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">Nenhuma atividade recente</p>
+                        {% endfor %}
+                        
+                        <div class="text-center mt-3">
+                            <a href="{% url 'medicos:saas_auditoria' conta_id=conta_id %}" class="btn btn-outline-primary btn-sm">
+                                Ver Todas as Atividades
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Ações Rápidas -->
+                    <div class="chart-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-tools me-2"></i>
+                            Ações Rápidas
+                        </h5>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'medicos:saas_configuracoes' conta_id=conta_id %}" class="btn btn-outline-primary">
+                                <i class="fas fa-cog me-2"></i>
+                                Configurações
+                            </a>
+                            
+                            <a href="{% url 'medicos:saas_export_data' conta_id=conta_id %}?type=audit" class="btn btn-outline-success">
+                                <i class="fas fa-download me-2"></i>
+                                Exportar Auditoria
+                            </a>
+                            
+                            <a href="{% url 'medicos:saas_export_data' conta_id=conta_id %}?type=metrics" class="btn btn-outline-info">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Exportar Métricas
+                            </a>
+                            
+                            <button type="button" class="btn btn-outline-warning" onclick="collectTestMetric()">
+                                <i class="fas fa-flask me-2"></i>
+                                Teste de Métrica
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Dados do gráfico vindos do backend
+const chartData = {{ chart_data|safe }};
+
+// Configuração do gráfico de atividade
+const ctx = document.getElementById('activityChart').getContext('2d');
+const activityChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: chartData.usuarios_ativos?.dates || [],
+        datasets: [
+            {
+                label: 'Usuários Ativos',
+                data: chartData.usuarios_ativos?.values || [],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Logins',
+                data: chartData.logins_dia?.values || [],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Relatórios',
+                data: chartData.relatorios_gerados?.values || [],
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+            }
+        },
+        interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+        }
+    }
+});
+
+// Função para coletar métrica de teste
+function collectTestMetric() {
+    if (!confirm('Deseja registrar uma métrica de teste?')) return;
+    
+    fetch('{% url "medicos:saas_collect_metric" conta_id=conta_id %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            metrica_tipo: 'api_calls',
+            valor: 1,
+            metadados: {
+                origem: 'dashboard_test',
+                timestamp: new Date().toISOString()
+            }
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Métrica de teste registrada com sucesso!');
+            location.reload(); // Recarrega para mostrar a nova métrica
+        } else {
+            alert('Erro ao registrar métrica: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao conectar com o servidor');
+    });
+}
+
+// Auto-refresh a cada 30 segundos (opcional)
+// setInterval(() => location.reload(), 30000);
+</script>
+{% endblock %}

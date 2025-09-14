@@ -11,10 +11,10 @@ por estimativa facilita o fluxo de caixa e planejamento tributário.
 """
 
 from medicos.models.relatorios_apuracao_irpj_mensal import ApuracaoIRPJMensal
-from medicos.models.base import Empresa
+from medicos.models.base import Empresa, REGIME_TRIBUTACAO_COMPETENCIA
 from medicos.models.fiscal import Aliquotas
 from medicos.models import NotaFiscal
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db import transaction
 from decimal import Decimal
 from datetime import datetime
@@ -52,19 +52,37 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
     for num_mes, nome_mes in MESES:
         competencia = f"{num_mes:02d}/{ano}"
         
-        # Buscar notas fiscais do mês
-        notas = NotaFiscal.objects.filter(
+        # Verificar regime tributário da empresa para IRPJ
+        if empresa.regime_tributario == REGIME_TRIBUTACAO_COMPETENCIA:
+            # Regime de competência: considera data de emissão
+            notas_irpj = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtEmissao__year=ano,
+                dtEmissao__month=num_mes
+            ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
+        else:
+            # Regime de caixa: considera data de recebimento
+            notas_irpj = NotaFiscal.objects.filter(
+                empresa_destinataria=empresa,
+                dtRecebimento__year=ano,
+                dtRecebimento__month=num_mes,
+                dtRecebimento__isnull=False  # Só considera notas efetivamente recebidas
+            ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
+        
+        # ADICIONAL DE IR: SEMPRE considera data de emissão (independente do regime)
+        # Lei 9.249/1995, Art. 3º, §1º - sempre por competência
+        notas_adicional = NotaFiscal.objects.filter(
             empresa_destinataria=empresa,
             dtEmissao__year=ano,
             dtEmissao__month=num_mes
-        )
+        ).exclude(status_recebimento='cancelado')  # Excluir notas canceladas
         
-        # Receitas por tipo de serviço
-        receita_consultas = notas.filter(
+        # Receitas por tipo de serviço (para IRPJ principal)
+        receita_consultas = notas_irpj.filter(
             tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
         ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         
-        receita_outros = notas.exclude(
+        receita_outros = notas_irpj.exclude(
             tipo_servico=NotaFiscal.TIPO_SERVICO_CONSULTAS
         ).aggregate(total=Sum('val_bruto'))['total'] or Decimal('0')
         
@@ -100,21 +118,12 @@ def montar_relatorio_irpj_mensal_persistente(empresa_id, ano):
         # Imposto devido mensal (15% sobre base de cálculo)
         imposto_devido = base_calculo_total * (aliquota.IRPJ_ALIQUOTA / Decimal('100'))
         
-        # CORREÇÃO: Adicional mensal conforme Lei 9.249/1995, Art. 3º, §1º
-        # Adicional de 10% sobre parcela do LUCRO PRESUMIDO que exceder R$ 20.000,00/mês
-        # IMPORTANTE: Adicional incide apenas sobre lucro presumido, NÃO sobre rendimentos de aplicações
-        adicional = Decimal('0')
-        limite_mensal_legal = Decimal('20000.00')  # R$ 20.000,00/mês (Lei 9.249/1995)
+        # IMPORTANTE: Adicional de IR é calculado apenas trimestralmente conforme Lei 9.249/1995
+        # O adicional mensal não é utilizado pois a lei estabelece limite trimestral de R$ 60.000,00
+        adicional = Decimal('0')  # Sempre zero para relatórios mensais
         
-        # Usar apenas a base de cálculo (lucro presumido), excluindo rendimentos de aplicações
-        lucro_presumido_mensal = base_calculo  # Apenas 32% da receita bruta, sem aplicações
-        
-        if lucro_presumido_mensal > limite_mensal_legal:
-            excesso_lucro_presumido = lucro_presumido_mensal - limite_mensal_legal
-            adicional = excesso_lucro_presumido * (Decimal('10.00') / Decimal('100'))  # 10% fixo por lei
-        
-        # Impostos retidos nas notas fiscais
-        imposto_retido_nf = notas.aggregate(
+        # Impostos retidos nas notas fiscais (usar notas do IRPJ principal)
+        imposto_retido_nf = notas_irpj.aggregate(
             total=Sum('val_IR')
         )['total'] or Decimal('0')
         

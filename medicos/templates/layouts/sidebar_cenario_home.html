@@ -16,5 +16,26 @@
         <a class="nav-link text-secondary disabled" tabindex="-1" aria-disabled="true" href="#"><i class="fas fa-list me-2 text-muted"></i>Lista de Usuários</a>
       {% endif %}
     </li>
+    
+    <!-- Seção SaaS - Configurações Avançadas -->
+    <li class="nav-item mt-3">
+      <span class="nav-link text-secondary small text-uppercase" style="letter-spacing:1px;">
+        <i class="fas fa-cogs me-2"></i>Configurações SaaS
+      </span>
+    </li>
+    <li class="nav-item">
+      {% if conta_id %}
+        <a class="nav-link text-light" href="{% url 'medicos:saas_configuracoes' conta_id=conta_id %}"><i class="fas fa-sliders-h me-2 text-info"></i>Preferências da Conta</a>
+      {% else %}
+        <a class="nav-link text-secondary disabled" tabindex="-1" aria-disabled="true" href="#"><i class="fas fa-sliders-h me-2 text-muted"></i>Preferências da Conta</a>
+      {% endif %}
+    </li>
+    <li class="nav-item">
+      {% if conta_id %}
+        <a class="nav-link text-light" href="{% url 'medicos:saas_auditoria' conta_id=conta_id %}"><i class="fas fa-shield-alt me-2 text-danger"></i>Logs de Auditoria</a>
+      {% else %}
+        <a class="nav-link text-secondary disabled" tabindex="-1" aria-disabled="true" href="#"><i class="fas fa-shield-alt me-2 text-muted"></i>Logs de Auditoria</a>
+      {% endif %}
+    </li>
   </ul>
 </nav>

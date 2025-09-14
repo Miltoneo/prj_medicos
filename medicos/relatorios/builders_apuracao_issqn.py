@@ -3,10 +3,11 @@ from medicos.models.base import Empresa
 from medicos.models.relatorios_apuracao_issqn import ApuracaoISSQN
 
 def calcular_e_salvar_apuracao_issqn(empresa, competencia, aliquota_iss):
+    # EXCLUDINDO notas fiscais canceladas de todos os cálculos
     notas = NotaFiscal.objects.filter(
         empresa_destinataria=empresa,
         dtEmissao__startswith=competencia  # MM/YYYY
-    )
+    ).exclude(status_recebimento='cancelado')
     base_calculo = sum(n.val_bruto for n in notas)
     imposto_devido = base_calculo * aliquota_iss / 100
     imposto_retido_nf = sum(n.val_ISS for n in notas)

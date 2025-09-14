@@ -3,6 +3,7 @@ from .base import *
 from .fiscal import *
 from .despesas import *
 from .financeiro import *
+from .conta_corrente import *
 from .auditoria import *
 
 from .relatorios import *
@@ -12,7 +13,8 @@ from .relatorios_apuracao_irpj_mensal import *
 # Definir __all__ para controlar as importações
 __all__ = [
     # Modelos Base
-    'CustomUser', 'Conta', 'Licenca', 'ContaMembership', 'SaaSBaseModel', 
+    'CustomUser', 'Conta', 'ContaPreferencias', 'ContaAuditLog', 'ContaMetrics', 
+    'Licenca', 'ContaMembership', 'SaaSBaseModel', 
     'Pessoa', 'Empresa', 'Socio', 'ContaScopedManager',
     
     # Modelos Fiscais
@@ -21,6 +23,9 @@ __all__ = [
     
     # Modelos Financeiros
     'MeioPagamento', 'DescricaoMovimentacaoFinanceira', 'Financeiro',
+    
+    # Modelos de Conta Corrente
+    'ContaCorrente', 'MovimentacaoContaCorrente', 'SaldoMensalContaCorrente',
 
     # Modelos de Apuração
     'ApuracaoCSLL', 'ApuracaoIRPJMensal',
