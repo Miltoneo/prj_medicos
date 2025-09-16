@@ -1,28 +1,32 @@
 services:
   redis:
     image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    
   db:
-    image: mysql:8.0
-    container_name: mysql_c
+    image: postgres:16
+    container_name: postgres_c
     restart: unless-stopped
     volumes:
-      - /tmp/app/mysqld:/var/run/mysqld
-      - ./db:/var/lib/mysql
+      - ./pgdata:/var/lib/postgresql/data
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE     : db_medicos
-      MYSQL_USER         : admin
-      MYSQL_PASSWORD     : admin
+      POSTGRES_DB: db_medicos
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
     ports:
-      - "3306:3306"
+      - "5432:5432"
     healthcheck:
-      test:  mysql --user=root --password=root -e "SELECT 1"
+      test: ["CMD-SHELL", "pg_isready -U admin -d db_medicos"]
       timeout: 10s
       retries: 5
+      interval: 10s
+      start_period: 30s
+
 
   app:
-    image: miltoneo/medicos:latest                     # current directory
-    container_name: medicos_c
+    image: miltoneo/prj_medicos:latest
+    container_name: prj_medicos_c
     command: sh -c " python manage.py migrate 
                       && python manage.py makemigrations medicos 
                       && python manage.py migrate  
@@ -31,7 +35,6 @@ services:
 
     restart: unless-stopped
     environment:
-      #SECONDARY_SERVER_HOSTNAME: db 
       SECONDARY_SERVER_HOSTNAME: db #host.docker.internal  
       SECONDARY_DATABASE_NAME: db_medicos
       SECONDARY_DATABASE_USER: admin
