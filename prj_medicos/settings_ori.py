@@ -64,19 +64,6 @@ STATIC_ROOT = BASE_DIR / 'static'
 SECRET_KEY = 'django-insecure-ngjj!z$$f^h-0-d(05*hw(r6^jx_7a0hp_nbk^xl_x&b7!8cy+'
 #DEBUG = True
 
-# Configurações de segurança aprimoradas
-if not DEBUG:
-    # Configurações de segurança para produção
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = 31536000  # 1 ano
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'www.onkoto.com.br', 'onkoto.com.br','[::1]', '*'] 
 
 INSTALLED_APPS = [
@@ -154,13 +141,7 @@ DATABASES = {
         'PASSWORD': DATABASE_PASSWORD,
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
-        'OPTIONS': {
-            'sslmode': 'prefer',  # Prefere SSL se disponível
-            'connect_timeout': 10,
-            'options': '-c default_transaction_isolation=read\ committed'
-        },
-        'CONN_MAX_AGE': 600,  # Reutiliza conexões por 10 minutos
-        'CONN_HEALTH_CHECKS': True,  # Verifica saúde das conexões
+
     }
 }
 
@@ -189,32 +170,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
-REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD', 'StrongRedisPass2024!')
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_KWARGS": {
-                "retry_on_timeout": True,
-                "socket_keepalive": True,
-                "socket_keepalive_options": {},
-            }
-        },
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     },
     "select2": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/2",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_KWARGS": {
-                "retry_on_timeout": True,
-                "socket_keepalive": True,
-                "socket_keepalive_options": {},
-            }
-        },
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/2",
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     }
 }
 
