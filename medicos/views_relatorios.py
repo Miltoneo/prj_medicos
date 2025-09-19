@@ -11,6 +11,7 @@ import calendar
 # Imports de terceiros
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.http import HttpResponse
 from django.utils import timezone
 from django.db.models import Sum
 
@@ -449,6 +450,543 @@ def relatorio_mensal_socio(request, empresa_id):
     })
     
     return render(request, 'relatorios/relatorio_mensal_socio.html', context)
+
+
+@login_required
+def relatorio_mensal_socio_pdf(request, empresa_id):
+    """
+    Gera e retorna o PDF completo do relatório mensal do sócio.
+    Inclui todas as seções: Receitas, Impostos, Movimentações, Despesas e Notas Fiscais.
+    Fonte: .github/documentacao_especifica_instructions.md, seção Relatórios
+    """
+    import io
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageTemplate, Frame
+    from reportlab.pdfgen import canvas
+    from datetime import datetime
+    
+    # Função para desenhar o rodapé
+    def draw_footer(canvas_obj, doc):
+        canvas_obj.saveState()
+        canvas_obj.setFont("Helvetica", 9)
+        current_date = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        footer_text = f"Página: {doc.page} / Emitido em: {current_date}"
+        # Posicionar no rodapé direito
+        page_width = landscape(A4)[0]
+        canvas_obj.drawRightString(page_width - 30, 20, footer_text)
+        canvas_obj.restoreState()
+
+    empresa = Empresa.objects.get(id=empresa_id)
+    mes_ano = request.GET.get('mes_ano') or request.session.get('mes_ano')
+    socio_id_raw = request.GET.get('socio_id')
+    socios, socio_selecionado, socio_id = _obter_socio_selecionado(empresa, socio_id_raw)
+    
+    # Obter todos os dados do relatório (mesmo contexto da view HTML)
+    relatorio_dict = montar_relatorio_mensal_socio(
+        empresa_id,
+        mes_ano,
+        socio_id=socio_id,
+        auto_lancar_impostos=True,
+        atualizar_lancamentos_existentes=True
+    )
+    
+    # Obter context completo similar à view HTML
+    empresa = Empresa.objects.get(id=empresa_id)
+    mes_ano = _obter_mes_ano(request)
+    socio_id_raw = request.GET.get('socio_id')
+    socios, socio_selecionado, socio_id = _obter_socio_selecionado(empresa, socio_id_raw)
+    auto_lancar_impostos = True
+    atualizar_lancamentos = True
+    relatorio_obj = relatorio_dict['relatorio']
+    lista_movimentacoes = _processar_movimentacoes_financeiras(relatorio_obj)
+    
+    # Carregar Despesas Apropriadas (mesmo código da view HTML)
+    from medicos.models.despesas import DespesaSocio, DespesaRateada, ItemDespesaRateioMensal
+    despesas_apropriadas = []
+    total_despesas_apropriadas = 0
+    total_despesas_provisionadas = 0
+    if socio_id and mes_ano:
+        try:
+            ano_str, mes_str = mes_ano.split('-')
+            ano = int(ano_str)
+            mes = int(mes_str)
+            
+            # Despesas individuais do sócio
+            despesas_individuais = DespesaSocio.objects.filter(
+                socio_id=socio_id,
+                socio__empresa_id=empresa_id,
+                data__year=ano, 
+                data__month=mes
+            ).select_related('socio', 'item_despesa', 'item_despesa__grupo_despesa')
+
+            # Despesas rateadas do sócio
+            rateadas_qs = DespesaRateada.objects.filter(
+                item_despesa__grupo_despesa__empresa_id=empresa_id,
+                data__year=ano, data__month=mes
+            ).select_related('item_despesa', 'item_despesa__grupo_despesa')
+            
+            # Processar despesas rateadas
+            for despesa in rateadas_qs:
+                rateio = ItemDespesaRateioMensal.obter_rateio_para_despesa(
+                    despesa.item_despesa, Socio.objects.get(id=socio_id), despesa.data
+                )
+                if rateio is not None:
+                    valor_apropriado = despesa.valor * (rateio.percentual_rateio / 100)
+                    socio_obj = Socio.objects.get(id=socio_id)
+                    item_desc = getattr(despesa.item_despesa, 'descricao', None) or '-'
+                    grupo_obj = getattr(despesa.item_despesa, 'grupo_despesa', None)
+                    grupo_desc = getattr(grupo_obj, 'descricao', None) or '-'
+                    
+                    despesas_apropriadas.append({
+                        'data': despesa.data,
+                        'socio': socio_obj,
+                        'descricao': item_desc,
+                        'grupo': grupo_desc,
+                        'tipo_classificacao': getattr(despesa, 'tipo_classificacao', 1),
+                        'valor_total': despesa.valor,
+                        'taxa_rateio': rateio.percentual_rateio,
+                        'valor_apropriado': valor_apropriado,
+                        'id': None,
+                    })
+
+            # Processar despesas individuais
+            for d in despesas_individuais:
+                despesas_apropriadas.append({
+                    'data': d.data,
+                    'socio': d.socio,
+                    'descricao': getattr(d.item_despesa, 'descricao', '-'),
+                    'grupo': getattr(getattr(d.item_despesa, 'grupo_despesa', None), 'descricao', '-'),
+                    'tipo_classificacao': getattr(d, 'tipo_classificacao', 1),
+                    'valor_total': d.valor,
+                    'taxa_rateio': '-',
+                    'valor_apropriado': d.valor,
+                    'id': d.id,
+                })
+            
+            # Calcular totais
+            total_despesas_normal = sum([
+                d.get('valor_apropriado', 0) or 0
+                for d in despesas_apropriadas
+                if d.get('tipo_classificacao', 1) == 1
+            ])
+            total_despesas_provisionadas = sum([
+                d.get('valor_apropriado', 0) or 0
+                for d in despesas_apropriadas
+                if d.get('tipo_classificacao', 1) == 2
+            ])
+            total_despesas_apropriadas = sum([d.get('valor_apropriado', 0) or 0 for d in despesas_apropriadas])
+            despesas_apropriadas.sort(key=lambda x: (x.get('tipo_classificacao', 1), -x['data'].toordinal() if x['data'] else 0))
+            
+        except Exception as e:
+            print(f"ERROR View PDF: erro ao carregar despesas apropriadas: {e}")
+            despesas_apropriadas = []
+            total_despesas_apropriadas = 0
+
+    # Montar dicionário do relatório (mesma estrutura da view HTML)
+    relatorio = {
+        'socios': list(socios),
+        'socio_id': socio_id,
+        'socio_nome': socio_selecionado.pessoa.name if socio_selecionado else '',
+        'competencia': mes_ano,
+        'data_geracao': timezone.now().strftime('%d/%m/%Y %H:%M'),
+        'total_despesas_normal': total_despesas_normal,
+        'total_despesas_provisionadas': total_despesas_provisionadas,
+        'despesa_geral': getattr(relatorio_obj, 'despesa_geral', 0),
+        'despesas_total': getattr(relatorio_obj, 'despesas_total', 0),
+        'despesas_apropriadas': despesas_apropriadas,
+        'total_despesas_apropriadas': total_despesas_apropriadas,
+        'movimentacoes_financeiras': lista_movimentacoes,
+        'saldo_movimentacao_financeira': getattr(relatorio_obj, 'saldo_movimentacao_financeira', 0),
+        'notas_fiscais': getattr(relatorio_obj, 'lista_notas_fiscais', []),
+        'notas_fiscais_emitidas': getattr(relatorio_obj, 'lista_notas_fiscais_emitidas', []),
+        'total_notas_emitidas_mes': getattr(relatorio_obj, 'total_notas_emitidas_mes', 0),
+        'total_notas_bruto': getattr(relatorio_obj, 'total_notas_bruto', 0),
+        'total_notas_liquido': getattr(relatorio_obj, 'total_notas_liquido', 0),
+        'total_iss': getattr(relatorio_obj, 'total_iss', 0),
+        'total_pis': getattr(relatorio_obj, 'total_pis', 0),
+        'total_cofins': getattr(relatorio_obj, 'total_cofins', 0),
+        'total_irpj': getattr(relatorio_obj, 'total_irpj', 0),
+        'total_irpj_adicional': getattr(relatorio_obj, 'total_irpj_adicional', 0),
+        'total_csll': getattr(relatorio_obj, 'total_csll', 0),
+        'total_iss_devido': getattr(relatorio_obj, 'total_iss_devido', 0),
+        'total_pis_devido': getattr(relatorio_obj, 'total_pis_devido', 0),
+        'total_cofins_devido': getattr(relatorio_obj, 'total_cofins_devido', 0),
+        'total_irpj_devido': getattr(relatorio_obj, 'total_irpj_devido', 0),
+        'total_csll_devido': getattr(relatorio_obj, 'total_csll_devido', 0),
+        'total_iss_retido': getattr(relatorio_obj, 'total_iss_retido', 0),
+        'total_pis_retido': getattr(relatorio_obj, 'total_pis_retido', 0),
+        'total_cofins_retido': getattr(relatorio_obj, 'total_cofins_retido', 0),
+        'total_irpj_retido': getattr(relatorio_obj, 'total_irpj_retido', 0),
+        'total_csll_retido': getattr(relatorio_obj, 'total_csll_retido', 0),
+        'receita_bruta_recebida': getattr(relatorio_obj, 'receita_bruta_recebida', 0),
+        'receita_liquida': getattr(relatorio_obj, 'receita_liquida', 0),
+        'impostos_total': getattr(relatorio_obj, 'impostos_total', 0),
+        'impostos_devido_total': getattr(relatorio_obj, 'impostos_devido_total', 0),
+        'impostos_retido_total': getattr(relatorio_obj, 'impostos_retido_total', 0),
+        'saldo_apurado': getattr(relatorio_obj, 'saldo_apurado', 0),
+        'saldo_a_transferir': getattr(relatorio_obj, 'saldo_a_transferir', 0),
+        'imposto_provisionado_mes_anterior': getattr(relatorio_obj, 'imposto_provisionado_mes_anterior', 0),
+        'total_nf_valor_bruto': getattr(relatorio_obj, 'total_nf_valor_bruto', 0),
+        'total_nf_iss': getattr(relatorio_obj, 'total_nf_iss', 0),
+        'total_nf_pis': getattr(relatorio_obj, 'total_nf_pis', 0),
+        'total_nf_cofins': getattr(relatorio_obj, 'total_nf_cofins', 0),
+        'total_nf_irpj': getattr(relatorio_obj, 'total_nf_irpj', 0),
+        'total_nf_csll': getattr(relatorio_obj, 'total_nf_csll', 0),
+        'total_nf_outros': getattr(relatorio_obj, 'total_nf_outros', 0),
+        'total_nf_valor_liquido': getattr(relatorio_obj, 'total_nf_valor_liquido', 0),
+        'total_nf_emitidas_valor_bruto': getattr(relatorio_obj, 'total_nf_emitidas_valor_bruto', 0),
+        'total_nf_emitidas_iss': getattr(relatorio_obj, 'total_nf_emitidas_iss', 0),
+        'total_nf_emitidas_pis': getattr(relatorio_obj, 'total_nf_emitidas_pis', 0),
+        'total_nf_emitidas_cofins': getattr(relatorio_obj, 'total_nf_emitidas_cofins', 0),
+        'total_nf_emitidas_irpj': getattr(relatorio_obj, 'total_nf_emitidas_irpj', 0),
+        'total_nf_emitidas_csll': getattr(relatorio_obj, 'total_nf_emitidas_csll', 0),
+        'total_nf_emitidas_outros': getattr(relatorio_obj, 'total_nf_emitidas_outros', 0),
+        'total_nf_emitidas_valor_liquido': getattr(relatorio_obj, 'total_nf_emitidas_valor_liquido', 0),
+        'base_calculo_consultas': relatorio_dict.get('base_calculo_consultas', 0),
+        'base_calculo_outros': relatorio_dict.get('base_calculo_outros', 0),
+        'base_calculo_ir_total': relatorio_dict.get('base_calculo_ir_total', 0),
+        'faturamento_consultas': getattr(relatorio_obj, 'faturamento_consultas', 0),
+        'faturamento_plantao': getattr(relatorio_obj, 'faturamento_plantao', 0),
+        'faturamento_outros': getattr(relatorio_obj, 'faturamento_outros', 0),
+    }
+
+    # Criar PDF usando reportlab - usar orientação paisagem com rodapé personalizado
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=30, leftMargin=30, 
+                          topMargin=30, bottomMargin=50)
+    
+    # Definir estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        spaceAfter=30,
+        alignment=1  # Center
+    )
+    
+    section_style = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading2'],
+        fontSize=12,
+        spaceBefore=20,
+        spaceAfter=10,
+        textColor=colors.blue
+    )
+    
+    # Lista de elementos do PDF
+    elements = []
+    
+    # Título e Cabeçalho
+    elements.append(Paragraph("DEMONSTRATIVO DE RESULTADOS", title_style))
+    elements.append(Spacer(1, 12))
+    
+    # Informações básicas
+    info_data = [
+        ['Competência:', relatorio['competencia']],
+        ['Empresa:', empresa.nome_fantasia or empresa.name],
+        ['Sócio:', relatorio['socio_nome']],
+        ['Data de Geração:', relatorio['data_geracao']]
+    ]
+    
+    # Aproveitar melhor o espaço em orientação paisagem
+    info_table = Table(info_data, colWidths=[2.5*inch, 5*inch])
+    info_table.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 20))
+    
+    # SEÇÕES 1 e 2: RECEITAS E IMPOSTOS LADO A LADO
+    elements.append(Paragraph("RESULTADO FINANCEIRO", section_style))
+    
+    # Preparar dados da tabela de receitas
+    receitas_data = [
+        ['Descrição', 'Valor (R$)'],
+        ['(=) RECEITA BRUTA RECEBIDA', f"{relatorio['receita_bruta_recebida']:,.2f}"],
+        ['(-) IMPOSTO DEVIDO', f"{relatorio['impostos_devido_total'] + relatorio['total_irpj_adicional']:,.2f}"],
+        ['(=) RECEITA LÍQUIDA', f"{relatorio['receita_liquida']:,.2f}"],
+        ['(-) DESPESAS MÊS ATUAL', f"{relatorio['total_despesas_normal']:,.2f}"],
+        ['(-) DESPESAS PROVISIONADAS', f"{relatorio['total_despesas_provisionadas']:,.2f}"],
+        ['(+) SALDO DAS MOVIMENTAÇÕES FINANCEIRAS', f"{relatorio['saldo_movimentacao_financeira']:,.2f}"],
+        ['(=) SALDO A TRANSFERIR', f"{relatorio['saldo_a_transferir']:,.2f}"],
+    ]
+    
+    # Criar tabela de receitas
+    receitas_table = Table(receitas_data, colWidths=[3*inch, 1.5*inch])
+    receitas_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('ALIGN', (1,0), (1,-1), 'RIGHT'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTNAME', (0,1), (0,-1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
+    ]))
+    
+    # Obter alíquotas do contexto
+    base_calculo_ir = relatorio.get('base_calculo_ir_total', 0)
+    contexto_aliquotas = _obter_contexto_aliquotas(empresa, base_calculo_ir)
+    
+    # Preparar dados da tabela de impostos
+    impostos_data = [
+        ['Imposto', 'Devido (R$)', 'Retido (R$)', 'A Pagar (R$)'],
+        ['Base Consultas Médicas', f"{relatorio_dict.get('base_consultas_socio_regime', 0):,.2f}", '-', '-'],
+        ['Base Outros Serviços', f"{relatorio_dict.get('base_outros_socio_regime', 0):,.2f}", '-', '-'],
+        [f"PIS ({relatorio_dict.get('aliquota_pis', 0):.2f}%)", f"{relatorio['total_pis_devido']:,.2f}", f"{relatorio['total_pis_retido']:,.2f}", f"{relatorio['total_pis']:,.2f}"],
+        [f"COFINS ({relatorio_dict.get('aliquota_cofins', 0):.2f}%)", f"{relatorio['total_cofins_devido']:,.2f}", f"{relatorio['total_cofins_retido']:,.2f}", f"{relatorio['total_cofins']:,.2f}"],
+        [f"IRPJ ({relatorio_dict.get('aliquota_irpj', 0):.2f}%)", f"{relatorio['total_irpj_devido']:,.2f}", f"{relatorio['total_irpj_retido']:,.2f}", f"{relatorio['total_irpj']:,.2f}"],
+        [f"CSLL ({relatorio_dict.get('aliquota_csll', 0):.2f}%)", f"{relatorio['total_csll_devido']:,.2f}", f"{relatorio['total_csll_retido']:,.2f}", f"{relatorio['total_csll']:,.2f}"],
+        [f"ISSQN ({relatorio_dict.get('aliquota_iss', 0):.2f}%)", f"{relatorio['total_iss_devido']:,.2f}", f"{relatorio['total_iss_retido']:,.2f}", f"{relatorio['total_iss']:,.2f}"],
+        ['TOTAL', f"{relatorio['impostos_devido_total']:,.2f}", f"{relatorio['impostos_retido_total']:,.2f}", f"{relatorio['impostos_total']:,.2f}"],
+        ['(+) ADICIONAL DE IR TRIMESTRAL', f"{relatorio['total_irpj_adicional']:,.2f}", '-', f"{relatorio['total_irpj_adicional']:,.2f}"],
+        ['(=) TOTAL COM ADICIONAL', f"{relatorio['impostos_devido_total'] + relatorio['total_irpj_adicional']:,.2f}", f"{relatorio['impostos_retido_total']:,.2f}", f"{relatorio['impostos_total'] + relatorio['total_irpj_adicional']:,.2f}"],
+    ]
+    
+    # Criar tabela de impostos
+    impostos_table = Table(impostos_data, colWidths=[2*inch, 1*inch, 1*inch, 1*inch])
+    impostos_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('ALIGN', (1,0), (-1,-1), 'RIGHT'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('BACKGROUND', (0,-3), (-1,-3), colors.lightgrey),
+        ('BACKGROUND', (0,-1), (-1,-1), colors.green),
+        ('TEXTCOLOR', (0,-1), (-1,-1), colors.whitesmoke),
+    ]))
+    
+    # Criar tabela principal que contém as duas tabelas lado a lado
+    layout_data = [[receitas_table, impostos_table]]
+    layout_table = Table(layout_data, colWidths=[4.8*inch, 5.5*inch])
+    layout_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ]))
+    elements.append(layout_table)
+    elements.append(Spacer(1, 20))
+    
+    # SEÇÃO 2: MOVIMENTAÇÕES FINANCEIRAS
+    elements.append(Paragraph("2. MOVIMENTAÇÕES FINANCEIRAS", section_style))
+    
+    if relatorio['movimentacoes_financeiras']:
+        mov_data = [['ID', 'Data', 'Descrição', 'Valor (R$)']]
+        for mov in relatorio['movimentacoes_financeiras']:
+            mov_data.append([
+                str(getattr(mov, 'id', '')),
+                str(getattr(mov, 'data', '')),
+                str(getattr(mov, 'descricao', ''))[:50],  # Limitar tamanho
+                f"{getattr(mov, 'valor', 0):,.2f}"
+            ])
+        mov_data.append(['', '', 'SALDO TOTAL', f"{relatorio['saldo_movimentacao_financeira']:,.2f}"])
+        
+        # Aproveitar melhor o espaço em orientação paisagem
+        mov_table = Table(mov_data, colWidths=[0.6*inch, 1.2*inch, 4.5*inch, 2*inch])
+        mov_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.grey),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('ALIGN', (3,0), (3,-1), 'RIGHT'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
+            ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
+        ]))
+        elements.append(mov_table)
+    else:
+        elements.append(Paragraph("Nenhuma movimentação financeira encontrada.", styles['Normal']))
+    
+    elements.append(Spacer(1, 20))
+    
+    # SEÇÃO 3: DESPESAS APROPRIADAS
+    elements.append(Paragraph("3. DESPESAS APROPRIADAS", section_style))
+    
+    if relatorio['despesas_apropriadas']:
+        desp_data = [['Data', 'Descrição', 'Grupo', 'Classificação', 'Valor Total (R$)', 'Taxa Rateio (%)', 'Valor Apropriado (R$)']]
+        for despesa in relatorio['despesas_apropriadas']:
+            classificacao = 'Normal' if despesa.get('tipo_classificacao', 1) == 1 else 'Provisionada'
+            taxa_rateio = str(despesa.get('taxa_rateio', '-'))
+            if taxa_rateio != '-':
+                taxa_rateio = f"{float(taxa_rateio):,.2f}"
+            
+            desp_data.append([
+                despesa.get('data', '').strftime('%d/%m/%Y') if despesa.get('data') else '',
+                str(despesa.get('descricao', ''))[:25],
+                str(despesa.get('grupo', ''))[:20],
+                classificacao,
+                f"{despesa.get('valor_total', 0):,.2f}",
+                taxa_rateio,
+                f"{despesa.get('valor_apropriado', 0):,.2f}"
+            ])
+        
+        desp_data.append(['', '', '', '', '', 'TOTAL:', f"{relatorio['total_despesas_apropriadas']:,.2f}"])
+        
+        # Aproveitar melhor o espaço em orientação paisagem
+        desp_table = Table(desp_data, colWidths=[1*inch, 2*inch, 1.5*inch, 1*inch, 1.2*inch, 1*inch, 1.2*inch])
+        desp_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.grey),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('ALIGN', (4,0), (-1,-1), 'RIGHT'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 7),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
+            ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
+        ]))
+        elements.append(desp_table)
+    else:
+        elements.append(Paragraph("Nenhuma despesa apropriada encontrada.", styles['Normal']))
+    
+    elements.append(Spacer(1, 20))
+    
+    # SEÇÃO 4: NOTAS FISCAIS RECEBIDAS NO MÊS
+    elements.append(Paragraph("4. NOTAS FISCAIS RECEBIDAS NO MÊS", section_style))
+    
+    if relatorio['notas_fiscais']:
+        # Cabeçalhos com quebra de linha para melhor aproveitamento do espaço
+        nf_rec_data = [['ID', 'Número', 'Tp\naliquota', 'Data\nEmissão', 'Data\nRecebimento', 'Tomador', '%\nRateio', 'Valor\nBruto\n(R$)', 'ISS\n(R$)', 'PIS\n(R$)', 'COFINS\n(R$)', 'IRPJ\n(R$)', 'CSLL\n(R$)', 'Outros\n(R$)', 'Valor\nLíquido\n(R$)']]
+        
+        for nota in relatorio['notas_fiscais']:
+            # Tratar como dicionário ao invés de objeto
+            tp_aliquota = str(nota.get('tp_aliquota', ''))
+            # Truncar "Consultas Médicas" para apenas "Consultas"
+            if 'Consultas Médicas' in tp_aliquota:
+                tp_aliquota = 'Consultas'
+            
+            nf_rec_data.append([
+                str(nota.get('id', '')),
+                str(nota.get('numero', ''))[:10],
+                tp_aliquota,
+                str(nota.get('data_emissao', '')),
+                str(nota.get('data_recebimento', '')),
+                str(nota.get('tomador', ''))[:15],
+                f"{float(nota.get('percentual_rateio', 0)):,.2f}%",
+                f"{float(nota.get('valor_bruto', 0)):,.2f}",
+                f"{float(nota.get('iss', 0)):,.2f}",
+                f"{float(nota.get('pis', 0)):,.2f}",
+                f"{float(nota.get('cofins', 0)):,.2f}",
+                f"{float(nota.get('irpj', 0)):,.2f}",
+                f"{float(nota.get('csll', 0)):,.2f}",
+                f"{float(nota.get('outros', 0)):,.2f}",
+                f"{float(nota.get('valor_liquido', 0)):,.2f}"
+            ])
+        
+        # Linha de totais para notas recebidas
+        nf_rec_data.append([
+            '', '', '', '', '', '', 'TOTAIS:',
+            f"{relatorio['total_nf_valor_bruto']:,.2f}",
+            f"{relatorio['total_nf_iss']:,.2f}",
+            f"{relatorio['total_nf_pis']:,.2f}",
+            f"{relatorio['total_nf_cofins']:,.2f}",
+            f"{relatorio['total_nf_irpj']:,.2f}",
+            f"{relatorio['total_nf_csll']:,.2f}",
+            f"{relatorio['total_nf_outros']:,.2f}",
+            f"{relatorio['total_nf_valor_liquido']:,.2f}"
+        ])
+        
+        # Larguras otimizadas para aproveitamento máximo da página paisagem (~11.5" total)
+        # ID: 0.3" | Número: 0.7" | Tp aliq: 1.1" | Datas: 0.7" cada | Tomador: 1.8" | % Rateio: 0.6"
+        # Valores monetários: 0.6" cada para acomodar aumento do % Rateio
+        nf_rec_table = Table(nf_rec_data, colWidths=[0.3*inch, 0.7*inch, 1.1*inch, 0.7*inch, 0.7*inch, 1.8*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.7*inch])
+        nf_rec_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.grey),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('ALIGN', (6,0), (-1,-1), 'RIGHT'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 7),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
+            ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),  # Centralizar verticalmente o texto
+        ]))
+        elements.append(nf_rec_table)
+    else:
+        elements.append(Paragraph("Nenhuma nota fiscal recebida encontrada.", styles['Normal']))
+    
+    elements.append(Spacer(1, 20))
+    
+    # SEÇÃO 5: NOTAS FISCAIS EMITIDAS NO MÊS
+    elements.append(Paragraph("5. NOTAS FISCAIS EMITIDAS NO MÊS", section_style))
+    
+    if relatorio['notas_fiscais_emitidas']:
+        # Cabeçalhos com quebra de linha para melhor aproveitamento do espaço (iguais às notas recebidas)
+        nf_data = [['ID', 'Número', 'Tp\naliquota', 'Data\nEmissão', 'Data\nRecebimento', 'Tomador', '%\nRateio', 'Valor\nBruto\n(R$)', 'ISS\n(R$)', 'PIS\n(R$)', 'COFINS\n(R$)', 'IRPJ\n(R$)', 'CSLL\n(R$)', 'Outros\n(R$)', 'Valor\nLíquido\n(R$)']]
+        
+        for nota in relatorio['notas_fiscais_emitidas']:
+            # Tratar como dicionário ao invés de objeto
+            tp_aliquota = str(nota.get('tp_aliquota', ''))
+            # Truncar "Consultas Médicas" para apenas "Consultas"
+            if 'Consultas Médicas' in tp_aliquota:
+                tp_aliquota = 'Consultas'
+            
+            nf_data.append([
+                str(nota.get('id', '')),
+                str(nota.get('numero', ''))[:10],
+                tp_aliquota,
+                str(nota.get('data_emissao', '')),
+                str(nota.get('data_recebimento', '')),
+                str(nota.get('tomador', ''))[:15],
+                f"{float(nota.get('percentual_rateio', 0)):,.2f}%",
+                f"{float(nota.get('valor_bruto', 0)):,.2f}",
+                f"{float(nota.get('iss', 0)):,.2f}",
+                f"{float(nota.get('pis', 0)):,.2f}",
+                f"{float(nota.get('cofins', 0)):,.2f}",
+                f"{float(nota.get('irpj', 0)):,.2f}",
+                f"{float(nota.get('csll', 0)):,.2f}",
+                f"{float(nota.get('outros', 0)):,.2f}",
+                f"{float(nota.get('valor_liquido', 0)):,.2f}"
+            ])
+        
+        # Linha de totais (ajustada para as novas colunas)
+        nf_data.append([
+            '', '', '', '', '', '', 'TOTAIS:',
+            f"{relatorio['total_nf_emitidas_valor_bruto']:,.2f}",
+            f"{relatorio['total_nf_emitidas_iss']:,.2f}",
+            f"{relatorio['total_nf_emitidas_pis']:,.2f}",
+            f"{relatorio['total_nf_emitidas_cofins']:,.2f}",
+            f"{relatorio['total_nf_emitidas_irpj']:,.2f}",
+            f"{relatorio['total_nf_emitidas_csll']:,.2f}",
+            f"{relatorio['total_nf_emitidas_outros']:,.2f}",
+            f"{relatorio['total_nf_emitidas_valor_liquido']:,.2f}"
+        ])
+        
+        # Larguras idênticas às notas recebidas - % Rateio ampliado para 0.6"
+        nf_table = Table(nf_data, colWidths=[0.3*inch, 0.7*inch, 1.1*inch, 0.7*inch, 0.7*inch, 1.8*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.6*inch, 0.7*inch])
+        nf_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.grey),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('ALIGN', (6,0), (-1,-1), 'RIGHT'),  # Ajustar para a nova posição da coluna % Rateio
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 7),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
+            ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),  # Centralizar verticalmente o texto
+        ]))
+        elements.append(nf_table)
+    else:
+        elements.append(Paragraph("Nenhuma nota fiscal emitida encontrada.", styles['Normal']))
+    
+    # Gerar o PDF com rodapé
+    doc.build(elements, onFirstPage=draw_footer, onLaterPages=draw_footer)
+    buffer.seek(0)
+    
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="relatorio_mensal_socio_{empresa_id}_{mes_ano}.pdf"'
+    return response
 
 
 def calcular_adicional_ir_trimestral(empresa_id, ano):
