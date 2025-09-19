@@ -790,8 +790,8 @@ def relatorio_mensal_socio_pdf(request, empresa_id):
         ('FONTSIZE', (0,0), (-1,-1), 8),
         ('GRID', (0,0), (-1,-1), 1, colors.black),
         ('BACKGROUND', (0,-3), (-1,-3), colors.lightgrey),
-        ('BACKGROUND', (0,-1), (-1,-1), colors.green),
-        ('TEXTCOLOR', (0,-1), (-1,-1), colors.whitesmoke),
+        ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey),  # Mesma cor da linha TOTAL
+        ('TEXTCOLOR', (0,-1), (-1,-1), colors.black),
     ]))
     
     # Criar tabela principal que contém as duas tabelas lado a lado
