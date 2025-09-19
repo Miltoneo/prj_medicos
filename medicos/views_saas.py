@@ -104,11 +104,8 @@ def saas_configuracoes(request, conta_id):
                 acao='config_change',
                 objeto_tipo='ContaPreferencias',
                 objeto_id=str(preferences.conta.id),
-                objeto_nome='Preferências da Conta',
                 descricao='Atualização das configurações da conta',
-                dados_novos=updated_data,
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT')
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
             # Registra métrica

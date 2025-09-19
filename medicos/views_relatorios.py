@@ -19,6 +19,7 @@ from django.db.models import Sum
 from medicos.models import Empresa
 from medicos.models.base import Socio
 from medicos.models.fiscal import NotaFiscal, Aliquotas
+from medicos.utils_saas import SaaSPreferencesManager
 
 # Imports locais - Builders e relatórios
 from medicos.relatorios.builders import (
@@ -471,12 +472,38 @@ def relatorio_mensal_socio_pdf(request, empresa_id):
     # Função para desenhar o rodapé
     def draw_footer(canvas_obj, doc):
         canvas_obj.saveState()
-        canvas_obj.setFont("Helvetica", 9)
+        canvas_obj.setFont("Helvetica", 7)
         current_date = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         footer_text = f"Página: {doc.page} / Emitido em: {current_date}"
         # Posicionar no rodapé direito
         page_width = landscape(A4)[0]
+        
+        # Adicionar informações do sistema acima da numeração da página
+        canvas_obj.drawRightString(page_width - 30, 45, "SISTEMA DE ROTINAS CONTÁBEIS - SIRCO")
+        canvas_obj.drawRightString(page_width - 30, 32, "www.onkoto.com.br/medicos")
         canvas_obj.drawRightString(page_width - 30, 20, footer_text)
+        
+        # Adicionar informações das preferências da conta no rodapé esquerdo
+        # Obter preferências da conta
+        try:
+            preferences = SaaSPreferencesManager.get_or_create_preferences(empresa.conta)
+            footer_left_lines = []
+            
+            if preferences.nome_customizado:
+                footer_left_lines.append(preferences.nome_customizado)
+            if preferences.website:
+                footer_left_lines.append(preferences.website)
+            
+            # Desenhar as linhas no rodapé esquerdo
+            y_position = 35  # Posição inicial mais alta para múltiplas linhas
+            for line in footer_left_lines:
+                canvas_obj.drawString(30, y_position, line)
+                y_position -= 12  # Espaçamento entre linhas
+                
+        except Exception:
+            # Em caso de erro, não exibe as informações extras
+            pass
+            
         canvas_obj.restoreState()
 
     empresa = Empresa.objects.get(id=empresa_id)
@@ -688,23 +715,24 @@ def relatorio_mensal_socio_pdf(request, empresa_id):
     info_data = [
         ['Competência:', relatorio['competencia']],
         ['Empresa:', empresa.nome_fantasia or empresa.name],
-        ['Sócio:', relatorio['socio_nome']],
-        ['Data de Geração:', relatorio['data_geracao']]
+        ['Sócio:', relatorio['socio_nome']]
     ]
     
-    # Aproveitar melhor o espaço em orientação paisagem
-    info_table = Table(info_data, colWidths=[2.5*inch, 5*inch])
+    # Aproveitar melhor o espaço em orientação paisagem - alinhamento à esquerda forçado
+    info_table = Table(info_data, colWidths=[2.5*inch, 5*inch], hAlign='LEFT')
     info_table.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
         ('FONTSIZE', (0,0), (-1,-1), 10),
         ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
     ]))
     elements.append(info_table)
     elements.append(Spacer(1, 20))
     
     # SEÇÕES 1 e 2: RECEITAS E IMPOSTOS LADO A LADO
-    elements.append(Paragraph("RESULTADO FINANCEIRO", section_style))
+    elements.append(Paragraph("1. RESULTADO FINANCEIRO", section_style))
     
     # Preparar dados da tabela de receitas
     receitas_data = [
@@ -984,8 +1012,25 @@ def relatorio_mensal_socio_pdf(request, empresa_id):
     doc.build(elements, onFirstPage=draw_footer, onLaterPages=draw_footer)
     buffer.seek(0)
     
+    # Criar nome do arquivo com padrão solicitado
+    nome_socio = socio_selecionado.pessoa.name if socio_selecionado else 'SOCIO_NAO_SELECIONADO'
+    # Remover caracteres especiais do nome do sócio para o nome do arquivo
+    nome_socio_limpo = ''.join(c for c in nome_socio if c.isalnum() or c in (' ', '_')).strip()
+    nome_socio_limpo = nome_socio_limpo.replace(' ', '_')
+    
+    # Formatar mês de competência (YYYY-MM-01)
+    if mes_ano and '-' in mes_ano:
+        ano, mes = mes_ano.split('-')
+        mes_competencia = f"{ano}-{mes.zfill(2)}-01"
+    else:
+        from datetime import datetime
+        hoje = datetime.now()
+        mes_competencia = f"{hoje.year}-{hoje.month:02d}-01"
+    
+    nome_arquivo = f"DEMONSTRATIVO_DE_RESULTADOS_{nome_socio_limpo}_{mes_competencia}.pdf"
+    
     response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="relatorio_mensal_socio_{empresa_id}_{mes_ano}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="{nome_arquivo}"'
     return response
 
 

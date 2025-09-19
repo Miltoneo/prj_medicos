@@ -210,10 +210,11 @@ class ContaPreferencias(BaseTimestampMixin):
         verbose_name="Email Específico para Cabeçalhos",
         help_text="Email que aparecerá nos relatórios (se diferente do email principal)"
     )
-    website = models.URLField(
+    website = models.CharField(
+        max_length=255,
         blank=True,
-        verbose_name="URL do Portal/Site da Conta",
-        help_text="Website que aparecerá nos relatórios e documentos"
+        verbose_name="Website/Portal da Conta",
+        help_text="Website, portal ou qualquer informação de contato da conta"
     )
     telefone_contato = models.CharField(
         max_length=20,

@@ -108,13 +108,9 @@ class SaaSAuditManager:
             user=user,
             acao=acao,
             objeto_tipo=objeto_tipo,
-            objeto_id=objeto_id,
-            objeto_nome=objeto_nome,
-            descricao=descricao,
-            dados_anteriores=dados_anteriores,
-            dados_novos=dados_novos,
-            ip_address=ip_address,
-            user_agent=user_agent
+            objeto_id=str(objeto_id) if objeto_id else '',
+            descricao=descricao or f'Ação {acao} em {objeto_tipo}',
+            ip_address=ip_address
         )
     
     @staticmethod
@@ -127,8 +123,7 @@ class SaaSAuditManager:
             user=user,
             acao='login',
             descricao=f'Login do usuário {user.email}',
-            ip_address=ip_address,
-            user_agent=user_agent
+            ip_address=ip_address
         )
     
     @staticmethod
@@ -142,9 +137,7 @@ class SaaSAuditManager:
             acao='create',
             objeto_tipo=objeto.__class__.__name__,
             objeto_id=str(objeto.pk),
-            objeto_nome=str(objeto),
             descricao=descricao or f'Criação de {objeto.__class__.__name__}',
-            dados_novos={'id': objeto.pk, 'nome': str(objeto)},
             ip_address=ip_address
         )
     
@@ -159,10 +152,7 @@ class SaaSAuditManager:
             acao='update',
             objeto_tipo=objeto.__class__.__name__,
             objeto_id=str(objeto.pk),
-            objeto_nome=str(objeto),
             descricao=descricao or f'Atualização de {objeto.__class__.__name__}',
-            dados_anteriores=dados_anteriores,
-            dados_novos={'id': objeto.pk, 'nome': str(objeto)},
             ip_address=ip_address
         )
 
@@ -173,8 +163,7 @@ class SaaSMetricsManager:
     """
     
     @staticmethod
-    def record_metric(conta, metrica_tipo, valor, data=None, periodo_tipo='dia', 
-                     unidade='quantidade', metadados=None):
+    def record_metric(conta, metrica_tipo, valor, data=None, metadados=None):
         """
         Registra uma métrica
         
@@ -183,9 +172,7 @@ class SaaSMetricsManager:
             metrica_tipo (str): Tipo da métrica (choices do model)
             valor (Decimal): Valor da métrica
             data (date): Data da métrica (padrão: hoje)
-            periodo_tipo (str): Tipo de período
-            unidade (str): Unidade da métrica
-            metadados (dict): Dados adicionais
+            metadados (dict): Dados adicionais (não usado no modelo atual)
             
         Returns:
             ContaMetrics: Métrica criada
@@ -198,26 +185,20 @@ class SaaSMetricsManager:
             conta=conta,
             metrica_tipo=metrica_tipo,
             data=data,
-            periodo_tipo=periodo_tipo,
             defaults={
-                'valor': valor,
-                'unidade': unidade,
-                'metadados': metadados or {}
+                'valor': valor
             }
         )
         
         if not created:
             # Atualiza valor existente
             metric.valor = valor
-            metric.unidade = unidade
-            if metadados:
-                metric.metadados = metadados
             metric.save()
         
         return metric
     
     @staticmethod
-    def increment_metric(conta, metrica_tipo, incremento=1, data=None, periodo_tipo='dia'):
+    def increment_metric(conta, metrica_tipo, incremento=1, data=None):
         """
         Incrementa uma métrica existente
         """
@@ -228,7 +209,6 @@ class SaaSMetricsManager:
             conta=conta,
             metrica_tipo=metrica_tipo,
             data=data,
-            periodo_tipo=periodo_tipo,
             defaults={'valor': incremento}
         )
         
