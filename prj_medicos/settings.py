@@ -157,7 +157,7 @@ DATABASES = {
         'OPTIONS': {
             'sslmode': 'prefer',  # Prefere SSL se disponível
             'connect_timeout': 10,
-            'options': '-c default_transaction_isolation=read\ committed'
+            'options': '-c default_transaction_isolation=read\\ committed'
         },
         'CONN_MAX_AGE': 600,  # Reutiliza conexões por 10 minutos
         'CONN_HEALTH_CHECKS': True,  # Verifica saúde das conexões
